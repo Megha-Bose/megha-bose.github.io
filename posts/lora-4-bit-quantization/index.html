@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>LoRA & 4-bit Quantization // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="LoRA & 4-bit Quantization">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="LoRA & 4-bit Quantization">
+<meta name="twitter:description" content="Prerequisites:
  Transfer Learning & Fine-Tuning  Linear Transformations  Singular Value Decomposition    GPT-3 has 175 billion parameters. Each one is stored as a 32-bit float - four bytes. That&rsquo;s 700 GB of memory just to hold the weights, before you&rsquo;ve done any computation at all.
 Fine-tuning GPT-3 requires more. You need gradients: another 700 GB. You need optimizer states: Adam stores first and second moment estimates, so another 1.">
 <meta property="og:title" content="LoRA & 4-bit Quantization">
@@ -25,37 +25,37 @@ Fine-tuning GPT-3 requires more. You need gradients: another 700 GB. You need op
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>LoRA & 4-bit Quantization</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">LoRA & 4-bit Quantization</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Mar 6, 2022
 </div>
@@ -64,14 +64,14 @@ Mar 6, 2022
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/transfer-learning/ target=_blank rel="noopener noreferrer">Transfer Learning & Fine-Tuning</a>
+<li><a href="/posts/transfer-learning/" target="_blank" rel="noopener noreferrer">Transfer Learning & Fine-Tuning</a>
 </li>
-<li><a href=/posts/linear-transformations/ target=_blank rel="noopener noreferrer">Linear Transformations</a>
+<li><a href="/posts/linear-transformations/" target="_blank" rel="noopener noreferrer">Linear Transformations</a>
 </li>
-<li><a href=/posts/singular-value-decomposition/ target=_blank rel="noopener noreferrer">Singular Value Decomposition</a>
+<li><a href="/posts/singular-value-decomposition/" target="_blank" rel="noopener noreferrer">Singular Value Decomposition</a>
 </li>
 </ul>
 <hr>
@@ -80,7 +80,7 @@ Mar 6, 2022
 <p>Very few organizations have that. Most people don&rsquo;t.</p>
 <p>LoRA (Low-Rank Adaptation) changes this equation dramatically. The mathematical idea is simple enough to write on a napkin, yet it makes fine-tuning 175B-parameter models possible on a handful of consumer GPUs. Understanding why it works requires nothing more than linear algebra you already know - specifically, the idea of rank.</p>
 <hr>
-<h2 id=the-fine-tuning-memory-problem>The Fine-Tuning Memory Problem</h2>
+<h2 id="the-fine-tuning-memory-problem">The Fine-Tuning Memory Problem</h2>
 <p>Let&rsquo;s be precise about the numbers.</p>
 <p>Suppose your model has $N$ parameters. Fine-tuning in full precision (FP32) requires:</p>
 <ul>
@@ -96,7 +96,7 @@ Mar 6, 2022
 <p>This observation has a precise mathematical consequence: the weight updates during fine-tuning tend to live in a low-dimensional subspace. Most singular values of the gradient matrix $\Delta W$ are small or zero. The update has low effective rank.</p>
 <p>LoRA exploits this.</p>
 <hr>
-<h2 id=lora-the-idea>LoRA: The Idea</h2>
+<h2 id="lora-the-idea">LoRA: The Idea</h2>
 <p>Consider a single weight matrix $W \in \mathbb{R}^{d \times k}$ inside your transformer (say, the query projection in an attention layer). During fine-tuning, we want to learn an update $\Delta W$ such that the effective weight becomes $W + \Delta W$.</p>
 <p>Full fine-tuning: train $\Delta W$ directly. Memory cost: $d \times k$ extra parameters.</p>
 <p>LoRA&rsquo;s proposal (Hu et al., 2021): instead of learning $\Delta W$ freely, constrain it to be a product of two low-rank matrices:</p>
@@ -128,7 +128,7 @@ Mar 6, 2022
 </table>
 <p>For an entire model with many such matrices, the savings compound. Instead of storing 16N bytes for training, you store the frozen weights (in low precision, as we&rsquo;ll see shortly) plus a tiny fraction of trainable parameters.</p>
 <hr>
-<h2 id=initialization-starting-from-the-pre-trained-weights>Initialization: Starting from the Pre-Trained Weights</h2>
+<h2 id="initialization-starting-from-the-pre-trained-weights">Initialization: Starting from the Pre-Trained Weights</h2>
 <p>There&rsquo;s a subtlety in how $A$ and $B$ are initialized that makes LoRA work cleanly.</p>
 <p>We want: at the start of training, $\Delta W = BA = 0$. This ensures the model begins exactly at the pre-trained checkpoint, with no random perturbation.</p>
 <p>The initialization is:</p>
@@ -142,13 +142,13 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> Why not initialize both $A$ and $B$ randomly? If both are nonzero at initialization, $\Delta W = BA \neq 0$ and the model starts somewhere other than the pre-trained checkpoint. For fine-tuning (where the pre-trained weights are already good), this is wasteful. The asymmetric initialization - $A$ random, $B$ zero - is a deliberate choice that preserves the starting point while allowing $B$ to develop nontrivially during training.</p>
 </blockquote>
 <hr>
-<h2 id=the-scaling-factor-alpha>The Scaling Factor $\alpha$</h2>
+<h2 id="the-scaling-factor-alpha">The Scaling Factor $\alpha$</h2>
 <p>In practice, the LoRA update is scaled:</p>
 <p>$$\Delta W = \frac{\alpha}{r} BA.$$</p>
 <p>The hyperparameter $\alpha$ controls the effective learning rate of the LoRA update relative to the frozen weights. Common practice: set $\alpha = 2r$, so the scaling factor $\alpha/r = 2$.</p>
 <p>Why does this matter? The magnitude of $BA$ grows with $r$ (more parameters, more potential signal). The $\alpha/r$ scaling keeps the update magnitude roughly independent of the rank choice, making it easier to transfer hyperparameters between different $r$ settings.</p>
 <hr>
-<h2 id=why-low-rank-works-the-svd-perspective>Why Low Rank Works: The SVD Perspective</h2>
+<h2 id="why-low-rank-works-the-svd-perspective">Why Low Rank Works: The SVD Perspective</h2>
 <p>Let&rsquo;s think about this more carefully. Any matrix $W \in \mathbb{R}^{d \times k}$ has a singular value decomposition:</p>
 <p>$$W = U \Sigma V^T,$$</p>
 <p>where $U \in \mathbb{R}^{d \times d}$, $\Sigma \in \mathbb{R}^{d \times k}$ is diagonal with non-negative entries $\sigma_1 \geq \sigma_2 \geq \cdots \geq 0$, and $V \in \mathbb{R}^{k \times k}$.</p>
@@ -158,7 +158,7 @@ Mar 6, 2022
 <p>The empirical claim underlying LoRA is that the weight update $\Delta W$ needed for task adaptation has low effective rank. That is: most of the &ldquo;useful&rdquo; change in $W$ is captured by just a few singular directions. The rest is noise. LoRA constrains $\Delta W$ to live in this low-rank subspace, which is where the update would have ended up anyway.</p>
 <p>This has been verified empirically: when you fine-tune a large model fully and then examine the singular values of $\Delta W$, the spectrum drops off sharply. A rank-8 or rank-16 approximation captures most of the useful update.</p>
 <hr>
-<h2 id=which-layers-and-what-rank>Which Layers and What Rank?</h2>
+<h2 id="which-layers-and-what-rank">Which Layers and What Rank?</h2>
 <p>LoRA is typically applied to the <strong>attention weight matrices</strong>: the query, key, value, and output projection matrices ($W_Q, W_K, W_V, W_O$) in each transformer layer. Sometimes the feed-forward network (FFN) matrices are included too.</p>
 <p>The rank $r$ is a hyperparameter:</p>
 <ul>
@@ -168,7 +168,7 @@ Mar 6, 2022
 </ul>
 <p>For most practical fine-tuning tasks, $r = 8$ to $r = 16$ with LoRA on attention layers gives results competitive with full fine-tuning while using a small fraction of the memory.</p>
 <hr>
-<h2 id=qlora-lora-meets-4-bit-quantization>QLoRA: LoRA Meets 4-Bit Quantization</h2>
+<h2 id="qlora-lora-meets-4-bit-quantization">QLoRA: LoRA Meets 4-Bit Quantization</h2>
 <p>LoRA alone reduces the number of trainable parameters dramatically, but the frozen base model still needs to live in GPU memory. For a 65B parameter model in FP16, that&rsquo;s still 130 GB.</p>
 <p>QLoRA (Dettmers et al., 2023) solves this by quantizing the frozen base model to 4 bits, reducing its memory footprint by 8× compared to FP16.</p>
 <p>The setup:</p>
@@ -182,7 +182,7 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> The LoRA adapters change which parameters are optimized, not the model&rsquo;s expressive power. A LoRA-fine-tuned model is mathematically equivalent to a full model where $\Delta W = BA$ - the low-rank constraint is a computational restriction on the update during training, not a permanent limitation on the model&rsquo;s capabilities. At inference time, you can merge the LoRA update into the base weights: $W_{\text{new}} = W + BA$. The merged model has no extra overhead - it runs identically to a fully fine-tuned model. The low-rank structure was just a training efficiency trick.</p>
 </blockquote>
 <hr>
-<h2 id=4-bit-quantization-nf4-format>4-Bit Quantization: NF4 Format</h2>
+<h2 id="4-bit-quantization-nf4-format">4-Bit Quantization: NF4 Format</h2>
 <p>Quantization maps continuous weight values to a discrete set of representable values. With 4 bits, you have $2^4 = 16$ levels.</p>
 <p>The key question: where do you put those 16 levels?</p>
 <p>Naive uniform quantization: evenly space the 16 levels between $[\min(W), \max(W)]$. This wastes levels in the tails of the weight distribution where few weights live.</p>
@@ -199,7 +199,7 @@ Mar 6, 2022
 <p><strong>Double quantization</strong> (a QLoRA contribution): the normalization constants $\max(|W|)$ are themselves quantized from FP32 to 8-bit. This meta-quantization saves another ~0.37 bits per parameter on average.</p>
 <p>The combined effect: NF4 + double quantization uses approximately 4.5 bits per parameter, compared to 16 bits for FP16. An 8× memory reduction for the base model, with quantization error small enough that fine-tuning quality is nearly indistinguishable from FP16.</p>
 <hr>
-<h2 id=the-full-memory-picture>The Full Memory Picture</h2>
+<h2 id="the-full-memory-picture">The Full Memory Picture</h2>
 <p>Let&rsquo;s make the memory accounting concrete for a practical example: fine-tuning LLaMA-13B.</p>
 <table>
 <thead>
@@ -239,13 +239,13 @@ Mar 6, 2022
 </table>
 <p>QLoRA reduces training memory from ~104 GB to ~7.2 GB - a 14× reduction. LLaMA-13B training fits on a single consumer RTX 3090 (24 GB) with room to spare.</p>
 <hr>
-<h2 id=practical-implications>Practical Implications</h2>
+<h2 id="practical-implications">Practical Implications</h2>
 <p><strong>Per-task adapters.</strong> LoRA fine-tuning produces a small set of adapter weights ($A$ and $B$ matrices for each LoRA layer). For a 7B model with $r=16$ LoRA on all attention layers, the adapters are roughly 30 MB - a file you can email. The base model is shared. Switching between tasks means swapping adapters, not reloading the full model.</p>
 <p><strong>Serving multiple tasks.</strong> If you have 100 specialized fine-tunes (one for legal, one for medical, one for coding, &mldr;), you need one copy of the base model in GPU memory plus 100 × 30 MB of adapter weights. Much more efficient than 100 full model copies.</p>
 <p><strong>Merging adapters.</strong> Because $W_{\text{new}} = W + BA$ is a simple matrix addition, you can merge multiple LoRA adapters via weight arithmetic. Models like SLERP-merged and task-arithmetic models combine capabilities of different fine-tunes - conceptually like &ldquo;averaging&rdquo; experts in weight space.</p>
 <p><strong>Limitations.</strong> LoRA constrains the update to low rank, which may not suffice for tasks that require fundamentally new behaviors (as opposed to adapting existing ones). Very low ranks ($r=1$ or $r=2$) may underfit complex tasks. The choice of which layers to apply LoRA to matters and is often determined empirically.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -296,16 +296,16 @@ Mar 6, 2022
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/rlhf/ target=_blank rel="noopener noreferrer">RLHF</a>
+<li><a href="/posts/rlhf/" target="_blank" rel="noopener noreferrer">RLHF</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

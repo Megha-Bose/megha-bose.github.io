@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Efficient Transformers // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Efficient Transformers">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Efficient Transformers">
+<meta name="twitter:description" content="Prerequisites:
  Transformers from First Principles  The Chain Rule & Backpropagation    The attention mechanism computes $n^2$ dot products for a sequence of $n$ tokens. GPT-4 processes up to 128,000 tokens. That&rsquo;s $128000^2 = 16,384,000,000$ attention score computations per layer - 16 billion operations - and GPT-4 has 96 layers. But compute is only half the problem. The attention matrix itself, the $n \times n$ array of scores before softmax, would require $128000 \times 128000 \times 4$ bytes $= 65.">
 <meta property="og:title" content="Efficient Transformers">
 <meta property="og:description" content="Prerequisites:
@@ -23,37 +23,37 @@
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Efficient Transformers</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Efficient Transformers</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Mar 6, 2022
 </div>
@@ -62,19 +62,19 @@ Mar 6, 2022
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/transformers-from-first-principles/ target=_blank rel="noopener noreferrer">Transformers from First Principles</a>
+<li><a href="/posts/transformers-from-first-principles/" target="_blank" rel="noopener noreferrer">Transformers from First Principles</a>
 </li>
-<li><a href=/posts/the-chain-rule-backpropagation/ target=_blank rel="noopener noreferrer">The Chain Rule & Backpropagation</a>
+<li><a href="/posts/the-chain-rule-backpropagation/" target="_blank" rel="noopener noreferrer">The Chain Rule & Backpropagation</a>
 </li>
 </ul>
 <hr>
 <p>The attention mechanism computes $n^2$ dot products for a sequence of $n$ tokens. GPT-4 processes up to 128,000 tokens. That&rsquo;s $128000^2 = 16,384,000,000$ attention score computations per layer - 16 billion operations - and GPT-4 has 96 layers. But compute is only half the problem. The attention matrix itself, the $n \times n$ array of scores before softmax, would require $128000 \times 128000 \times 4$ bytes $= 65.5$ GB of memory - for a single layer, and just for the matrix. The GPU you&rsquo;re running on has 80 GB total.</p>
 <p>Standard attention does not scale to long contexts. Efficient transformers are the collection of engineering and mathematical ideas that make it possible anyway. Some are approximations that trade a small amount of accuracy for large gains in efficiency. Others - most famously FlashAttention - are exact but reorganize computation to avoid the memory bottleneck entirely.</p>
 <hr>
-<h2 id=the-quadratic-bottleneck>The Quadratic Bottleneck</h2>
+<h2 id="the-quadratic-bottleneck">The Quadratic Bottleneck</h2>
 <p>Let&rsquo;s be precise about what &ldquo;quadratic&rdquo; means here.</p>
 <p>Standard scaled dot-product attention computes:</p>
 <p>$$\text{Attention}(Q, K, V) = \text{softmax}!\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$</p>
@@ -87,7 +87,7 @@ Mar 6, 2022
 </ul>
 <p>Different techniques target different axes. FlashAttention targets memory I/O without approximating. Sparse attention and linear attention reduce compute, usually with some approximation.</p>
 <hr>
-<h2 id=sparse-attention>Sparse Attention</h2>
+<h2 id="sparse-attention">Sparse Attention</h2>
 <p>The key observation: most attention weights are small. In a trained transformer, the softmax over a long sequence is dominated by a few high-weight positions; the rest contribute negligibly. So why compute them all?</p>
 <p>Sparse attention restricts which $(i, j)$ pairs token $i$ can attend to. Instead of attending to all $n$ positions, each token attends to a structured subset of size $k \ll n$. The cost drops from $O(n^2)$ to $O(nk)$.</p>
 <p><strong>Local window attention:</strong> token $i$ attends to tokens $i - w, \ldots, i + w$ - a sliding window of width $2w + 1$. Cost: $O(nw)$. This captures local context well. Think of how you understand a sentence: nearby words matter most, and words 500 positions away rarely help. Window size $w = 512$ on a sequence of 100,000 tokens reduces compute by 100×.</p>
@@ -97,7 +97,7 @@ Mar 6, 2022
 <p><strong>BigBird</strong> (Zaheer et al., 2020) combines local attention, global tokens, and a random component - each token also attends to a small random subset of positions. The random component ensures that, in expectation, information can flow between any two tokens in $O(\log n)$ steps (like a random graph expander). BigBird proved that this combination is Turing-complete - it can simulate any Turing machine computation - while remaining $O(n)$.</p>
 <p>The limitation of sparse attention: if two tokens need to interact directly but aren&rsquo;t in each other&rsquo;s windows, they can only communicate indirectly across layers. This increases depth requirements for certain tasks. For tasks with genuinely long-range dependencies - cross-reference resolution in long documents, for example - pure sparse attention can miss interactions that full attention would catch.</p>
 <hr>
-<h2 id=linear-attention-the-kernel-trick>Linear Attention: The Kernel Trick</h2>
+<h2 id="linear-attention-the-kernel-trick">Linear Attention: The Kernel Trick</h2>
 <p>Sparse attention approximates the structure of which tokens interact. Linear attention approximates the softmax function itself.</p>
 <p>Standard attention can be written:</p>
 <p>$$\text{Attention}(Q, K, V)_i = \frac{\sum_j \exp(Q_i K_j^T) V_j}{\sum_j \exp(Q_i K_j^T)}$$</p>
@@ -111,7 +111,7 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> Linear attention methods have better theoretical complexity than standard attention, but theoretical complexity and wall-clock speed don&rsquo;t always match on real hardware. Modern GPUs are highly optimized for the specific matrix operations in standard attention, while linear attention&rsquo;s sequential structure can be harder to parallelize. The practical speedup of linear attention over FlashAttention (which is exact and highly optimized) is often smaller than the asymptotic analysis suggests. This is a recurring theme in efficient ML: the &ldquo;efficient&rdquo; algorithm on paper may not be the faster one in practice.</p>
 </blockquote>
 <hr>
-<h2 id=flashattention-the-right-bottleneck>FlashAttention: The Right Bottleneck</h2>
+<h2 id="flashattention-the-right-bottleneck">FlashAttention: The Right Bottleneck</h2>
 <p>The most practically important advance in transformer efficiency is FlashAttention (Dao et al., 2022), and it works by solving a different problem than you might expect.</p>
 <p>The insight: <strong>the bottleneck is not arithmetic throughput - it&rsquo;s memory bandwidth between HBM (high bandwidth memory, main GPU RAM) and SRAM (on-chip cache, fast but small).</strong></p>
 <p>Modern GPUs have a memory hierarchy:</p>
@@ -140,7 +140,7 @@ Mar 6, 2022
 <p><strong>FlashAttention-2</strong> (Dao, 2023) improved parallelism by splitting work across sequence length (not just batch and head dimensions), achieving 2 - 3× further speedup. <strong>FlashAttention-3</strong> adds optimizations for H100&rsquo;s asynchronous execution.</p>
 <p>FlashAttention is now the default attention implementation in PyTorch (<code>torch.nn.functional.scaled_dot_product_attention</code>), HuggingFace Transformers, vLLM, and essentially every production LLM serving system.</p>
 <hr>
-<h2 id=mixture-of-experts-moe>Mixture of Experts (MoE)</h2>
+<h2 id="mixture-of-experts-moe">Mixture of Experts (MoE)</h2>
 <p>A different axis of efficiency: instead of making attention cheaper, make the feedforward network sparse.</p>
 <p>In a standard transformer, every layer has one feedforward network (FFN) of size $d_{\text{model}} \times d_{\text{ffn}}$. It&rsquo;s applied to every token, every layer. The FFN is often the largest component by parameter count.</p>
 <p><strong>Mixture of Experts</strong> replaces the single FFN with $E$ &ldquo;expert&rdquo; FFNs and a router. For each token, the router selects $k$ of the $E$ experts (typically $k = 2$ out of $E = 8$ or $E = 64$). Only the selected experts process that token. The outputs are summed, weighted by the router&rsquo;s scores.</p>
@@ -163,7 +163,7 @@ Mar 6, 2022
 <p>where $f_i$ is the fraction of tokens routed to expert $i$, $P_i$ is the average routing probability for expert $i$, and $\alpha$ controls the strength. In perfect balance, $f_i = P_i = 1/E$ for all $i$, so $\mathcal{L}_{\text{aux}} = \alpha/E$. Any deviation increases this loss. The coefficient $\alpha$ must be tuned carefully - too small and experts collapse, too large and the router becomes uniform (ignoring token content entirely).</p>
 <p><strong>Shared experts</strong> (used in DeepSeek-V2/V3) are always-active experts that absorb common patterns, freeing specialised experts to focus on rarer distributions. One shared expert is typically sufficient. <strong>Expert granularity</strong> - more experts with smaller dimensions vs fewer with larger - trades off parameter efficiency against specialization. Recent models (DeepSeek, Kimi K2) use high sparsity: 8 active experts out of 64-384 total. Loss-free load balancing (DeepSeek-V3 approach) adds a learned bias to routing scores rather than a loss term, avoiding interference with the primary training objective.</p>
 <hr>
-<h2 id=grouped-query-attention-and-multi-query-attention>Grouped Query Attention and Multi-Query Attention</h2>
+<h2 id="grouped-query-attention-and-multi-query-attention">Grouped Query Attention and Multi-Query Attention</h2>
 <p>During inference, the KV cache is a major memory consumer. For every token generated, the model must store the key and value vectors for all previous tokens in all layers - because attention is computed against the full history.</p>
 <p>For a model with $H$ attention heads, $d$ head dimension, $L$ layers, and context length $n$:</p>
 <p>$$\text{KV cache size} = 2 \times H \times d \times L \times n \times \text{bytes per element}$$</p>
@@ -172,7 +172,7 @@ Mar 6, 2022
 <p><strong>Grouped Query Attention (GQA)</strong> (Ainslie et al., 2023): a middle ground. Group the $H$ query heads into $G$ groups ($G$ divides $H$). Each group shares one $K$ head and one $V$ head. KV cache reduction: $G \times$ instead of $H \times$, but with less quality degradation than MQA.</p>
 <p>LLaMA-2 70B uses GQA with $G = 8$ (8 KV heads for 64 query heads). This gives an 8× reduction in KV cache compared to standard MHA, enabling much longer contexts at the same memory budget.</p>
 <hr>
-<h2 id=multi-head-latent-attention>Multi-Head Latent Attention</h2>
+<h2 id="multi-head-latent-attention">Multi-Head Latent Attention</h2>
 <p>Grouped Query Attention reduces the KV cache by sharing key-value heads across query groups. Multi-Head Latent Attention (MLA), introduced in DeepSeek-V2, takes a different approach: compress the KV cache into a low-dimensional latent vector, then project it back to full keys and values at inference time.</p>
 <p>Instead of storing $n_h$ key-value pairs per token (as in MHA), MLA stores a single compressed latent $c_t^{KV} \in \mathbb{R}^{d_c}$ where $d_c \ll n_h \cdot d_h$:</p>
 <p>$$c_t^{KV} = W^{DKV} h_t$$</p>
@@ -188,7 +188,7 @@ Mar 6, 2022
 <li>MLA: comparable KV cache to GQA, MHA-level quality, but complex implementation (RoPE decomposition, custom kernels required)</li>
 </ul>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -262,16 +262,16 @@ Mar 6, 2022
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/kv-caching-llm-inference/ target=_blank rel="noopener noreferrer">KV Caching & LLM Inference</a>
+<li><a href="/posts/kv-caching-llm-inference/" target="_blank" rel="noopener noreferrer">KV Caching & LLM Inference</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

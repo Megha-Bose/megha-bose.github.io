@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Feed Design: Push vs Pull // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Feed Design: Push vs Pull">
-<meta name=twitter:description content="Prerequisite: The Hot Partition Problem  Katy Perry posts a tweet. She has 100 million followers. In what sense should all 100 million people see it in their feeds within seconds? And more importantly - should the system even try to make that happen?
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Feed Design: Push vs Pull">
+<meta name="twitter:description" content="Prerequisite: The Hot Partition Problem  Katy Perry posts a tweet. She has 100 million followers. In what sense should all 100 million people see it in their feeds within seconds? And more importantly - should the system even try to make that happen?
 This question turns out to be the central design decision in social feed architecture. The answer shapes the entire system: storage requirements, write amplification, read latency, consistency guarantees, and how your infrastructure behaves when a celebrity does something newsworthy at 8 PM on a Tuesday.">
 <meta property="og:title" content="Feed Design: Push vs Pull">
 <meta property="og:description" content="Prerequisite: The Hot Partition Problem  Katy Perry posts a tweet. She has 100 million followers. In what sense should all 100 million people see it in their feeds within seconds? And more importantly - should the system even try to make that happen?
@@ -23,37 +23,37 @@ This question turns out to be the central design decision in social feed archite
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Feed Design: Push vs Pull</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Feed Design: Push vs Pull</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Sep 15, 2024
 </div>
@@ -62,37 +62,37 @@ Sep 15, 2024
 </div>
 </div>
 </header>
-<div class=post-content>
-<p><strong>Prerequisite:</strong> <a href=/posts/the-hot-partition-problem/ target=_blank rel="noopener noreferrer">The Hot Partition Problem</a>
+<div class="post-content">
+<p><strong>Prerequisite:</strong> <a href="/posts/the-hot-partition-problem/" target="_blank" rel="noopener noreferrer">The Hot Partition Problem</a>
 </p>
 <hr>
 <p>Katy Perry posts a tweet. She has 100 million followers. In what sense should all 100 million people see it in their feeds within seconds? And more importantly - should the system even try to make that happen?</p>
 <p>This question turns out to be the central design decision in social feed architecture. The answer shapes the entire system: storage requirements, write amplification, read latency, consistency guarantees, and how your infrastructure behaves when a celebrity does something newsworthy at 8 PM on a Tuesday.</p>
-<h2 id=the-geometry-of-the-problem>The Geometry of the Problem</h2>
+<h2 id="the-geometry-of-the-problem">The Geometry of the Problem</h2>
 <p>Consider two variables: the number of people a user follows, and the number of followers a user has.</p>
 <p>For a typical user following 500 accounts: loading their feed naively means querying 500 separate data locations, fetching recent posts from each, and merging the results by timestamp. Five hundred round trips (or one large scatter-gather query) per feed load, multiplied by millions of concurrent feed loads, is not a system that survives contact with real traffic.</p>
 <p>For a celebrity with 100 million followers posting once: if the system writes that post into each follower&rsquo;s precomputed feed at post time, that&rsquo;s 100 million writes triggered by a single action. At one microsecond per write (an optimistic estimate), that&rsquo;s 100 seconds of serial writes. In a parallel pipeline, it&rsquo;s still an enormous fan-out operation that consumes significant infrastructure for a single event.</p>
 <p>These two problems define the design space. You can solve the read problem by precomputing feeds at write time. You can solve the write problem by computing feeds at read time. You cannot fully solve both simultaneously - the tradeoff is structural.</p>
-<h2 id=push-fan-out-on-write>Push: Fan-Out on Write</h2>
+<h2 id="push-fan-out-on-write">Push: Fan-Out on Write</h2>
 <p>The push model precomputes a user&rsquo;s feed when content is created. When a user posts, the system immediately writes a reference to that post into each follower&rsquo;s feed. By the time a follower loads their feed, the work is already done - it&rsquo;s a single key lookup.</p>
 <p>The natural data structure for a precomputed feed is a sorted list keyed by timestamp. In Redis, a sorted set per user (<code>ZADD feed:{user_id} {timestamp} {post_id}</code>) works well: timestamp is the score, post ID is the member. Range queries by recency are <code>ZREVRANGEBYSCORE</code>. In Cassandra, a table with <code>(user_id, post_timestamp DESC)</code> as the compound primary key supports efficient time-range scans. The reads are simple and fast: one key, one lookup, return the top N items.</p>
 <p><strong>When push works well:</strong> follower counts are in the thousands to low hundreds of thousands, posts are infrequent relative to reads, and the user base is active (precomputed feeds are actually read, not just stored and forgotten).</p>
 <p><strong>Where push fails:</strong></p>
 <p>Write amplification is the fundamental problem. A user with 10 million followers generates 10 million writes per post. Storage cost is $O(\text{followers} \times \text{posts})$ - every post is duplicated across every follower&rsquo;s feed. Deleting a post means removing it from potentially millions of feed entries, which is expensive and slow. A user unfollowing someone requires cleaning up past feed entries retroactively - or accepting that stale entries will be filtered at read time.</p>
 <p>The inactive user problem is subtle but real. Users who haven&rsquo;t logged in for six months still have feeds being updated. Storage accumulates for feeds no one will read. At scale - Instagram has over 2 billion monthly active users, but many of those are not daily active - the wasted writes and storage for inactive users is significant.</p>
-<h2 id=pull-fan-out-on-read>Pull: Fan-Out on Read</h2>
+<h2 id="pull-fan-out-on-read">Pull: Fan-Out on Read</h2>
 <p>The pull model computes a user&rsquo;s feed on demand. When a user loads their feed, the system queries the post store for recent posts from each account they follow, then merges and sorts the results in application memory.</p>
 <p><strong>When pull works well:</strong> users follow few accounts, the write path must be simple, or the content changes frequently enough that precomputing is wasteful.</p>
 <p><strong>Where pull fails:</strong></p>
 <p>Read latency grows with the number of followed accounts. A user following 2,000 accounts requires touching 2,000 data locations per feed load - that&rsquo;s either 2,000 sequential round trips or one large scatter-gather query. For most social platforms where median follow counts are in the hundreds, this is a difficult path to make fast at scale.</p>
 <p>Real-time ranking is expensive. A ranked feed (Instagram&rsquo;s non-chronological ordering, Twitter&rsquo;s &ldquo;you might have missed these&rdquo;) requires running ML inference at read time against a fresh set of candidates. At feed load time, with millions of concurrent users, this is computationally intensive. You need to fetch more candidates than you&rsquo;ll show, score them, and return the top N.</p>
-<h2 id=twitters-architecture-evolution>Twitter&rsquo;s Architecture Evolution</h2>
+<h2 id="twitters-architecture-evolution">Twitter&rsquo;s Architecture Evolution</h2>
 <p>Twitter started with a push-based model. Fan-out workers consumed a queue of post events and wrote each new tweet into every follower&rsquo;s precomputed timeline, stored in a Redis cluster. For most users this worked: reads were fast, timelines were fresh, the system was conceptually simple.</p>
 <p>Then Beyoncé announced her pregnancy at the 2013 Grammy Awards.</p>
 <p>The fan-out workers were designed to handle ordinary write amplification. A user with 100,000 followers generating a tweet was a significant write operation - 100,000 Redis writes - but manageable. Beyoncé had 58 million followers at the time, and the post happened in real-time during a live broadcast, meaning millions of users were actively refreshing Twitter simultaneously.</p>
 <p>The fan-out queue grew faster than the workers could drain it. Timelines fell behind. Users saw stale feeds. The system didn&rsquo;t crash, but it visibly lagged - the timeline gap became a running joke on the platform.</p>
 <p>The solution Twitter eventually shipped is the hybrid model, which is now the standard architecture across large social platforms.</p>
-<h2 id=the-hybrid-model>The Hybrid Model</h2>
+<h2 id="the-hybrid-model">The Hybrid Model</h2>
 <p>The hybrid model draws a line at a follower threshold. Accounts below the threshold (typical users) use push fan-out on write. Accounts above the threshold (celebrities, major media accounts) are excluded from the push fan-out.</p>
 <p>When a user loads their feed, the system:</p>
 <ol>
@@ -103,25 +103,25 @@ Sep 15, 2024
 <p>This bounds both failure modes. Write amplification is bounded: no fan-out for accounts above the threshold, regardless of follower count. Read latency is bounded: pull only applies to a small number of celebrity accounts, not to all followed accounts.</p>
 <p>The system must classify accounts dynamically. A user who gains a million followers becomes a celebrity; a celebrity who loses followers might become a regular user. The threshold crossing requires operational decisions: do existing followers' precomputed feeds get backfilled with the newly-reclassified account&rsquo;s recent posts?</p>
 <p>Instagram uses a similar model. Their engineering blog describes the split point at roughly 100,000 followers, with real-time adjustment based on actual traffic patterns.</p>
-<h2 id=feed-storage-redis-sorted-sets-and-cassandra>Feed Storage: Redis Sorted Sets and Cassandra</h2>
+<h2 id="feed-storage-redis-sorted-sets-and-cassandra">Feed Storage: Redis Sorted Sets and Cassandra</h2>
 <p><strong>Redis sorted sets</strong> are the canonical choice for hot, recently-active user timelines. The data structure is exactly right: scores (timestamps) enable efficient range queries, insertion is O(log N), and retrieval of the top K items is O(log N + K). Most platforms cap feed depth (keeping only the most recent 1,000 posts per user) to bound memory usage: <code>ZREMRANGEBYRANK</code> trims the set after each insertion.</p>
 <p>For cold users - inactive for days or weeks - feeds are evicted from Redis. On next login, the feed is rebuilt from the Cassandra backing store. This cold-start rebuild is the cost of keeping Redis memory usage bounded.</p>
 <p><strong>Cassandra</strong> serves as the durable, long-term store. A table with partition key <code>user_id</code> and clustering key <code>post_timestamp DESC</code> supports efficient time-range queries. Cassandra&rsquo;s wide rows handle large fan-outs naturally - a user&rsquo;s entire timeline fits in a single partition. For the fan-out operation, Cassandra batches help, though they must be used carefully to avoid overloading partition coordinators.</p>
-<h2 id=kafka-as-the-fan-out-backbone>Kafka as the Fan-Out Backbone</h2>
+<h2 id="kafka-as-the-fan-out-backbone">Kafka as the Fan-Out Backbone</h2>
 <p>The fan-out operation itself - notifying each follower&rsquo;s feed when a user posts - is naturally event-driven. When user A posts, a post event is published to a Kafka topic. A fleet of fan-out workers consumes from this topic and writes to each follower&rsquo;s Redis sorted set (for active users) and Cassandra row (for durability).</p>
 <p>Kafka provides the durability and backpressure that a push model needs. If fan-out workers fall behind (during a celebrity post spike), the event stays in Kafka until a worker can process it. The fan-out lag is visible (Kafka consumer lag metrics) and bounded. The post itself is written immediately to the author&rsquo;s post store; the fan-out is best-effort asynchronous.</p>
-<h2 id=ml-ranked-feeds>ML-Ranked Feeds</h2>
+<h2 id="ml-ranked-feeds">ML-Ranked Feeds</h2>
 <p>Chronological feeds are straightforward to build. Ranked feeds - Instagram&rsquo;s current default, Twitter&rsquo;s algorithmic feed, Facebook&rsquo;s News Feed - are a fundamentally different beast.</p>
 <p>Ranking requires, at minimum: candidate retrieval (fetch the last N posts from followed accounts), feature computation (engagement signals, recency, relationship strength, post-type preferences), and scoring (running candidates through a ranking model). This pipeline must complete within feed load latency constraints - typically under 200ms.</p>
 <p>Most platforms solve this by pre-computing ranked candidates periodically (every few minutes) and caching the ranked feed. The feed you see may be a few minutes stale, but the ranking computation didn&rsquo;t happen in your request&rsquo;s critical path. When you scroll past the precomputed candidates, the system fetches and ranks more - this is why &ldquo;infinite scroll&rdquo; loads the first page instantly and occasionally shows a spinner.</p>
-<h2 id=pagination-why-offset-based-is-wrong>Pagination: Why Offset-Based Is Wrong</h2>
+<h2 id="pagination-why-offset-based-is-wrong">Pagination: Why Offset-Based Is Wrong</h2>
 <p>Offset-based pagination (<code>LIMIT 20 OFFSET 400</code>) seems obvious and is wrong. Computing offset 400 requires skipping 400 rows - expensive at the database level. Worse: if new posts arrive while you&rsquo;re paginating, all offsets shift. Page 2 may contain items you already saw on page 1, or skip items entirely.</p>
 <p>Cursor-based pagination uses the last-seen post&rsquo;s timestamp (or ID) as an opaque cursor. The next-page query is <code>WHERE timestamp &lt; cursor_timestamp LIMIT 20</code>. This is an O(1) index lookup, is stable across new arrivals, and works identically in Redis (<code>ZREVRANGEBYSCORE</code> with the cursor as the max score) and Cassandra (<code>WHERE post_timestamp &lt; cursor LIMIT 20</code>).</p>
-<h2 id=the-decentralized-future>The Decentralized Future</h2>
+<h2 id="the-decentralized-future">The Decentralized Future</h2>
 <p>Bluesky&rsquo;s AT Protocol and Mastodon&rsquo;s ActivityPub represent a different model: decentralized feeds where the feed algorithm is itself replaceable. In AT Protocol, feeds are computed by external &ldquo;feed generators&rdquo; - third-party services that define their own ranking and selection logic. A user can choose their feed algorithm the same way they choose their podcast app.</p>
 <p>This shifts the architectural problem: instead of one company&rsquo;s infrastructure handling all fan-out, the protocol standardizes how posts are published and discovered, and the computation is distributed. The hot partition problem doesn&rsquo;t go away - it just changes who owns it.</p>
 <p>ML-ranked feeds are also under pressure. The recommendation that maximizes engagement can systematically surface outrage and division - this is a well-documented effect. Chronological and user-controlled algorithmic feeds are being re-explored not just for technical reasons but for product and societal ones.</p>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -161,15 +161,15 @@ Sep 15, 2024
 </tbody>
 </table>
 <hr>
-<p><strong>Read Next:</strong> <a href=/posts/search-elasticsearch-geo/ target=_blank rel="noopener noreferrer">Search: Elasticsearch & Geo</a>
+<p><strong>Read Next:</strong> <a href="/posts/search-elasticsearch-geo/" target="_blank" rel="noopener noreferrer">Search: Elasticsearch & Geo</a>
 </p>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

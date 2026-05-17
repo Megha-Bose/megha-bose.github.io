@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Sharding & Data Replication // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Sharding & Data Replication">
-<meta name=twitter:description content="Your database hits 10TB and queries start taking seconds. You&rsquo;ve already tuned every index, added read replicas, and upgraded the hardware twice. The largest available cloud instance is maxed out. The business is growing and there&rsquo;s no bigger box to buy. Now what?
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Sharding & Data Replication">
+<meta name="twitter:description" content="Your database hits 10TB and queries start taking seconds. You&rsquo;ve already tuned every index, added read replicas, and upgraded the hardware twice. The largest available cloud instance is maxed out. The business is growing and there&rsquo;s no bigger box to buy. Now what?
 This is the moment every successful data-intensive system eventually faces: the point where a single machine is no longer enough, and the architecture must distribute data across multiple machines.">
 <meta property="og:title" content="Sharding & Data Replication">
 <meta property="og:description" content="Your database hits 10TB and queries start taking seconds. You&rsquo;ve already tuned every index, added read replicas, and upgraded the hardware twice. The largest available cloud instance is maxed out. The business is growing and there&rsquo;s no bigger box to buy. Now what?
@@ -23,37 +23,37 @@ This is the moment every successful data-intensive system eventually faces: the 
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Sharding & Data Replication</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Sharding & Data Replication</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Sep 15, 2024
 </div>
@@ -62,57 +62,57 @@ Sep 15, 2024
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p>Your database hits 10TB and queries start taking seconds. You&rsquo;ve already tuned every index, added read replicas, and upgraded the hardware twice. The largest available cloud instance is maxed out. The business is growing and there&rsquo;s no bigger box to buy. Now what?</p>
 <p>This is the moment every successful data-intensive system eventually faces: the point where a single machine is no longer enough, and the architecture must distribute data across multiple machines. Replication and sharding are the two fundamental techniques for doing this - and they solve different problems, come with different tradeoffs, and are far more commonly combined than used alone.</p>
-<h2 id=the-case-for-doing-neither-yet>The Case for Doing Neither (Yet)</h2>
+<h2 id="the-case-for-doing-neither-yet">The Case for Doing Neither (Yet)</h2>
 <p>Before discussing how to distribute data, it&rsquo;s worth stating the most important advice in this space: <strong>most teams shard prematurely</strong>.</p>
 <p>Sharding is operationally complex. It breaks SQL joins across shards. It eliminates cross-shard transactions (or makes them very expensive). It forces every query to be shard-key-aware. Engineers who&rsquo;ve never operated a sharded system routinely underestimate what they&rsquo;re taking on.</p>
 <p>Read replicas - adding one or more database servers that receive copies of all writes and serve reads - solve 80% of database scaling problems without any of sharding&rsquo;s complexity. If your bottleneck is read throughput (the common case: reads vastly outnumber writes), read replicas scale read capacity horizontally while leaving the write path simple.</p>
 <p>Vertical scaling (&ldquo;buy a bigger server&rdquo;) is also consistently underrated. A modern cloud instance can have 192 vCPUs, 12TB of RAM, and NVMe storage delivering millions of IOPS. For many workloads that &ldquo;need sharding,&rdquo; the real need is just a bigger primary and a few read replicas.</p>
 <p>Shard when the write throughput or storage genuinely exceeds what one machine can handle. This is a higher bar than most people think.</p>
-<h2 id=replication-copies-for-resilience-and-scale>Replication: Copies for Resilience and Scale</h2>
+<h2 id="replication-copies-for-resilience-and-scale">Replication: Copies for Resilience and Scale</h2>
 <p>Replication copies data from one server (the <strong>primary</strong>, also called master) to one or more servers (<strong>replicas</strong>, also called secondaries or standbys). Every write goes to the primary. Reads can go to any replica.</p>
-<h3 id=synchronous-vs-asynchronous>Synchronous vs Asynchronous</h3>
+<h3 id="synchronous-vs-asynchronous">Synchronous vs Asynchronous</h3>
 <p><strong>Synchronous replication</strong>: the primary waits for at least one replica to write the change to its durable log before acknowledging the write to the client. If the primary dies, that replica has every committed write - zero data loss. The cost: every write waits for a network round trip to the replica. On a cross-region link (say, us-east-1 to eu-west-1, ~85ms RTT), this adds 85ms to every write operation.</p>
 <p><strong>Asynchronous replication</strong>: the primary acknowledges writes immediately and ships the changes to replicas in the background. Write latency is fast (no waiting for replicas). The risk: if the primary dies before a write is replicated, that write is lost. This is called <strong>replication lag</strong>: the gap between what the primary has committed and what replicas have applied.</p>
 <p>Most production systems use asynchronous replication or semi-synchronous (wait for exactly one replica, not all). PostgreSQL streaming replication is asynchronous by default but can be configured to require synchronous acknowledgment from specific standbys. Aurora uses a distributed storage layer that replicates writes to 6 copies in 3 AZs before acknowledging - you get durability without paying the cross-region latency cost of traditional synchronous replication.</p>
-<h3 id=the-read-your-own-write-problem>The Read-Your-Own-Write Problem</h3>
+<h3 id="the-read-your-own-write-problem">The Read-Your-Own-Write Problem</h3>
 <p>Replication lag creates a subtle but infuriating user experience problem. A user updates their profile photo. The write goes to the primary. The response page fetches the user&rsquo;s profile from a read replica - but the replica hasn&rsquo;t received the update yet. The user sees their old photo, becomes confused, tries again. The same problem affects &ldquo;post a comment, immediately see it in the list.&rdquo;</p>
 <p>Solutions: route reads to the primary for a short window after a write (e.g., for 1 second). Or use a monotonic read guarantee: once a user sees a given version of the data, subsequent reads go to a replica that is at least as up-to-date. Or use session-level sticky routing: route all reads from a given user session to the same replica. Each approach adds complexity. The simplest is to route reads to the primary for &ldquo;sensitive&rdquo; flows (profile updates, payment confirmations) and to replicas for everything else.</p>
-<h3 id=failover-and-the-split-brain-danger>Failover and the Split-Brain Danger</h3>
+<h3 id="failover-and-the-split-brain-danger">Failover and the Split-Brain Danger</h3>
 <p>When the primary fails, a replica must be promoted. Automated failover tools (Patroni for PostgreSQL, AWS RDS Multi-AZ) detect primary failure and elect a new primary within seconds to minutes. During this window, writes fail.</p>
 <p>The more dangerous failure is <strong>split-brain</strong>: two nodes both believe they are the primary and accept writes simultaneously. This happens when the primary becomes unreachable due to a network partition but is still running. Both the primary and the promoted replica accept writes. When the partition heals, the two divergent write histories must be reconciled - some data is lost.</p>
 <p>The standard countermeasure is <strong>fencing</strong>. Before a replica promotes, it ensures the old primary cannot accept writes. In cloud environments, this means revoking the old primary&rsquo;s network access or terminating its instance. In bare-metal environments, STONITH (Shoot The Other Node In The Head) literally powers off the old primary via a remote management interface. Fencing sounds violent; it prevents data loss.</p>
-<h2 id=sharding-split-the-data-itself>Sharding: Split the Data Itself</h2>
+<h2 id="sharding-split-the-data-itself">Sharding: Split the Data Itself</h2>
 <p>Sharding <strong>horizontally partitions</strong> the dataset across multiple servers. Each server owns a subset of the data - a <strong>shard</strong>. A write for user 5001 goes to the shard that owns users 5000 - 6000; a write for user 1001 goes to a different shard. Total storage and write throughput scale with the number of shards.</p>
-<h3 id=range-sharding>Range Sharding</h3>
+<h3 id="range-sharding">Range Sharding</h3>
 <p>Partition by value ranges. Shard 1 holds user IDs 1 - 1,000,000; Shard 2 holds 1,000,001 - 2,000,000; and so on.</p>
 <p><strong>Advantage</strong>: range queries on the shard key (<code>WHERE user_id BETWEEN 50000 AND 75000</code>) hit exactly one shard.</p>
 <p><strong>Danger</strong>: hot spots. If user IDs are assigned sequentially, all new writes go to the last shard. Earlier shards sit nearly idle while the newest shard is saturated. This is the single biggest operational problem with range sharding - the distribution is only even in theory, not in the workload.</p>
 <p>Range sharding works well when the access pattern naturally distributes across the range (time-series data where older data is accessed less, geographic data where different regions have different load patterns). It fails when the range has a natural ordering that concentrates writes at one end.</p>
-<h3 id=hash-sharding>Hash Sharding</h3>
+<h3 id="hash-sharding">Hash Sharding</h3>
 <p>Apply a hash function to the shard key and use modulo:</p>
-<pre tabindex=0><code>shard_id = hash(user_id) % num_shards
+<pre tabindex="0"><code>shard_id = hash(user_id) % num_shards
 </code></pre><p><strong>Advantage</strong>: distributes data uniformly regardless of key ordering. No hot spots.</p>
 <p><strong>Disadvantage</strong>: range queries require hitting all shards (scatter-gather). <code>WHERE user_id BETWEEN 50000 AND 75000</code> could have users scattered across every shard - the database must query all of them and merge results. Aggregate queries (<code>COUNT</code>, <code>SUM</code>, <code>AVG</code>) require collecting partial results from every shard and combining.</p>
 <p>Hash sharding is the default choice when write uniformity is more important than range query efficiency. For most key-value access patterns (look up a user by ID, look up an order by ID), hash sharding is appropriate.</p>
-<h3 id=directory-sharding>Directory Sharding</h3>
+<h3 id="directory-sharding">Directory Sharding</h3>
 <p>A lookup table maps each key (or key range) to a specific shard. The routing table is consulted on every request.</p>
 <p><strong>Advantage</strong>: maximum flexibility. Any mapping logic is possible. Individual tenants can be moved between shards without changing the sharding function. You can move a &ldquo;hot&rdquo; tenant to a dedicated shard without affecting others.</p>
 <p><strong>Disadvantage</strong>: the lookup table is a bottleneck and a single point of failure unless it&rsquo;s replicated and cached. Adding a caching layer (memcached, Redis) in front of the directory is standard, but this adds operational complexity and cache invalidation concerns.</p>
 <p>Directory sharding is common in multi-tenant SaaS applications where each customer (tenant) is a sharding unit and the business occasionally needs to move large customers to dedicated infrastructure.</p>
-<h2 id=consistent-hashing-the-resharding-solution>Consistent Hashing: The Resharding Solution</h2>
+<h2 id="consistent-hashing-the-resharding-solution">Consistent Hashing: The Resharding Solution</h2>
 <p>The fundamental problem with <code>hash(key) % N</code>: when you add a shard (change N from 4 to 5), almost every key maps to a different shard. Virtually all data must migrate simultaneously. This is catastrophic for a live system.</p>
 <p>Consistent hashing solves this. Arrange all possible hash output values on a circle (the &ldquo;ring&rdquo;). Place each shard at one or more points on the ring. A key maps to the first shard clockwise from the key&rsquo;s hash position.</p>
 <p>When you add a new shard, it takes over only the keys between it and its predecessor on the ring - roughly 1/n of the data, distributed from adjacent shards. When a shard is removed, its keys go to the next shard clockwise. Only adjacent shards are affected.</p>
 <p><strong>Virtual nodes</strong> improve load balance. Instead of placing each shard at one point, place it at many points (virtual nodes, often 100 - 300 per physical shard). Virtual nodes make the distribution more uniform: each physical shard has many small arcs of the ring rather than one large arc. They also improve fault tolerance: when a shard fails, its virtual nodes' keys are distributed across many other shards rather than all piling onto one successor.</p>
-<pre tabindex=0><code>Ring with virtual nodes (simplified):
+<pre tabindex="0"><code>Ring with virtual nodes (simplified):
 [shard-A-v0, shard-C-v2, shard-B-v1, shard-A-v1, shard-B-v2, shard-C-v0, shard-A-v2, ...]
 
 Key hashes to position 0.45 → next clockwise: shard-B-v1 → routes to Shard B
 </code></pre><p>This is how DynamoDB and Cassandra route requests. DynamoDB&rsquo;s partition key is hashed, and the result determines which storage partition owns the data. Cassandra uses a similar ring with configurable virtual node count.</p>
-<h3 id=dynamodb-partition-keys-and-hot-partitions>DynamoDB Partition Keys and Hot Partitions</h3>
+<h3 id="dynamodb-partition-keys-and-hot-partitions">DynamoDB Partition Keys and Hot Partitions</h3>
 <p>DynamoDB is essentially a managed hash-sharded database. The partition key determines which physical partition receives the write. DynamoDB allocates read and write capacity uniformly across partitions.</p>
 <p>The critical design rule: choose a partition key with high cardinality and uniform access frequency. If you use <code>user_id</code> as the partition key and user 12345 is a celebrity with 10 million followers who all load their feed simultaneously, all those reads hit the same partition - a hot partition. DynamoDB throttles the partition when it exceeds its allocated capacity.</p>
 <p>Common patterns to avoid hot partitions:</p>
@@ -122,18 +122,18 @@ Key hashes to position 0.45 → next clockwise: shard-B-v1 → routes to Shard B
 <li><strong>Write sharding</strong>: for items with high write rates, distribute writes across sub-keys.</li>
 </ul>
 <p>AWS provides <strong>DynamoDB Adaptive Capacity</strong> (and later <strong>On-Demand mode</strong>) which automatically adjusts capacity allocation in response to uneven traffic patterns - but this only helps within the throughput ceiling of the table, not if you&rsquo;ve genuinely exhausted capacity.</p>
-<h3 id=cassandra-partition-key-vs-clustering-key>Cassandra: Partition Key vs Clustering Key</h3>
+<h3 id="cassandra-partition-key-vs-clustering-key">Cassandra: Partition Key vs Clustering Key</h3>
 <p>Cassandra&rsquo;s data model makes the sharding semantics explicit in the schema. The <strong>partition key</strong> determines which node stores the data (hashed to the ring). The <strong>clustering key</strong> determines the sort order within a partition.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#66d9ef>CREATE</span> <span style=color:#66d9ef>TABLE</span> user_posts (
-    user_id    UUID,          <span style=color:#75715e>-- partition key: determines which node
-</span><span style=color:#75715e></span>    created_at <span style=color:#66d9ef>TIMESTAMP</span>,     <span style=color:#75715e>-- clustering key: sort order within partition
-</span><span style=color:#75715e></span>    post_id    UUID,
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> user_posts (
+    user_id    UUID,          <span style="color:#75715e">-- partition key: determines which node
+</span><span style="color:#75715e"></span>    created_at <span style="color:#66d9ef">TIMESTAMP</span>,     <span style="color:#75715e">-- clustering key: sort order within partition
+</span><span style="color:#75715e"></span>    post_id    UUID,
     content    TEXT,
-    <span style=color:#66d9ef>PRIMARY</span> <span style=color:#66d9ef>KEY</span> (user_id, created_at)
-) <span style=color:#66d9ef>WITH</span> CLUSTERING <span style=color:#66d9ef>ORDER</span> <span style=color:#66d9ef>BY</span> (created_at <span style=color:#66d9ef>DESC</span>);
+    <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span> (user_id, created_at)
+) <span style="color:#66d9ef">WITH</span> CLUSTERING <span style="color:#66d9ef">ORDER</span> <span style="color:#66d9ef">BY</span> (created_at <span style="color:#66d9ef">DESC</span>);
 </code></pre></div><p>All posts for a user live in one partition, sorted by time descending. &ldquo;Get the 20 most recent posts for user X&rdquo; is a single-node, single-partition query - efficient. &ldquo;Get all posts from the last hour across all users&rdquo; is a scatter-gather across every node - expensive.</p>
 <p>This explicit exposure of the data model&rsquo;s distribution logic forces engineers to think about query patterns before designing the schema - the opposite of relational databases where schema design and query optimization are partially decoupled.</p>
-<h2 id=cross-shard-queries-and-their-cost>Cross-Shard Queries and Their Cost</h2>
+<h2 id="cross-shard-queries-and-their-cost">Cross-Shard Queries and Their Cost</h2>
 <p>Sharding trades query flexibility for write scalability. A query that once ran against one database may now span multiple shards, requiring scatter-gather:</p>
 <ol>
 <li>Fan out the query to all N shards.</li>
@@ -143,7 +143,7 @@ Key hashes to position 0.45 → next clockwise: shard-B-v1 → routes to Shard B
 </ol>
 <p>Scatter-gather latency is the maximum latency across all shards, not the average - the slow shard determines the total response time. This tail latency problem compounds as the number of shards grows.</p>
 <p>Cross-shard joins are generally not supported natively. If user data is on one shard and order data is on another, joining them requires fetching one result set and doing the join in application memory. At scale, this means denormalizing data so related entities are co-located on the same shard, or giving up on online joins entirely and running cross-entity analytics in a data warehouse (BigQuery, Redshift, Snowflake) where scatter-gather over many nodes is the normal operational model.</p>
-<h2 id=mysql-sharding-at-youtube-vitess>MySQL Sharding at YouTube: Vitess</h2>
+<h2 id="mysql-sharding-at-youtube-vitess">MySQL Sharding at YouTube: Vitess</h2>
 <p>YouTube sharded MySQL long before the managed alternatives existed. By 2010, they were running hundreds of MySQL shards manually. The operational overhead was brutal: schema changes required coordinating across hundreds of databases, shard management was manual, and query routing was application-side.</p>
 <p>Vitess was born from this pain. It&rsquo;s a middleware layer that sits in front of MySQL and provides:</p>
 <ul>
@@ -154,13 +154,13 @@ Key hashes to position 0.45 → next clockwise: shard-B-v1 → routes to Shard B
 </ul>
 <p>Vitess is now used by Slack, GitHub, and many others, and is a CNCF graduated project. It&rsquo;s the pragmatic answer to &ldquo;we need to shard MySQL without rewriting our application.&rdquo;</p>
 <p>PlanetScale is a managed Vitess offering - MySQL sharding as a service, with a GitHub-like branching model for database schema changes.</p>
-<h2 id=the-critique-you-probably-dont-need-to-shard-yet>The Critique: You Probably Don&rsquo;t Need to Shard Yet</h2>
+<h2 id="the-critique-you-probably-dont-need-to-shard-yet">The Critique: You Probably Don&rsquo;t Need to Shard Yet</h2>
 <p>Sharding adds complexity that&rsquo;s easy to overlook before you&rsquo;ve operated it. Common second-order costs:</p>
 <p><strong>Schema changes are hard.</strong> In a single database, <code>ALTER TABLE</code> runs once. Across 256 shards, it must be applied 256 times, ideally online and without locking. Tools like Vitess and gh-ost (online schema change for MySQL) help, but it&rsquo;s still more complex than a single database.</p>
 <p><strong>Cross-shard transactions are either absent or expensive.</strong> You give up relational guarantees across shards. If you need atomicity across shard boundaries, you&rsquo;re back to 2PC or Sagas.</p>
 <p><strong>Read replicas often solve the problem.</strong> If reads outnumber writes by 10x (common), one primary with three read replicas gives you 4x the read capacity without any data distribution complexity. Most &ldquo;database performance problems&rdquo; are read problems.</p>
 <p><strong>Connection pooling matters more than you think.</strong> A database server can handle ~200 concurrent connections efficiently. A hundred application servers each opening 20 connections exhausts this. PgBouncer (PostgreSQL) and ProxySQL (MySQL) pool connections at the middleware layer, drastically reducing the connection load on the database - often eliminating the performance problem that was mistaken for a need to shard.</p>
-<h2 id=future-outlook>Future Outlook</h2>
+<h2 id="future-outlook">Future Outlook</h2>
 <p><strong>Serverless databases</strong> are attempting to make horizontal scaling automatic and invisible. Aurora Serverless v2 scales storage and compute independently, handling traffic spikes without pre-provisioned capacity. Neon (serverless PostgreSQL) separates storage from compute, allowing compute to scale to zero and storage to grow arbitrarily. PlanetScale&rsquo;s database branching model treats sharding as a deployment concern rather than a schema design concern.</p>
 <p><strong>NewSQL databases</strong> (CockroachDB, Google Spanner, TiDB) implement distributed transactions with serializable isolation across shards, attempting to provide the scalability of sharding with the ACID guarantees of a single database. Spanner uses TrueTime for global consistency; CockroachDB uses Raft consensus per partition. These are no longer research projects - they run in production at scale.</p>
 <p>The direction of the field is toward making sharding a database concern rather than an application concern. Whether managed services (Aurora, PlanetScale) or NewSQL databases fulfill this promise at every scale point will determine whether the next generation of engineers ever needs to hand-implement consistent hashing.</p>
@@ -242,16 +242,16 @@ Key hashes to position 0.45 → next clockwise: shard-B-v1 → routes to Shard B
 <hr>
 <p><strong>Read Next:</strong></p>
 <ul>
-<li><a href=/posts/consistency-cap-theorem/ target=_blank rel="noopener noreferrer">Consistency & the CAP Theorem</a>
+<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency & the CAP Theorem</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

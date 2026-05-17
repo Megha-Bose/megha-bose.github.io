@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Direct Preference Optimization // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Direct Preference Optimization">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Direct Preference Optimization">
+<meta name="twitter:description" content="Prerequisites:
  RLHF  Statistics Basics    RLHF works. It produced ChatGPT, Claude, and every other major assistant-style language model. But it requires training four separate models simultaneously - policy, reference, reward, and value function - then running PPO, which is notoriously unstable and sensitive to hyperparameters. Practitioners often spend more time debugging training dynamics than improving the underlying model.
 DPO (Rafailov et al., 2023) showed that you can achieve the same result as RLHF without a reward model and without any RL at all.">
 <meta property="og:title" content="Direct Preference Optimization">
@@ -25,37 +25,37 @@ DPO (Rafailov et al., 2023) showed that you can achieve the same result as RLHF 
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Direct Preference Optimization</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Direct Preference Optimization</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Mar 6, 2022
 </div>
@@ -64,12 +64,12 @@ Mar 6, 2022
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/rlhf/ target=_blank rel="noopener noreferrer">RLHF</a>
+<li><a href="/posts/rlhf/" target="_blank" rel="noopener noreferrer">RLHF</a>
 </li>
-<li><a href=/posts/statistics-basics/ target=_blank rel="noopener noreferrer">Statistics Basics</a>
+<li><a href="/posts/statistics-basics/" target="_blank" rel="noopener noreferrer">Statistics Basics</a>
 </li>
 </ul>
 <hr>
@@ -77,7 +77,7 @@ Mar 6, 2022
 <p>DPO (Rafailov et al., 2023) showed that you can achieve the same result as RLHF without a reward model and without any RL at all. Just a single supervised loss on paired preferences. It&rsquo;s simpler, cheaper, and in many benchmarks, better.</p>
 <p>The mathematical insight is beautiful: the optimal policy under the RLHF objective is already implicitly defined by the training data. You don&rsquo;t need to find it iteratively through RL - you can write down a loss function whose solution is exactly that optimal policy, and optimize it directly.</p>
 <hr>
-<h2 id=recalling-the-rlhf-objective>Recalling the RLHF Objective</h2>
+<h2 id="recalling-the-rlhf-objective">Recalling the RLHF Objective</h2>
 <p>In RLHF, we train the policy $\pi_\theta$ to maximize:</p>
 <p>$$\mathcal{J}(\theta) = \mathbb{E}<em>{x \sim \mathcal{D},, y \sim \pi</em>\theta(\cdot|x)}!\left[R(x,y) - \beta,\text{KL}!\left(\pi_\theta(\cdot|x),|,\pi_{\text{ref}}(\cdot|x)\right)\right].$$</p>
 <p>The reward $R(x,y)$ measures response quality. The KL penalty keeps the trained policy from drifting too far from the reference policy $\pi_{\text{ref}}$ (typically the SFT model). The parameter $\beta$ controls the tradeoff.</p>
@@ -87,7 +87,7 @@ Mar 6, 2022
 <p>You can verify this: the optimal policy places higher probability on responses with high reward, but its shape stays close to $\pi_{\text{ref}}$ (controlled by $\beta$). Large $\beta$: stays near reference. Small $\beta$: concentrates mass on high-reward responses.</p>
 <p>RLHF searches for this optimal policy iteratively, using the reward model and PPO. DPO derives a direct loss function that achieves it in one shot.</p>
 <hr>
-<h2 id=the-key-rearrangement>The Key Rearrangement</h2>
+<h2 id="the-key-rearrangement">The Key Rearrangement</h2>
 <p>Starting from the closed-form optimal policy, we can solve for the reward:</p>
 <p>$$\pi^*(y \mid x) = \frac{1}{Z(x)},\pi_{\text{ref}}(y \mid x)\cdot \exp!\left(\frac{R(x,y)}{\beta}\right).$$</p>
 <p>Taking logs:</p>
@@ -96,7 +96,7 @@ Mar 6, 2022
 <p>$$R(x,y) = \beta,\log\frac{\pi^*(y \mid x)}{\pi_{\text{ref}}(y \mid x)} + \beta,\log Z(x).$$</p>
 <p>This is remarkable. The reward is completely determined by the ratio of the optimal policy to the reference policy. If you know $\pi^*$, you know $R$ - up to the partition function $Z(x)$, which depends only on $x$ and not on the specific response $y$.</p>
 <hr>
-<h2 id=the-dpo-loss-deriving-it>The DPO Loss: Deriving It</h2>
+<h2 id="the-dpo-loss-deriving-it">The DPO Loss: Deriving It</h2>
 <p>Now plug this implicit reward into the Bradley-Terry preference model from RLHF Stage 2:</p>
 <p>$$P(y_w \succ y_l \mid x) = \sigma!\left(R(x, y_w) - R(x, y_l)\right).$$</p>
 <p>Substituting:</p>
@@ -112,7 +112,7 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> The derivation substituted $\pi^<em>$ (the optimal policy, which we&rsquo;re trying to find) with $\pi_\theta$ (the policy we&rsquo;re training). This looks circular - we&rsquo;re using $\pi^</em>$ in the derivation but then replacing it with $\pi_\theta$. The resolution: the DPO loss is constructed so that its minimizer is exactly $\pi^<em>$. We&rsquo;re not assuming we already have $\pi^</em>$; we&rsquo;re building a loss whose minimum achieves $\pi^<em>$. Gradient descent on this loss moves $\pi_\theta$ toward $\pi^</em>$ without needing to know $\pi^*$ in advance.</p>
 </blockquote>
 <hr>
-<h2 id=what-this-means-in-practice>What This Means in Practice</h2>
+<h2 id="what-this-means-in-practice">What This Means in Practice</h2>
 <p>The DPO training procedure is almost identical to ordinary supervised fine-tuning, plus one extra model for reference probabilities.</p>
 <p>For each preference pair $(x, y_w, y_l)$ in your dataset:</p>
 <ol>
@@ -123,7 +123,7 @@ Mar 6, 2022
 <p>Memory footprint: two models (policy + reference). Compare to RLHF: four models (policy + reference + reward + value function). Training stability: no RL loop, no reward hacking, no clip ratios to tune.</p>
 <p>For a 7B model in FP16, DPO needs roughly 28 GB for two model copies, plus gradients and optimizer states for the policy. With LoRA on the policy, this fits comfortably on a single A100-80GB. RLHF on the same model, running PPO with four model copies, requires careful memory engineering even on multiple GPUs.</p>
 <hr>
-<h2 id=understanding-the-gradient>Understanding the Gradient</h2>
+<h2 id="understanding-the-gradient">Understanding the Gradient</h2>
 <p>What does optimizing the DPO loss actually do to the policy?</p>
 <p>Let $h_\theta = \beta\log(\pi_\theta(y_w|x)/\pi_{\text{ref}}(y_w|x)) - \beta\log(\pi_\theta(y_l|x)/\pi_{\text{ref}}(y_l|x))$ be the &ldquo;margin&rdquo; between preferred and rejected responses. The loss is $-\log\sigma(h_\theta)$.</p>
 <p>The gradient with respect to $\theta$ has an interpretable form (dropping constants):</p>
@@ -131,7 +131,7 @@ Mar 6, 2022
 <p>The factor $\sigma(-h_\theta)$ is large when the model currently rates $y_l$ above $y_w$ (the preference is &ldquo;wrong&rdquo;), and small when the model already correctly prefers $y_w$. This is an implicit weighting: the loss focuses updates on the pairs the model gets wrong, and de-emphasizes pairs it already gets right.</p>
 <p>The term in brackets increases the log-probability of the preferred response and decreases the log-probability of the rejected response, simultaneously. This is the key behavior: DPO is pushing up on $y_w$ and pulling down on $y_l$, relative to the reference policy - not in absolute terms but as a ratio.</p>
 <hr>
-<h2 id=the-role-of-beta>The Role of $\beta$</h2>
+<h2 id="the-role-of-beta">The Role of $\beta$</h2>
 <p>The hyperparameter $\beta$ appears in the DPO loss in the same role as in the RLHF objective: it controls how aggressively the policy diverges from the reference.</p>
 <ul>
 <li><strong>Small $\beta$ (e.g., 0.01):</strong> strong optimization pressure, large updates, policy drifts far from reference. Risk of overfitting to the preference data and losing general capabilities.</li>
@@ -139,7 +139,7 @@ Mar 6, 2022
 </ul>
 <p>Typical values: $\beta = 0.1$ to $\beta = 0.5$. The choice depends on the quality of the preference data and how different the aligned behavior needs to be from the reference.</p>
 <hr>
-<h2 id=data-requirements>Data Requirements</h2>
+<h2 id="data-requirements">Data Requirements</h2>
 <p>DPO requires a dataset of preference triplets: $(x, y_w, y_l)$ - a prompt and two responses, one preferred. Several sources work:</p>
 <ul>
 <li><strong>Human-labeled preference data</strong> (same as RLHF Stage 2 data). DPO can directly reuse it.</li>
@@ -148,7 +148,7 @@ Mar 6, 2022
 </ul>
 <p>The quality of the preference data dominates DPO performance. Noisy labels (inconsistent human ratings, ambiguous preferences) degrade the result more than they would degrade a reward model (which can average over noise). This is one area where RLHF with a trained reward model has an advantage: the RM learns a smooth function over the preference space, implicitly averaging out label noise.</p>
 <hr>
-<h2 id=dpo-variants>DPO Variants</h2>
+<h2 id="dpo-variants">DPO Variants</h2>
 <p>The simplicity of DPO has spawned a family of variants addressing specific limitations:</p>
 <p><strong>IPO (Azar et al., 2023):</strong> Identity Preference Optimization. Modifies the DPO loss to prevent overfitting to the preference data. DPO&rsquo;s loss approaches zero as the margin $h_\theta \to \infty$, meaning the gradient vanishes and training effectively stops before the policy is fully optimized. IPO adds a regularization term to prevent this:</p>
 <p>$$\mathcal{L}<em>{\text{IPO}} = \mathbb{E}!\left[\left(h</em>\theta - \frac{1}{2\beta}\right)^2\right].$$</p>
@@ -158,7 +158,7 @@ Mar 6, 2022
 <p><strong>ORPO (Hong et al., 2024):</strong> Odds Ratio Preference Optimization. Combines the SFT loss and preference optimization into a single objective. The model learns to follow instructions and to prefer good responses simultaneously, without requiring a separate SFT stage:</p>
 <p>$$\mathcal{L}<em>{\text{ORPO}} = \mathcal{L}</em>{\text{SFT}} - \lambda,\mathbb{E}!\left[\log\sigma!\left(\log\frac{\pi_\theta(y_w|x)}{1-\pi_\theta(y_w|x)} - \log\frac{\pi_\theta(y_l|x)}{1-\pi_\theta(y_l|x)}\right)\right].$$</p>
 <hr>
-<h2 id=practical-impact>Practical Impact</h2>
+<h2 id="practical-impact">Practical Impact</h2>
 <p>DPO is currently the dominant method for open-source LLM alignment. Its simplicity means anyone with a GPU, a dataset, and a few hundred lines of code can align a language model.</p>
 <p>Notable aligned models trained with DPO or close variants:</p>
 <ul>
@@ -171,7 +171,7 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> DPO isn&rsquo;t always better than RLHF in practice. The approximation that the reference policy is fixed throughout training can hurt if the policy moves far from the reference early in training (making the log-ratio terms unreliable). For very large-scale training, where the extra compute for PPO is affordable and reward hacking can be carefully managed, RLHF with PPO may still be preferred. Research by Anthropic and others suggests that online methods - where the model generates fresh responses during training rather than learning from a fixed dataset - often outperform offline DPO. The field is still actively evolving.</p>
 </blockquote>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -230,18 +230,18 @@ Mar 6, 2022
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/kv-caching-llm-inference/ target=_blank rel="noopener noreferrer">KV Caching & LLM Inference</a>
+<li><a href="/posts/kv-caching-llm-inference/" target="_blank" rel="noopener noreferrer">KV Caching & LLM Inference</a>
 </li>
-<li><a href=/posts/building-sharded-transformers/ target=_blank rel="noopener noreferrer">Building Sharded Transformers</a>
+<li><a href="/posts/building-sharded-transformers/" target="_blank" rel="noopener noreferrer">Building Sharded Transformers</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

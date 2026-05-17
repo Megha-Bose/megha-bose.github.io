@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Kalman Filtering // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Kalman Filtering">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kalman Filtering">
+<meta name="twitter:description" content="Prerequisites:
  Probability Distributions  Vectors, Matrices, & Linear Systems    In 1960, Rudolf Kálmán published a paper that enabled the Apollo moon landing. The Apollo navigation computer used Kálmán&rsquo;s filter to track the spacecraft&rsquo;s position from noisy sensor data. It works by fusing a prediction (from physics) with a measurement (from sensors), weighting each by its uncertainty. The result is always better than either alone.
 That&rsquo;s the whole idea: you have two imperfect sources of information.">
 <meta property="og:title" content="Kalman Filtering">
@@ -25,37 +25,37 @@ That&rsquo;s the whole idea: you have two imperfect sources of information.">
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Kalman Filtering</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Kalman Filtering</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Aug 3, 2021
 </div>
@@ -64,19 +64,19 @@ Aug 3, 2021
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/probability-distributions/ target=_blank rel="noopener noreferrer">Probability Distributions</a>
+<li><a href="/posts/probability-distributions/" target="_blank" rel="noopener noreferrer">Probability Distributions</a>
 </li>
-<li><a href=/posts/vectors-matrices-linear-systems/ target=_blank rel="noopener noreferrer">Vectors, Matrices, & Linear Systems</a>
+<li><a href="/posts/vectors-matrices-linear-systems/" target="_blank" rel="noopener noreferrer">Vectors, Matrices, & Linear Systems</a>
 </li>
 </ul>
 <hr>
 <p>In 1960, Rudolf Kálmán published a paper that enabled the Apollo moon landing. The Apollo navigation computer used Kálmán&rsquo;s filter to track the spacecraft&rsquo;s position from noisy sensor data. It works by fusing a prediction (from physics) with a measurement (from sensors), weighting each by its uncertainty. The result is always better than either alone.</p>
 <p>That&rsquo;s the whole idea: you have two imperfect sources of information. Physics tells you where you should be. Sensors tell you where you appear to be. The Kalman filter takes the weighted average, assigning more trust to whichever is more reliable.</p>
 <hr>
-<h2 id=the-setup>The Setup</h2>
+<h2 id="the-setup">The Setup</h2>
 <p>A system evolves over time. You can&rsquo;t observe the state directly - only noisy measurements of it.</p>
 <p><strong>State transition model</strong> - how the hidden state evolves:</p>
 <p>$$x_t = F x_{t-1} + B u_t + w_t, \qquad w_t \sim \mathcal{N}(0, Q)$$</p>
@@ -86,14 +86,14 @@ Aug 3, 2021
 <p>Here $y_t$ is your measurement, $H$ maps the state to measurement space, and $v_t$ is measurement noise with covariance $R$ (sensor error).</p>
 <p>Both noises are Gaussian. This is the key assumption. Under it, everything stays Gaussian, which means you can track the full probability distribution over the hidden state using just two numbers: a mean vector $\hat{x}$ and a covariance matrix $P$.</p>
 <hr>
-<h2 id=the-kalman-filter-cycle>The Kalman Filter Cycle</h2>
+<h2 id="the-kalman-filter-cycle">The Kalman Filter Cycle</h2>
 <p>The filter alternates between two steps: predict and update.</p>
-<h3 id=predict>Predict</h3>
+<h3 id="predict">Predict</h3>
 <p>Use the dynamics to project the current estimate forward in time:</p>
 <p>$$\hat{x}<em>{t \mid t-1} = F \hat{x}</em>{t-1 \mid t-1} + B u_t$$</p>
 <p>$$P_{t \mid t-1} = F P_{t-1 \mid t-1} F^T + Q$$</p>
 <p>The predicted state mean propagates through the physics. The predicted covariance grows: process noise $Q$ adds uncertainty because you don&rsquo;t know the exact dynamics.</p>
-<h3 id=update>Update</h3>
+<h3 id="update">Update</h3>
 <p>A new measurement $y_t$ arrives. Compute the innovation - the gap between what you observed and what you predicted:</p>
 <p>$$\text{innovation} = y_t - H \hat{x}_{t \mid t-1}$$</p>
 <p>Compute the Kalman gain:</p>
@@ -102,7 +102,7 @@ Aug 3, 2021
 <p>$$\hat{x}<em>{t \mid t} = \hat{x}</em>{t \mid t-1} + K_t \left(y_t - H \hat{x}_{t \mid t-1}\right)$$</p>
 <p>$$P_{t \mid t} = (I - K_t H) P_{t \mid t-1}$$</p>
 <hr>
-<h2 id=the-kalman-gain-how-much-to-trust-the-measurement>The Kalman Gain: How Much to Trust the Measurement</h2>
+<h2 id="the-kalman-gain-how-much-to-trust-the-measurement">The Kalman Gain: How Much to Trust the Measurement</h2>
 <p>The Kalman gain $K_t = P_{t \mid t-1} H^T (H P_{t \mid t-1} H^T + R)^{-1}$ looks complex but has a clean interpretation.</p>
 <p>The numerator $P_{t \mid t-1} H^T$ captures the predicted state uncertainty projected into measurement space. The denominator $H P_{t \mid t-1} H^T + R$ is the total measurement uncertainty: prediction uncertainty plus sensor noise.</p>
 <ul>
@@ -113,7 +113,7 @@ Aug 3, 2021
 </ul>
 <p>The gain is exactly the weight that minimizes the posterior variance. You&rsquo;re always doing the optimal fusion of two uncertain sources.</p>
 <hr>
-<h2 id=why-this-is-exact-bayesian-inference>Why This Is Exact Bayesian Inference</h2>
+<h2 id="why-this-is-exact-bayesian-inference">Why This Is Exact Bayesian Inference</h2>
 <p>If the prior and the likelihood are both Gaussian, the posterior is Gaussian - and its mean and covariance are exactly what the Kalman update computes.</p>
 <p>The predicted state distribution $p(x_t \mid y_1, \ldots, y_{t-1}) = \mathcal{N}(\hat{x}<em>{t \mid t-1}, P</em>{t \mid t-1})$ is the prior. The measurement likelihood is $p(y_t \mid x_t) = \mathcal{N}(Hx_t, R)$. Bayes' theorem gives:</p>
 <p>$$p(x_t \mid y_1, \ldots, y_t) \propto p(y_t \mid x_t) \cdot p(x_t \mid y_1, \ldots, y_{t-1})$$</p>
@@ -126,17 +126,17 @@ Aug 3, 2021
 <p><strong>Particle filter:</strong> represent the distribution as a set of weighted samples. Non-parametric - no Gaussian assumption needed. Handles any noise distribution, any nonlinearity. Cost scales with number of particles and degrades in high dimensions (curse of dimensionality). Used in robotics localization and computer vision.</p>
 </blockquote>
 <hr>
-<h2 id=practical-complexity>Practical Complexity</h2>
+<h2 id="practical-complexity">Practical Complexity</h2>
 <p>Per time step: the dominant cost is the matrix inversion in the Kalman gain, $O(m^3)$ where $m$ is the measurement dimension, plus the matrix multiplications $O(n^2 m)$ where $n$ is the state dimension.</p>
 <p>For a time-invariant system (constant $F$, $H$, $Q$, $R$), the covariance eventually converges to a steady state $P_\infty$ satisfying the discrete algebraic Riccati equation. Once you&rsquo;ve pre-computed $P_\infty$ and the corresponding steady-state gain $K_\infty$, the runtime update reduces to matrix-vector products - no inversion needed at each step. This is the form used in embedded navigation systems.</p>
 <hr>
-<h2 id=applications>Applications</h2>
+<h2 id="applications">Applications</h2>
 <p><strong>GPS navigation.</strong> GPS measurements have large, slow-varying errors. An inertial measurement unit (IMU) provides high-frequency acceleration readings that predict position between GPS fixes. The Kalman filter fuses them: predict with IMU, update with GPS. The result has less noise than either alone.</p>
 <p><strong>Robotics (SLAM).</strong> Simultaneous localization and mapping: the robot estimates its own position while building a map of landmarks. Both the robot pose and landmark positions are in the state vector. The Kalman filter (or its nonlinear variants) maintains a joint distribution over all of them.</p>
 <p><strong>Object tracking.</strong> A constant-velocity model propagates bounding box positions in video. Detections from a neural network are noisy measurements. The Kalman filter smooths the track and handles frames where detection fails. SORT (Simple Online and Realtime Tracking), a widely used tracking algorithm, is built on this exactly.</p>
 <p><strong>Estimating volatility.</strong> The hidden state is the true volatility of an asset. Observable data is the transaction price, which mixes true price and microstructure noise. A Kalman filter on a state-space model separates the signal from the noise.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -186,16 +186,16 @@ Aug 3, 2021
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/metropolis-hastings-mcmc/ target=_blank rel="noopener noreferrer">Metropolis-Hastings & MCMC</a>
+<li><a href="/posts/metropolis-hastings-mcmc/" target="_blank" rel="noopener noreferrer">Metropolis-Hastings & MCMC</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

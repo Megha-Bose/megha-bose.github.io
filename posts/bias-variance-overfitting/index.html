@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Bias, Variance & Overfitting // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Bias, Variance & Overfitting">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Bias, Variance & Overfitting">
+<meta name="twitter:description" content="Prerequisites:
  Objective Functions & Loss Design  Statistics Basics  Concentration Inequalities    You train a decision tree on 1000 examples. It achieves 100% training accuracy. You test it on 100 new examples. It achieves 55% accuracy - barely better than a coin flip. You didn&rsquo;t build a classifier. You built a lookup table that memorized noise.
 This is overfitting. And understanding why it happens - and what to do about it - is the central intellectual challenge of machine learning.">
 <meta property="og:title" content="Bias, Variance & Overfitting">
@@ -25,37 +25,37 @@ This is overfitting. And understanding why it happens - and what to do about it 
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Bias, Variance & Overfitting</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Bias, Variance & Overfitting</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Mar 6, 2022
 </div>
@@ -64,27 +64,27 @@ Mar 6, 2022
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/objective-functions/ target=_blank rel="noopener noreferrer">Objective Functions & Loss Design</a>
+<li><a href="/posts/objective-functions/" target="_blank" rel="noopener noreferrer">Objective Functions & Loss Design</a>
 </li>
-<li><a href=/posts/statistics-basics/ target=_blank rel="noopener noreferrer">Statistics Basics</a>
+<li><a href="/posts/statistics-basics/" target="_blank" rel="noopener noreferrer">Statistics Basics</a>
 </li>
-<li><a href=/posts/concentration-inequalities/ target=_blank rel="noopener noreferrer">Concentration Inequalities</a>
+<li><a href="/posts/concentration-inequalities/" target="_blank" rel="noopener noreferrer">Concentration Inequalities</a>
 </li>
 </ul>
 <hr>
 <p>You train a decision tree on 1000 examples. It achieves 100% training accuracy. You test it on 100 new examples. It achieves 55% accuracy - barely better than a coin flip. You didn&rsquo;t build a classifier. You built a lookup table that memorized noise.</p>
 <p>This is overfitting. And understanding why it happens - and what to do about it - is the central intellectual challenge of machine learning. The bias-variance tradeoff gives you the language to think about it precisely.</p>
 <hr>
-<h2 id=two-kinds-of-error>Two Kinds of Error</h2>
+<h2 id="two-kinds-of-error">Two Kinds of Error</h2>
 <p>Before decomposing anything, name the two ways a model can fail.</p>
 <p>A model has <strong>high bias</strong> if it makes systematic errors - it&rsquo;s consistently wrong in the same direction, regardless of which training data you use. A linear model fit to a quadratic pattern will always underpredict in the middle and overpredict at the extremes, no matter how much data you give it. The model is too simple to capture the truth.</p>
 <p>A model has <strong>high variance</strong> if it changes dramatically depending on the training data. Retrain on a different sample of 1000 examples, and you get a different model. The model is memorizing the specific dataset rather than learning the underlying pattern. This is the decision tree above.</p>
 <p>Both are failure modes. The question is which one you&rsquo;re suffering from, and how to fix it.</p>
 <hr>
-<h2 id=the-bias-variance-decomposition>The Bias-Variance Decomposition</h2>
+<h2 id="the-bias-variance-decomposition">The Bias-Variance Decomposition</h2>
 <p>Here is the precise statement. Suppose we&rsquo;re doing regression: the true relationship is $y = f(x) + \epsilon$ where $\epsilon \sim \mathcal{N}(0, \sigma^2)$ is irreducible noise. We train a model $\hat{f}$ using some training set $\mathcal{D}$, drawn from the data distribution. The expected squared error at a test point $x$ is:</p>
 <p>$$\mathbb{E}_\mathcal{D}\left[(\hat{f}(x) - y)^2\right] = \text{Bias}(\hat{f}(x))^2 + \text{Var}(\hat{f}(x)) + \sigma^2.$$</p>
 <p>The three terms are:</p>
@@ -101,13 +101,13 @@ Mar 6, 2022
 <p>$$= \underbrace{(\mu - f(x))^2}<em>{\text{Bias}^2} + \underbrace{\mathbb{E}</em>\mathcal{D}[(\hat{f}(x)-\mu)^2]}<em>{\text{Variance}} + \underbrace{\sigma^2}</em>{\text{Noise}}.$$</p>
 <p>The three terms are genuinely independent. Bias measures systematic error. Variance measures sensitivity to the training set. Noise is irreducible - it is the minimum possible error even if your model is perfect.</p>
 <hr>
-<h2 id=the-classic-tradeoff>The Classic Tradeoff</h2>
+<h2 id="the-classic-tradeoff">The Classic Tradeoff</h2>
 <p>As model complexity increases, what happens to bias and variance?</p>
 <p>A very simple model - say, predicting the constant mean of $y$ - has high bias (it&rsquo;s almost certainly wrong about the relationship between $x$ and $y$) but zero variance (it gives the same prediction regardless of training data). A very complex model - a depth-50 decision tree with millions of leaves - has low bias (it can approximate almost any function) but high variance (small changes in the training set produce completely different trees).</p>
 <p>The classical picture: as complexity increases, bias falls monotonically and variance rises monotonically. Total error is a U-shaped curve. There is a sweet spot in the middle where the sum of all three terms is minimized. This is the optimal model complexity for your data.</p>
 <p>The practical implication is that you cannot simultaneously minimize both bias and variance. Adding model capacity reduces bias but raises variance. Regularization reduces variance but raises bias. Every modeling choice involves this tradeoff.</p>
 <hr>
-<h2 id=double-descent>Double Descent</h2>
+<h2 id="double-descent">Double Descent</h2>
 <p>Here is where the classical story breaks down.</p>
 <p>In modern neural networks - particularly large ones with far more parameters than training examples - something surprising happens. The test error follows the classical U-shaped curve up to a certain complexity, peaks at the &ldquo;interpolation threshold&rdquo; where the model just barely fits the training data exactly, and then <em>decreases again</em> as the model grows larger.</p>
 <p>This phenomenon is called <strong>double descent</strong>. Over-parameterized models (more parameters than data points) can generalize better than models with optimal complexity by classical theory. Why? Several reasons are hypothesized:</p>
@@ -118,7 +118,7 @@ Mar 6, 2022
 </ul>
 <p>Double descent is empirically real and reproducible. It challenges the classical bias-variance narrative, which predicted that over-parameterization would always hurt. The formal theory for why it works is still an active research area.</p>
 <hr>
-<h2 id=training-error-vs-generalization-error>Training Error vs. Generalization Error</h2>
+<h2 id="training-error-vs-generalization-error">Training Error vs. Generalization Error</h2>
 <p>Two quantities matter in practice:</p>
 <p><strong>Training error</strong> is the loss on the data you trained on. The optimizer minimizes this by design. It is always optimistic - the model has seen these examples, so it has an unfair advantage. For a sufficiently expressive model with enough training time, training error can reach zero even on random noise.</p>
 <p><strong>Generalization error</strong> (also called test error) is the expected loss on new, unseen data drawn from the same distribution. This is what you actually care about. It measures whether the model learned the true pattern or just memorized the training set.</p>
@@ -127,7 +127,7 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> &ldquo;The model is overfitting, so I need more data.&rdquo; True. But also: &ldquo;The model is overfitting, so I need a simpler model.&rdquo; Also true. And: &ldquo;The model is overfitting, so I need regularization.&rdquo; Also true. All three interventions reduce variance, and all three are valid. Which to use depends on what is feasible. More data is best but often expensive. Regularization is cheap. Simpler models may sacrifice the bias you need to solve the problem. There is no universal answer.</p>
 </blockquote>
 <hr>
-<h2 id=diagnosing-the-problem>Diagnosing the Problem</h2>
+<h2 id="diagnosing-the-problem">Diagnosing the Problem</h2>
 <p>Before choosing a fix, diagnose which failure mode you have.</p>
 <p><strong>Underfitting (high bias):</strong> High training error AND high test error, with a small generalization gap. The model is not powerful enough to capture the signal.</p>
 <ul>
@@ -139,7 +139,7 @@ Mar 6, 2022
 </ul>
 <p><strong>Both? Separately?</strong> In practice, you diagnose by looking at learning curves: plot training and validation error as a function of training set size or training steps. Converging curves that are both high indicate underfitting. A large and growing gap indicates overfitting.</p>
 <hr>
-<h2 id=train-validation-and-test-splits>Train, Validation, and Test Splits</h2>
+<h2 id="train-validation-and-test-splits">Train, Validation, and Test Splits</h2>
 <p>You need separate data for three distinct purposes:</p>
 <p><strong>Training set:</strong> Fit the model parameters. The optimizer sees this data.</p>
 <p><strong>Validation set:</strong> Select hyperparameters (learning rate, regularization strength, model depth, number of epochs). This data is not used by the optimizer, but your <em>decisions</em> are influenced by it. This introduces a subtle form of leakage - if you tune 100 hyperparameters on the validation set, you will overfit to the validation set by luck.</p>
@@ -147,7 +147,7 @@ Mar 6, 2022
 <p>The standard split is roughly 70/15/15 or 80/10/10 depending on dataset size. For very large datasets (millions of examples), the validation and test sets can be much smaller fractions.</p>
 <p><strong>K-fold cross-validation</strong> is used when data is scarce. Split the data into $K$ equal folds; for each fold $k$, train on the other $K-1$ folds and evaluate on fold $k$. Average the $K$ validation errors. This makes full use of all data for both training and evaluation, at the cost of training $K$ models. Common choices are $K = 5$ or $K = 10$.</p>
 <hr>
-<h2 id=regularization-techniques>Regularization Techniques</h2>
+<h2 id="regularization-techniques">Regularization Techniques</h2>
 <p>These all reduce variance, at the cost of increased bias.</p>
 <p><strong>L2 regularization (weight decay):</strong> Add $\lambda|\theta|^2$ to the loss. Shrinks all weights toward zero, preventing any single parameter from dominating. Equivalent to a Gaussian prior on weights. This is the most common form of regularization in neural networks and is typically implemented as <code>weight_decay</code> in optimizers.</p>
 <p><strong>L1 regularization (Lasso):</strong> Add $\lambda|\theta|_1$ to the loss. Produces sparse solutions: many weights become exactly zero. Useful when you believe only a few features are relevant.</p>
@@ -155,7 +155,7 @@ Mar 6, 2022
 <p><strong>Early stopping:</strong> Monitor validation error during training. Stop when validation error starts rising, even if training error is still falling. This is one of the simplest and most effective regularization techniques. It requires no modification to the loss function.</p>
 <p><strong>Data augmentation:</strong> Artificially expand the training set by applying transformations that preserve the label: rotations, flips, crops (for images); synonym replacement, back-translation (for text). More data always reduces variance. Augmentation creates more data cheaply.</p>
 <hr>
-<h2 id=generalization-bounds-the-formal-theory>Generalization Bounds: The Formal Theory</h2>
+<h2 id="generalization-bounds-the-formal-theory">Generalization Bounds: The Formal Theory</h2>
 <p>The bias-variance decomposition describes expected error, but it doesn&rsquo;t tell you how well you can expect to generalize. Statistical learning theory provides formal bounds.</p>
 <p>For a hypothesis class of VC dimension $d$ (a measure of how many distinct binary labelings the class can produce), with $n$ training samples, the generalization gap satisfies:</p>
 <p>$$\text{Gen. gap} \leq \mathcal{O}\left(\sqrt{\frac{d\log(n/d)}{n}}\right)$$</p>
@@ -163,7 +163,7 @@ Mar 6, 2022
 <p>The VC bound is often loose in practice - neural networks have astronomically large VC dimension but generalize far better than the bound predicts. This is one of the deep mysteries motivating the double descent discussion above, and an active area of research.</p>
 <p>A tighter framework for neural networks uses <strong>PAC-Bayesian bounds</strong>, which measure not the capacity of the hypothesis class but the flatness of the loss landscape near the solution found - flat minima tend to generalize better.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -222,18 +222,18 @@ Mar 6, 2022
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/batchnorm-layernorm/ target=_blank rel="noopener noreferrer">BatchNorm & LayerNorm</a>
+<li><a href="/posts/batchnorm-layernorm/" target="_blank" rel="noopener noreferrer">BatchNorm & LayerNorm</a>
 </li>
-<li><a href=/posts/transfer-learning/ target=_blank rel="noopener noreferrer">Transfer Learning</a>
+<li><a href="/posts/transfer-learning/" target="_blank" rel="noopener noreferrer">Transfer Learning</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

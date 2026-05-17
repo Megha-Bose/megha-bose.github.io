@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Building Sharded Transformers // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Building Sharded Transformers">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Building Sharded Transformers">
+<meta name="twitter:description" content="Prerequisites:
  KV Caching & LLM Inference  Linear Transformations    GPT-3 has 175 billion parameters. In FP16, that&rsquo;s 350 GB - about five high-end A100 GPUs just to store the weights. Training requires gradients and optimizer states on top of that: roughly 2 - 3 TB total. No single machine has this memory.
 The solution isn&rsquo;t better hardware. A100s already push the limits of what&rsquo;s physically possible with current chip technology.">
 <meta property="og:title" content="Building Sharded Transformers">
@@ -25,37 +25,37 @@ The solution isn&rsquo;t better hardware. A100s already push the limits of what&
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Building Sharded Transformers</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Building Sharded Transformers</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Mar 6, 2022
 </div>
@@ -64,12 +64,12 @@ Mar 6, 2022
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/kv-caching-llm-inference/ target=_blank rel="noopener noreferrer">KV Caching & LLM Inference</a>
+<li><a href="/posts/kv-caching-llm-inference/" target="_blank" rel="noopener noreferrer">KV Caching & LLM Inference</a>
 </li>
-<li><a href=/posts/linear-transformations/ target=_blank rel="noopener noreferrer">Linear Transformations</a>
+<li><a href="/posts/linear-transformations/" target="_blank" rel="noopener noreferrer">Linear Transformations</a>
 </li>
 </ul>
 <hr>
@@ -77,7 +77,7 @@ Mar 6, 2022
 <p>The solution isn&rsquo;t better hardware. A100s already push the limits of what&rsquo;s physically possible with current chip technology. The solution is distributed computation: split the model across many GPUs, and coordinate them so they collectively behave as a single model.</p>
 <p>Building and training these &ldquo;sharded&rdquo; transformers is one of the hardest engineering problems in machine learning. The mathematics involves linear algebra (how to split matrices), communication theory (how to synchronize across machines), and numerical methods (how to do it without losing precision). This post covers all three.</p>
 <hr>
-<h2 id=the-memory-problem-precisely>The Memory Problem, Precisely</h2>
+<h2 id="the-memory-problem-precisely">The Memory Problem, Precisely</h2>
 <p>Before discussing solutions, let&rsquo;s quantify the problem.</p>
 <p>For a model with $N$ parameters, the memory required for training in full precision is:</p>
 <table>
@@ -151,7 +151,7 @@ Mar 6, 2022
 <p>Same total. Mixed precision saves memory on activations (not shown) but not on optimizer states.</p>
 <p>For 175B parameters in mixed precision: still 2.8 TB. Requiring roughly 35 A100-80GB GPUs at minimum, before accounting for activations.</p>
 <hr>
-<h2 id=data-parallelism>Data Parallelism</h2>
+<h2 id="data-parallelism">Data Parallelism</h2>
 <p>The simplest form of distributed training: each GPU holds a complete copy of the model, but different GPUs process different batches of data.</p>
 <p><strong>Procedure:</strong></p>
 <ol>
@@ -165,7 +165,7 @@ Mar 6, 2022
 <p><strong>Limitation:</strong> the model must fit on a single GPU. Works for 7B models on A100-80GB. Doesn&rsquo;t help for 175B.</p>
 <p><strong>Communication cost:</strong> the all-reduce step transmits $4N$ bytes (the gradients) per step, at a bandwidth cost of $2 \times \frac{N(P-1)}{P} \approx 2N$ parameters transmitted per GPU per step (for large $P$). For $N = 7 \times 10^9$ in FP32: 28 GB per step. This is why NVLink (within a node, 600 GB/s) and InfiniBand (across nodes, 200 - 400 GB/s) matter.</p>
 <hr>
-<h2 id=tensor-parallelism>Tensor Parallelism</h2>
+<h2 id="tensor-parallelism">Tensor Parallelism</h2>
 <p>When the model is too large for one GPU, you split individual layers across multiple GPUs. This is <strong>tensor parallelism</strong> (TP), also called model parallelism (Shoeybi et al., 2019, Megatron-LM style).</p>
 <p>Consider a linear layer: $y = xW$ where $x \in \mathbb{R}^{b \times d}$ (batch × hidden) and $W \in \mathbb{R}^{d \times k}$.</p>
 <p><strong>Column splitting:</strong> partition $W$ along its columns across $P$ GPUs:</p>
@@ -178,7 +178,7 @@ Mar 6, 2022
 <p><strong>Communication pattern:</strong> TP requires an all-reduce at every layer. For a model with $L$ layers and batch size $b$, that&rsquo;s $L$ all-reduces per forward pass, each transmitting $b \times d$ activations. This communication-per-layer requirement means TP works best within a single node where GPUs are connected by NVLink ($\sim 600$ GB/s), not across nodes where bandwidth is limited.</p>
 <p>In practice: use TP=8 within a single 8-GPU node.</p>
 <hr>
-<h2 id=pipeline-parallelism>Pipeline Parallelism</h2>
+<h2 id="pipeline-parallelism">Pipeline Parallelism</h2>
 <p>Instead of splitting within layers (TP), split across layers (PP). Assign a consecutive block of transformer layers to each GPU:</p>
 <ul>
 <li>GPU 0: layers $1, \ldots, L/P$</li>
@@ -197,7 +197,7 @@ Mar 6, 2022
 <p><strong>Interleaved scheduling</strong> (Narayanan et al., 2021): each GPU holds multiple non-consecutive layer blocks (interleaved, not contiguous), allowing more overlap. Reduces bubble further at the cost of more complex scheduling.</p>
 <p><strong>Communication cost:</strong> only activations at stage boundaries - $b \times d$ floats between consecutive GPUs, once per micro-batch. This is much lower bandwidth than TP&rsquo;s per-layer all-reduces, making PP suitable for across-node communication.</p>
 <hr>
-<h2 id=zero-zero-redundancy-optimizer>ZeRO: Zero Redundancy Optimizer</h2>
+<h2 id="zero-zero-redundancy-optimizer">ZeRO: Zero Redundancy Optimizer</h2>
 <p>In standard data parallelism, every GPU stores the full optimizer state. For $P$ GPUs, you&rsquo;re replicating the 16N bytes of per-parameter state $P$ times. ZeRO (Rajbhandari et al., 2020) eliminates this redundancy by partitioning across GPUs.</p>
 <p><strong>ZeRO Stage 1:</strong> Partition optimizer states across $P$ GPUs. Each GPU stores $1/P$ of the Adam states (first and second moments). Memory per GPU:</p>
 <p>$$\text{Weights}: 4N \quad \text{Grads}: 4N \quad \text{Optimizer}: 8N/P \quad \text{Total}: 8N + 8N/P.$$</p>
@@ -211,7 +211,7 @@ Mar 6, 2022
 <p><strong>Communication overhead of ZeRO-3:</strong> during the forward pass, each GPU needs the weights for the current layer (even though it only stores $1/P$ of them). So ZeRO-3 performs all-gathers to reconstruct weight shards on the fly during forward and backward passes, then discards them. This adds communication volume, but overlapped with compute, the overhead is typically 10 - 30%.</p>
 <p><strong>DeepSpeed</strong> (Microsoft) is the standard implementation of ZeRO. PyTorch&rsquo;s <strong>FSDP</strong> (Fully Sharded Data Parallel) is PyTorch&rsquo;s native equivalent of ZeRO-3.</p>
 <hr>
-<h2 id=3d-parallelism>3D Parallelism</h2>
+<h2 id="3d-parallelism">3D Parallelism</h2>
 <p>For the largest models, you combine all three strategies:</p>
 <p>$$\text{GPUs} = P_{\text{TP}} \times P_{\text{PP}} \times P_{\text{DP}}.$$</p>
 <p><strong>Example (GPT-3 scale):</strong></p>
@@ -224,7 +224,7 @@ Mar 6, 2022
 <p>Each &ldquo;layer block&rdquo; in the pipeline is split across 8 GPUs via tensor parallelism. Multiple complete model copies run in parallel for data parallelism. The three strategies are orthogonal and compose cleanly.</p>
 <p>Choosing the right configuration is empirical. The optimal split depends on model architecture (number of layers, hidden dimension), cluster topology (inter/intra-node bandwidth), batch size, and sequence length.</p>
 <hr>
-<h2 id=activation-checkpointing>Activation Checkpointing</h2>
+<h2 id="activation-checkpointing">Activation Checkpointing</h2>
 <p>Training requires storing intermediate activations from the forward pass for use during the backward pass. For a transformer with sequence length $n$, hidden dimension $d$, and $L$ layers, this is $O(n \times d \times L)$ - which can easily exceed the model weights in memory for long sequences or large batches.</p>
 <p><strong>Activation checkpointing</strong> (also called gradient checkpointing): don&rsquo;t store all intermediate activations. Instead, only store activations at &ldquo;checkpoint&rdquo; boundaries (e.g., every $k$ layers). During the backward pass, recompute the non-stored activations by re-running the corresponding forward pass segment.</p>
 <p><strong>Memory-compute tradeoff:</strong> with $L$ layers and checkpoints every $\sqrt{L}$ layers:</p>
@@ -234,7 +234,7 @@ Mar 6, 2022
 </ul>
 <p>For a 70B model with 80 layers and 4096 context: activation memory without checkpointing can exceed 100 GB. With checkpointing: under 20 GB. The extra 33% compute is almost always worth it at this scale.</p>
 <hr>
-<h2 id=mixed-precision-training>Mixed Precision Training</h2>
+<h2 id="mixed-precision-training">Mixed Precision Training</h2>
 <p>Training in FP32 is safe but memory-intensive. FP16 saves memory but has numerical issues: values below $\sim 6 \times 10^{-5}$ underflow to zero (gradient vanishing), and values above $\sim 65{,}504$ overflow.</p>
 <p><strong>Mixed precision training</strong> (Micikevicius et al., 2018) keeps the benefits of both:</p>
 <ol>
@@ -248,7 +248,7 @@ Mar 6, 2022
 <p><strong>BF16 (Brain Float 16):</strong> 1 sign bit, 8 exponent bits, 7 mantissa bits (vs. FP16&rsquo;s 1 sign, 5 exponent, 10 mantissa). BF16 has the same dynamic range as FP32 (8 exponent bits), making it immune to the overflow problem that plagues FP16. Less precision than FP16 in the mantissa, but empirically this barely matters for training. Used by TPUs from the beginning; supported on NVIDIA GPUs since Ampere (A100).</p>
 <p>Modern large model training almost universally uses BF16 + FP32 master weights, without dynamic loss scaling.</p>
 <hr>
-<h2 id=communication-primitives>Communication Primitives</h2>
+<h2 id="communication-primitives">Communication Primitives</h2>
 <p>Distributed training is built on a small set of collective communication operations.</p>
 <p><strong>All-reduce:</strong> each GPU $i$ has a tensor $x_i$. After all-reduce, every GPU has $\sum_i x_i$. Total data transmitted per GPU: $2N(P-1)/P \approx 2N$ values. Used in data parallelism (gradient averaging) and tensor parallelism (summing partial activations).</p>
 <p><strong>All-gather:</strong> each GPU $i$ has a shard $x_i$ of some partitioned tensor. After all-gather, every GPU has the full tensor $[x_1, x_2, \ldots, x_P]$. Total data transmitted per GPU: $N(P-1)/P \approx N$ values. Used in ZeRO-3 (gathering weight shards for computation).</p>
@@ -259,7 +259,7 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> These parallelism strategies interact in complex ways that theory doesn&rsquo;t fully capture. TP requires synchronization at every layer; PP requires careful pipeline scheduling; ZeRO-3 adds communication during weight gather. The &ldquo;correct&rdquo; configuration for a given model and cluster is highly empirical - determined by profiling, not analysis. At frontier scale, the engineering of the training run - parallelism strategy, micro-batch size, gradient checkpointing, communication overlap - can make a 3 - 5× difference in training throughput. This is one reason that training frontier models is so hard to replicate even with equivalent hardware.</p>
 </blockquote>
 <hr>
-<h2 id=the-software-stack>The Software Stack</h2>
+<h2 id="the-software-stack">The Software Stack</h2>
 <p>You don&rsquo;t need to implement any of this from scratch. The standard libraries:</p>
 <ul>
 <li><strong>PyTorch DDP</strong> (<code>torch.nn.parallel.DistributedDataParallel</code>): data parallelism. Well-tested, easy to use.</li>
@@ -270,7 +270,7 @@ Mar 6, 2022
 </ul>
 <p>For most practitioners: use FSDP or DeepSpeed ZeRO-3 for models that don&rsquo;t fit on a single GPU. Add pipeline parallelism (Megatron-style) for models in the 70B+ range across multiple nodes.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -361,12 +361,12 @@ Mar 6, 2022
 <p><strong>Read next:</strong></p>
 <p>You have now seen the full ML systems stack from fine-tuning (LoRA) through alignment (RLHF, DPO) through inference (KV caching) to distributed training (sharding). The primary literature is directly accessible from here: Megatron-LM, DeepSpeed ZeRO, vLLM, and the original LoRA, InstructGPT, and DPO papers are all self-contained given this background.</p>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

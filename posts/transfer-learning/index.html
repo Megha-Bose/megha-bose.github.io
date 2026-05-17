@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Transfer Learning & Fine-Tuning // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Transfer Learning & Fine-Tuning">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Transfer Learning & Fine-Tuning">
+<meta name="twitter:description" content="Prerequisites:
  Bias, Variance & Overfitting  Transformers from First Principles    A radiologist who spent 10 years reading X-rays doesn&rsquo;t need to learn anatomy from scratch before reading MRIs. She already knows what normal tissue looks like, what pathological growth patterns look like, how to navigate a 2D slice of a 3D body. She transfers her knowledge. Machine learning models can do something analogous. Pre-training on a massive, general task - then fine-tuning on a specific smaller task - is the dominant paradigm in modern machine learning.">
 <meta property="og:title" content="Transfer Learning & Fine-Tuning">
 <meta property="og:description" content="Prerequisites:
@@ -23,37 +23,37 @@
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Transfer Learning & Fine-Tuning</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Transfer Learning & Fine-Tuning</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Mar 6, 2022
 </div>
@@ -62,19 +62,19 @@ Mar 6, 2022
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/bias-variance-overfitting/ target=_blank rel="noopener noreferrer">Bias, Variance & Overfitting</a>
+<li><a href="/posts/bias-variance-overfitting/" target="_blank" rel="noopener noreferrer">Bias, Variance & Overfitting</a>
 </li>
-<li><a href=/posts/transformers-from-first-principles/ target=_blank rel="noopener noreferrer">Transformers from First Principles</a>
+<li><a href="/posts/transformers-from-first-principles/" target="_blank" rel="noopener noreferrer">Transformers from First Principles</a>
 </li>
 </ul>
 <hr>
 <p>A radiologist who spent 10 years reading X-rays doesn&rsquo;t need to learn anatomy from scratch before reading MRIs. She already knows what normal tissue looks like, what pathological growth patterns look like, how to navigate a 2D slice of a 3D body. She transfers her knowledge. Machine learning models can do something analogous. Pre-training on a massive, general task - then fine-tuning on a specific smaller task - is the dominant paradigm in modern machine learning. It&rsquo;s why you don&rsquo;t need billions of labeled examples to build capable models.</p>
 <p>The intuition is straightforward once you accept it: general-purpose representation learning is more data-efficient than task-specific learning. A model that has seen half the internet knows what words mean, how arguments are structured, what code looks like. That knowledge is worth something on almost any downstream task, even if the downstream task is narrow and specialized.</p>
 <hr>
-<h2 id=why-transfer-works>Why Transfer Works</h2>
+<h2 id="why-transfer-works">Why Transfer Works</h2>
 <p>Consider what a language model learns from next-token prediction on a large text corpus. To predict the next word in &ldquo;The patient was diagnosed with&mldr;&rdquo; the model must:</p>
 <ul>
 <li>Know vocabulary and spelling</li>
@@ -88,7 +88,7 @@ Mar 6, 2022
 <p>When you fine-tune this model on a specific task (say, classifying whether a clinical note indicates readmission risk), you don&rsquo;t start from scratch. You start from a model that already understands medical language, sentence structure, and causal relationships. You only need to learn how these existing representations map to your specific labels.</p>
 <p>This is the transfer learning bet: <strong>the representations learned from cheap, unlabeled data at scale are useful for expensive, labeled tasks.</strong></p>
 <hr>
-<h2 id=early-transfer-learning-computer-vision>Early Transfer Learning: Computer Vision</h2>
+<h2 id="early-transfer-learning-computer-vision">Early Transfer Learning: Computer Vision</h2>
 <p>The ideas appeared first in computer vision, before the language model era.</p>
 <p><strong>ImageNet</strong> (Deng et al., 2009) provided 1.2 million labeled images across 1,000 categories - enormous at the time. Deep convolutional networks (AlexNet, VGG, ResNet) trained on ImageNet learned a hierarchy of visual features: early layers detect edges and color gradients, middle layers detect textures and patterns, late layers detect object parts and semantic categories.</p>
 <p>The transfer learning discovery: take a ResNet pre-trained on ImageNet. Remove the final classification layer (which was specific to 1,000 categories). Replace it with a new layer for your task (say, 5 categories of skin lesion). Then train - either just the new head, or the full network with a small learning rate.</p>
@@ -98,7 +98,7 @@ Mar 6, 2022
 <p><strong>Full fine-tuning:</strong> update all weights with a low learning rate. Slower and risks forgetting pre-training, but allows the backbone to adapt. Usually achieves better final accuracy.</p>
 <p>In practice, a layered approach often works best: first train with the backbone frozen (feature extraction), then unfreeze and fine-tune with a small learning rate.</p>
 <hr>
-<h2 id=bert-the-nlp-breakthrough>BERT: The NLP Breakthrough</h2>
+<h2 id="bert-the-nlp-breakthrough">BERT: The NLP Breakthrough</h2>
 <p>The computer vision approach - pre-train on classification, fine-tune - doesn&rsquo;t translate directly to NLP because classification doesn&rsquo;t force the model to understand language. The equivalent would be pre-training a language model on a proxy task that requires deep linguistic understanding.</p>
 <p><strong>BERT</strong> (Devlin et al., 2018) - Bidirectional Encoder Representations from Transformers - proposed two pre-training tasks:</p>
 <p><strong>Masked Language Modeling (MLM):</strong> randomly mask 15% of input tokens and predict them from context. Unlike left-to-right language models (which can only use previous tokens), MLM allows the model to use context from both directions. This bidirectionality produces richer representations for tasks that require understanding full sentences.</p>
@@ -107,11 +107,11 @@ Mar 6, 2022
 <p>The results were striking. On GLUE (a benchmark of 9 language understanding tasks): BERT-Large improved the state of the art by 7 points. On SQuAD (reading comprehension): BERT surpassed human performance on some metrics. On 11 diverse NLP tasks: BERT fine-tuned achieved state of the art on all of them.</p>
 <p>One pre-trained model, fine-tuned to dozens of tasks, with only thousands to tens of thousands of labeled examples per task. The pre-training/fine-tuning paradigm immediately became the dominant approach in NLP.</p>
 <hr>
-<h2 id=gpt-style-pre-training-and-in-context-learning>GPT-Style Pre-Training and In-Context Learning</h2>
+<h2 id="gpt-style-pre-training-and-in-context-learning">GPT-Style Pre-Training and In-Context Learning</h2>
 <p>BERT uses bidirectional attention and needs fine-tuning to perform tasks. The GPT family takes a different path: left-to-right language modeling only, but the pre-training is so thorough that fine-tuning may not be needed at all.</p>
 <p><strong>GPT-2</strong> (Radford et al., 2019) showed that a pure language model pre-trained on a large, diverse corpus could perform many tasks just by being given the right prompt. No gradient updates. The model had already learned to do translation, summarization, and question answering as consequences of language modeling - because the training data contained text of all these forms.</p>
 <p><strong>GPT-3</strong> (Brown et al., 2020) demonstrated <strong>in-context learning</strong> at scale. Show the model a few examples in the prompt:</p>
-<pre tabindex=0><code>Translate English to French:
+<pre tabindex="0"><code>Translate English to French:
 sea otter → loutre de mer
 peppermint → menthe poivrée
 plush girafe → girafe peluche
@@ -125,7 +125,7 @@ cheese →
 </ul>
 <p>In-context learning emerges from scale. GPT-2 (1.5B parameters) shows weak in-context learning. GPT-3 (175B parameters) shows strong in-context learning on many tasks. The transition is one of the &ldquo;emergent capabilities&rdquo; discussed in the scaling laws literature.</p>
 <hr>
-<h2 id=catastrophic-forgetting>Catastrophic Forgetting</h2>
+<h2 id="catastrophic-forgetting">Catastrophic Forgetting</h2>
 <p>When you fine-tune a pre-trained model, you&rsquo;re making gradient updates that push the weights toward your fine-tuning objective. If you push too hard, the model forgets what it learned during pre-training. This is <strong>catastrophic forgetting</strong>.</p>
 <p>A typical scenario: fine-tune a language model on customer support emails for your software product. After 10,000 gradient steps with a high learning rate, the model achieves 95% accuracy on your held-out customer emails. But it now struggles to do basic language understanding tasks - because the fine-tuning overwrote the general representations with product-specific ones.</p>
 <p>Symptoms:</p>
@@ -142,7 +142,7 @@ cheese →
 <li><strong>Parameter-efficient fine-tuning</strong> (see below): only update a small number of parameters, leaving most of the pre-trained model frozen.</li>
 </ul>
 <hr>
-<h2 id=the-four-fine-tuning-regimes>The Four Fine-Tuning Regimes</h2>
+<h2 id="the-four-fine-tuning-regimes">The Four Fine-Tuning Regimes</h2>
 <p>&ldquo;Fine-tuning&rdquo; is an overloaded term that refers to several distinct approaches with different cost/quality tradeoffs.</p>
 <p><strong>1. Full fine-tuning.</strong> Update all model parameters on your dataset. Achieves the best possible adaptation to the task. But costs roughly as much compute as pre-training (proportional to the number of gradient steps × model size), and requires all parameters to be in GPU memory simultaneously. For a 70B-parameter model at 16-bit precision: ~140 GB of GPU RAM just for the weights, before gradients and optimizer states (which add 2 - 4× more).</p>
 <p><strong>2. Feature extraction.</strong> Freeze all pre-trained weights. Add a new output head and train only that. Very fast. No risk of forgetting. But if the pre-trained representations aren&rsquo;t well-suited to your task, the head can&rsquo;t compensate - it can only do a linear transformation of frozen features.</p>
@@ -152,28 +152,28 @@ cheese →
 <p><strong>Discomfort check.</strong> &ldquo;Instruction tuning&rdquo; and &ldquo;RLHF&rdquo; are also forms of fine-tuning, but they target different properties than task-specific fine-tuning. Instruction tuning trains the model to follow instructions across a diverse range of tasks (rather than optimizing for one specific task). RLHF (reinforcement learning from human feedback) uses human preferences to shift the model&rsquo;s distribution toward outputs humans rate as helpful, harmless, and honest. Both use gradient updates to the model weights. But their objectives, datasets, and effect on the model are quite different from &ldquo;fine-tune on customer support emails.&rdquo; The word &ldquo;fine-tuning&rdquo; in practice refers to all of these, which can cause confusion.</p>
 </blockquote>
 <hr>
-<h2 id=the-scale-hierarchy-and-what-it-implies>The Scale Hierarchy and What It Implies</h2>
+<h2 id="the-scale-hierarchy-and-what-it-implies">The Scale Hierarchy and What It Implies</h2>
 <p>As of 2024, the landscape looks roughly like this:</p>
 <p><strong>Foundation models (70B - 100B+ parameters):</strong> models like LLaMA-2 70B, Falcon 180B, Gemma 27B. Too large to fully fine-tune on a single consumer GPU. Can be fine-tuned with LoRA on a multi-GPU server, or with quantization tricks on a single high-end GPU. Pre-training cost: millions of dollars.</p>
 <p><strong>Mid-sized models (7B - 13B parameters):</strong> LLaMA-2 7B, Mistral 7B, Gemma 7B. Can be fully fine-tuned on a single A100 (80 GB) with small batch sizes, or fine-tuned with LoRA on a consumer GPU (24 GB VRAM). Pre-training cost: tens to hundreds of thousands of dollars.</p>
 <p><strong>Small models (&lt;3B parameters):</strong> Phi-2 2.7B, Gemma 2B. Can be fully fine-tuned on a single consumer GPU. May lack reasoning capability for complex tasks.</p>
 <p>The practical reality: if you need a custom model for a specific task, you almost certainly start from a pre-trained model at one of these scales. Pre-training from scratch is reserved for organizations with very large compute budgets or very specific data requirements. For everyone else, transfer learning is not a technique - it&rsquo;s the only option.</p>
 <hr>
-<h2 id=when-transfer-learning-fails>When Transfer Learning Fails</h2>
+<h2 id="when-transfer-learning-fails">When Transfer Learning Fails</h2>
 <p>Transfer learning is powerful but not infallible. Knowing when it fails saves debugging time.</p>
 <p><strong>Domain shift is too large.</strong> Pre-training on English text doesn&rsquo;t always transfer to protein sequences, molecular graphs, or music. The representations learned from text may be actively misleading for domains with completely different statistical structure. Specialized pre-training (BioBERT, ChemBERTa) often outperforms general pre-training for these domains.</p>
 <p><strong>Fine-tuning data is too small.</strong> With fewer than a few hundred examples, even fine-tuning a pre-trained model risks overfitting. The pre-trained features may not include the specific signal you need. In-context learning (providing examples in the prompt without any gradient updates) may work better with tiny datasets.</p>
 <p><strong>Fine-tuning data has a different format.</strong> Pre-trained language models are calibrated for natural text distribution. If your fine-tuning data is extremely short, lacks punctuation, or is in a specialized format (medical codes, API calls), the pre-trained model may generalize poorly.</p>
 <p><strong>Task requires knowledge the model doesn&rsquo;t have.</strong> Fine-tuning teaches the model to use its existing knowledge in a specific way. It doesn&rsquo;t add new knowledge. If you need the model to know about events that happened after its training cutoff, or facts specific to your organization that never appeared in training data, fine-tuning won&rsquo;t help. Retrieval-augmented generation (RAG) - providing relevant documents as context - is a better approach for knowledge updates.</p>
 <hr>
-<h2 id=why-transfer-learning-dominates>Why Transfer Learning Dominates</h2>
+<h2 id="why-transfer-learning-dominates">Why Transfer Learning Dominates</h2>
 <p>Step back and ask: why did this paradigm win?</p>
 <p><strong>Labeled data is expensive; unlabeled data is cheap.</strong> A human labeling sentiment of product reviews can do maybe 200 examples per hour. At that rate, 100,000 labeled examples cost roughly 500 person-hours. Meanwhile, the internet contains trillions of words, freely available. Pre-training leverages cheap data; fine-tuning leverages expensive data efficiently.</p>
 <p><strong>Representations generalize across tasks.</strong> A model that understands &ldquo;negation&rdquo; in one context understands it in all contexts. A model that knows &ldquo;passive voice&rdquo; in one domain knows it in all domains. General-purpose linguistic knowledge, learned once, transfers everywhere.</p>
 <p><strong>The depth-to-task-specificity gradient.</strong> Early layers of a neural network learn generic features (edges in vision; syntax in NLP). Later layers learn task-specific features. This means you can freeze early layers (they&rsquo;re already right), and only adapt late layers and output heads. The pre-training investment is most valuable where generalization is most robust.</p>
 <p><strong>Scale creates emergent representations.</strong> At large scale, the representations learned by pre-trained models aren&rsquo;t just &ldquo;better versions&rdquo; of smaller models' representations - they include qualitatively new capabilities (reasoning, analogy, in-context learning) that weren&rsquo;t present at smaller scale. This makes the pre-trained model a far more powerful starting point than any from-scratch initialization could be.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -226,16 +226,16 @@ cheese →
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/lora-4-bit-quantization/ target=_blank rel="noopener noreferrer">LoRA & 4-bit Quantization</a>
+<li><a href="/posts/lora-4-bit-quantization/" target="_blank" rel="noopener noreferrer">LoRA & 4-bit Quantization</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

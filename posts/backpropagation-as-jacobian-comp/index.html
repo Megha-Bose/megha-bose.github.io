@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Backpropagation as Jacobian Comp // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Backpropagation as Jacobian Comp">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Backpropagation as Jacobian Comp">
+<meta name="twitter:description" content="Prerequisites:
  The Chain Rule & Backpropagation  Vector Calculus for ML  Gradients & Partial Derivatives    You have trained neural networks using backpropagation, or you have heard that backpropagation is how neural networks learn. But what is it, exactly? Most descriptions fall into one of two failure modes. The high-level version says something like &ldquo;errors propagate backward through the network&rdquo; - true but not mathematical. The code-focused version gives you pseudocode with arrays and loops - useful for implementation, but it conceals what is actually happening.">
 <meta property="og:title" content="Backpropagation as Jacobian Comp">
 <meta property="og:description" content="Prerequisites:
@@ -23,37 +23,37 @@
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Backpropagation as Jacobian Comp</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Backpropagation as Jacobian Comp</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Dec 11, 2020
 </div>
@@ -62,14 +62,14 @@ Dec 11, 2020
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/the-chain-rule-backpropagation/ target=_blank rel="noopener noreferrer">The Chain Rule & Backpropagation</a>
+<li><a href="/posts/the-chain-rule-backpropagation/" target="_blank" rel="noopener noreferrer">The Chain Rule & Backpropagation</a>
 </li>
-<li><a href=/posts/vector-calculus-for-ml/ target=_blank rel="noopener noreferrer">Vector Calculus for ML</a>
+<li><a href="/posts/vector-calculus-for-ml/" target="_blank" rel="noopener noreferrer">Vector Calculus for ML</a>
 </li>
-<li><a href=/posts/gradients-partial-derivatives/ target=_blank rel="noopener noreferrer">Gradients & Partial Derivatives</a>
+<li><a href="/posts/gradients-partial-derivatives/" target="_blank" rel="noopener noreferrer">Gradients & Partial Derivatives</a>
 </li>
 </ul>
 <hr>
@@ -78,14 +78,14 @@ Dec 11, 2020
 <p>Here is the answer in one sentence: backpropagation computes the partial derivative of the loss with respect to every weight in the network, using the chain rule of calculus, evaluated in reverse order through the computation.</p>
 <p>That sentence contains everything. This post unpacks it, step by step, until nothing is hidden.</p>
 <hr>
-<h2 id=section-1-what-we-are-trying-to-compute>Section 1: What We Are Trying to Compute</h2>
+<h2 id="section-1-what-we-are-trying-to-compute">Section 1: What We Are Trying to Compute</h2>
 <p>Suppose you have a neural network with weights $w_1, w_2, \ldots, w_N$ - maybe millions of them. You have a loss function $L$ that measures how wrong the network&rsquo;s predictions are. Training means finding weights that make $L$ small.</p>
 <p>The method is gradient descent: repeatedly move the weights in the direction that decreases the loss. For weight $w_k$, the update is:</p>
 <p>$$w_k \leftarrow w_k - \eta \frac{\partial L}{\partial w_k}$$</p>
 <p>where $\eta > 0$ is the learning rate. To apply this update to every weight, you need $\partial L / \partial w_k$ for every $k$. That is the computation. Every other question about backpropagation is a question about how to compute these partial derivatives efficiently.</p>
 <p>The network computes its output as a composition of functions. Each layer applies a function to the previous layer&rsquo;s output. So the loss $L$ is a function of the weights, but it is not a direct function - it is a function of a function of a function, stacked as many times as there are layers. Computing $\partial L / \partial w_k$ requires differentiating through all those layers. That requires the chain rule.</p>
 <hr>
-<h2 id=section-2-the-single-variable-chain-rule>Section 2: The Single-Variable Chain Rule</h2>
+<h2 id="section-2-the-single-variable-chain-rule">Section 2: The Single-Variable Chain Rule</h2>
 <p>Before anything multidimensional, review the single-variable case. Suppose you have a composition of three functions:</p>
 <p>$$L = f(a), \quad a = g(z), \quad z = h(w)$$</p>
 <p>where $w$ is the weight. The loss $L$ depends on $w$ through two intermediate quantities. The chain rule says:</p>
@@ -106,7 +106,7 @@ Dec 11, 2020
 <p><strong>Discomfort check.</strong> The Leibniz notation $\frac{dL}{da} \cdot \frac{da}{dz} \cdot \frac{dz}{dw}$ looks like the $da$&rsquo;s and $dz$&rsquo;s cancel, as in ordinary fractions. They do not cancel literally - these are derivatives, not fractions - but the chain rule is designed so that the mnemonic works. Treat it as a guide to what factors appear, not as arithmetic.</p>
 </blockquote>
 <hr>
-<h2 id=section-3-from-scalars-to-vectors---the-jacobian>Section 3: From Scalars to Vectors - the Jacobian</h2>
+<h2 id="section-3-from-scalars-to-vectors---the-jacobian">Section 3: From Scalars to Vectors - the Jacobian</h2>
 <p>A real neural network layer does not map a number to a number. It maps a vector to a vector. A layer $f: \mathbb{R}^n \to \mathbb{R}^m$ takes an $n$-dimensional input and produces an $m$-dimensional output.</p>
 <p>For such a function, the derivative is not a single number. It is a matrix: the <strong>Jacobian</strong>.</p>
 <p><strong>Definition.</strong> For a differentiable function $f: \mathbb{R}^n \to \mathbb{R}^m$, the Jacobian at a point $x$ is the $m \times n$ matrix:</p>
@@ -126,7 +126,7 @@ Dec 11, 2020
 <p><strong>Discomfort check.</strong> When you multiply two matrices, dimensions must be compatible: the number of columns of the left matrix must equal the number of rows of the right matrix. Here $J_f$ is $k \times m$ and $J_g$ is $m \times n$, so the inner dimension $m$ matches. The result is $k \times n$: it maps $n$-dimensional inputs to $k$-dimensional outputs, which is exactly what $f \circ g$ does. The matrix multiplication encodes the composition.</p>
 </blockquote>
 <hr>
-<h2 id=section-4-a-concrete-two-layer-network>Section 4: A Concrete Two-Layer Network</h2>
+<h2 id="section-4-a-concrete-two-layer-network">Section 4: A Concrete Two-Layer Network</h2>
 <p>Stop thinking abstractly. Build a specific network and compute every Jacobian explicitly.</p>
 <p><strong>Setup.</strong> Input $x \in \mathbb{R}^d$. One hidden layer:</p>
 <p>$$z = W_1 x + b_1, \quad z \in \mathbb{R}^m$$</p>
@@ -163,7 +163,7 @@ Dec 11, 2020
 <p>$$\frac{\partial L}{\partial (W_1)_{ij}} = \frac{\partial L}{\partial z_i} \cdot x_j$$</p>
 <p>In matrix form: $\partial L / \partial W_1 = (\partial L / \partial z)^T \cdot x^T$, where $\partial L / \partial z$ is treated as a column vector.</p>
 <hr>
-<h2 id=section-5-assembling-the-chain>Section 5: Assembling the Chain</h2>
+<h2 id="section-5-assembling-the-chain">Section 5: Assembling the Chain</h2>
 <p>The chain rule for this network is:</p>
 <p>$$\frac{\partial L}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial h} \cdot \frac{\partial h}{\partial z} \cdot \frac{\partial z}{\partial W_1}$$</p>
 <p>Let us compute backward, starting from the loss.</p>
@@ -185,7 +185,7 @@ Dec 11, 2020
 <p><strong>Discomfort check.</strong> Where does the outer product $\delta^T x^T$ come from? Think about it dimension by dimension. The gradient $\partial L / \partial (W_1)_{ij}$ is the number $(\delta_z)_i \cdot x_j$ - the $i$-th component of the error signal times the $j$-th component of the input. Assembling all $i$ and $j$ into a matrix gives $\delta_z^T x^T$. A column times a row gives a matrix. This formula will appear in every linear layer - it is not specific to this example.</p>
 </blockquote>
 <hr>
-<h2 id=section-6-the-upstream-gradient>Section 6: The Upstream Gradient</h2>
+<h2 id="section-6-the-upstream-gradient">Section 6: The Upstream Gradient</h2>
 <p>You may have heard the phrase &ldquo;upstream gradient&rdquo; in the context of automatic differentiation. Now that we have a concrete example, we can say precisely what it means.</p>
 <p>In the backward pass, at each node in the computation graph, you receive the gradient of the loss with respect to the output of that node. This is the upstream gradient - it has already been computed by the layers above (closer to the loss).</p>
 <p>Your job at each node is:</p>
@@ -200,7 +200,7 @@ Dec 11, 2020
 <p><strong>Discomfort check.</strong> The upstream gradient arrives as a row vector (because $L$ is a scalar, so $\partial L / \partial (\text{anything})$ is a row vector by convention). The local Jacobian is a matrix. Multiplying a row vector by a matrix gives another row vector. This row vector is then passed to the next layer. The shapes propagate consistently if you keep track.</p>
 </blockquote>
 <hr>
-<h2 id=section-7-why-backward-and-not-forward>Section 7: Why Backward and Not Forward?</h2>
+<h2 id="section-7-why-backward-and-not-forward">Section 7: Why Backward and Not Forward?</h2>
 <p>There are two orders in which you can multiply a chain of matrices. Suppose the chain is:</p>
 <p>$$\frac{\partial L}{\partial x} = \underbrace{\frac{\partial L}{\partial \hat{y}}}<em>{1 \times k} \cdot \underbrace{\frac{\partial \hat{y}}{\partial h}}</em>{k \times m} \cdot \underbrace{\frac{\partial h}{\partial z}}<em>{m \times m} \cdot \underbrace{\frac{\partial z}{\partial x}}</em>{m \times d}$$</p>
 <p>Matrix multiplication is associative, so you can choose the order. There are two natural choices:</p>
@@ -214,7 +214,7 @@ Dec 11, 2020
 <p>So one backward pass gives you $\partial L / \partial W_l$ for every layer $l$ simultaneously. The cost is one backward pass, comparable in expense to one forward pass. To get all the same information with forward mode, you would need one pass per parameter group - potentially millions.</p>
 <p><strong>The formal argument.</strong> For a function $L: \mathbb{R}^N \to \mathbb{R}$ with $N$ inputs and 1 output, backward mode computes all $N$ partial derivatives in 1 pass. Forward mode computes all $N$ partial derivatives in $N$ passes (one per input direction). For neural networks, $N$ is enormous and outputs are scalar. Backward mode wins by a factor of $N$.</p>
 <hr>
-<h2 id=section-8-the-computational-graph>Section 8: The Computational Graph</h2>
+<h2 id="section-8-the-computational-graph">Section 8: The Computational Graph</h2>
 <p>Any computation can be represented as a directed acyclic graph (DAG), where each node is an operation and each edge carries a value. The forward pass evaluates nodes in topological order, and the backward pass does the same in reverse.</p>
 <p>For our two-layer network, the nodes are: multiply by $W_1$, add $b_1$, apply $\sigma$, multiply by $W_2$, add $b_2$, compute $|\cdot - y|^2$. Each has:</p>
 <ul>
@@ -235,7 +235,7 @@ Dec 11, 2020
 <p>At the end, $\bar{v}_i = \partial L / \partial v_i$ for every node $i$. In particular, $\bar{w}_k = \partial L / \partial w_k$ for every weight node $w_k$.</p>
 <p>This is backpropagation. It is a dynamic programming algorithm that computes all partial derivatives simultaneously by traversing the graph once backward.</p>
 <hr>
-<h2 id=section-9-deriving-the-jacobian-of-a-linear-layer-from-scratch>Section 9: Deriving the Jacobian of a Linear Layer from Scratch</h2>
+<h2 id="section-9-deriving-the-jacobian-of-a-linear-layer-from-scratch">Section 9: Deriving the Jacobian of a Linear Layer from Scratch</h2>
 <p>The backward rules for a linear layer are used in every network, so they are worth deriving carefully rather than just stating.</p>
 <p>Forward: $y = Wx$ where $W \in \mathbb{R}^{m \times n}$ and $x \in \mathbb{R}^n$. Output $y \in \mathbb{R}^m$.</p>
 <p><strong>Gradient with respect to $x$.</strong> We want $\partial L / \partial x$ given upstream gradient $g = \partial L / \partial y$ (a row vector of length $m$).</p>
@@ -254,7 +254,7 @@ Dec 11, 2020
 <p>$$\frac{\partial L}{\partial W} = g^T x^T \quad \text{(shape } m \times n \text{, same as } W \text{)}$$</p>
 <p>This derivation uses only the definition of a partial derivative and the chain rule. No tricks, no formulas memorized without understanding.</p>
 <hr>
-<h2 id=section-10-gradients-of-common-operations>Section 10: Gradients of Common Operations</h2>
+<h2 id="section-10-gradients-of-common-operations">Section 10: Gradients of Common Operations</h2>
 <p>Every layer you will encounter in practice has a backward rule derivable from the chain rule. The linear layer was worked out from scratch in Section 9. Here are the other essential ones.</p>
 <p>Every layer you will encounter in practice has a backward rule derivable from the chain rule. Here are the most important ones.</p>
 <p><strong>Elementwise nonlinearity: $y = \sigma(x)$, so $y_i = \sigma(x_i)$.</strong></p>
@@ -270,7 +270,7 @@ Dec 11, 2020
 <p><strong>Discomfort check.</strong> Why does the gradient $\hat{p} - y$ not involve the derivative of the softmax? It does - it is just hidden. The softmax Jacobian has a specific form that, when combined with the cross-entropy gradient, telescopes to $\hat{p} - y$. If you work through the full chain rule for softmax and cross-entropy separately, and then multiply, you will recover this formula. The simplification is a consequence of the special structure of the exponential function and the logarithm being inverses.</p>
 </blockquote>
 <hr>
-<h2 id=section-11-what-vanishing-gradients-actually-are>Section 11: What Vanishing Gradients Actually Are</h2>
+<h2 id="section-11-what-vanishing-gradients-actually-are">Section 11: What Vanishing Gradients Actually Are</h2>
 <p>You have probably heard that deep networks suffer from vanishing gradients. Now you can see exactly why.</p>
 <p>The gradient flowing back to layer $l$ is a product of local Jacobians from layers $l+1$ through $L$:</p>
 <p>$$\frac{\partial L}{\partial h_l} = \frac{\partial L}{\partial \hat{y}} \cdot J_{f_L} \cdot J_{f_{L-1}} \cdots J_{f_{l+1}}$$</p>
@@ -286,7 +286,7 @@ Dec 11, 2020
 </ul>
 <p>Both are derived by requiring the variance of the output of each layer to equal the variance of its input, so the activation scale is preserved as the signal passes forward and the gradient scale is preserved as the gradient passes backward. Both are consequences of the Jacobian analysis above.</p>
 <hr>
-<h2 id=section-12-backpropagation-is-not-optional>Section 12: Backpropagation Is Not Optional</h2>
+<h2 id="section-12-backpropagation-is-not-optional">Section 12: Backpropagation Is Not Optional</h2>
 <p>A question sometimes asked: why can we not just compute $\partial L / \partial w_k$ by finite differences - perturb $w_k$ slightly, measure how $L$ changes, divide?</p>
 <p>The numerical derivative $\partial L / \partial w_k \approx (L(w_k + \epsilon) - L(w_k)) / \epsilon$ is correct in principle. But it requires one full forward pass per weight. A network with one million weights requires one million forward passes. At typical network sizes, this is computationally impossible.</p>
 <p>Backpropagation computes all $N$ partial derivatives in the cost of roughly two forward passes (one for the forward pass, one for the backward pass). This is not an approximation - it is exact (up to floating-point precision). The efficiency gain is a factor of $N/2$, which for large models is tens of millions.</p>
@@ -298,7 +298,7 @@ Dec 11, 2020
 <p><strong>Memory and the backward pass.</strong> One practical constraint: the backward pass must access the activations computed during the forward pass (you need $h$ to compute $\partial L / \partial W_2$, you need $z$ to evaluate $\sigma'(z)$, etc.). For deep networks, storing all intermediate activations requires memory proportional to the number of layers times the batch size times the layer width.</p>
 <p>For very deep networks or large batches, this can exceed GPU memory. The solution is gradient checkpointing: recompute activations on demand during the backward pass instead of storing them all. You store only activations at checkpointed layers (every $\sqrt{L}$ layers, say), and recompute intermediate activations when needed. This reduces memory from $O(L)$ to $O(\sqrt{L})$ at the cost of one additional forward pass per segment - a factor-of-2 increase in computation in exchange for a square-root reduction in memory.</p>
 <hr>
-<h2 id=section-13-beyond-feedforward-networks>Section 13: Beyond Feedforward Networks</h2>
+<h2 id="section-13-beyond-feedforward-networks">Section 13: Beyond Feedforward Networks</h2>
 <p>The same principles apply to any computation that can be expressed as a graph of differentiable operations. Here are two important cases.</p>
 <p><strong>Recurrent neural networks.</strong> A recurrent network processes a sequence $x_1, x_2, \ldots, x_T$ by maintaining a hidden state $h_t$ that is updated at each step:</p>
 <p>$$h_t = \sigma(W_h h_{t-1} + W_x x_t + b)$$</p>
@@ -310,7 +310,7 @@ Dec 11, 2020
 <p>where $Q, K, V$ are matrices. This is a composition of matrix multiplication, scaling, softmax (applied rowwise), and another matrix multiplication. Each operation has a backward rule - the chain rule applies exactly as before. The backward rule for attention is derivable from the rules in Section 10, though the resulting formulas involve matrix products rather than simple elementwise operations.</p>
 <p>The practical point: no special mathematical treatment is required for attention. It is a differentiable computation, and its gradients are computed by backpropagation through its computational graph, just as for any other operation.</p>
 <hr>
-<h2 id=section-14-the-complete-picture>Section 14: The Complete Picture</h2>
+<h2 id="section-14-the-complete-picture">Section 14: The Complete Picture</h2>
 <p>Let us return to the one-sentence summary: backpropagation computes the partial derivative of the loss with respect to every weight in the network, using the chain rule of calculus, evaluated in reverse order through the computation.</p>
 <p>Each word now has a precise meaning:</p>
 <ul>
@@ -322,7 +322,7 @@ Dec 11, 2020
 <p>The word &ldquo;backpropagation&rdquo; names the algorithm. The mathematics is: reverse-mode automatic differentiation applied to a composition of functions representing a neural network.</p>
 <p>Any other neural network computation you encounter - attention, convolution, normalization layers, residual connections - has a backward rule derivable by the same principles. The local Jacobian changes. The pattern does not.</p>
 <hr>
-<h2 id=section-15-batch-training-and-the-gradient-sum>Section 15: Batch Training and the Gradient Sum</h2>
+<h2 id="section-15-batch-training-and-the-gradient-sum">Section 15: Batch Training and the Gradient Sum</h2>
 <p>In practice, you do not compute the gradient on a single example. You compute it over a minibatch of $B$ examples ${(x_i, y_i)}_{i=1}^B$ and average:</p>
 <p>$$L_{\text{batch}} = \frac{1}{B} \sum_{i=1}^B L_i$$</p>
 <p>where $L_i$ is the loss on the $i$-th example.</p>
@@ -332,7 +332,7 @@ Dec 11, 2020
 <p>where $\Delta \in \mathbb{R}^{B \times m}$ stacks the $\delta_i$ as rows and $X \in \mathbb{R}^{B \times d}$ stacks the $x_i$ as rows. This is a single matrix multiplication: the entire batch is processed simultaneously.</p>
 <p>This is why GPUs are effective for deep learning. A GPU performs many matrix multiplications in parallel. By organizing the batch as a matrix, the forward pass (and backward pass) become sequences of matrix multiplications over the entire batch, which GPUs can execute at maximum hardware utilization.</p>
 <hr>
-<h2 id=section-16-gradient-formulas-reference>Section 16: Gradient Formulas Reference</h2>
+<h2 id="section-16-gradient-formulas-reference">Section 16: Gradient Formulas Reference</h2>
 <p>For any layer with upstream gradient $g = \partial L / \partial y$ (treat as a row vector):</p>
 <table>
 <thead>
@@ -388,18 +388,18 @@ Dec 11, 2020
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/modern-optimizer-zoo/ target=_blank rel="noopener noreferrer">Modern Optimizer Zoo</a>
+<li><a href="/posts/modern-optimizer-zoo/" target="_blank" rel="noopener noreferrer">Modern Optimizer Zoo</a>
 - how gradient information gets turned into weight updates in practice</li>
-<li><a href=/posts/vc-dimension/ target=_blank rel="noopener noreferrer">VC Dimension</a>
+<li><a href="/posts/vc-dimension/" target="_blank" rel="noopener noreferrer">VC Dimension</a>
 - the statistical theory of what neural networks can and cannot learn</li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

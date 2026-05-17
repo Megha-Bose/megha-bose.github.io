@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>How Compilers Work // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="How Compilers Work">
-<meta name=twitter:description content="Prerequisite: Context-Free Grammars & Parsing | Automata Theory & FSMs You write x = a + b * 2. The compiler turns this into machine code that:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="How Compilers Work">
+<meta name="twitter:description" content="Prerequisite: Context-Free Grammars & Parsing | Automata Theory & FSMs You write x = a + b * 2. The compiler turns this into machine code that:
  Evaluates b * 2 before a + b * 2 because multiplication has higher precedence Computes b * 2 as b + b using a lea instruction instead of a multiply, because addition is faster Eliminates the variable x entirely if it&rsquo;s never used Inlines the function call if you wrapped this in a tiny function  How does a text transformation tool - which is all a compiler is - produce code that is faster than most programmers could hand-write?">
 <meta property="og:title" content="How Compilers Work">
 <meta property="og:description" content="Prerequisite: Context-Free Grammars & Parsing | Automata Theory & FSMs You write x = a + b * 2. The compiler turns this into machine code that:
@@ -23,37 +23,37 @@
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>How Compilers Work</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">How Compilers Work</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Sep 15, 2024
 </div>
@@ -62,9 +62,9 @@ Sep 15, 2024
 </div>
 </div>
 </header>
-<div class=post-content>
-<p><strong>Prerequisite:</strong> <a href=/posts/context-free-grammars-parsing/ target=_blank rel="noopener noreferrer">Context-Free Grammars & Parsing</a>
-| <a href=/posts/automata-theory-fsms/ target=_blank rel="noopener noreferrer">Automata Theory & FSMs</a>
+<div class="post-content">
+<p><strong>Prerequisite:</strong> <a href="/posts/context-free-grammars-parsing/" target="_blank" rel="noopener noreferrer">Context-Free Grammars & Parsing</a>
+| <a href="/posts/automata-theory-fsms/" target="_blank" rel="noopener noreferrer">Automata Theory & FSMs</a>
 </p>
 <p>You write <code>x = a + b * 2</code>. The compiler turns this into machine code that:</p>
 <ul>
@@ -74,65 +74,65 @@ Sep 15, 2024
 <li>Inlines the function call if you wrapped this in a tiny function</li>
 </ul>
 <p>How does a text transformation tool - which is all a compiler is - produce code that is faster than most programmers could hand-write? The answer is a pipeline of increasingly abstract representations, each designed to make a different class of optimization obvious. Understanding that pipeline is what separates engineers who treat compilation as a black box from engineers who can predict what the compiler will do and write code that cooperates with it.</p>
-<h2 id=the-historical-context-why-compilers-exist>The Historical Context: Why Compilers Exist</h2>
+<h2 id="the-historical-context-why-compilers-exist">The Historical Context: Why Compilers Exist</h2>
 <p>Before compilers, programs were written in machine code or assembly, directly. Adding two numbers meant knowing the binary encoding of the <code>add</code> instruction, knowing the register numbers, encoding the operands. Grace Hopper, working on the UNIVAC in the early 1950s, observed that programmers kept writing the same routines - square root, logarithm, output formatting. She built A-0 (1952), a system that could retrieve these routines from a catalog and combine them. This was not quite a compiler in the modern sense - it was more a linker - but it established the idea: code that writes code.</p>
 <p>The first true compiler, in the sense of translating a high-level language to machine code, is usually credited to John Backus&rsquo;s FORTRAN compiler at IBM (1957). The radical claim was that a compiler could produce code as fast as an expert human programmer. Most computer scientists at the time believed this was impossible. The FORTRAN team proved them wrong - and established compiler optimization as a research field.</p>
 <p>The next revolution was LLVM (2003), developed by Chris Lattner as a University of Illinois PhD project. The insight: compiler backends (the code that generates machine instructions) were being reimplemented from scratch for every new language. LLVM provided a reusable, language-agnostic backend. You only need to compile your language to LLVM&rsquo;s intermediate representation (IR), and LLVM handles the rest - optimization, register allocation, code generation for x86, ARM, WebAssembly, whatever the target. Clang, Rust, Swift, Julia, Kotlin Native, Emscripten, and dozens of other compilers all use LLVM. This is one person&rsquo;s PhD thesis reshaping the compiler landscape for twenty years.</p>
-<h2 id=phase-1-lexical-analysis>Phase 1: Lexical Analysis</h2>
+<h2 id="phase-1-lexical-analysis">Phase 1: Lexical Analysis</h2>
 <p>The compiler&rsquo;s first job is to read the character stream and break it into tokens - the meaningful units of the language. The lexer doesn&rsquo;t care about structure; it only cares about boundaries.</p>
-<pre tabindex=0><code>int x = 3 + y * 2;
+<pre tabindex="0"><code>int x = 3 + y * 2;
 →  [KW_INT] [IDENT &quot;x&quot;] [EQ] [NUM 3] [PLUS] [IDENT &quot;y&quot;] [STAR] [NUM 2] [SEMI]
 </code></pre><p>The lexer discards whitespace and comments. It classifies character sequences: a sequence of digits is <code>NUM</code>, a sequence of letters and digits starting with a letter is <code>IDENT</code>, single characters like <code>+</code> and <code>=</code> are themselves tokens.</p>
 <p>The formal machinery underlying lexers is the deterministic finite automaton (DFA). The lexer&rsquo;s job is exactly what a DFA computes: recognize strings in a regular language. Token types are specified as regular expressions; the lexer generator (lex, flex, re2c) converts these to a combined DFA that recognizes all token types simultaneously and tells you which one matched.</p>
 <p>In practice, hand-written lexers are common for production compilers (GCC&rsquo;s lexer is hand-written; so is Clang&rsquo;s) because they handle edge cases more explicitly and are easier to tune for performance. The conceptual model is the same either way.</p>
-<h2 id=phase-2-parsing>Phase 2: Parsing</h2>
+<h2 id="phase-2-parsing">Phase 2: Parsing</h2>
 <p>The parser takes the token stream and determines whether it conforms to the language&rsquo;s grammar, simultaneously building an <strong>Abstract Syntax Tree (AST)</strong> - a tree that represents the hierarchical structure of the program.</p>
 <p>Context-free grammars describe what valid programs look like. A grammar for arithmetic expressions:</p>
-<pre tabindex=0><code>Expr → Expr + Term | Expr - Term | Term
+<pre tabindex="0"><code>Expr → Expr + Term | Expr - Term | Term
 Term → Term * Factor | Term / Factor | Factor
 Factor → ( Expr ) | NUM | IDENT
 </code></pre><p>This grammar encodes operator precedence structurally: multiplication (<code>Term * Factor</code>) nests inside addition (<code>Expr + Term</code>), so multiplication will always sit deeper in the parse tree, evaluated first.</p>
 <p>The AST for <code>3 + y * 2</code>:</p>
-<pre tabindex=0><code>    ADD
+<pre tabindex="0"><code>    ADD
    /   \
   3    MUL
        / \
       y   2
 </code></pre><p>MUL is deeper, so it is evaluated first. The tree encodes precedence without any special runtime checks.</p>
-<h3 id=the-discomfort-why-parsing-is-hard>The Discomfort: Why Parsing Is Hard</h3>
+<h3 id="the-discomfort-why-parsing-is-hard">The Discomfort: Why Parsing Is Hard</h3>
 <p>Parsing is where most compiler courses lose students. The formalism (LL parsers, LR parsers, shift-reduce conflicts, FIRST/FOLLOW sets) is dense and the connection to the intuition is non-obvious.</p>
 <p>Here is the intuition, without the full formalism.</p>
 <p>A <strong>recursive descent parser</strong> is a direct translation of the grammar into mutually recursive functions. Each non-terminal in the grammar becomes a function. The <code>parseExpr</code> function handles additions and subtractions. The <code>parseTerm</code> function handles multiplications and divisions. The <code>parseFactor</code> function handles atoms (numbers, identifiers, parenthesized expressions).</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>parse_expr</span>(tokens):
-    left <span style=color:#f92672>=</span> parse_term(tokens)
-    <span style=color:#66d9ef>while</span> tokens<span style=color:#f92672>.</span>peek() <span style=color:#f92672>in</span> (<span style=color:#e6db74>&#39;+&#39;</span>, <span style=color:#e6db74>&#39;-&#39;</span>):
-        op <span style=color:#f92672>=</span> tokens<span style=color:#f92672>.</span>consume()
-        right <span style=color:#f92672>=</span> parse_term(tokens)
-        left <span style=color:#f92672>=</span> BinaryOp(op, left, right)
-    <span style=color:#66d9ef>return</span> left
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parse_expr</span>(tokens):
+    left <span style="color:#f92672">=</span> parse_term(tokens)
+    <span style="color:#66d9ef">while</span> tokens<span style="color:#f92672">.</span>peek() <span style="color:#f92672">in</span> (<span style="color:#e6db74">&#39;+&#39;</span>, <span style="color:#e6db74">&#39;-&#39;</span>):
+        op <span style="color:#f92672">=</span> tokens<span style="color:#f92672">.</span>consume()
+        right <span style="color:#f92672">=</span> parse_term(tokens)
+        left <span style="color:#f92672">=</span> BinaryOp(op, left, right)
+    <span style="color:#66d9ef">return</span> left
 
-<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>parse_term</span>(tokens):
-    left <span style=color:#f92672>=</span> parse_factor(tokens)
-    <span style=color:#66d9ef>while</span> tokens<span style=color:#f92672>.</span>peek() <span style=color:#f92672>in</span> (<span style=color:#e6db74>&#39;*&#39;</span>, <span style=color:#e6db74>&#39;/&#39;</span>):
-        op <span style=color:#f92672>=</span> tokens<span style=color:#f92672>.</span>consume()
-        right <span style=color:#f92672>=</span> parse_factor(tokens)
-        left <span style=color:#f92672>=</span> BinaryOp(op, left, right)
-    <span style=color:#66d9ef>return</span> left
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parse_term</span>(tokens):
+    left <span style="color:#f92672">=</span> parse_factor(tokens)
+    <span style="color:#66d9ef">while</span> tokens<span style="color:#f92672">.</span>peek() <span style="color:#f92672">in</span> (<span style="color:#e6db74">&#39;*&#39;</span>, <span style="color:#e6db74">&#39;/&#39;</span>):
+        op <span style="color:#f92672">=</span> tokens<span style="color:#f92672">.</span>consume()
+        right <span style="color:#f92672">=</span> parse_factor(tokens)
+        left <span style="color:#f92672">=</span> BinaryOp(op, left, right)
+    <span style="color:#66d9ef">return</span> left
 
-<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>parse_factor</span>(tokens):
-    <span style=color:#66d9ef>if</span> tokens<span style=color:#f92672>.</span>peek() <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;(&#39;</span>:
-        tokens<span style=color:#f92672>.</span>consume(<span style=color:#e6db74>&#39;(&#39;</span>)
-        expr <span style=color:#f92672>=</span> parse_expr(tokens)
-        tokens<span style=color:#f92672>.</span>consume(<span style=color:#e6db74>&#39;)&#39;</span>)
-        <span style=color:#66d9ef>return</span> expr
-    <span style=color:#66d9ef>elif</span> tokens<span style=color:#f92672>.</span>peek()<span style=color:#f92672>.</span>type <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;NUM&#39;</span>:
-        <span style=color:#66d9ef>return</span> Number(tokens<span style=color:#f92672>.</span>consume())
-    <span style=color:#66d9ef>else</span>:
-        <span style=color:#66d9ef>return</span> Identifier(tokens<span style=color:#f92672>.</span>consume())
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parse_factor</span>(tokens):
+    <span style="color:#66d9ef">if</span> tokens<span style="color:#f92672">.</span>peek() <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;(&#39;</span>:
+        tokens<span style="color:#f92672">.</span>consume(<span style="color:#e6db74">&#39;(&#39;</span>)
+        expr <span style="color:#f92672">=</span> parse_expr(tokens)
+        tokens<span style="color:#f92672">.</span>consume(<span style="color:#e6db74">&#39;)&#39;</span>)
+        <span style="color:#66d9ef">return</span> expr
+    <span style="color:#66d9ef">elif</span> tokens<span style="color:#f92672">.</span>peek()<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;NUM&#39;</span>:
+        <span style="color:#66d9ef">return</span> Number(tokens<span style="color:#f92672">.</span>consume())
+    <span style="color:#66d9ef">else</span>:
+        <span style="color:#66d9ef">return</span> Identifier(tokens<span style="color:#f92672">.</span>consume())
 </code></pre></div><p>This is LL(1) parsing - top-down, left-to-right, using one token of lookahead. It is easy to write by hand and easy to understand. GCC, Clang, and the Rust compiler all use hand-written recursive descent parsers.</p>
 <p>The &ldquo;1&rdquo; in LL(1) means one token of lookahead - the parser only needs to look one token ahead to decide which production to apply. Grammars that require more lookahead (LL(k)) or that are left-recursive (like the grammar above, where <code>Expr → Expr + Term</code> has <code>Expr</code> on both sides) need different handling. Left recursion is converted to right recursion or to an iterative <code>while</code> loop, as in the <code>parse_expr</code> example above.</p>
 <p>LR parsing (bottom-up, right-to-left) handles a strictly larger class of grammars and is more powerful, but it is essentially impossible to write by hand - you generate it using tools like yacc, bison, or LALR parser generators. The generated parser uses a stack-based state machine. It is efficient but opaque. Error messages from LR-generated parsers are notoriously bad (&ldquo;unexpected token at line 42&rdquo;), which is why most modern production compilers prefer hand-written recursive descent with custom error recovery.</p>
-<h2 id=phase-3-semantic-analysis>Phase 3: Semantic Analysis</h2>
+<h2 id="phase-3-semantic-analysis">Phase 3: Semantic Analysis</h2>
 <p>Having established that the token stream is syntactically valid, the compiler determines whether it is semantically meaningful. Syntax answers &ldquo;is this grammatical?&rdquo; Semantics answers &ldquo;does this make sense?&rdquo;</p>
 <p>The <strong>symbol table</strong> maps every identifier to its declaration: type, scope, storage class. When the parser sees <code>x = 3 + y * 2</code>, semantic analysis looks up <code>x</code> and <code>y</code> in the symbol table to find their types, checks that the types are compatible with <code>+</code> and <code>*</code>, and checks that <code>x</code> has been declared (not just used).</p>
 <p>Nested scopes work as a chain of symbol tables. A function body&rsquo;s symbol table has a parent pointer to the file scope&rsquo;s symbol table. Looking up a name walks the chain outward until a declaration is found - this is the implementation of variable shadowing.</p>
@@ -147,15 +147,15 @@ Factor → ( Expr ) | NUM | IDENT
 <p>Type errors are detected here. Assigning a <code>string</code> to an <code>int</code> variable, passing 3 arguments to a function that expects 2, using an undeclared identifier - all caught in semantic analysis, before any code generation.</p>
 <p><strong>Type inference</strong> (Haskell, Rust, OCaml, modern C++ <code>auto</code>) extends this: the compiler solves a system of type equations generated from the AST, inferring types that were not written. The Hindley-Milner algorithm solves this for a large class of languages in $O(n \alpha(n))$ time (essentially linear). When Rust infers that <code>let x = vec.iter().map(|y| y * 2).collect()</code> produces a <code>Vec&lt;i32></code>, it is running Hindley-Milner on the expression tree.</p>
 <p>The output of semantic analysis is an annotated AST: every node tagged with its type, every identifier resolved to its declaration, every scope boundary marked.</p>
-<h2 id=phase-4-intermediate-representation-ir>Phase 4: Intermediate Representation (IR)</h2>
+<h2 id="phase-4-intermediate-representation-ir">Phase 4: Intermediate Representation (IR)</h2>
 <p>Compilers don&rsquo;t translate AST directly to machine code. An intermediate representation is a language-independent, target-independent form that is easier to analyze and transform than either source or machine code.</p>
 <p>The most influential IR design is LLVM IR - a textual format that resembles assembly but operates on an infinite set of typed virtual registers rather than the CPU&rsquo;s finite register file.</p>
 <p>LLVM IR for a simple function:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-llvm data-lang=llvm><span style=color:#66d9ef>define</span> <span style=color:#66d9ef>i32</span> @add_mul(<span style=color:#66d9ef>i32</span> %a, <span style=color:#66d9ef>i32</span> %b) {
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-llvm" data-lang="llvm"><span style="color:#66d9ef">define</span> <span style="color:#66d9ef">i32</span> @add_mul(<span style="color:#66d9ef">i32</span> %a, <span style="color:#66d9ef">i32</span> %b) {
 entry:
-  %mul = <span style=color:#66d9ef>mul</span> <span style=color:#66d9ef>i32</span> %b, <span style=color:#ae81ff>2</span>     <span style=color:#75715e>; b * 2
-</span><span style=color:#75715e></span>  %add = <span style=color:#66d9ef>add</span> <span style=color:#66d9ef>i32</span> %a, %mul  <span style=color:#75715e>; a + (b * 2)
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>ret</span> <span style=color:#66d9ef>i32</span> %add
+  %mul = <span style="color:#66d9ef">mul</span> <span style="color:#66d9ef">i32</span> %b, <span style="color:#ae81ff">2</span>     <span style="color:#75715e">; b * 2
+</span><span style="color:#75715e"></span>  %add = <span style="color:#66d9ef">add</span> <span style="color:#66d9ef">i32</span> %a, %mul  <span style="color:#75715e">; a + (b * 2)
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">ret</span> <span style="color:#66d9ef">i32</span> %add
 }
 </code></pre></div><p>The key features:</p>
 <ul>
@@ -164,47 +164,47 @@ entry:
 <li><strong>SSA form</strong>: each register is assigned exactly once. This is the key that makes optimization tractable.</li>
 </ul>
 <p><strong>SSA (Static Single Assignment)</strong> form means every variable is defined in exactly one place. When control flow merges (after an <code>if/else</code>), the variable has multiple possible values. SSA handles this with a <strong>phi</strong> instruction that selects between them:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-llvm data-lang=llvm><span style=color:#66d9ef>define</span> <span style=color:#66d9ef>i32</span> @abs(<span style=color:#66d9ef>i32</span> %x) {
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-llvm" data-lang="llvm"><span style="color:#66d9ef">define</span> <span style="color:#66d9ef">i32</span> @abs(<span style="color:#66d9ef">i32</span> %x) {
 entry:
-  %cmp = <span style=color:#66d9ef>icmp</span> <span style=color:#66d9ef>slt</span> <span style=color:#66d9ef>i32</span> %x, <span style=color:#ae81ff>0</span>   <span style=color:#75715e>; x &lt; 0?
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>br</span> <span style=color:#66d9ef>i1</span> %cmp, <span style=color:#66d9ef>label</span> %neg, <span style=color:#66d9ef>label</span> %pos
+  %cmp = <span style="color:#66d9ef">icmp</span> <span style="color:#66d9ef">slt</span> <span style="color:#66d9ef">i32</span> %x, <span style="color:#ae81ff">0</span>   <span style="color:#75715e">; x &lt; 0?
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">br</span> <span style="color:#66d9ef">i1</span> %cmp, <span style="color:#66d9ef">label</span> %neg, <span style="color:#66d9ef">label</span> %pos
 
 neg:
-  %negx = <span style=color:#66d9ef>sub</span> <span style=color:#66d9ef>i32</span> <span style=color:#ae81ff>0</span>, %x        <span style=color:#75715e>; -x
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>br</span> <span style=color:#66d9ef>label</span> %merge
+  %negx = <span style="color:#66d9ef">sub</span> <span style="color:#66d9ef">i32</span> <span style="color:#ae81ff">0</span>, %x        <span style="color:#75715e">; -x
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">br</span> <span style="color:#66d9ef">label</span> %merge
 
 pos:
-  <span style=color:#66d9ef>br</span> <span style=color:#66d9ef>label</span> %merge
+  <span style="color:#66d9ef">br</span> <span style="color:#66d9ef">label</span> %merge
 
 merge:
-  %result = <span style=color:#66d9ef>phi</span> <span style=color:#66d9ef>i32</span> [ %negx, %neg ], [ %x, %pos ]  <span style=color:#75715e>; pick based on which branch
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>ret</span> <span style=color:#66d9ef>i32</span> %result
+  %result = <span style="color:#66d9ef">phi</span> <span style="color:#66d9ef">i32</span> [ %negx, %neg ], [ %x, %pos ]  <span style="color:#75715e">; pick based on which branch
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">ret</span> <span style="color:#66d9ef">i32</span> %result
 }
 </code></pre></div><p>SSA form makes many optimizations trivially easy to implement. Use-def chains are explicit - every use of a register traces directly back to its unique definition. Dead code elimination: a register with no uses can be deleted. Constant folding: if a register is defined as a constant, substitute the constant at every use. These require complex analysis on non-SSA code; on SSA, they reduce to simple traversals.</p>
-<h2 id=phase-5-optimization-passes>Phase 5: Optimization Passes</h2>
+<h2 id="phase-5-optimization-passes">Phase 5: Optimization Passes</h2>
 <p>The middle-end applies a sequence of optimization passes to the IR. Each pass is a transformation: it reads the IR, applies an analysis, and writes modified IR. Because all passes operate on the same IR representation, they compose freely.</p>
 <p><strong>Constant folding</strong>: evaluate expressions whose operands are known at compile time. <code>2 * 3 * 4</code> → <code>24</code>. This sounds trivial, but combined with other optimizations, it cascades: if a branch condition becomes a constant, the dead branch can be eliminated.</p>
 <p><strong>Dead code elimination (DCE)</strong>: remove instructions whose results are never used. DCE is straightforward in SSA: any register with no uses is dead and can be removed. Removing it may make other registers dead, so DCE iterates until no more dead code exists.</p>
 <p><strong>Inlining</strong>: replace a function call with the body of the function, substituting arguments. Inlining eliminates call overhead (saving/restoring registers, branch prediction penalty) and enables further optimizations - the inlined function&rsquo;s code can now be folded with the caller&rsquo;s. The trade-off is code size: inlining every function call would produce enormous binaries and thrash the instruction cache. Compilers use heuristics (function size, call frequency, hot path indicators) to decide when to inline.</p>
 <p><strong>Loop-invariant code motion (LICM)</strong>: move computations out of loops when the result doesn&rsquo;t change across iterations.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>// Before LICM:
-</span><span style=color:#75715e></span><span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n; i<span style=color:#f92672>++</span>)
-    a[i] <span style=color:#f92672>=</span> b[i] <span style=color:#f92672>*</span> (x <span style=color:#f92672>+</span> y);  <span style=color:#75715e>// x + y computed n times
-</span><span style=color:#75715e></span>
-<span style=color:#75715e>// After LICM:
-</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> xy <span style=color:#f92672>=</span> x <span style=color:#f92672>+</span> y;
-<span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n; i<span style=color:#f92672>++</span>)
-    a[i] <span style=color:#f92672>=</span> b[i] <span style=color:#f92672>*</span> xy;        <span style=color:#75715e>// x + y computed once
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// Before LICM:
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> n; i<span style="color:#f92672">++</span>)
+    a[i] <span style="color:#f92672">=</span> b[i] <span style="color:#f92672">*</span> (x <span style="color:#f92672">+</span> y);  <span style="color:#75715e">// x + y computed n times
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">// After LICM:
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">float</span> xy <span style="color:#f92672">=</span> x <span style="color:#f92672">+</span> y;
+<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> n; i<span style="color:#f92672">++</span>)
+    a[i] <span style="color:#f92672">=</span> b[i] <span style="color:#f92672">*</span> xy;        <span style="color:#75715e">// x + y computed once
 </span></code></pre></div><p><strong>Strength reduction</strong>: replace expensive operations with cheaper equivalents. Multiplying by a constant becomes a shift (×8 → <code>&lt;&lt; 3</code>) or an <code>lea</code>. An induction variable <code>i * stride</code> becomes an addition (<code>prev + stride</code>) - cheaper than multiply on most architectures.</p>
 <p><strong>Common subexpression elimination (CSE)</strong>: compute a shared sub-expression once. If <code>a * b + c</code> appears twice in the same basic block, compute <code>a * b</code> once, save the result, and reuse it.</p>
 <p><strong>Alias analysis</strong>: determine which memory locations might refer to the same address. Without alias information, the compiler must conservatively assume any load might return a value just written by any store. Alias analysis allows the compiler to prove &ldquo;these two pointers can&rsquo;t alias&rdquo; and eliminate spurious dependencies, enabling more aggressive reordering and elimination.</p>
 <p>Modern compilers (LLVM, GCC) run dozens of passes, some multiple times, in a carefully tuned order. The pass order matters: inlining before CSE allows CSE to eliminate subexpressions revealed by inlining; running DCE after constant folding removes branches that folding made constant. Getting the pass order right is one of the deep expertise areas of compiler engineering.</p>
-<h2 id=phase-6-code-generation>Phase 6: Code Generation</h2>
+<h2 id="phase-6-code-generation">Phase 6: Code Generation</h2>
 <p>The backend translates optimized IR into machine instructions for a specific target. Three sub-problems:</p>
 <p><strong>Instruction selection</strong>: which machine instruction implements each IR operation? For <code>add i32</code>, use <code>addl</code>. For <code>mul i32</code> with a constant power of two, use <code>shll</code>. For a multiplication by a small constant, use <code>leal</code> (the address-computation instruction repurposed for arithmetic). These decisions are made by pattern matching: a pattern matcher maps IR subtrees to instruction sequences. In LLVM, this is specified in TableGen files; in GCC, it is specified using RTL (Register Transfer Language) patterns.</p>
 <p><strong>Instruction scheduling</strong>: reorder instructions to maximize pipeline utilization. Modern CPUs are superscalar (execute multiple instructions per cycle) and out-of-order (execute instructions as their inputs become ready). The compiler pre-schedules instructions to avoid hazards: if instruction B depends on the result of instruction A and A has 4 cycles of latency, place 4 independent instructions between A and B so the pipeline stays full.</p>
 <p><strong>Register allocation</strong>: assign virtual IR registers to physical CPU registers. When there are more live values than registers, some values must be <em>spilled</em> to memory (stored to the stack, reloaded when needed). Register allocation is NP-hard in general (it is equivalent to graph coloring: live ranges are nodes, conflicts between simultaneously-live values are edges, and registers are colors). In practice, linear scan allocation (used by many JIT compilers for speed) and graph-coloring allocation (used by GCC and LLVM for quality) are the two approaches.</p>
-<h2 id=the-llvm-ir-why-it-revolutionized-the-ecosystem>The LLVM IR: Why It Revolutionized the Ecosystem</h2>
+<h2 id="the-llvm-ir-why-it-revolutionized-the-ecosystem">The LLVM IR: Why It Revolutionized the Ecosystem</h2>
 <p>Before LLVM, building a new language required implementing a complete compiler backend: instruction selection, scheduling, and register allocation for each target CPU. This was a multi-year project, which is why most research languages (ML, Haskell, Ocaml) had backends for only one or two architectures.</p>
 <p>LLVM changed this by providing a high-quality reusable backend with a clean IR interface. Compiling to LLVM IR requires weeks of work, not years. The resulting compiler targets every architecture LLVM supports (x86-64, ARM, RISC-V, PowerPC, WebAssembly, and more), with competitive code quality.</p>
 <p>The languages that owe their practical viability to LLVM:</p>
@@ -217,7 +217,7 @@ merge:
 <li><strong>Emscripten</strong>: compiles C/C++ to WebAssembly by compiling to LLVM IR, then to Wasm</li>
 </ul>
 <p>LLVM&rsquo;s success has created its own form of lock-in: there is now strong pressure for new languages to target LLVM, because doing so gives you a production-quality backend &ldquo;for free.&rdquo; Languages that don&rsquo;t use LLVM (V8 for JavaScript, CPython for Python, OpenJDK&rsquo;s JIT for Java) have invested enormous resources into their own backends - resources only feasible for languages with massive ecosystems and corporate backing.</p>
-<h2 id=jit-vs-aot-two-compilation-philosophies>JIT vs AOT: Two Compilation Philosophies</h2>
+<h2 id="jit-vs-aot-two-compilation-philosophies">JIT vs AOT: Two Compilation Philosophies</h2>
 <p><strong>Ahead-of-time (AOT) compilation</strong> is the traditional model: the full pipeline runs before the program is distributed. The user receives a binary that starts immediately, with no compilation overhead at runtime. GCC, Clang, and the Rust compiler all do AOT.</p>
 <p><strong>Just-in-time (JIT) compilation</strong> compiles code at runtime, typically identifying hot paths and compiling only those. The tradeoffs are different:</p>
 <p><em>Advantages of JIT</em>:</p>
@@ -235,18 +235,18 @@ merge:
 <p><strong>CPython</strong> compiles Python to bytecode (<code>.pyc</code> files) - a compact instruction set for the CPython virtual machine. CPython&rsquo;s VM is an interpreter: it reads each bytecode instruction and executes it in a C switch statement. This is simple and portable but slow.</p>
 <p><strong>PyPy</strong> takes a different approach: it is a JIT compiler for Python implemented in RPython (a subset of Python). PyPy identifies hot loops at runtime, compiles them to machine code, and applies speculative optimizations based on observed types. Typical speedup over CPython: 5 - 10x for CPU-bound code. The limitation: PyPy lags CPython in compatibility and is less effective for code that spends most of its time in C extension modules (NumPy, PyTorch) - those are already compiled and JIT doesn&rsquo;t help them.</p>
 <p><strong>Java&rsquo;s HotSpot JVM</strong> is the most mature JIT compiler. It starts interpreting bytecode, identifies hot methods (those called more than a threshold number of times), compiles them with the client JIT (fast compile, moderate optimization), and recompiles the hottest methods with the server JIT (slow compile, aggressive optimization). The result: Java code that runs for minutes often achieves performance close to C++ equivalents.</p>
-<h2 id=jaxs-tracing-compilation-as-a-library-call>JAX&rsquo;s Tracing: Compilation as a Library Call</h2>
+<h2 id="jaxs-tracing-compilation-as-a-library-call">JAX&rsquo;s Tracing: Compilation as a Library Call</h2>
 <p>JAX&rsquo;s approach to compilation is conceptually interesting and worth understanding separately from traditional compilers.</p>
 <p>When you call <code>jax.jit(f)(x)</code>, JAX <em>traces</em> <code>f</code> - it runs the function with abstract &ldquo;tracer&rdquo; values that record the operations performed without carrying concrete numbers. The trace produces an XLA HLO computation graph. XLA compiles that graph to machine code and caches it. Subsequent calls with the same input shapes skip Python entirely and execute the compiled binary.</p>
 <p>This is not a compiler in the traditional sense - there is no lexer, no parser, no AST. The &ldquo;source code&rdquo; is a Python function; JAX captures the computation graph by executing it with abstract values. The IR is HLO; the backend is XLA.</p>
 <p>The limitation: Python control flow that depends on concrete values is frozen at trace time. <code>if x > 0</code> where <code>x</code> is a traced JAX value evaluates the condition with an abstract value, producing an arbitrary result. The branch taken at trace time is baked into the compiled binary. This is the same fundamental issue that all partial evaluation and program specialization systems face.</p>
 <p>torch.compile (PyTorch 2.0) solves this differently: it captures the Python bytecode executed during a real forward pass using a bytecode interpreter (Dynamo), converts the captured computation to a graph IR (FX graph), and compiles that IR using Inductor. The advantage: it handles arbitrary PyTorch code with fallback to eager execution when compilation fails. The disadvantage: less aggressive optimization than XLA because the compilation boundary is less strict.</p>
-<h2 id=the-critique-compilers-vs-ml-guided-compilation>The Critique: Compilers vs ML-Guided Compilation</h2>
+<h2 id="the-critique-compilers-vs-ml-guided-compilation">The Critique: Compilers vs ML-Guided Compilation</h2>
 <p>Traditional compiler optimizations are rule-based: each pass applies a transformation whenever a specific pattern is recognized. The patterns are written by experts who understand hardware and have analyzed benchmarks. This works well for common patterns but is brittle for unusual code.</p>
 <p>ML-guided compilation uses machine learning to make optimization decisions. <strong>MLGO</strong> (ML-Guided Optimization), deployed in Google&rsquo;s production LLVM builds, uses a reinforcement learning policy to make inlining decisions - whether to inline a given function call at a given call site. The RL policy outperforms the heuristic-based inlining decisions by 3 - 5% on benchmark suites (better for binary size, similar performance to heuristic for speed).</p>
 <p><strong>Autotuning</strong> (used by TensorFlow XLA, CUDA libraries, and Halide) searches over a space of implementation choices (loop tile sizes, operation orderings) by empirically benchmarking different configurations and selecting the best. This is slower than rule-based optimization (it requires actual execution) but can find configurations no human-written rule would discover.</p>
 <p>The longer-term question is whether ML will eventually outperform rule-based compilers across the board. The evidence so far is mixed: ML-guided optimization outperforms heuristics for specific decisions (inlining, tile size selection) but doesn&rsquo;t yet replace entire optimization passes. The main obstacle is the cost of training: generating high-quality training data for compiler optimization requires compiling large codebases many times with different decisions and measuring the resulting performance.</p>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -362,16 +362,16 @@ merge:
 </tbody>
 </table>
 <hr>
-<p><strong>Read Next:</strong> <a href=/posts/assembly-and-machine-code/ target=_blank rel="noopener noreferrer">Assembly & Machine Code</a>
-| <a href=/posts/compiler-optimizations/ target=_blank rel="noopener noreferrer">Compiler Optimizations</a>
+<p><strong>Read Next:</strong> <a href="/posts/assembly-and-machine-code/" target="_blank" rel="noopener noreferrer">Assembly & Machine Code</a>
+| <a href="/posts/compiler-optimizations/" target="_blank" rel="noopener noreferrer">Compiler Optimizations</a>
 </p>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

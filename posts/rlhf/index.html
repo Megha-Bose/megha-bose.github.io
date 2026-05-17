@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>RLHF: Reinforcement Learning from Human Feedback // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="RLHF: Reinforcement Learning from Human Feedback">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RLHF: Reinforcement Learning from Human Feedback">
+<meta name="twitter:description" content="Prerequisites:
  LoRA & 4-bit Quantization  Objective Functions & Loss Design  Markov Chains    A language model trained only on next-token prediction is, strictly speaking, a document completion machine.
 Ask it a question and it will produce text that looks like it might follow that question somewhere in its training data. That might be a different question (FAQ pages often list questions back-to-back), a wrong answer stated confidently, an irrelevant continuation, or something harmful.">
 <meta property="og:title" content="RLHF: Reinforcement Learning from Human Feedback">
@@ -25,37 +25,37 @@ Ask it a question and it will produce text that looks like it might follow that 
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>RLHF: Reinforcement Learning from Human Feedback</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">RLHF: Reinforcement Learning from Human Feedback</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Mar 6, 2022
 </div>
@@ -64,14 +64,14 @@ Mar 6, 2022
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/lora-4-bit-quantization/ target=_blank rel="noopener noreferrer">LoRA & 4-bit Quantization</a>
+<li><a href="/posts/lora-4-bit-quantization/" target="_blank" rel="noopener noreferrer">LoRA & 4-bit Quantization</a>
 </li>
-<li><a href=/posts/objective-functions/ target=_blank rel="noopener noreferrer">Objective Functions & Loss Design</a>
+<li><a href="/posts/objective-functions/" target="_blank" rel="noopener noreferrer">Objective Functions & Loss Design</a>
 </li>
-<li><a href=/posts/markov-chains/ target=_blank rel="noopener noreferrer">Markov Chains</a>
+<li><a href="/posts/markov-chains/" target="_blank" rel="noopener noreferrer">Markov Chains</a>
 </li>
 </ul>
 <hr>
@@ -79,7 +79,7 @@ Mar 6, 2022
 <p>Ask it a question and it will produce text that looks like it might follow that question somewhere in its training data. That might be a different question (FAQ pages often list questions back-to-back), a wrong answer stated confidently, an irrelevant continuation, or something harmful. The model has no concept of &ldquo;answering helpfully.&rdquo; It only knows &ldquo;what comes next in text like this.&rdquo;</p>
 <p>InstructGPT (Ouyang et al., 2022) introduced RLHF - Reinforcement Learning from Human Feedback - to teach models not just to produce plausible text, but to produce text that humans prefer. The method worked better than anyone expected, and every major assistant-style language model since (ChatGPT, Claude, Gemini, LLaMA-2-chat) has used some version of it.</p>
 <hr>
-<h2 id=the-alignment-problem>The Alignment Problem</h2>
+<h2 id="the-alignment-problem">The Alignment Problem</h2>
 <p>The challenge has a name: alignment. You want your model to be helpful, harmless, and honest. These are properties you can articulate in English but cannot easily encode as a loss function.</p>
 <p>Consider what goes wrong with a model trained purely on next-token prediction:</p>
 <ul>
@@ -91,7 +91,7 @@ Mar 6, 2022
 <p>You want to correct all of this. But defining &ldquo;helpful, harmless, and honest&rdquo; as a mathematical loss function is genuinely hard. Human preferences are contextual, nuanced, sometimes inconsistent, and hard to specify in advance.</p>
 <p>One observation simplifies things considerably: <strong>humans are better at comparing two outputs than rating one output absolutely.</strong> Given two responses to the same question, most people can reliably say which is better, even when they couldn&rsquo;t articulate in advance what &ldquo;better&rdquo; means. RLHF exploits this.</p>
 <hr>
-<h2 id=why-not-just-fine-tune-on-good-responses>Why Not Just Fine-Tune on &ldquo;Good&rdquo; Responses?</h2>
+<h2 id="why-not-just-fine-tune-on-good-responses">Why Not Just Fine-Tune on &ldquo;Good&rdquo; Responses?</h2>
 <p>Before getting into RLHF, it&rsquo;s worth asking: why not just collect examples of ideal responses and fine-tune directly on them (supervised learning)?</p>
 <p>This is actually Stage 1 of RLHF - supervised fine-tuning (SFT) - and it&rsquo;s done. But it has limits:</p>
 <ul>
@@ -101,12 +101,12 @@ Mar 6, 2022
 </ul>
 <p>Reinforcement learning offers something supervised learning doesn&rsquo;t: the ability to explore. The model can generate candidate responses, receive feedback on them, and update accordingly - learning from responses it has never seen before. The feedback signal (the reward model) acts as a proxy for &ldquo;what humans prefer,&rdquo; allowing the model to optimize beyond the fixed training set.</p>
 <hr>
-<h2 id=the-rlhf-pipeline-three-stages>The RLHF Pipeline: Three Stages</h2>
+<h2 id="the-rlhf-pipeline-three-stages">The RLHF Pipeline: Three Stages</h2>
 <p>RLHF as used in InstructGPT involves three sequential training stages. Each produces a new model, which is used as input to the next stage.</p>
-<h3 id=stage-1-supervised-fine-tuning-sft>Stage 1: Supervised Fine-Tuning (SFT)</h3>
+<h3 id="stage-1-supervised-fine-tuning-sft">Stage 1: Supervised Fine-Tuning (SFT)</h3>
 <p>Start with a pre-trained base language model. Collect demonstrations: human contractors (or high-quality curated data) provide examples of ideal responses to a variety of prompts. Fine-tune the base model on these demonstration pairs using standard cross-entropy loss.</p>
 <p>The result is the <strong>SFT model</strong>: a model that can follow instructions, handle diverse prompts, and produce coherent responses. It&rsquo;s noticeably better than the raw pre-trained model for task completion. But it&rsquo;s not yet aligned in the sense we want - it hasn&rsquo;t been specifically optimized to produce responses humans prefer.</p>
-<h3 id=stage-2-reward-model-training>Stage 2: Reward Model Training</h3>
+<h3 id="stage-2-reward-model-training">Stage 2: Reward Model Training</h3>
 <p>Now we train a separate model to predict human preferences.</p>
 <p>Sample pairs of responses $(y_1, y_2)$ to the same prompt $x$ from the SFT model. Have human raters compare them and indicate which is better: &ldquo;$y_1$ is preferred over $y_2$&rdquo; or vice versa. Collect a large dataset of such comparisons.</p>
 <p>The <strong>reward model</strong> $R_\phi(x, y) \to \mathbb{R}$ takes a prompt $x$ and response $y$ and outputs a scalar quality score. We train it using the <strong>Bradley-Terry preference model</strong>:</p>
@@ -116,7 +116,7 @@ Mar 6, 2022
 <p>$$\mathcal{L}<em>{\text{RM}} = -\mathbb{E}</em>{(x, y_w, y_l) \sim \mathcal{D}}!\left[\log \sigma!\left(R_\phi(x, y_w) - R_\phi(x, y_l)\right)\right].$$</p>
 <p>This is just binary cross-entropy: we want the model to correctly predict which response was preferred. The Bradley-Terry model is a classic way to convert pairwise comparisons into scalar scores - the same approach used in chess rating systems (Elo) and tournament ranking.</p>
 <p>The reward model is typically initialized from the SFT model (same architecture, extra linear head for the scalar output). After training, it acts as a proxy for human judgment: given any (prompt, response) pair, it estimates how much a human would prefer it.</p>
-<h3 id=stage-3-rl-fine-tuning-with-ppo>Stage 3: RL Fine-Tuning with PPO</h3>
+<h3 id="stage-3-rl-fine-tuning-with-ppo">Stage 3: RL Fine-Tuning with PPO</h3>
 <p>Now we use the reward model to train the policy - the language model - via reinforcement learning.</p>
 <p>The setup:</p>
 <ul>
@@ -133,7 +133,7 @@ Mar 6, 2022
 <p>where $r_t(\theta) = \pi_\theta(a_t | s_t) / \pi_{\theta_{\text{old}}}(a_t | s_t)$ is the probability ratio between new and old policies, $\hat{A}_t$ is the estimated advantage, and $\epsilon$ (typically $0.1$ to $0.2$) is the clip range.</p>
 <p>The result of Stage 3 is the final aligned model: a language model that generates responses maximizing the reward model&rsquo;s score while staying close to the SFT model&rsquo;s distribution.</p>
 <hr>
-<h2 id=reward-hacking>Reward Hacking</h2>
+<h2 id="reward-hacking">Reward Hacking</h2>
 <p>The reward model is an imperfect proxy for human preferences. It was trained on a finite set of comparisons, by a particular group of raters, on a particular distribution of prompts. It will have blind spots and biases.</p>
 <p>When you run RL optimization against the reward model, you&rsquo;re optimizing against this imperfect proxy. The policy can - and often does - find strategies that maximize the proxy reward without actually being better:</p>
 <ul>
@@ -145,7 +145,7 @@ Mar 6, 2022
 <p>This is the fundamental problem with RLHF. The RM is a learned approximation, and any optimization process is good at finding its weaknesses. The KL penalty mitigates this by limiting how far from the SFT model the policy can go - but it&rsquo;s a blunt instrument.</p>
 <p>The solution in practice is careful RM training, limited optimization budget, and human evaluation of the final model (rather than trusting the RM score). This is why the RLHF pipeline often involves multiple rounds: train RM, train policy, collect new preferences on the new policy, retrain RM, repeat.</p>
 <hr>
-<h2 id=why-ppo-is-hard>Why PPO Is Hard</h2>
+<h2 id="why-ppo-is-hard">Why PPO Is Hard</h2>
 <p>Running PPO on a 7B+ parameter language model is not easy.</p>
 <p>At any given training step, you need four separate models in memory simultaneously:</p>
 <ol>
@@ -167,7 +167,7 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> &ldquo;Reinforcement learning from human feedback&rdquo; sounds like the model is learning in real time from individual human interactions. It&rsquo;s not. Stages 1 through 3 are an offline training procedure: you collect a dataset, train fixed models, and move on. The &ldquo;RL&rdquo; is an optimization process run against a fixed, pre-trained reward model - not a live feedback loop. Online RLHF, where the model actually interacts with humans in real time and receives live rewards, is a separate and harder research problem. Most deployed RLHF uses the offline procedure described here.</p>
 </blockquote>
 <hr>
-<h2 id=constitutional-ai-anthropics-variation>Constitutional AI: Anthropic&rsquo;s Variation</h2>
+<h2 id="constitutional-ai-anthropics-variation">Constitutional AI: Anthropic&rsquo;s Variation</h2>
 <p>Anthropic introduced Constitutional AI (CAI) as a variation on RLHF that reduces dependence on human labeling.</p>
 <p>Instead of collecting human preference comparisons for Stage 2, CAI uses a set of written principles - the &ldquo;Constitution&rdquo; - to generate AI-written critiques and revisions of model outputs. The process:</p>
 <ol>
@@ -177,7 +177,7 @@ Mar 6, 2022
 </ol>
 <p>This scales more readily than human labeling: once the Constitution is written, the AI can generate preference data automatically. The tradeoff is that the quality of the reward model depends on the quality of the AI&rsquo;s self-evaluation, which depends on the quality of the base model.</p>
 <hr>
-<h2 id=rlvr-reinforcement-learning-from-verifiable-rewards>RLVR: Reinforcement Learning from Verifiable Rewards</h2>
+<h2 id="rlvr-reinforcement-learning-from-verifiable-rewards">RLVR: Reinforcement Learning from Verifiable Rewards</h2>
 <p>RLHF requires a learned reward model - a neural network trained on human preference data that scores responses. This creates two problems: reward hacking (the policy learns to fool the reward model rather than actually improve) and the cost of human annotation at scale.</p>
 <p><strong>Verifiable rewards</strong> sidestep both problems. For tasks where correctness can be checked automatically - mathematics, code, formal logic - the reward signal is the answer to &ldquo;is this solution correct?&rdquo; A math problem either has the right answer or it doesn&rsquo;t. Code either passes tests or it doesn&rsquo;t. No learned reward model, no reward hacking.</p>
 <p><strong>RLVR setup.</strong> The language model generates a chain-of-thought reasoning trace followed by a final answer. A deterministic verifier checks whether the answer is correct and returns reward 1 (correct) or 0 (incorrect). The policy is updated via GRPO (Group Relative Policy Optimization) or similar on-policy RL: generate $G$ solutions per problem, compute rewards, use the group mean and variance to normalise advantages, update with a clipped policy gradient loss identical in structure to PPO.</p>
@@ -186,7 +186,7 @@ Mar 6, 2022
 <p><strong>Why it works.</strong> The key insight is that the verifiable reward provides a training signal exactly where you want it - at the final answer - without requiring a learned reward model that can be gamed. The chain-of-thought is not directly supervised; the model is free to develop whatever reasoning process leads to correct answers. This is how DeepSeek-R1 and similar &ldquo;reasoning models&rdquo; are trained: start from a base model, apply RLVR on math/code problems with ground-truth verifiers, and the model spontaneously develops longer, more structured reasoning chains.</p>
 <p><strong>Limitations.</strong> RLVR only works when correctness is verifiable. Open-ended tasks (writing, summarisation, subjective judgements) have no ground-truth verifier. For these, RLHF with a learned reward model remains necessary. RLVR also requires a base model that already has enough capability to solve some fraction of problems - if the initial success rate is near zero, the RL signal vanishes. &ldquo;Rubric-based&rdquo; RLVR extends verifiable rewards to partially-correct answers using structured rubrics evaluated by a stronger model.</p>
 <hr>
-<h2 id=the-bigger-picture>The Bigger Picture</h2>
+<h2 id="the-bigger-picture">The Bigger Picture</h2>
 <p>RLHF is a paradigm, not a single algorithm. The key ideas:</p>
 <ol>
 <li>Human preferences are better captured by comparisons than by absolute ratings.</li>
@@ -196,7 +196,7 @@ Mar 6, 2022
 </ol>
 <p>These four ideas, combined with careful engineering, produced a step change in the quality of AI assistants. The mathematical machinery - Bradley-Terry models, PPO, KL divergence - had all existed for years. The insight was applying them here, at this scale, in this order.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -251,16 +251,16 @@ Mar 6, 2022
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/direct-preference-optimization/ target=_blank rel="noopener noreferrer">Direct Preference Optimization</a>
+<li><a href="/posts/direct-preference-optimization/" target="_blank" rel="noopener noreferrer">Direct Preference Optimization</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Cross-Validation // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Cross-Validation">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Cross-Validation">
+<meta name="twitter:description" content="Prerequisites:
  Train, Val, & Test Splits  Bias, Variance, & Overfitting    You have 1000 labeled examples and you want to choose between two model architectures. You set aside 100 examples as a validation set and train each model on the remaining 900. Model A gets 84% validation accuracy. Model B gets 81%. You pick Model A. But here is the uncomfortable truth: with only 100 validation examples, the standard error of each accuracy estimate is about $\sqrt{0.">
 <meta property="og:title" content="Cross-Validation">
 <meta property="og:description" content="Prerequisites:
@@ -23,37 +23,37 @@
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Cross-Validation</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Cross-Validation</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Jun 1, 2024
 </div>
@@ -62,12 +62,12 @@ Jun 1, 2024
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/train-val-test-splits/ target=_blank rel="noopener noreferrer">Train, Val, & Test Splits</a>
+<li><a href="/posts/train-val-test-splits/" target="_blank" rel="noopener noreferrer">Train, Val, & Test Splits</a>
 </li>
-<li><a href=/posts/bias-variance-overfitting/ target=_blank rel="noopener noreferrer">Bias, Variance, & Overfitting</a>
+<li><a href="/posts/bias-variance-overfitting/" target="_blank" rel="noopener noreferrer">Bias, Variance, & Overfitting</a>
 </li>
 </ul>
 <hr>
@@ -75,7 +75,7 @@ Jun 1, 2024
 <p>The fundamental problem is that a single holdout validation set gives a noisy estimate of a model&rsquo;s true performance. The estimate depends heavily on which examples happened to end up in the validation set. If those 100 examples are unusually easy or unusually hard, the estimate is biased in that direction. With limited data, you cannot afford to dedicate a large chunk exclusively to validation - but a small validation set gives unreliable estimates. This tension is the problem that cross-validation resolves.</p>
 <p>The key idea is to use all of the data for both training and validation, just not at the same time. Instead of committing to one fixed split, you perform multiple splits and average the results. Each example gets to be in the validation set exactly once. The resulting estimate is lower variance than any single split and makes efficient use of every labeled example you have.</p>
 <hr>
-<h2 id=k-fold-cross-validation>K-Fold Cross-Validation</h2>
+<h2 id="k-fold-cross-validation">K-Fold Cross-Validation</h2>
 <p><strong>K-fold CV</strong> works as follows. Partition the training data randomly into $K$ equal-sized subsets called folds. For each fold $k = 1, \ldots, K$:</p>
 <ol>
 <li>Train the model on all folds except fold $k$ (so on $(K-1)/K$ of the data).</li>
@@ -87,14 +87,14 @@ Jun 1, 2024
 <p>Every example appears in the validation set exactly once and in the training set $K-1$ times. No data is wasted. The estimate of model performance is an average over $K$ different data splits, which substantially reduces variance compared to a single split.</p>
 <p><strong>A concrete example with $K=5$.</strong> With 1000 examples and $K=5$, each fold contains 200 examples. You train 5 models, each on 800 examples, each validated on a different set of 200. Each model sees 80% of the data for training. The five validation scores are averaged. If the scores are 83%, 86%, 82%, 85%, 84%, the CV estimate is 84% with a standard error of roughly $\sigma / \sqrt{5}$ where $\sigma$ is the standard deviation of the fold scores - in this case about $1.6% / \sqrt{5} \approx 0.7%$. Far more informative than a single 200-example holdout.</p>
 <hr>
-<h2 id=the-bias-variance-tradeoff-in-k>The Bias-Variance Tradeoff in K</h2>
+<h2 id="the-bias-variance-tradeoff-in-k">The Bias-Variance Tradeoff in K</h2>
 <p>The choice of $K$ involves a bias-variance tradeoff, just like the rest of machine learning.</p>
 <p><strong>Large $K$ (leave-one-out, $K = n$):</strong> Each training set has $n-1$ examples, almost the same size as the full dataset. The model trained in each fold is nearly identical to a model trained on all the data, so the performance estimate has low bias - it closely reflects how a model trained on the full dataset would perform. However, the $n$ validation scores are each based on a single example and are highly correlated (the $n$ training sets overlap almost entirely). This correlation means averaging them does not reduce variance as much as one might hope. Leave-one-out CV is also computationally expensive: you train $n$ separate models.</p>
 <p><strong>Small $K$ ($K = 2$):</strong> Each training set uses only half the data. A model trained on half the data may perform substantially worse than a model trained on all the data. The CV estimate is now biased downward - it underestimates how well your model will perform when trained on the full training set. On the positive side, the two folds are independent, so the two estimates are less correlated.</p>
 <p><strong>$K = 5$ or $K = 10$</strong> hits a practical sweet spot. The training sets use 80-90% of the data (low bias), and the five or ten folds are reasonably independent (reduced variance). Empirically, $K = 10$ is the most common choice. $K = 5$ is preferred when computational cost is a concern.</p>
 <p>There is a theoretical result (Kohavi 1995) suggesting $K = 10$ often gives better estimates than leave-one-out in practice, because despite the lower bias of LOO, its variance is high enough to outweigh the gain.</p>
 <hr>
-<h2 id=what-cross-validation-is-for>What Cross-Validation Is For</h2>
+<h2 id="what-cross-validation-is-for">What Cross-Validation Is For</h2>
 <p>Cross-validation is a tool for <strong>model selection and hyperparameter tuning</strong>. It is not a substitute for a held-out test set.</p>
 <p>This distinction is critical. Suppose you use 5-fold CV to compare 20 hyperparameter settings and pick the best one. You then report the CV score of the winning configuration as your model&rsquo;s performance. This is wrong. You have selected the hyperparameter that happened to do best on your CV splits. Out of 20 candidates, the winner has some lucky positive bias from the selection process. The reported CV score overestimates how the model will perform in deployment.</p>
 <p>The correct workflow:</p>
@@ -106,12 +106,12 @@ Jun 1, 2024
 </ol>
 <p>Cross-validation tells you which model configuration is best. The test set tells you how good &ldquo;best&rdquo; actually is.</p>
 <hr>
-<h2 id=stratified-k-fold>Stratified K-Fold</h2>
+<h2 id="stratified-k-fold">Stratified K-Fold</h2>
 <p>For classification with imbalanced classes, a random partition into $K$ folds may produce folds with very different class proportions. A fold that happens to contain no positive examples gives a degenerate validation score and can cause numerical issues (e.g., undefined AUC if there are no positives).</p>
 <p><strong>Stratified K-fold</strong> preserves the class proportions in each fold. If the full dataset is 90% negative and 10% positive, each fold is also 90/10. This ensures that each validation estimate is computed on a representative sample of the label distribution, making the CV estimate reliable and stable.</p>
 <p>For regression, stratification can be approximated by binning the target variable and stratifying on the bins.</p>
 <hr>
-<h2 id=time-series-cv-forward-chaining>Time-Series CV: Forward Chaining</h2>
+<h2 id="time-series-cv-forward-chaining">Time-Series CV: Forward Chaining</h2>
 <p>Standard K-fold CV assumes examples are exchangeable - that is, the order doesn&rsquo;t matter. For time-series data, this assumption is violated. Randomly shuffling and splitting a time series means a model is trained on future data and validated on past data, which is temporal leakage.</p>
 <p>The correct approach for time-series is <strong>forward chaining</strong> (also called expanding window or walk-forward validation). The idea is always to train on the past and validate on the future:</p>
 <ul>
@@ -123,7 +123,7 @@ Jun 1, 2024
 <p>Each subsequent training set is strictly in the past relative to its validation set. No temporal leakage. The average performance across folds estimates how the model performs when deployed to predict a future period it hasn&rsquo;t seen.</p>
 <p>An alternative is a <strong>sliding window</strong>: use a fixed-size training window instead of an ever-expanding one. This is appropriate when older data is less relevant (e.g., fashion trends from 10 years ago may not be informative today).</p>
 <hr>
-<h2 id=nested-cross-validation>Nested Cross-Validation</h2>
+<h2 id="nested-cross-validation">Nested Cross-Validation</h2>
 <p>Here is a subtle problem. Suppose you use 10-fold CV to tune hyperparameters and pick the best configuration. You then report the CV score of that best configuration. As noted above, this is optimistically biased because the hyperparameter selection used the same CV splits that generated the reported score.</p>
 <p><strong>Nested cross-validation</strong> separates these two concerns by using two loops:</p>
 <p><strong>Outer loop</strong> (for performance estimation): Split data into $K_\text{out}$ folds. For each outer fold, hold out one fold as the outer validation set. On the remaining data, run the inner loop.</p>
@@ -131,12 +131,12 @@ Jun 1, 2024
 <p>After all outer folds complete, average the outer validation scores. This is an unbiased estimate of performance of the model selection procedure, not of any single model.</p>
 <p>Nested CV is expensive - it trains $K_\text{out} \times K_\text{in} \times H$ models, where $H$ is the number of hyperparameter settings. It is most useful when data is scarce and you need both a reliable performance estimate and principled hyperparameter selection. In practice, with large datasets, a simple train/val/test split is sufficient and nested CV is unnecessary.</p>
 <hr>
-<h2 id=repeated-cross-validation>Repeated Cross-Validation</h2>
+<h2 id="repeated-cross-validation">Repeated Cross-Validation</h2>
 <p>Even K-fold CV has variance from the random choice of how the folds are formed. A different random partition might give a different average score. <strong>Repeated K-fold CV</strong> runs K-fold multiple times, each time with a different random partition of the data, and averages all the results.</p>
 <p>For example, 10 repetitions of 5-fold CV trains $10 \times 5 = 50$ models and averages 50 validation scores. The resulting estimate has substantially lower variance than a single run of 5-fold CV. The tradeoff is computational: 10 times as many model fits.</p>
 <p>Repeated CV is most useful when your dataset is small, each fold estimate is noisy, and you want a stable estimate for comparing two similar models. For large datasets, a single run of K-fold CV is already stable enough.</p>
 <hr>
-<h2 id=computational-cost>Computational Cost</h2>
+<h2 id="computational-cost">Computational Cost</h2>
 <p>K-fold CV costs exactly $K$ times as much as training a single model (assuming each fold takes the same time). For models that are cheap to train (linear regression, shallow trees), this is trivial. For large neural networks, K-fold CV may be prohibitive: training a large language model 10 times is not feasible.</p>
 <p>In practice, the computational budget determines which CV strategy is viable:</p>
 <table>
@@ -167,7 +167,7 @@ Jun 1, 2024
 </table>
 <p>For neural networks, a common compromise is to use a single validation set but report the average over multiple independent runs with different random seeds - this captures some of the variance that K-fold CV would reveal, at lower cost.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -225,18 +225,18 @@ Jun 1, 2024
 </table>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/decision-trees/ target=_blank rel="noopener noreferrer">Decision Trees</a>
+<li><a href="/posts/decision-trees/" target="_blank" rel="noopener noreferrer">Decision Trees</a>
 </li>
-<li><a href=/posts/bias-variance-overfitting/ target=_blank rel="noopener noreferrer">Bias, Variance, & Overfitting</a>
+<li><a href="/posts/bias-variance-overfitting/" target="_blank" rel="noopener noreferrer">Bias, Variance, & Overfitting</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

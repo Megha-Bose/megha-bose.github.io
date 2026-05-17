@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>BatchNorm, LayerNorm & Normalization // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="BatchNorm, LayerNorm & Normalization">
-<meta name=twitter:description content="Prerequisites:
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="BatchNorm, LayerNorm & Normalization">
+<meta name="twitter:description" content="Prerequisites:
  Bias, Variance & Overfitting  Gradients & Partial Derivatives    In 2014, training a 20-layer neural network was a research achievement. You needed hand-tuned learning rates, carefully chosen weight initialization schemes, and even then, training could take months and fail unpredictably. Batch normalization, introduced by Ioffe and Szegedy in 2015, changed that almost overnight. Networks that previously could not be trained converged in days. Learning rates that would have caused gradient explosions became stable.">
 <meta property="og:title" content="BatchNorm, LayerNorm & Normalization">
 <meta property="og:description" content="Prerequisites:
@@ -23,37 +23,37 @@
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>BatchNorm, LayerNorm & Normalization</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">BatchNorm, LayerNorm & Normalization</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Mar 6, 2022
 </div>
@@ -62,19 +62,19 @@ Mar 6, 2022
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p><strong>Prerequisites:</strong></p>
 <ul>
-<li><a href=/posts/bias-variance-overfitting/ target=_blank rel="noopener noreferrer">Bias, Variance & Overfitting</a>
+<li><a href="/posts/bias-variance-overfitting/" target="_blank" rel="noopener noreferrer">Bias, Variance & Overfitting</a>
 </li>
-<li><a href=/posts/gradients-partial-derivatives/ target=_blank rel="noopener noreferrer">Gradients & Partial Derivatives</a>
+<li><a href="/posts/gradients-partial-derivatives/" target="_blank" rel="noopener noreferrer">Gradients & Partial Derivatives</a>
 </li>
 </ul>
 <hr>
 <p>In 2014, training a 20-layer neural network was a research achievement. You needed hand-tuned learning rates, carefully chosen weight initialization schemes, and even then, training could take months and fail unpredictably. Batch normalization, introduced by Ioffe and Szegedy in 2015, changed that almost overnight. Networks that previously could not be trained converged in days. Learning rates that would have caused gradient explosions became stable. Batch normalization was not a small improvement - it made a qualitatively different class of models trainable.</p>
 <p>LayerNorm came shortly after, solving the specific problems batch normalization introduced for sequential models. Between them, these two techniques underlie essentially every modern deep learning system you will encounter.</p>
 <hr>
-<h2 id=the-problem-internal-covariate-shift>The Problem: Internal Covariate Shift</h2>
+<h2 id="the-problem-internal-covariate-shift">The Problem: Internal Covariate Shift</h2>
 <p>To understand why normalization helps, you first need to understand what makes deep networks hard to train.</p>
 <p>Consider a 10-layer network. Each layer takes input from the previous layer, applies weights, and passes the result forward. Now start training: the optimizer updates the weights in layers 1 through 9. But each update to layer $k$ changes the distribution of activations that layer $k+1$ receives as input. Layer 5&rsquo;s job today is not the same as layer 5&rsquo;s job tomorrow, because layers 1-4 have changed.</p>
 <p>This phenomenon is called <strong>internal covariate shift</strong>. Each layer must continuously re-adapt to a moving target distribution. The deeper the network, the worse this gets: small changes in early layers produce compounding distributional shifts in later layers. Training becomes slow and unstable.</p>
@@ -83,7 +83,7 @@ Mar 6, 2022
 <p><strong>Small learning rates:</strong> With well-initialized weights, a small learning rate ensures each update is small enough that later layers can adapt. But small learning rates mean slow training - you need many more gradient steps to converge.</p>
 <p>Both tools address the symptom (unstable activations) rather than the cause (the absence of any mechanism to stabilize distributions during training). Batch normalization addresses the cause directly.</p>
 <hr>
-<h2 id=batch-normalization>Batch Normalization</h2>
+<h2 id="batch-normalization">Batch Normalization</h2>
 <p>The idea: after each layer&rsquo;s linear transformation, normalize the activations so that they have zero mean and unit variance. Do this within each mini-batch.</p>
 <p>Formally: consider a mini-batch of $B$ samples, and a specific feature (neuron) $j$ in some layer. The batch statistics for this feature are:</p>
 <p>$$\mu_j = \frac{1}{B}\sum_{i=1}^{B} x_{ij}, \qquad \sigma_j^2 = \frac{1}{B}\sum_{i=1}^{B}(x_{ij} - \mu_j)^2.$$</p>
@@ -94,11 +94,11 @@ Mar 6, 2022
 <p>$$y_{ij} = \gamma_j \hat{x}_{ij} + \beta_j.$$</p>
 <p>The parameters $\gamma_j$ (scale) and $\beta_j$ (shift) are learned jointly with the rest of the network by backpropagation. This step is critical. Without it, batch normalization would force every layer&rsquo;s output to have mean 0 and variance 1, which could be actively harmful - the network cannot learn to use a different scale or mean even when that would improve performance. The learnable parameters give the network the option to undo the normalization entirely (by setting $\gamma_j = \sigma_j$, $\beta_j = \mu_j$), or to use any other scale and shift it finds useful.</p>
 <p>The full batch normalization layer applies this procedure to every feature independently.</p>
-<h3 id=at-inference>At Inference</h3>
+<h3 id="at-inference">At Inference</h3>
 <p>During training, the mean and variance are computed from the current mini-batch. At inference, you typically have a single example (or a batch with a different size), so you can&rsquo;t use batch statistics. Instead, batch normalization maintains <strong>running statistics</strong>: an exponential moving average of the batch means and variances accumulated during training. At inference, these running statistics are used in place of batch statistics.</p>
 <p>This is the correct approach, but it introduces a subtle distinction between training and inference behavior that can cause bugs if you forget to set the model to eval mode.</p>
 <hr>
-<h2 id=why-batchnorm-helps>Why BatchNorm Helps</h2>
+<h2 id="why-batchnorm-helps">Why BatchNorm Helps</h2>
 <p>The intuition is that by normalizing activations, you are standardizing the input distribution to each layer. Layer 5 always receives activations with approximately the same mean and variance, regardless of what layers 1-4 are doing. This is the reduction in internal covariate shift that Ioffe and Szegedy originally described.</p>
 <p>But the benefits go further:</p>
 <p><strong>Reduced sensitivity to initialization.</strong> With batch normalization, the exact choice of weight initialization matters much less. The normalization step counteracts poorly scaled initial activations, so training is stable even with less-careful initialization.</p>
@@ -109,7 +109,7 @@ Mar 6, 2022
 <p><strong>Discomfort check.</strong> Why does normalization help theoretically? The original explanation was internal covariate shift, and that is still a useful intuition. But Santurkar et al. showed that removing internal covariate shift was neither necessary nor sufficient for the improvement - you could reintroduce covariate shift after batch normalization and still get the training benefits. The actual mechanism involves the loss landscape becoming smoother in a precise mathematical sense (better Lipschitz constants for the gradient), which allows larger learning rates and more stable optimization. This was discovered empirically, and the theory followed the observation. Many of the most important techniques in deep learning were found this way.</p>
 </blockquote>
 <hr>
-<h2 id=problems-with-batch-normalization>Problems with Batch Normalization</h2>
+<h2 id="problems-with-batch-normalization">Problems with Batch Normalization</h2>
 <p>Batch normalization is powerful but has real limitations.</p>
 <p><strong>Batch size dependence.</strong> The statistics $\mu_j$ and $\sigma_j^2$ are estimated from a mini-batch. With batch size 1, this collapses: the mean is just the single value, and the variance is zero. With batch size 2, the estimates are unreliable. Batch normalization requires moderately large batches (typically $\geq 16$, preferably $\geq 32$) to work well.</p>
 <p><strong>Train-inference discrepancy.</strong> Batch statistics during training and running statistics during inference are different quantities. If the running statistics are poorly estimated (e.g., due to non-stationary training data), inference behavior diverges from training behavior. This is a source of subtle, hard-to-debug failures.</p>
@@ -117,7 +117,7 @@ Mar 6, 2022
 <p><strong>Online learning and very small datasets.</strong> If you are processing one example at a time (online learning), or if your dataset is so small that you can&rsquo;t form meaningful batches, batch normalization doesn&rsquo;t work.</p>
 <p>These limitations directly motivated layer normalization.</p>
 <hr>
-<h2 id=layer-normalization>Layer Normalization</h2>
+<h2 id="layer-normalization">Layer Normalization</h2>
 <p>Layer normalization (Ba et al. 2016) makes a different normalization choice: instead of normalizing across the batch for each feature, normalize across features within each sample.</p>
 <p>For a single sample $x \in \mathbb{R}^d$ (e.g., a single layer&rsquo;s activation vector), compute:</p>
 <p>$$\mu = \frac{1}{d}\sum_{j=1}^{d} x_j, \qquad \sigma^2 = \frac{1}{d}\sum_{j=1}^{d}(x_j - \mu)^2.$$</p>
@@ -134,13 +134,13 @@ Mar 6, 2022
 <p>Layer normalization is the standard normalization in transformers. Every modern large language model - GPT, BERT, Llama, and their successors - uses layer normalization, not batch normalization.</p>
 <p>The cost: for convolutional networks on images, batch normalization is typically better. Layer normalization normalizes across feature channels, which can discard spatial information that batch normalization preserves.</p>
 <hr>
-<h2 id=rmsnorm>RMSNorm</h2>
+<h2 id="rmsnorm">RMSNorm</h2>
 <p>RMSNorm is a simplified variant of layer normalization that omits mean centering entirely. Instead of normalizing by the standard deviation, normalize by the root-mean-square:</p>
 <p>$$\hat{x}<em>j = \frac{x_j}{\sqrt{\frac{1}{d}\sum</em>{k=1}^{d} x_k^2 + \varepsilon}}.$$</p>
 <p>Then apply a learnable scale $\gamma_j$ (no bias term).</p>
 <p>Why drop the mean centering? Empirically, it often doesn&rsquo;t hurt performance, and it reduces compute and memory. It&rsquo;s also slightly simpler to implement correctly. RMSNorm is used in Llama, PaLM, and many other recent models. As the field moves toward extreme computational efficiency, simpler normalization schemes become attractive.</p>
 <hr>
-<h2 id=training-stability-techniques-logit-softcapping-z-loss-qk-norm>Training Stability Techniques: Logit Softcapping, Z-Loss, QK-Norm</h2>
+<h2 id="training-stability-techniques-logit-softcapping-z-loss-qk-norm">Training Stability Techniques: Logit Softcapping, Z-Loss, QK-Norm</h2>
 <p>At frontier scale, attention logits and output logits can grow unboundedly during training, causing loss spikes and instability. Three techniques address this at different points in the forward pass.</p>
 <p><strong>Z-loss.</strong> Add a regularization term to the standard cross-entropy loss that penalizes large logit magnitudes:</p>
 <p>$$\mathcal{L}_{\text{z}} = \alpha \cdot \mathbb{E}!\left[\log^2 Z\right]$$</p>
@@ -154,7 +154,7 @@ Mar 6, 2022
 <p>By normalising $Q$ and $K$, the dot product $QK^T$ is bounded, preventing attention logit explosion without any additional loss term or forward-pass modification. The drawback: LayerNorm strips the magnitude from $Q$ and $K$, which carries useful information (a large magnitude indicates high confidence). For long-context tasks, QK-norm has been found to hurt performance by de-emphasising relevant tokens - the normalisation removes exactly the signal that distinguishes attended-to from ignored positions.</p>
 <p><strong>Which to use.</strong> Logit softcapping (Gemma-style) is currently the most widely adopted in frontier models - it is effective, adds no loss term overhead, and is well-understood. Z-loss is a simpler alternative with less forward-pass modification. QK-norm is an option if you want bounded attention without modifying the loss or forward pass, but avoid it for long-context tasks.</p>
 <hr>
-<h2 id=pre-norm-vs-post-norm>Pre-Norm vs. Post-Norm</h2>
+<h2 id="pre-norm-vs-post-norm">Pre-Norm vs. Post-Norm</h2>
 <p>Where you apply normalization in the network architecture matters.</p>
 <p>The original transformer (Vaswani et al. 2017) used <strong>post-norm</strong>: apply layer normalization after the residual addition.</p>
 <p>$$x \to \text{LayerNorm}(x + \text{Sublayer}(x)).$$</p>
@@ -163,12 +163,12 @@ Mar 6, 2022
 <p>$$x \to x + \text{Sublayer}(\text{LayerNorm}(x)).$$</p>
 <p>Pre-norm has become the standard in modern architectures (GPT-2 and later) because it produces more stable gradients during training for very deep networks. The intuition: in post-norm, gradients flow through the normalization on every backward pass, which can distort them. In pre-norm, the residual stream is unnormalized, giving gradients a direct path through the network.</p>
 <hr>
-<h2 id=group-norm-and-instance-norm>Group Norm and Instance Norm</h2>
+<h2 id="group-norm-and-instance-norm">Group Norm and Instance Norm</h2>
 <p>For completeness: there are other normalization variants for specific use cases.</p>
 <p><strong>Group normalization</strong> (Wu & He 2018) divides channels into groups and normalizes within each group. It is independent of batch size (like layer norm) but preserves more spatial structure than layer norm (useful for image models). It works well for object detection and segmentation tasks where batch sizes must be small due to memory constraints.</p>
 <p><strong>Instance normalization</strong> normalizes each sample&rsquo;s each channel independently. It is used in style transfer networks, where removing instance-specific statistics helps transfer artistic styles between images.</p>
 <hr>
-<h2 id=connection-to-transformer-architecture>Connection to Transformer Architecture</h2>
+<h2 id="connection-to-transformer-architecture">Connection to Transformer Architecture</h2>
 <p>Every modern transformer uses either layer normalization or RMSNorm. Understanding normalization is not optional for reading the architecture literature.</p>
 <p>The standard transformer block looks like this with pre-norm:</p>
 <p>$$x' = x + \text{Attention}(\text{LayerNorm}(x)),$$
@@ -176,7 +176,7 @@ $$x'' = x' + \text{FFN}(\text{LayerNorm}(x')).$$</p>
 <p>The layer norms ensure that the inputs to attention and feedforward layers are well-scaled, regardless of how large the residual stream activations have grown. Without normalization, the residual additions would cause activations to grow without bound through the depth of the network.</p>
 <p>Training a 100-layer transformer without normalization is essentially impossible with standard optimizers. With pre-norm layer normalization, it is routine.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -229,16 +229,16 @@ $$x'' = x' + \text{FFN}(\text{LayerNorm}(x')).$$</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/word-embeddings/ target=_blank rel="noopener noreferrer">Word Embeddings</a>
+<li><a href="/posts/word-embeddings/" target="_blank" rel="noopener noreferrer">Word Embeddings</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

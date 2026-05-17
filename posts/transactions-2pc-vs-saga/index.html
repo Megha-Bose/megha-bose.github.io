@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Transactions: 2PC vs Saga // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Transactions: 2PC vs Saga">
-<meta name=twitter:description content="A bank transfer sounds simple: debit $500 from Account A, credit $500 to Account B. Two operations. What if the server crashes between them?
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Transactions: 2PC vs Saga">
+<meta name="twitter:description" content="A bank transfer sounds simple: debit $500 from Account A, credit $500 to Account B. Two operations. What if the server crashes between them?
 Without any protection, you&rsquo;ve just destroyed $500. Account A is down $500; Account B received nothing. The money vanished into an inconsistent state that no business rule anticipated and no error handler can easily fix.
 This problem is not hypothetical. It&rsquo;s the first question anyone building a financial system confronts, and the answer - transactions - is one of the most consequential abstractions in computing.">
 <meta property="og:title" content="Transactions: 2PC vs Saga">
@@ -25,37 +25,37 @@ This problem is not hypothetical. It&rsquo;s the first question anyone building 
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Transactions: 2PC vs Saga</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Transactions: 2PC vs Saga</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Sep 15, 2024
 </div>
@@ -64,47 +64,47 @@ Sep 15, 2024
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <p>A bank transfer sounds simple: debit $500 from Account A, credit $500 to Account B. Two operations. What if the server crashes between them?</p>
 <p>Without any protection, you&rsquo;ve just destroyed $500. Account A is down $500; Account B received nothing. The money vanished into an inconsistent state that no business rule anticipated and no error handler can easily fix.</p>
 <p>This problem is not hypothetical. It&rsquo;s the first question anyone building a financial system confronts, and the answer - transactions - is one of the most consequential abstractions in computing. But what happens when Account A and Account B live in different databases, run by different services, in different data centers?</p>
-<h2 id=acid-not-just-an-acronym>ACID: Not Just an Acronym</h2>
+<h2 id="acid-not-just-an-acronym">ACID: Not Just an Acronym</h2>
 <p>ACID (Atomicity, Consistency, Isolation, Durability) is the set of guarantees a database transaction must provide. Each property addresses a specific failure mode:</p>
 <p><strong>Atomicity</strong> means the transaction is all-or-nothing. If you debit Account A and then the server crashes before crediting Account B, the debit is rolled back. The database returns to its pre-transaction state, as if nothing happened. The mechanism is the write-ahead log (WAL): before modifying any data, the database writes what it&rsquo;s about to do to a durable log. On crash recovery, the database replays committed transactions from the log and rolls back uncommitted ones.</p>
 <p><strong>Consistency</strong> means transactions take the database from one valid state to another valid state. If a constraint says <code>balance >= 0</code>, no transaction can leave a negative balance - the transaction is rejected rather than committed. Consistency is partially enforced by the database (constraints, foreign keys, triggers) and partially by the application (business rules that the database doesn&rsquo;t know about).</p>
 <p><strong>Isolation</strong> means concurrent transactions behave as if they ran serially. If two transactions both try to withdraw from the same account simultaneously, neither should see the intermediate state of the other. In practice, perfect isolation is expensive, so databases offer configurable isolation levels - a spectrum from &ldquo;fast but buggy&rdquo; to &ldquo;correct but slow.&rdquo;</p>
 <p><strong>Durability</strong> means once a transaction commits, the data survives any subsequent failure. The database has flushed the commit record to durable storage (disk, not just memory) before acknowledging the commit. This is why databases are slow to acknowledge writes under high load - they&rsquo;re waiting for fsync.</p>
-<h2 id=isolation-levels-the-correctness-performance-tradeoff>Isolation Levels: The Correctness-Performance Tradeoff</h2>
+<h2 id="isolation-levels-the-correctness-performance-tradeoff">Isolation Levels: The Correctness-Performance Tradeoff</h2>
 <p>Full serializability is expensive because it requires locking or conflict detection across all concurrent transactions. Databases offer weaker levels that allow specific anomalies in exchange for higher throughput.</p>
 <p><strong>Read Committed</strong> (PostgreSQL default): a query sees only committed data at the moment each row is read. Two reads of the same row within one transaction may see different values if another transaction committed between them. This is called a non-repeatable read.</p>
 <p><strong>Repeatable Read</strong> (MySQL InnoDB default): a transaction sees a consistent snapshot of the database as of its start time. Reads within the transaction always return the same data, regardless of concurrent commits. However, the transaction may see new rows appearing that match a range query if another transaction inserts them - a phantom read.</p>
 <p><strong>Serializable</strong>: transactions execute as if they ran one at a time in some serial order. No anomalies. PostgreSQL implements this with Serializable Snapshot Isolation (SSI), which detects dangerous read-write conflicts between concurrent transactions and aborts one of them. Applications must retry aborted transactions.</p>
 <p>A concrete anomaly that bites real systems: <strong>lost update</strong>. Two sessions read an account balance (100), both compute new balance (100 + deposit), both write back. The first write is overwritten by the second. Both transactions committed, but one update was silently lost. Repeatable Read prevents this in PostgreSQL (it detects the write conflict). Read Committed does not.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#75715e>-- Session 1                    -- Session 2
-</span><span style=color:#75715e></span><span style=color:#66d9ef>BEGIN</span>;                           <span style=color:#66d9ef>BEGIN</span>;
-<span style=color:#66d9ef>SELECT</span> balance <span style=color:#66d9ef>FROM</span> accounts     <span style=color:#66d9ef>SELECT</span> balance <span style=color:#66d9ef>FROM</span> accounts
-<span style=color:#66d9ef>WHERE</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>42</span>; <span style=color:#75715e>-- returns 100    WHERE id = 42; -- returns 100
-</span><span style=color:#75715e></span>
-<span style=color:#66d9ef>UPDATE</span> accounts <span style=color:#66d9ef>SET</span> balance <span style=color:#f92672>=</span> <span style=color:#ae81ff>150</span> <span style=color:#66d9ef>WHERE</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>42</span>;
-<span style=color:#66d9ef>COMMIT</span>;
-                                 <span style=color:#75715e>-- Under Read Committed, Session 2
-</span><span style=color:#75715e></span>                                 <span style=color:#75715e>-- doesn&#39;t know Session 1 committed
-</span><span style=color:#75715e></span>                                 <span style=color:#66d9ef>UPDATE</span> accounts <span style=color:#66d9ef>SET</span> balance <span style=color:#f92672>=</span> <span style=color:#ae81ff>130</span> <span style=color:#66d9ef>WHERE</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>42</span>;
-                                 <span style=color:#66d9ef>COMMIT</span>; <span style=color:#75715e>-- Session 1&#39;s update is lost
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Session 1                    -- Session 2
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">BEGIN</span>;                           <span style="color:#66d9ef">BEGIN</span>;
+<span style="color:#66d9ef">SELECT</span> balance <span style="color:#66d9ef">FROM</span> accounts     <span style="color:#66d9ef">SELECT</span> balance <span style="color:#66d9ef">FROM</span> accounts
+<span style="color:#66d9ef">WHERE</span> id <span style="color:#f92672">=</span> <span style="color:#ae81ff">42</span>; <span style="color:#75715e">-- returns 100    WHERE id = 42; -- returns 100
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">UPDATE</span> accounts <span style="color:#66d9ef">SET</span> balance <span style="color:#f92672">=</span> <span style="color:#ae81ff">150</span> <span style="color:#66d9ef">WHERE</span> id <span style="color:#f92672">=</span> <span style="color:#ae81ff">42</span>;
+<span style="color:#66d9ef">COMMIT</span>;
+                                 <span style="color:#75715e">-- Under Read Committed, Session 2
+</span><span style="color:#75715e"></span>                                 <span style="color:#75715e">-- doesn&#39;t know Session 1 committed
+</span><span style="color:#75715e"></span>                                 <span style="color:#66d9ef">UPDATE</span> accounts <span style="color:#66d9ef">SET</span> balance <span style="color:#f92672">=</span> <span style="color:#ae81ff">130</span> <span style="color:#66d9ef">WHERE</span> id <span style="color:#f92672">=</span> <span style="color:#ae81ff">42</span>;
+                                 <span style="color:#66d9ef">COMMIT</span>; <span style="color:#75715e">-- Session 1&#39;s update is lost
 </span></code></pre></div><p>Under Repeatable Read in PostgreSQL, Session 2&rsquo;s UPDATE would fail with &ldquo;could not serialize access due to concurrent update&rdquo; - the application retries and reads the correct value of 150.</p>
-<h2 id=optimistic-vs-pessimistic-locking>Optimistic vs Pessimistic Locking</h2>
+<h2 id="optimistic-vs-pessimistic-locking">Optimistic vs Pessimistic Locking</h2>
 <p><strong>Pessimistic locking</strong> (<code>SELECT ... FOR UPDATE</code>) acquires a row-level lock at read time. No other transaction can modify the locked rows until the current transaction commits or rolls back. Safe against concurrent modifications but reduces throughput and risks deadlock.</p>
 <p><strong>Optimistic locking</strong> skips the lock and instead validates at commit time. The common implementation uses a version column:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#75715e>-- Read the current version
-</span><span style=color:#75715e></span><span style=color:#66d9ef>SELECT</span> balance, <span style=color:#66d9ef>version</span> <span style=color:#66d9ef>FROM</span> accounts <span style=color:#66d9ef>WHERE</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>42</span>;
-<span style=color:#75715e>-- balance=100, version=7
-</span><span style=color:#75715e></span>
-<span style=color:#75715e>-- Update only if version hasn&#39;t changed
-</span><span style=color:#75715e></span><span style=color:#66d9ef>UPDATE</span> accounts <span style=color:#66d9ef>SET</span> balance <span style=color:#f92672>=</span> <span style=color:#ae81ff>150</span>, <span style=color:#66d9ef>version</span> <span style=color:#f92672>=</span> <span style=color:#ae81ff>8</span>
-<span style=color:#66d9ef>WHERE</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>42</span> <span style=color:#66d9ef>AND</span> <span style=color:#66d9ef>version</span> <span style=color:#f92672>=</span> <span style=color:#ae81ff>7</span>;
-<span style=color:#75715e>-- If 0 rows updated, another transaction already modified this row - retry
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Read the current version
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> balance, <span style="color:#66d9ef">version</span> <span style="color:#66d9ef">FROM</span> accounts <span style="color:#66d9ef">WHERE</span> id <span style="color:#f92672">=</span> <span style="color:#ae81ff">42</span>;
+<span style="color:#75715e">-- balance=100, version=7
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">-- Update only if version hasn&#39;t changed
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">UPDATE</span> accounts <span style="color:#66d9ef">SET</span> balance <span style="color:#f92672">=</span> <span style="color:#ae81ff">150</span>, <span style="color:#66d9ef">version</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">8</span>
+<span style="color:#66d9ef">WHERE</span> id <span style="color:#f92672">=</span> <span style="color:#ae81ff">42</span> <span style="color:#66d9ef">AND</span> <span style="color:#66d9ef">version</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>;
+<span style="color:#75715e">-- If 0 rows updated, another transaction already modified this row - retry
 </span></code></pre></div><p>Optimistic locking works well when conflicts are rare (most of the time nobody else is modifying the same row). When conflicts are frequent, the retry overhead erases the throughput advantage. For high-contention resources - a shared inventory count, a popularity counter - pessimistic locking or an atomic counter operation is more appropriate.</p>
-<h2 id=the-distributed-transaction-problem>The Distributed Transaction Problem</h2>
+<h2 id="the-distributed-transaction-problem">The Distributed Transaction Problem</h2>
 <p>A single database gives you ACID for free. Distributed systems do not.</p>
 <p>Consider an e-commerce checkout flow across three microservices:</p>
 <ol>
@@ -114,7 +114,7 @@ Sep 15, 2024
 </ol>
 <p>Each service has its own database. If payment fails after inventory is reserved and the order is created, who is responsible for undoing the reservation and cancelling the order? There&rsquo;s no single database to roll back.</p>
 <p>This is the distributed transaction problem, and there are exactly two serious solutions: Two-Phase Commit (strong consistency) and the Saga pattern (eventual consistency).</p>
-<h2 id=two-phase-commit-2pc>Two-Phase Commit (2PC)</h2>
+<h2 id="two-phase-commit-2pc">Two-Phase Commit (2PC)</h2>
 <p>2PC introduces a <strong>coordinator</strong> that orchestrates all participants through two phases:</p>
 <p><strong>Phase 1 - Prepare</strong>: The coordinator sends <code>PREPARE</code> to all participants. Each participant writes the transaction to its durable log (it can commit if asked) and replies <code>READY</code> or <code>ABORT</code>. This vote is durable - the participant is promising that it can commit.</p>
 <p><strong>Phase 2 - Commit or Abort</strong>: If all participants voted <code>READY</code>, the coordinator writes a commit record to its own durable log (this is the point of no return) and sends <code>COMMIT</code> to all participants. If any participant voted <code>ABORT</code>, the coordinator sends <code>ABORT</code> to all. Participants apply or discard their prepared changes accordingly.</p>
@@ -122,7 +122,7 @@ Sep 15, 2024
 <p>The catastrophic problem: <strong>2PC is a blocking protocol</strong>. If the coordinator crashes after sending <code>PREPARE</code> but before sending <code>COMMIT</code>, participants are stuck. They voted <code>READY</code> - they promised to commit - but they can&rsquo;t unilaterally decide whether to commit or abort because they don&rsquo;t know how other participants voted. They must hold locks indefinitely, waiting for the coordinator to recover.</p>
 <p>This is not a theoretical edge case. In a distributed system with hundreds of services, coordinator crashes and network partitions happen regularly. The blocking failure mode - where a crashed coordinator freezes all participants - is why 2PC is described as &ldquo;the protocol that proves distributed transactions are fundamentally hard.&rdquo;</p>
 <p>2PC is implemented as XA transactions in most enterprise databases (PostgreSQL, MySQL, Oracle). It&rsquo;s appropriate when you control all participants, all are databases that support XA, the operation completes in milliseconds, and coordinator failure is truly rare. It&rsquo;s rarely the right choice for cross-service coordination over HTTP in microservices.</p>
-<h2 id=the-saga-pattern>The Saga Pattern</h2>
+<h2 id="the-saga-pattern">The Saga Pattern</h2>
 <p>A Saga breaks a distributed transaction into a sequence of <strong>local transactions</strong>, each within a single service, each individually atomic using that service&rsquo;s local database. If a step fails, previously completed steps are reversed using <strong>compensating transactions</strong>.</p>
 <p>The e-commerce checkout as a Saga:</p>
 <ol>
@@ -134,9 +134,9 @@ Sep 15, 2024
 </ol>
 <p>Compensating transactions are <em>not</em> rollbacks. They&rsquo;re new forward transactions that undo the visible effects of a prior step. An inventory reservation was committed to the database; you can&rsquo;t roll it back. You release it with a new transaction. This distinction matters: compensating transactions must account for the state changes that happened after the original transaction committed.</p>
 <p><strong>Critical requirement</strong>: compensating transactions must be idempotent. The saga orchestrator may crash and retry. If <code>POST /inventory/release/reservation-123</code> is called twice, the second call must succeed without double-releasing. This is usually implemented by checking whether the compensation has already been applied before applying it.</p>
-<h3 id=choreography-decentralized-sagas>Choreography: Decentralized Sagas</h3>
+<h3 id="choreography-decentralized-sagas">Choreography: Decentralized Sagas</h3>
 <p>In choreography, each service reacts to events from the previous step and emits events for the next:</p>
-<pre tabindex=0><code>Order Service emits: OrderCreated
+<pre tabindex="0"><code>Order Service emits: OrderCreated
   → Inventory Service hears it, reserves items, emits: InventoryReserved
   → Payment Service hears it, charges card, emits: PaymentCharged or PaymentFailed
   → If PaymentFailed:
@@ -145,9 +145,9 @@ Sep 15, 2024
 </code></pre><p>No central coordinator. Each service is autonomous. The overall transaction flow is distributed across event handlers.</p>
 <p>Pros: no single point of failure; services are loosely coupled; adding a new step only requires adding a new event listener.<br>
 Cons: the overall flow is implicit - it&rsquo;s invisible in any one service&rsquo;s code. Tracing a distributed flow requires correlating events across multiple services' logs. Testing requires simulating the entire event chain.</p>
-<h3 id=orchestration-centralized-sagas>Orchestration: Centralized Sagas</h3>
+<h3 id="orchestration-centralized-sagas">Orchestration: Centralized Sagas</h3>
 <p>An orchestrator (sometimes called a process manager or saga coordinator) explicitly commands each service and tracks the saga&rsquo;s state:</p>
-<pre tabindex=0><code>Orchestrator persists state: {saga_id: &quot;abc&quot;, step: &quot;reserve_inventory&quot;, status: &quot;in_progress&quot;}
+<pre tabindex="0"><code>Orchestrator persists state: {saga_id: &quot;abc&quot;, step: &quot;reserve_inventory&quot;, status: &quot;in_progress&quot;}
 
 → POST /inventory/reserve {order_id: 123, items: [...]}
 ← 200 OK: {reservation_id: &quot;res-456&quot;}
@@ -165,7 +165,7 @@ Orchestrator updates state: {step: &quot;complete&quot;, outcome: &quot;failed&q
 </code></pre><p>Pros: the flow is explicit and visible in one place; easy to add tracing, monitoring, and retry logic; failure modes are easier to reason about.<br>
 Cons: the orchestrator is a new service to build and operate; it becomes a partial coupling point (it knows about all participants); it&rsquo;s a single point of failure unless itself made reliable.</p>
 <p><strong>AWS Step Functions</strong> is a managed orchestrator. You define state machine transitions in JSON; Step Functions handles persistence, retries, and compensation logic. Lambda functions implement each step. The managed infrastructure removes the need to build and operate the orchestrator yourself - at the cost of AWS lock-in and per-transition pricing.</p>
-<h2 id=2pc-vs-saga-when-to-use-which>2PC vs Saga: When to Use Which</h2>
+<h2 id="2pc-vs-saga-when-to-use-which">2PC vs Saga: When to Use Which</h2>
 <table>
 <thead>
 <tr>
@@ -208,12 +208,12 @@ Cons: the orchestrator is a new service to build and operate; it becomes a parti
 </tbody>
 </table>
 <p>Use 2PC when all participants are databases you control with XA support, the operation is short-lived, and you need true atomicity with no intermediate state visible. Use Saga when the transaction spans independent microservices, involves external APIs (payment processors, email providers) that can&rsquo;t participate in XA, or represents a long-running business process.</p>
-<h2 id=the-critique-sagas-hidden-complexity>The Critique: Saga&rsquo;s Hidden Complexity</h2>
+<h2 id="the-critique-sagas-hidden-complexity">The Critique: Saga&rsquo;s Hidden Complexity</h2>
 <p>Sagas introduce complexity that&rsquo;s easy to underestimate. Compensating transactions are business logic. Deciding how to compensate a failed payment requires understanding business rules: should inventory be released immediately or held in case the customer retries with a different card? Should the order be marked failed or pending-retry? These decisions don&rsquo;t live in a library - they&rsquo;re application code that must be written, tested, and maintained.</p>
 <p>Eventual consistency creates user experience problems. Between the time an order is created and the time payment fails and compensation completes, the user might see an order in &ldquo;processing&rdquo; state. If the saga takes several minutes to compensate (perhaps an external API is slow to respond), the user sees an order that looks active but will eventually be cancelled. Designing UX around eventually consistent state requires careful thought about which states are meaningful to display and when.</p>
 <p>Debugging a failed saga in production is non-trivial. Which step failed? Were compensating transactions applied? Were they idempotent-safe? Distributed tracing (OpenTelemetry, AWS X-Ray) that correlates events across services by saga ID is essentially mandatory for production sagas.</p>
 <p>The idempotency requirement propagates through your entire service: every compensation endpoint must be idempotent, which means every downstream database operation must be idempotent, which often means adding &ldquo;compensation already applied&rdquo; checks everywhere. This is more code, more tests, more surface area for bugs.</p>
-<h2 id=future-outlook>Future Outlook</h2>
+<h2 id="future-outlook">Future Outlook</h2>
 <p><strong>Google Spanner</strong> implements serializable isolation globally using TrueTime - hardware GPS and atomic clocks that provide a globally bounded clock with sub-10ms uncertainty. Spanner waits out the clock uncertainty before committing, ensuring that even in a globally distributed transaction, the commit timestamp is after all events that causally preceded it. This gives Spanner external consistency: if transaction A commits before transaction B starts (according to real time), B sees A&rsquo;s writes. This is stronger than serializable - no distributed system without TrueTime can offer it cheaply.</p>
 <p><strong>CockroachDB</strong> achieves serializable isolation globally without TrueTime, using Hybrid Logical Clocks (HLC) and MVCC. It implements a distributed 2PC-like protocol but with a consensus layer (Raft) per partition that eliminates the blocking coordinator failure mode. CockroachDB can survive the loss of any single node without stalling transactions.</p>
 <p>The long arc here is: distributed transactions are genuinely hard, 2PC is too fragile for most distributed systems, Saga is operationally complex, and NewSQL databases (Spanner, CockroachDB) are attempting to provide ACID across distributed nodes so application developers don&rsquo;t have to implement Sagas at all. As these systems mature and become more widely available, the choice between 2PC and Saga may become less relevant - replaced by &ldquo;use a database that handles it.&rdquo;</p>
@@ -287,16 +287,16 @@ Cons: the orchestrator is a new service to build and operate; it becomes a parti
 <hr>
 <p><strong>Read Next:</strong></p>
 <ul>
-<li><a href=/posts/consistency-cap-theorem/ target=_blank rel="noopener noreferrer">Consistency & the CAP Theorem</a>
+<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency & the CAP Theorem</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

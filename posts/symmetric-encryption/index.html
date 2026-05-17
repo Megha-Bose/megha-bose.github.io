@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Symmetric Encryption: CPA, CCA, and Modes of Operation // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Symmetric Encryption: CPA, CCA, and Modes of Operation">
-<meta name=twitter:description content="Prerequisites: Computational Cryptography A pseudorandom generator gives us a long pseudorandom string from a short key - which can be XOR&rsquo;d with a message like a one-time pad. But that only works for messages shorter than the keystream, and it cannot encrypt two messages under the same key (reuse breaks XOR-security). A block cipher processes fixed-length blocks and can be run in various modes to handle arbitrary messages. But the choice of mode matters enormously: the same block cipher used in different modes has wildly different security properties.">
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Symmetric Encryption: CPA, CCA, and Modes of Operation">
+<meta name="twitter:description" content="Prerequisites: Computational Cryptography A pseudorandom generator gives us a long pseudorandom string from a short key - which can be XOR&rsquo;d with a message like a one-time pad. But that only works for messages shorter than the keystream, and it cannot encrypt two messages under the same key (reuse breaks XOR-security). A block cipher processes fixed-length blocks and can be run in various modes to handle arbitrary messages. But the choice of mode matters enormously: the same block cipher used in different modes has wildly different security properties.">
 <meta property="og:title" content="Symmetric Encryption: CPA, CCA, and Modes of Operation">
 <meta property="og:description" content="Prerequisites: Computational Cryptography A pseudorandom generator gives us a long pseudorandom string from a short key - which can be XOR&rsquo;d with a message like a one-time pad. But that only works for messages shorter than the keystream, and it cannot encrypt two messages under the same key (reuse breaks XOR-security). A block cipher processes fixed-length blocks and can be run in various modes to handle arbitrary messages. But the choice of mode matters enormously: the same block cipher used in different modes has wildly different security properties.">
 <meta property="og:type" content="article">
@@ -21,37 +21,37 @@
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Symmetric Encryption: CPA, CCA, and Modes of Operation</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Symmetric Encryption: CPA, CCA, and Modes of Operation</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Jul 10, 2024
 </div>
@@ -60,14 +60,14 @@ Jul 10, 2024
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <hr>
-<p>Prerequisites: <a href=/posts/computational-cryptography/ target=_blank rel="noopener noreferrer">Computational Cryptography</a>
+<p>Prerequisites: <a href="/posts/computational-cryptography/" target="_blank" rel="noopener noreferrer">Computational Cryptography</a>
 </p>
 <p>A pseudorandom generator gives us a long pseudorandom string from a short key - which can be XOR&rsquo;d with a message like a one-time pad. But that only works for messages shorter than the keystream, and it cannot encrypt two messages under the same key (reuse breaks XOR-security). A block cipher processes fixed-length blocks and can be run in various modes to handle arbitrary messages. But the choice of mode matters enormously: the same block cipher used in different modes has wildly different security properties.</p>
 <p>This post builds the precise security definitions and traces the path from eavesdropper security to chosen-plaintext security to chosen-ciphertext security, explaining why each upgrade was needed. The definitions are not just bureaucratic formalism - each one was introduced because the previous one was shown to be insufficient for real-world adversaries who can do more than passively observe. Understanding what breaks at each level tells you exactly what property the next definition is buying.</p>
 <hr>
-<h2 id=eavesdropper-security-eav>Eavesdropper Security (EAV)</h2>
+<h2 id="eavesdropper-security-eav">Eavesdropper Security (EAV)</h2>
 <p>The weakest security definition asks: can an eavesdropper learn anything about the message from the ciphertext?</p>
 <p><strong>Definition (EAV security / semantic security).</strong> A private-key encryption scheme is EAV-secure if for all PPT adversaries $A$, the advantage in the following experiment is negligible:</p>
 <ol>
@@ -79,7 +79,7 @@ Jul 10, 2024
 <p>EAV security is equivalent to semantic security: no PPT adversary can compute any partial information about the message from the ciphertext.</p>
 <p><strong>Stream ciphers.</strong> A stream cipher uses a PRG $G: {0,1}^n \to {0,1}^{\ell}$ to produce a pseudorandom stream: $\text{Enc}_k(m) = G(k) \oplus m$. This is EAV-secure - the output of $G$ is computationally indistinguishable from a one-time pad. But it fails badly under the next definition.</p>
 <hr>
-<h2 id=cpa-attack-on-deterministic-encryption>CPA Attack on Deterministic Encryption</h2>
+<h2 id="cpa-attack-on-deterministic-encryption">CPA Attack on Deterministic Encryption</h2>
 <p>EAV security assumes the adversary sees only one ciphertext. The moment an adversary can make multiple encryption queries - a realistic model since Alice may send many messages - deterministic encryption breaks.</p>
 <p><strong>CPA (chosen-plaintext attack) experiment:</strong></p>
 <ol>
@@ -91,37 +91,37 @@ Jul 10, 2024
 <p><strong>Claim: any deterministic encryption scheme is CPA-insecure.</strong> $A$ queries $\text{Enc}_k(m_0)$ before the challenge. When it receives $c^<em>$, it checks if $c^</em> = \text{Enc}_k(m_0)$. If yes, $b' = 0$; else $b' = 1$. Determinism means $\text{Enc}_k(m_0)$ is always the same, so this wins with probability 1.</p>
 <p><strong>Fix: randomized encryption.</strong> $\text{Enc}$ must be randomized - using fresh randomness each call. The same message encrypts to different ciphertexts on different calls.</p>
 <hr>
-<h2 id=pseudorandom-functions-and-permutations>Pseudorandom Functions and Permutations</h2>
+<h2 id="pseudorandom-functions-and-permutations">Pseudorandom Functions and Permutations</h2>
 <p><strong>Pseudorandom function (PRF).</strong> A keyed function $F: {0,1}^n \times {0,1}^n \to {0,1}^n$ is a PRF if it is computationally indistinguishable from a truly random function: for all PPT $D$:
 $$|\Pr[D^{F_k(\cdot)}(1^n) = 1] - \Pr[D^{f(\cdot)}(1^n) = 1]| \leq \varepsilon(n)$$
 where $k \leftarrow {0,1}^n$ and $f$ is a uniformly random function. The distinguisher has oracle access but cannot distinguish $F_k$ from a random function.</p>
 <p><strong>Pseudorandom permutation (PRP).</strong> Same as PRF but $F_k$ must be a bijection, and the distinguisher also gets access to an inversion oracle $F_k^{-1}(\cdot)$ in the &ldquo;strong PRP&rdquo; variant. Block ciphers (AES, DES) are modeled as PRPs.</p>
 <p>PRFs exist if OWFs exist (via the Goldreich-Goldwasser-Micali construction). PRPs exist if PRFs exist - Luby-Rackoff: a 3-round Feistel network with PRF round functions gives a PRP.</p>
 <hr>
-<h2 id=modes-of-operation>Modes of Operation</h2>
+<h2 id="modes-of-operation">Modes of Operation</h2>
 <p>A block cipher $F_k: {0,1}^n \to {0,1}^n$ encrypts one $n$-bit block. To encrypt a variable-length message $m = m_1 | m_2 | \cdots | m_\ell$, choose a mode of operation.</p>
-<h3 id=ecb-electronic-codebook---broken>ECB (Electronic Codebook) - Broken</h3>
+<h3 id="ecb-electronic-codebook---broken">ECB (Electronic Codebook) - Broken</h3>
 <p>$c_i = F_k(m_i)$. Each block encrypted independently with the same key.</p>
 <p><strong>Why it fails:</strong> Deterministic. Identical plaintext blocks produce identical ciphertext blocks. The famous ECB penguin: an image encrypted block-by-block in ECB retains its visual structure because pixel blocks with the same values encrypt identically. Never use ECB for more than one block.</p>
-<h3 id=cbc-cipher-block-chaining>CBC (Cipher Block Chaining)</h3>
+<h3 id="cbc-cipher-block-chaining">CBC (Cipher Block Chaining)</h3>
 <p>Choose a random initialization vector $\text{IV} \leftarrow {0,1}^n$.
 $$c_0 = \text{IV}, \quad c_i = F_k(m_i \oplus c_{i-1})$$
 Decryption: $m_i = F_k^{-1}(c_i) \oplus c_{i-1}$.</p>
 <p>The IV must be fresh and uniform for each encryption (it is sent as part of the ciphertext). With a uniform IV, CBC is CPA-secure. The chaining means each block depends on all previous blocks - identical plaintext blocks produce different ciphertext. Weakness: requires sequential processing; IV predictability breaks CPA security.</p>
-<h3 id=ofb-output-feedback>OFB (Output Feedback)</h3>
+<h3 id="ofb-output-feedback">OFB (Output Feedback)</h3>
 <p>$$z_0 = \text{IV}, \quad z_i = F_k(z_{i-1}), \quad c_i = m_i \oplus z_i$$
 The keystream $z_1, z_2, \ldots$ is computed from $F_k$ applied to itself, independently of the message. Encryption reduces to XOR with a pseudorandom stream. This turns the block cipher into a stream cipher. The keystream can be precomputed. Error propagation: a bit flip in $c_i$ corrupts only $m_i$ (unlike CBC where a flip in $c_i$ also scrambles $m_{i+1}$).</p>
-<h3 id=ctr-counter-mode>CTR (Counter Mode)</h3>
+<h3 id="ctr-counter-mode">CTR (Counter Mode)</h3>
 <p>$$c_i = m_i \oplus F_k(\text{IV} | i)$$
 The keystream is $F_k(\text{IV}|1), F_k(\text{IV}|2), \ldots$ - the block cipher applied to a counter. Fully parallelizable (unlike CBC). Standard and widely used (AES-CTR).</p>
 <p>CTR and OFB are CPA-secure. For multi-message security, the IV must be unique (not necessarily random) - no two encryptions under the same key should use the same counter block.</p>
 <hr>
-<h2 id=cpa-security-from-prf>CPA Security from PRF</h2>
+<h2 id="cpa-security-from-prf">CPA Security from PRF</h2>
 <p><strong>Theorem.</strong> CTR mode using a PRF is CPA-secure.</p>
 <p><em>Proof sketch.</em> The keystream from $F_k(\text{IV}|i)$ with a random IV is indistinguishable from a truly random string. XOR with a random string gives a one-time-pad-secure encryption. Any distinguisher for CTR output can be used to distinguish $F_k$ from a random function - contradicting PRF security. $\square$</p>
 <p>The formal proof uses a hybrid: replace $F_k$ with a truly random function, show security under the random function (direct argument), then argue the replacement was undetectable (PRF security).</p>
 <hr>
-<h2 id=chosen-ciphertext-security-cca>Chosen-Ciphertext Security (CCA)</h2>
+<h2 id="chosen-ciphertext-security-cca">Chosen-Ciphertext Security (CCA)</h2>
 <p>CPA security assumes the adversary can only encrypt. A stronger model - and necessary for most real applications - allows the adversary to also decrypt.</p>
 <p><strong>CCA experiment:</strong></p>
 <ol>
@@ -134,7 +134,7 @@ The keystream is $F_k(\text{IV}|1), F_k(\text{IV}|2), \ldots$ - the block cipher
 <p>Pure CBC or CTR mode is not CCA-secure - a modified ciphertext will decrypt to a related plaintext with no detection. CCA security requires authentication on top of encryption. <strong>Authenticated encryption (AE)</strong> schemes (like AES-GCM) provide both CPA-style confidentiality and ciphertext integrity - ensuring that tampered ciphertexts are rejected before decryption.</p>
 <p>The correct paradigm: <strong>Encrypt-then-MAC</strong> - encrypt the message, then compute a MAC over the ciphertext. Never MAC-then-Encrypt. This gives CCA security from any CPA-secure cipher and any secure MAC.</p>
 <hr>
-<h2 id=summary>Summary</h2>
+<h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
@@ -207,20 +207,20 @@ The keystream is $F_k(\text{IV}|1), F_k(\text{IV}|2), \ldots$ - the block cipher
 </table>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/message-authentication-hashing/ target=_blank rel="noopener noreferrer">Message Authentication and Hashing</a>
+<li><a href="/posts/message-authentication-hashing/" target="_blank" rel="noopener noreferrer">Message Authentication and Hashing</a>
 </li>
-<li><a href=/posts/computational-cryptography/ target=_blank rel="noopener noreferrer">Computational Cryptography</a>
+<li><a href="/posts/computational-cryptography/" target="_blank" rel="noopener noreferrer">Computational Cryptography</a>
 </li>
-<li><a href=/posts/public-key-cryptography/ target=_blank rel="noopener noreferrer">Public Key Cryptography</a>
+<li><a href="/posts/public-key-cryptography/" target="_blank" rel="noopener noreferrer">Public Key Cryptography</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>

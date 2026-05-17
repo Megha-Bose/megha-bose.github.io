@@ -1,17 +1,17 @@
-<!doctype html><html lang=en-us>
+<!doctype html><html lang="en-us">
 <head>
 <title>Distributed Mutual Exclusion // Megha Bose</title>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta charset=utf-8>
-<meta name=generator content="Hugo 0.92.2">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Megha Bose">
-<meta name=description content>
-<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Distributed Mutual Exclusion">
-<meta name=twitter:description content="In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS. A process entering a critical section must somehow convince every other process in the network that it has exclusive access - without any entity having global visibility.">
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Distributed Mutual Exclusion">
+<meta name="twitter:description" content="In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS. A process entering a critical section must somehow convince every other process in the network that it has exclusive access - without any entity having global visibility.">
 <meta property="og:title" content="Distributed Mutual Exclusion">
 <meta property="og:description" content="In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS. A process entering a critical section must somehow convince every other process in the network that it has exclusive access - without any entity having global visibility.">
 <meta property="og:type" content="article">
@@ -21,37 +21,37 @@
 <script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
 </head>
 <body>
-<header class=app-header>
-<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
-<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
-<nav class=app-header-menu>
-<a class=app-header-menu-item href=/about/>About Me</a>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
 <br>
-<a class=app-header-menu-item href=/resume/> Resume</a>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
 <br>
-<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
 <br>
-<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
 </nav>
-<div class=app-header-social>
-<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
 </a>
-<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
 </a>
-<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
 </a>
-<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 </a>
 </div>
-<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
-<span class=theme-toggle-icon></span>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
 </button>
 </header>
-<main class=app-container>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Distributed Mutual Exclusion</h1>
-<div class=post-meta>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Distributed Mutual Exclusion</h1>
+<div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Aug 10, 2024
 </div>
@@ -60,13 +60,13 @@ Aug 10, 2024
 </div>
 </div>
 </header>
-<div class=post-content>
+<div class="post-content">
 <hr>
 <p>In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS. A process entering a critical section must somehow convince every other process in the network that it has exclusive access - without any entity having global visibility. The history of distributed mutual exclusion is a sequence of algorithms, each reducing message complexity or eliminating a bottleneck, while maintaining safety (at most one process in the CS at a time) and liveness (every request is eventually granted).</p>
 <p>Each algorithm in this sequence responds to a concrete deficiency in the previous one. Lamport gave the first correct solution but sent one message too many. Ricart and Agrawala noticed that the extra message was redundant and eliminated it. Maekawa asked why every process needed to hear from every other process, and showed that a carefully chosen quorum of $\sqrt{n}$ sufficed. Token-based algorithms took a different approach entirely - instead of asking for permission, they pass a token, reducing the steady-state cost to near zero. Understanding why each design choice was made requires understanding the cost model it was optimizing against.</p>
 <p>The correctness argument for all of these algorithms rests on the same underlying insight: two processes can only enter the critical section simultaneously if they somehow both receive permission without the other knowing. Every algorithm below prevents this by constructing an intersection property - either in the set of processes that must reply, or in the structure of a voting quorum, or in the uniqueness of a token. The differences are entirely in how efficiently that intersection is enforced.</p>
 <hr>
-<h2 id=the-problem>The Problem</h2>
+<h2 id="the-problem">The Problem</h2>
 <p>$n$ processes share a resource that only one may use at a time. A process wanting the resource enters a <strong>request</strong> phase, waits until it gets permission, enters the <strong>critical section (CS)</strong>, then executes a <strong>release</strong> phase. Requirements:</p>
 <ol>
 <li><strong>Safety.</strong> At most one process is in the CS at any time.</li>
@@ -80,7 +80,7 @@ Aug 10, 2024
 <li><strong>Response time.</strong> Time from request to CS entry.</li>
 </ul>
 <hr>
-<h2 id=lamports-algorithm-1978>Lamport&rsquo;s Algorithm (1978)</h2>
+<h2 id="lamports-algorithm-1978">Lamport&rsquo;s Algorithm (1978)</h2>
 <p><strong>Approach:</strong> Permission-based. Each process maintains a request queue sorted by Lamport timestamp. A process enters the CS only when its own request is at the front of the queue and it has received messages with higher timestamps from all other processes.</p>
 <p><strong>Protocol:</strong></p>
 <ol>
@@ -92,7 +92,7 @@ Aug 10, 2024
 <p><strong>Correctness.</strong> If $p_i$ and $p_j$ both want the CS, one has a smaller timestamp. The one with the smaller timestamp gets replies from all others first (since the one with the larger timestamp sends a REPLY, which puts the smaller timestamp first). So both cannot enter simultaneously.</p>
 <p><strong>Message complexity.</strong> $3(n-1)$ messages per CS entry: $(n-1)$ requests, $(n-1)$ replies, $(n-1)$ releases.</p>
 <hr>
-<h2 id=ricart-agrawala-algorithm-1981>Ricart-Agrawala Algorithm (1981)</h2>
+<h2 id="ricart-agrawala-algorithm-1981">Ricart-Agrawala Algorithm (1981)</h2>
 <p><strong>Key insight:</strong> In Lamport&rsquo;s algorithm, the REPLY can be deferred until the receiver has finished using the CS. If $p_i$ has a lower timestamp than $p_j$, then when $p_j$ receives $p_i$&rsquo;s request it sends a REPLY immediately (because $p_i$ has priority). If $p_j$ has a lower timestamp, it defers sending REPLY to $p_i$ until $p_j$ finishes the CS. This <strong>eliminates the RELEASE message entirely.</strong></p>
 <p><strong>Protocol:</strong></p>
 <ol>
@@ -108,12 +108,12 @@ Aug 10, 2024
 </ol>
 <p><strong>Message complexity.</strong> $2(n-1)$ messages per CS entry: $(n-1)$ requests and $(n-1)$ replies. One message saved per entry/exit compared to Lamport.</p>
 <hr>
-<h2 id=carvalho-roucairol-optimization-1983>Carvalho-Roucairol Optimization (1983)</h2>
+<h2 id="carvalho-roucairol-optimization-1983">Carvalho-Roucairol Optimization (1983)</h2>
 <p><strong>Key insight:</strong> Once $p_i$ has received a REPLY from $p_j$, it holds a &ldquo;permission token&rdquo; from $p_j$. If $p_j$ has not sent a request since $p_i$ last entered the CS, $p_i$ doesn&rsquo;t need to ask $p_j$ again.</p>
 <p><strong>Optimization:</strong> Keep a set $S$ of processes from which permission is held. On a new CS request, only send REQUEST to processes in $N \setminus S$ (those not already granted). When receiving a REQUEST from $p_j$ that $p_i$ is holding permission from, send the permission to $p_j$ and remove $p_j$ from $S$.</p>
 <p><strong>Result:</strong> In best case (no contention), 0 messages if all permissions are still held. In worst case (all permissions expired), $2(n-1)$ messages - same as RA. Average-case improvement depends on workload.</p>
 <hr>
-<h2 id=maekawas-algorithm-1985>Maekawa&rsquo;s Algorithm (1985)</h2>
+<h2 id="maekawas-algorithm-1985">Maekawa&rsquo;s Algorithm (1985)</h2>
 <p><strong>Motivation.</strong> Ricart-Agrawala requires permission from all $n-1$ others. Maekawa asks: do we need everyone&rsquo;s permission, or just a large enough subset?</p>
 <p><strong>Voting sets.</strong> Assign each process $p_i$ a <strong>voting set</strong> (quorum) $V_i \subseteq {p_1, \ldots, p_n}$ such that:</p>
 <ul>
@@ -138,7 +138,7 @@ Aug 10, 2024
 </ul>
 <p><strong>Starvation.</strong> The basic INQUIRE/FAILED protocol does not guarantee starvation freedom. Fixes exist (using timestamps in the queue discipline), but add complexity.</p>
 <hr>
-<h2 id=suzuki-kazami-algorithm-1985---token-based>Suzuki-Kazami Algorithm (1985) - Token Based</h2>
+<h2 id="suzuki-kazami-algorithm-1985---token-based">Suzuki-Kazami Algorithm (1985) - Token Based</h2>
 <p><strong>Approach.</strong> Token-based: a unique token circulates among processes. Only the holder of the token may enter the CS.</p>
 <p><strong>Data structures:</strong></p>
 <ul>
@@ -155,7 +155,7 @@ Aug 10, 2024
 <p><strong>Message complexity.</strong> 0 messages if token already held; otherwise 1 REQUEST broadcast ($n-1$ messages) + 1 token transfer = $n$ messages total. But broadcasts are expensive; effective per-entry cost depends on contention.</p>
 <p><strong>Advantage.</strong> No message overhead when a process reuses the CS consecutively. No voting, no synchronization messages, no possibility of deadlock.</p>
 <hr>
-<h2 id=raymonds-algorithm-1989---tree-based>Raymond&rsquo;s Algorithm (1989) - Tree Based</h2>
+<h2 id="raymonds-algorithm-1989---tree-based">Raymond&rsquo;s Algorithm (1989) - Tree Based</h2>
 <p><strong>Approach.</strong> Token-based, organized as a dynamic spanning tree. The tree structure routes token requests efficiently.</p>
 <p><strong>Each process maintains:</strong></p>
 <ul>
@@ -172,7 +172,7 @@ Aug 10, 2024
 <p><strong>Message complexity.</strong> $O(\log n)$ per CS entry on a balanced tree - much better than $O(n)$ or $O(\sqrt{n})$ for large systems.</p>
 <p><strong>Limitation.</strong> Tree topology must be maintained and updated. Token loss (node failure) requires recovery.</p>
 <hr>
-<h2 id=comparison>Comparison</h2>
+<h2 id="comparison">Comparison</h2>
 <table>
 <thead>
 <tr>
@@ -230,20 +230,20 @@ Aug 10, 2024
 </table>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href=/posts/distributed-deadlock-termination/ target=_blank rel="noopener noreferrer">Distributed Deadlock and Termination Detection</a>
+<li><a href="/posts/distributed-deadlock-termination/" target="_blank" rel="noopener noreferrer">Distributed Deadlock and Termination Detection</a>
 </li>
-<li><a href=/posts/logical-clocks-global-state/ target=_blank rel="noopener noreferrer">Logical Clocks and Global State</a>
+<li><a href="/posts/logical-clocks-global-state/" target="_blank" rel="noopener noreferrer">Logical Clocks and Global State</a>
 </li>
-<li><a href=/posts/fault-tolerance/ target=_blank rel="noopener noreferrer">Fault Tolerance</a>
+<li><a href="/posts/fault-tolerance/" target="_blank" rel="noopener noreferrer">Fault Tolerance</a>
 </li>
 </ul>
 </div>
-<div class=post-footer>
+<div class="post-footer">
 </div>
 </article>
 </main>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
 <script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
 </body>
 </html>
