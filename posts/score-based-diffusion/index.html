@@ -1,0 +1,344 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Score-Based Diffusion // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Score-Based Diffusion">
+<meta name=twitter:description content="Prerequisites:
+ Vector Calculus for ML Variational Autoencoders   Suppose someone hands you a blurry, noise-corrupted photograph and asks you to restore it. You do not know the original image, but you have seen thousands of photographs before and you have a strong sense of what natural images look like. The most useful piece of information at any moment is not &ldquo;what does the clean image look like&rdquo; but &ldquo;in which direction should I adjust the pixels to make this image more plausible?">
+<meta property="og:title" content="Score-Based Diffusion">
+<meta property="og:description" content="Prerequisites:
+ Vector Calculus for ML Variational Autoencoders   Suppose someone hands you a blurry, noise-corrupted photograph and asks you to restore it. You do not know the original image, but you have seen thousands of photographs before and you have a strong sense of what natural images look like. The most useful piece of information at any moment is not &ldquo;what does the clean image look like&rdquo; but &ldquo;in which direction should I adjust the pixels to make this image more plausible?">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/score-based-diffusion/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Score-Based Diffusion</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+14 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/ml/vector-calculus-for-ml/>Vector Calculus for ML</a></li>
+<li><a href=/posts/ml/variational-autoencoders/>Variational Autoencoders</a></li>
+</ul>
+<hr>
+<p>Suppose someone hands you a blurry, noise-corrupted photograph and asks you to restore it. You do not know the original image, but you have seen thousands of photographs before and you have a strong sense of what natural images look like. The most useful piece of information at any moment is not &ldquo;what does the clean image look like&rdquo; but &ldquo;in which direction should I adjust the pixels to make this image more plausible?&rdquo; That direction - the gradient of the log probability of the image - is the score function, and it is the central object in score-based diffusion.</p>
+<p>The score function $s_\theta(x) = \nabla_x \log p(x)$ points from low-density regions toward high-density ones. If you follow it with small gradient steps, you climb the probability landscape and eventually reach a region of high density - a plausible sample. The challenge is that we do not know $p(x)$ for natural images; we only have samples from it. Score matching, introduced by Hyvärinen in 2005, is a method to learn the score directly from data without ever computing the density. The key insight that turns this into a modern generative model is that you do not need to learn a single score function - you need one for each noise level, from pure Gaussian noise down to the clean data distribution. If you have this family of scores, you can start from noise and iteratively denoise your way to a real image.</p>
+<p>Diffusion models formalize this as a stochastic process. The forward process gradually destroys a data point by adding Gaussian noise, transforming any image into pure noise over time. The reverse process, if you know the score at each noise level, undoes this destruction step by step. Modern diffusion models - DDPM, DDIM, score SDEs - are different ways of parameterizing and solving this reverse process. They produce state-of-the-art image quality without the training instability of GANs, and unlike VAEs they do not optimize a surrogate lower bound. The price is sampling speed: generating a single image requires hundreds of sequential network evaluations.</p>
+<hr>
+<h2 id=the-score-function>The Score Function</h2>
+<p>For a distribution $p(x)$ over $\mathbb{R}^d$, the score function is:</p>
+<p>$$s(x) = \nabla_x \log p(x).$$</p>
+<p>This is a vector field on $\mathbb{R}^d$. At every point $x$, the score vector points in the direction of steepest ascent of the log density. Langevin dynamics turns the score into a sampler:</p>
+<p>$$x_{t+1} = x_t + \frac{\epsilon}{2} \nabla_x \log p(x_t) + \sqrt{\epsilon}, z_t, \qquad z_t \sim \mathcal{N}(0, I).$$</p>
+<p>Start at any point, repeatedly add the score (gradient of log density) plus a small noise term, and in the limit $\epsilon \to 0$ and steps $\to \infty$, the iterates converge to samples from $p$. No density evaluation required - just the gradient.</p>
+<p>The catch is that computing $\nabla_x \log p(x)$ exactly requires knowing $p(x)$, which we do not have. Score matching sidesteps this. The explicit score matching objective is:</p>
+<p>$$J_{\text{ESM}}(\theta) = \mathbb{E}<em>{p(x)}!\left[\tfrac{1}{2}|s</em>\theta(x) - \nabla_x \log p(x)|^2\right].$$</p>
+<p>Minimizing this over $\theta$ fits a network $s_\theta$ to the true score. By integration by parts, the unknown $\nabla_x \log p(x)$ can be eliminated, giving an equivalent objective requiring only samples from $p$:</p>
+<p>$$J_{\text{ISM}}(\theta) = \mathbb{E}<em>{p(x)}!\left[\text{tr}(\nabla_x s</em>\theta(x)) + \frac{1}{2}|s_\theta(x)|^2\right].$$</p>
+<p>The trace term involves second derivatives of the network - expensive to compute at scale. Sliced score matching approximates this trace by projecting onto random directions, making it practical for high-dimensional data.</p>
+<p><strong>Why score functions fail near low-density regions.</strong> Score matching works well in regions of high probability, where there are many training points. In the low-density regions between modes - the gaps in the data distribution - there are almost no training samples, so the learned score is inaccurate there. Langevin dynamics starting from noise must cross these gaps to reach any mode, and it will get lost if the score in the gaps is wrong. This is the core problem that the noising schedule solves.</p>
+<hr>
+<h2 id=the-forward-process>The Forward Process</h2>
+<p>The forward process progressively corrupts data $x_0 \sim p_{\text{data}}$ by adding Gaussian noise. In DDPM (Ho et al., 2020), this is a discrete Markov chain:</p>
+<p>$$q(x_t \mid x_{t-1}) = \mathcal{N}!\left(x_t;; \sqrt{1 - \beta_t}, x_{t-1},; \beta_t I\right), \qquad t = 1, \ldots, T.$$</p>
+<p>The noise schedule ${\beta_t}$ increases from small to large. Using the notation $\alpha_t = 1 - \beta_t$ and $\bar{\alpha}<em>t = \prod</em>{s=1}^t \alpha_s$, the marginal at time $t$ has a closed form:</p>
+<p>$$q(x_t \mid x_0) = \mathcal{N}!\left(x_t;; \sqrt{\bar{\alpha}_t}, x_0,; (1 - \bar{\alpha}_t) I\right).$$</p>
+<p>This means: to get $x_t$ from $x_0$, sample $\epsilon \sim \mathcal{N}(0, I)$ and set $x_t = \sqrt{\bar{\alpha}_t}, x_0 + \sqrt{1 - \bar{\alpha}_t}, \epsilon$. As $t \to T$, $\bar{\alpha}_T \approx 0$ and $x_T \approx \mathcal{N}(0, I)$ regardless of $x_0$. The data has been completely destroyed.</p>
+<p>The continuous-time version (Song et al., 2021) describes the same process as a stochastic differential equation:</p>
+<p>$$dx = f(x, t), dt + g(t), dW,$$</p>
+<p>where $dW$ is a Wiener process (Brownian motion increment), $f(x, t)$ is the drift coefficient, and $g(t)$ is the diffusion coefficient. For the variance-preserving SDE used in DDPM-like models:</p>
+<p>$$dx = -\frac{\beta(t)}{2}, x, dt + \sqrt{\beta(t)}, dW.$$</p>
+<p>The drift $-\frac{\beta(t)}{2} x$ shrinks the signal; the diffusion $\sqrt{\beta(t)}, dW$ adds noise. At time 0 the process starts at data; at time $T$ it has converged to $\mathcal{N}(0, I)$.</p>
+<hr>
+<h2 id=the-reverse-process>The Reverse Process</h2>
+<p>The key mathematical fact is Anderson&rsquo;s theorem (1982): the time-reversal of the forward SDE is also an SDE,</p>
+<p>$$dx = \left[f(x, t) - g(t)^2 \nabla_x \log p_t(x)\right] dt + g(t), d\bar{W},$$</p>
+<p>where $d\bar{W}$ is a Wiener process running backward in time and $p_t(x)$ is the marginal density of the forward process at time $t$. The reverse SDE has the same structure as the forward, but the drift is modified by the score function $\nabla_x \log p_t(x)$.</p>
+<p>This is the core insight: <strong>if you know the score at every noise level $t$, you can reverse the forward process</strong>. Start from $x_T \sim \mathcal{N}(0, I)$ and integrate the reverse SDE from $T$ to $0$. The resulting $x_0$ is a sample from $p_{\text{data}}$.</p>
+<p>For the variance-preserving SDE, the reverse SDE is:</p>
+<p>$$dx = \left[-\frac{\beta(t)}{2} x - \beta(t), \nabla_x \log p_t(x)\right] dt + \sqrt{\beta(t)}, d\bar{W}.$$</p>
+<p>The score $\nabla_x \log p_t(x)$ is unknown, so we approximate it with a neural network $s_\theta(x, t)$ trained by score matching at each noise level $t$.</p>
+<hr>
+<h2 id=denoising-score-matching>Denoising Score Matching</h2>
+<p>Explicit score matching requires the true score, which is intractable. Denoising score matching (Vincent, 2011) gives an equivalent training objective that only requires the noised data.</p>
+<p>The key identity: for the forward process with transition kernel $q(x_t \mid x_0)$, the score of the marginal is related to the conditional score by:</p>
+<p>$$\nabla_{x_t} \log p_t(x_t) = \mathbb{E}<em>{q(x_0 \mid x_t)}!\left[\nabla</em>{x_t} \log q(x_t \mid x_0)\right].$$</p>
+<p>For a Gaussian transition $q(x_t \mid x_0) = \mathcal{N}(x_t;, \mu_t(x_0), \sigma_t^2 I)$, the conditional score is:</p>
+<p>$$\nabla_{x_t} \log q(x_t \mid x_0) = -\frac{x_t - \mu_t(x_0)}{\sigma_t^2}.$$</p>
+<p>Since $x_t = \sqrt{\bar{\alpha}_t}, x_0 + \sqrt{1-\bar{\alpha}_t}, \epsilon$ with $\epsilon \sim \mathcal{N}(0,I)$, we have $x_t - \mu_t(x_0) = \sqrt{1-\bar{\alpha}_t}, \epsilon$, so:</p>
+<p>$$\nabla_{x_t} \log q(x_t \mid x_0) = -\frac{\epsilon}{\sqrt{1 - \bar{\alpha}_t}}.$$</p>
+<p>The denoising score matching objective is then:</p>
+<p>$$\mathcal{L}<em>{\text{DSM}}(\theta) = \mathbb{E}</em>{t, x_0, \epsilon}!\left[\left|s_\theta(x_t, t) + \frac{\epsilon}{\sqrt{1-\bar{\alpha}_t}}\right|^2\right].$$</p>
+<p>In words: train the network to predict $-\epsilon / \sqrt{1-\bar{\alpha}_t}$ given the noised image $x_t$ and time $t$. This is the score of the noised distribution, not the clean data distribution - but that is exactly what the reverse SDE needs.</p>
+<hr>
+<h2 id=ddpm-predicting-noise-is-predicting-the-score>DDPM: Predicting Noise is Predicting the Score</h2>
+<p>Ho et al. (2020) reparameterize the network. Instead of directly learning $s_\theta(x_t, t) \approx \nabla_{x_t} \log p_t(x_t)$, they train a noise prediction network $\epsilon_\theta(x_t, t)$ to predict the noise $\epsilon$ that was added to produce $x_t$ from $x_0$.</p>
+<p>Since $s_\theta(x_t, t) = -\epsilon_\theta(x_t, t) / \sqrt{1-\bar{\alpha}_t}$, these are equivalent. The DDPM training objective is:</p>
+<p>$$\mathcal{L}<em>{\text{DDPM}}(\theta) = \mathbb{E}</em>{t \sim \mathcal{U}[1,T],, x_0 \sim p_{\text{data}},, \epsilon \sim \mathcal{N}(0,I)}!\left[|\epsilon - \epsilon_\theta(\underbrace{\sqrt{\bar{\alpha}_t}, x_0 + \sqrt{1-\bar{\alpha}<em>t}, \epsilon}</em>{x_t},, t)|^2\right].$$</p>
+<p>This is a simple weighted denoising loss. For each training step: (1) sample a clean image $x_0$, (2) sample a timestep $t$ uniformly, (3) sample noise $\epsilon$, (4) form the noisy image $x_t$, (5) ask the network to predict $\epsilon$, (6) take a gradient step. There is no adversarial training, no posterior approximation, no likelihood term. The network $\epsilon_\theta$ is typically a U-Net with time conditioning via sinusoidal embeddings.</p>
+<p>The reverse process is: starting from $x_T \sim \mathcal{N}(0, I)$, iterate</p>
+<p>$$x_{t-1} = \frac{1}{\sqrt{\alpha_t}}!\left(x_t - \frac{1-\alpha_t}{\sqrt{1-\bar{\alpha}<em>t}}, \epsilon</em>\theta(x_t, t)\right) + \sigma_t z_t, \qquad z_t \sim \mathcal{N}(0, I),$$</p>
+<p>for $t = T, T-1, \ldots, 1$. Each step uses the predicted noise to estimate the direction toward $x_0$, takes a step in that direction, and adds a small amount of noise to maintain stochasticity. After $T$ steps (typically $T = 1000$), the result is a sample from (approximately) $p_{\text{data}}$.</p>
+<hr>
+<h2 id=the-odesde-duality-ddim-vs-ddpm>The ODE/SDE Duality: DDIM vs DDPM</h2>
+<p>DDPM sampling is stochastic: each step adds fresh Gaussian noise. Song et al. (2021) showed that every diffusion model has a deterministic counterpart - a probability flow ODE - that samples from the same distribution without any stochasticity:</p>
+<p>$$\frac{dx}{dt} = f(x, t) - \frac{1}{2} g(t)^2, \nabla_x \log p_t(x).$$</p>
+<p>This ODE has the same marginals $p_t(x)$ as the forward SDE - meaning that trajectories of the ODE and the SDE visit the same distributions at each noise level $t$. Integrating this ODE backward from $x_T \sim \mathcal{N}(0, I)$ to $t = 0$ gives a sample from $p_{\text{data}}$.</p>
+<p><strong>DDIM</strong> (Denoising Diffusion Implicit Models, Song et al., 2021) is a discrete-time version of the probability flow ODE applied to the DDPM model. The DDIM update is:</p>
+<p>$$x_{t-1} = \sqrt{\bar{\alpha}<em>{t-1}}\underbrace{\frac{x_t - \sqrt{1-\bar{\alpha}<em>t}, \epsilon</em>\theta(x_t, t)}{\sqrt{\bar{\alpha}<em>t}}}</em>{\text{predicted } x_0} + \sqrt{1 - \bar{\alpha}</em>{t-1}}, \epsilon_\theta(x_t, t).$$</p>
+<p>Crucially, DDIM is deterministic: given $x_T$, the trajectory $x_T \to x_{T-1} \to \cdots \to x_0$ is fixed. This has three consequences:</p>
+<ol>
+<li><strong>Latent encoding:</strong> The ODE can be run forward to encode a real image $x_0$ into a noise vector $x_T$, and backward to decode it. DDPM cannot do this because the forward path is stochastic.</li>
+<li><strong>Faster sampling:</strong> DDIM can skip timesteps - instead of running all $T$ steps, take $S \ll T$ large steps along the ODE trajectory. In practice, 50 DDIM steps produce quality comparable to 1000 DDPM steps.</li>
+<li><strong>No stochasticity:</strong> DDIM produces cleaner, more consistent outputs but cannot match the diversity of DDPM when $T$ is large. DDPM adds noise at each step, which can correct small errors; DDIM propagates errors deterministically.</li>
+</ol>
+<p>The interpolation $\eta \in [0, 1]$ in DDIM controls the noise added at each step - $\eta = 0$ is the deterministic ODE, $\eta = 1$ recovers DDPM.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>DDPM</th>
+<th>DDIM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sampling</td>
+<td>Stochastic (SDE)</td>
+<td>Deterministic (ODE)</td>
+</tr>
+<tr>
+<td>Steps needed</td>
+<td>$\sim 1000$</td>
+<td>$\sim 50$</td>
+</tr>
+<tr>
+<td>Latent encoding</td>
+<td>No (forward is stochastic)</td>
+<td>Yes (forward ODE is invertible)</td>
+</tr>
+<tr>
+<td>Diversity</td>
+<td>High</td>
+<td>Lower for small steps</td>
+</tr>
+<tr>
+<td>Error correction</td>
+<td>Yes (noise at each step)</td>
+<td>No (deterministic)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id=why-diffusion-beats-gans>Why Diffusion Beats GANs</h2>
+<p>GANs and diffusion models are both learned samplers that transform a simple distribution into a complex one. The differences in their training objectives lead to stark differences in behavior.</p>
+<p><strong>Mode coverage.</strong> GAN training minimizes an adversarial objective that can collapse to minimizing JSD. The generator can increase its score by concentrating probability mass on a few high-density modes - the discriminator is fooled more easily when the generator&rsquo;s output is consistently in a small set of convincing examples. Diffusion training minimizes a denoising loss that is evaluated over the entire data distribution at every noise level. There is no incentive for mode collapse: the network must correctly denoise images from all modes to minimize the loss.</p>
+<p><strong>Training stability.</strong> GAN training is a minimax game between two networks with competing objectives. The loss landscape is non-stationary: as the generator improves, the optimal discriminator changes, which changes the gradient signal for the generator. This can lead to oscillation, vanishing gradients, and training instability. Diffusion training is a standard supervised regression problem - predict the noise $\epsilon$ from the noisy image $x_t$. The objective is fixed, the loss decreases monotonically with network capacity, and scaling behavior is predictable.</p>
+<p><strong>Sample quality and diversity.</strong> Modern diffusion models (DALL-E 2, Stable Diffusion, Imagen) produce samples with higher FID scores than state-of-the-art GANs, while maintaining diversity over the full distribution. The stochastic sampling process in DDPM actively explores the space of plausible completions at each denoising step, naturally producing diverse outputs from the same model.</p>
+<p>The cost of diffusion over GANs is inference speed. A GAN generates a sample in one forward pass; DDPM requires $T = 1000$ forward passes. DDIM reduces this to $\sim 50$ passes, and consistency models (Song et al., 2023) reduce it further, but diffusion is still substantially slower than GAN sampling.</p>
+<hr>
+<h2 id=classifier-free-guidance>Classifier-Free Guidance</h2>
+<p>Unconditional diffusion generates diverse samples from $p_{\text{data}}$. Conditional generation requires sampling from $p_{\text{data}}(x \mid c)$ for a condition $c$ (a class label, a text prompt, or any other signal). Guidance is a technique to sharpen conditional samples by trading diversity for fidelity to the condition.</p>
+<p><strong>Classifier guidance</strong> (Dhariwal and Nichol, 2021) uses a separately trained classifier $p_\phi(c \mid x_t)$ and modifies the score at each noise level:</p>
+<p>$$\nabla_{x_t} \log p(x_t \mid c) = \nabla_{x_t} \log p_t(x_t) + \nabla_{x_t} \log p_\phi(c \mid x_t).$$</p>
+<p>The classifier gradient pushes the sample toward regions that look like class $c$. This works but requires training a separate classifier on noisy images at all timesteps.</p>
+<p><strong>Classifier-free guidance</strong> (Ho and Salimans, 2022) avoids the separate classifier entirely. During training, the conditioning information $c$ is randomly dropped (replaced with a null token $\emptyset$) with probability $p_{\text{uncond}}$, so the network learns both $\epsilon_\theta(x_t, c)$ and $\epsilon_\theta(x_t, \emptyset)$ from a single model. At sampling time, the effective score is:</p>
+<p>$$\tilde{\epsilon}<em>\theta(x_t, c) = \epsilon</em>\theta(x_t, \emptyset) + w \cdot \left(\epsilon_\theta(x_t, c) - \epsilon_\theta(x_t, \emptyset)\right),$$</p>
+<p>where $w \geq 1$ is the guidance scale. This moves the score in the direction that increases $p(c \mid x_t)$, the same direction as classifier guidance but estimated purely from the diffusion model itself.</p>
+<p>When $w = 1$, the formula recovers $\epsilon_\theta(x_t, c)$ - standard conditional generation. When $w > 1$, the score is exaggerated in the direction of the condition: the sample is pushed toward the extreme of what satisfies condition $c$. The tradeoff: higher $w$ increases sharpness, coherence, and condition-alignment but decreases diversity and can produce oversaturated, unrealistic artifacts. In text-to-image models (Stable Diffusion, DALL-E 2), $w \in [5, 15]$ is typical.</p>
+<p>Geometrically: $\epsilon_\theta(x_t, c) - \epsilon_\theta(x_t, \emptyset)$ estimates the direction in noise space that makes the image more conditional-consistent. The guidance scale $w$ is the step length in that direction. Larger $w$ means larger steps - the sampler trades exploration (covering all plausible images satisfying $c$) for exploitation (maximizing one specific aspect of satisfying $c$).</p>
+<hr>
+<h2 id=flow-matching-and-the-continuous-sde-view>Flow Matching and the Continuous SDE View</h2>
+<p>Song et al. (2021) unify DDPM, score matching, and related methods under a single SDE framework. The key objects are:</p>
+<ul>
+<li>A family of distributions ${p_t}<em>{t=0}^T$ interpolating from $p</em>{\text{data}}$ ($t=0$) to $\mathcal{N}(0,I)$ ($t=T$).</li>
+<li>A score network $s_\theta(x, t)$ approximating $\nabla_x \log p_t(x)$.</li>
+<li>Either a stochastic reverse SDE (DDPM-like) or a deterministic probability flow ODE (DDIM-like) for sampling.</li>
+</ul>
+<p>Different choices of forward SDE give different models:</p>
+<ul>
+<li><strong>Variance-Preserving (VP) SDE</strong>: the DDPM forward process. Maintains unit variance throughout.</li>
+<li><strong>Variance-Exploding (VE) SDE</strong>: keeps the clean signal and adds increasing variance. Used in NCSN (Noise Conditional Score Network).</li>
+<li><strong>Sub-VP SDE</strong>: a modification of VP with smaller variance at each step, producing cleaner samples at the cost of slightly different noise statistics.</li>
+</ul>
+<p><strong>Flow Matching</strong> (Lipman et al., 2022) simplifies the training objective further. Instead of learning a score function and solving an SDE, flow matching directly learns a vector field $v_\theta(x, t)$ that transports samples from $\mathcal{N}(0,I)$ to $p_{\text{data}}$ via an ODE $dx/dt = v_\theta(x,t)$. The training target is a simple regression against the conditional flow field, which has lower variance than score matching and allows straight-line trajectories (requiring fewer integration steps).</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Process</th>
+<th>Training objective</th>
+<th>Sampling</th>
+<th>Exact likelihood</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DDPM</td>
+<td>Discrete SDE</td>
+<td>Predict noise $\epsilon$ at each $t$</td>
+<td>Stochastic, $\sim 1000$ steps</td>
+<td>No (lower bound via ELBO)</td>
+</tr>
+<tr>
+<td>DDIM</td>
+<td>Probability flow ODE</td>
+<td>Same as DDPM</td>
+<td>Deterministic, $\sim 50$ steps</td>
+<td>Yes (via ODE)</td>
+</tr>
+<tr>
+<td>Score SDE (VP/VE)</td>
+<td>Continuous SDE</td>
+<td>Score matching at all $t$</td>
+<td>Stochastic or ODE</td>
+<td>Yes (via probability flow ODE)</td>
+</tr>
+<tr>
+<td>Flow Matching</td>
+<td>ODE (straight paths)</td>
+<td>Predict velocity field $v$</td>
+<td>Deterministic, $\sim 10$ steps</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>GAN</td>
+<td>Implicit (one step)</td>
+<td>Adversarial minimax</td>
+<td>One forward pass</td>
+<td>No</td>
+</tr>
+<tr>
+<td>VAE</td>
+<td>Latent variable</td>
+<td>ELBO (reconstruction + KL)</td>
+<td>One forward pass</td>
+<td>Approximate (ELBO)</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Score function</td>
+<td>$s(x) = \nabla_x \log p(x)$; gradient of log density</td>
+</tr>
+<tr>
+<td>Langevin dynamics</td>
+<td>$x_{t+1} = x_t + \frac{\epsilon}{2} s(x_t) + \sqrt{\epsilon}, z_t$; converges to samples from $p$</td>
+</tr>
+<tr>
+<td>Forward process</td>
+<td>$x_t = \sqrt{\bar{\alpha}_t}, x_0 + \sqrt{1-\bar{\alpha}_t}, \epsilon$, $\epsilon \sim \mathcal{N}(0,I)$</td>
+</tr>
+<tr>
+<td>Denoising score matching</td>
+<td>Learn $\epsilon_\theta(x_t, t) \approx \epsilon$; equivalent to learning $\nabla_{x_t} \log p_t(x_t)$</td>
+</tr>
+<tr>
+<td>DDPM objective</td>
+<td>$\mathbb{E}<em>{t, x_0, \epsilon}|\epsilon - \epsilon</em>\theta(x_t, t)|^2$</td>
+</tr>
+<tr>
+<td>Reverse SDE</td>
+<td>$dx = [f - g^2 \nabla_x \log p_t] dt + g, d\bar{W}$; reverses the forward noise</td>
+</tr>
+<tr>
+<td>Probability flow ODE</td>
+<td>$dx/dt = f - \frac{1}{2} g^2 \nabla_x \log p_t$; deterministic, same marginals as SDE</td>
+</tr>
+<tr>
+<td>DDIM</td>
+<td>Deterministic sampler derived from probability flow ODE; enables latent encoding</td>
+</tr>
+<tr>
+<td>Classifier-free guidance</td>
+<td>$\tilde{\epsilon} = \epsilon_\theta(\emptyset) + w(\epsilon_\theta(c) - \epsilon_\theta(\emptyset))$; sharpens condition alignment</td>
+</tr>
+<tr>
+<td>Guidance scale $w$</td>
+<td>$w > 1$ sharpens samples toward condition at cost of diversity</td>
+</tr>
+<tr>
+<td>Mode collapse comparison</td>
+<td>DDPM: none (denoising loss over full distribution); GAN: common (adversarial incentive)</td>
+</tr>
+<tr>
+<td>Training stability</td>
+<td>DDPM: supervised regression, stable; GAN: minimax, unstable</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/ml/variational-autoencoders/>Variational Autoencoders</a></li>
+<li><a href=/posts/ml/generative-adversarial-networks/>Generative Adversarial Networks</a></li>
+<li><a href=/posts/ml/normalizing-flows/>Normalizing Flows</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

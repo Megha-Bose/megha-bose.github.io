@@ -1,0 +1,166 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Train, Val, & Test Splits // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Train, Val, & Test Splits">
+<meta name=twitter:description content="Prerequisites:
+ ML First Principles Bias, Variance, & Overfitting   Suppose you study for an exam using a set of practice problems, and the night before the test you check your score by redoing the same problems. You get 98%. Should you feel confident? No - because you already know those problems. Your brain has memorized them, and the score tells you nothing about how you will perform on problems you have never seen.">
+<meta property="og:title" content="Train, Val, & Test Splits">
+<meta property="og:description" content="Prerequisites:
+ ML First Principles Bias, Variance, & Overfitting   Suppose you study for an exam using a set of practice problems, and the night before the test you check your score by redoing the same problems. You get 98%. Should you feel confident? No - because you already know those problems. Your brain has memorized them, and the score tells you nothing about how you will perform on problems you have never seen.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/train-val-test-splits/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Train, Val, & Test Splits</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/machine-learning-first-principles/>ML First Principles</a></li>
+<li><a href=/posts/bias-variance-overfitting/>Bias, Variance, & Overfitting</a></li>
+</ul>
+<hr>
+<p>Suppose you study for an exam using a set of practice problems, and the night before the test you check your score by redoing the same problems. You get 98%. Should you feel confident? No - because you already know those problems. Your brain has memorized them, and the score tells you nothing about how you will perform on problems you have never seen. This is exactly the situation a machine learning model faces when you evaluate it on its own training data. The model has, in some sense, &ldquo;seen&rdquo; every training example and adjusted its parameters to fit them. A training accuracy of 100% is not a signal of a good model; it is a signal that the model has memorized rather than generalized.</p>
+<p>The only reliable way to measure whether a model has learned something real is to evaluate it on data it has never seen. This requires setting aside a portion of your data before training begins and never touching it during model development. In practice, you need not one but two held-out sets: a <strong>validation set</strong> for the many decisions you make during development (which architecture, which learning rate, when to stop training), and a <strong>test set</strong> for one final, unbiased measure of performance at the very end. These three sets - train, validation, test - serve fundamentally different purposes, and mixing them up is one of the most common and consequential mistakes in applied machine learning.</p>
+<p>Understanding this separation is not just a procedural detail. It sits at the heart of what it means to claim that a model generalizes. The train-validation-test framework is how you distinguish &ldquo;this model works&rdquo; from &ldquo;this model works on the problems I have been solving.&rdquo; Every downstream decision about model selection, hyperparameter tuning, and production deployment depends on getting this right.</p>
+<hr>
+<h2 id=why-training-error-is-meaningless>Why Training Error Is Meaningless</h2>
+<p>A model with enough capacity can fit any finite dataset with zero error. A degree-$n$ polynomial can interpolate $n+1$ points exactly. A neural network with enough parameters can memorize every training example. When this happens, training error is 0 and the model is useless on new data.</p>
+<p>Even with regularization, the training error is a biased estimate of generalization error. The model&rsquo;s parameters were chosen to minimize training error, so the training set has been &ldquo;used up&rdquo; in a statistical sense. The expected training error is strictly lower than the expected test error for any model with adjustable parameters. The gap between them is the generalization gap, and understanding it (via bias and variance analysis) is the subject of the overfitting literature.</p>
+<p>The practical consequence: never report training error as your model&rsquo;s performance. The only number that matters for deployment is performance on data the model has not seen.</p>
+<hr>
+<h2 id=the-three-way-split>The Three-Way Split</h2>
+<p>The standard approach partitions available data into three non-overlapping sets:</p>
+<p><strong>Training set</strong> - used to fit model parameters. Gradient descent, maximum likelihood, the perceptron update - all of these run on training data. This is typically the largest set (60-80% of total data).</p>
+<p><strong>Validation set</strong> - used to make decisions during development. Which of your five candidate architectures is best? Should you use a learning rate of 0.01 or 0.001? Should you train for 50 or 100 epochs? All of these decisions are made by evaluating on the validation set. The validation set is not used to compute gradients, but it is used by you, the practitioner, to make choices. Typical size: 10-20%.</p>
+<p><strong>Test set</strong> - used exactly once, at the very end, to report final performance. It is the unbiased estimate of how your model will perform in deployment. Typical size: 10-20%.</p>
+<p>A common split for moderately sized datasets is 70/15/15 or 80/10/10. For large datasets (millions of examples), you need far fewer than 10% for validation and test - 1% of 10 million examples is still 100,000 examples, more than enough for a reliable estimate. Conversely, for very small datasets (a few hundred examples), you may need to put 80-90% into training and use cross-validation instead of a fixed validation set (see the <a href=/posts/cross-validation/>cross-validation</a> post).</p>
+<hr>
+<h2 id=the-contamination-problem>The Contamination Problem</h2>
+<p>Here is the subtle issue that trips up even experienced practitioners. The test set gives an unbiased estimate of performance only if no decision during model development was informed by the test set. The moment you look at test set performance and use it to decide anything - which model to deploy, whether to collect more data, whether to add a regularizer - the test set is no longer unbiased. It has become a second validation set.</p>
+<p>This happens more easily than you might think. A team trains 20 models, evaluates them on the test set to pick the best, and reports that model&rsquo;s test accuracy. But they have effectively used the test set for model selection. The reported accuracy is optimistically biased, because out of 20 models, the one that happened to do well on the test set was selected - even if that advantage is partly due to chance.</p>
+<p>The rule is stark: the test set is touched exactly once. Before that moment, it does not exist as far as model development is concerned. If you have used your test set to make any decision, acquire more data, retrain, and establish a new test set.</p>
+<hr>
+<h2 id=data-leakage>Data Leakage</h2>
+<p>Data leakage occurs when information from the validation or test set bleeds into the training process, giving the model an unfair advantage it will not have at deployment. Leakage inflates apparent performance and leads to models that fail in production.</p>
+<p><strong>Normalization before splitting.</strong> A common mistake: compute the mean and standard deviation of each feature across the entire dataset, then split into train/val/test. Now the training set&rsquo;s normalized features were computed using statistics from the validation and test examples. The model has seen, in aggregate, what the test distribution looks like. The correct procedure: fit the normalization (and any preprocessing - PCA, imputation, scaling) on the training set only, then apply that same transformation to the validation and test sets.</p>
+<p><strong>Feature selection on all data.</strong> Running a feature importance analysis or correlation filter on the full dataset before splitting means the selected features were chosen using test set labels. The training data appears more predictive than it is. Always do feature selection inside the training fold.</p>
+<p><strong>Target encoding before splitting.</strong> Encoding categorical features using statistics of the target variable (e.g., replacing each category with its mean target value) must be computed only on training data. Computing it on the full dataset leaks target information from test examples into the training pipeline.</p>
+<p><strong>Temporal leakage.</strong> Using future information to predict the past. If you are predicting whether a customer will churn this month, any features derived from data after the current month are leaking. This also applies to the split itself: shuffling a time series and splitting randomly means your model trains on data from the future relative to some of its validation examples. Time series data requires chronological splitting.</p>
+<p>The general principle: the test set (and validation set, during preprocessing) should be treated as if it does not exist when computing any statistics or selecting any transformations used in the training pipeline.</p>
+<hr>
+<h2 id=stratified-splits>Stratified Splits</h2>
+<p>When class frequencies are unequal - say, 95% negative and 5% positive in a fraud detection problem - a random split might put all positive examples in training and none in validation, or vice versa. The validation set then has a different class distribution than the training set, making the validation estimate unreliable.</p>
+<p><strong>Stratified splitting</strong> preserves the class proportions in each split. If the full dataset is 95/5, each of train, validation, and test is also 95/5. This ensures that each split is a representative sample of the full distribution.</p>
+<p>In scikit-learn, <code>train_test_split</code> accepts a <code>stratify</code> parameter. For multi-label and multi-class problems, stratification becomes more complex but the principle is the same: each split should reflect the full label distribution.</p>
+<hr>
+<h2 id=temporal-data-never-split-randomly>Temporal Data: Never Split Randomly</h2>
+<p>For time-series data, random splitting is wrong by construction. Suppose you are predicting stock prices and you randomly assign 80% of days to training and 20% to testing. Your training set includes days from 2023, and your test set includes days from 2019. You are training on the future and testing on the past - your model can implicitly learn from post-test information.</p>
+<p>The correct approach is <strong>chronological splitting</strong>:</p>
+<ul>
+<li>Train on the earliest portion of the data.</li>
+<li>Validate on the next portion.</li>
+<li>Test on the most recent portion.</li>
+</ul>
+<p>This respects the causal structure: we only use past information to predict the future. It also gives a realistic measure of deployment performance, where the model always predicts events that occur after its training cutoff.</p>
+<p>For temporal data, there is an additional complication: the statistical properties of the data may drift over time (concept drift). A model trained on data from 2020 may degrade by 2024 because the underlying distribution has shifted. The chronological split naturally tests for this, whereas a random split would hide it.</p>
+<hr>
+<h2 id=the-variance-of-a-single-test-estimate>The Variance of a Single Test Estimate</h2>
+<p>A single test set estimate has variance. With 1000 test examples and an accuracy of 90%, the standard error is $\sqrt{0.9 \cdot 0.1 / 1000} \approx 0.0095$, giving a 95% confidence interval of roughly $[88.1%, 91.9%]$. With only 100 test examples, the confidence interval widens to $[84.1%, 95.9%]$, which is almost useless for comparing models.</p>
+<p>For model selection on small datasets, a single validation set is too noisy to reliably identify the best model. This is the motivation for <strong>cross-validation</strong>: instead of a single validation split, rotate through multiple splits and average the results. Cross-validation gives a lower-variance estimate of model performance and makes better use of limited data for model selection. The tradeoff and mechanics are covered in the next post.</p>
+<p>The key insight here: the test set is for one final estimate, not for iterative improvement. Its variance is the fundamental limit on how precisely you can measure your model&rsquo;s performance, and you should factor this into how you interpret reported numbers.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Set</th>
+<th>Purpose</th>
+<th>Size (typical)</th>
+<th>Seen during training?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train</td>
+<td>Fit model parameters</td>
+<td>60-80%</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td>Tune hyperparameters, select architecture</td>
+<td>10-20%</td>
+<td>No (but informs decisions)</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>Final unbiased performance estimate</td>
+<td>10-20%</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/cross-validation/>Cross-Validation</a></li>
+<li><a href=/posts/bias-variance-overfitting/>Bias, Variance, & Overfitting</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

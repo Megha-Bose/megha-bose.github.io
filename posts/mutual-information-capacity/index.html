@@ -1,0 +1,216 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Mutual Information & Capacity // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Mutual Information & Capacity">
+<meta name=twitter:description content="Prerequisites:
+ Entropy & Information Theory   Shannon entropy $H(X) = -\sum_x p(x) \log p(x)$ measures the average uncertainty in a single random variable. But the most important questions in communication and learning involve two variables at once: how much does observing the output of a noisy channel tell you about the input? How much does a feature $Y$ reduce your uncertainty about a label $X$? These questions have a precise answer, and it is called mutual information.">
+<meta property="og:title" content="Mutual Information & Capacity">
+<meta property="og:description" content="Prerequisites:
+ Entropy & Information Theory   Shannon entropy $H(X) = -\sum_x p(x) \log p(x)$ measures the average uncertainty in a single random variable. But the most important questions in communication and learning involve two variables at once: how much does observing the output of a noisy channel tell you about the input? How much does a feature $Y$ reduce your uncertainty about a label $X$? These questions have a precise answer, and it is called mutual information.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/mutual-information-capacity/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Mutual Information & Capacity</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/math/entropy-information/>Entropy & Information Theory</a></li>
+</ul>
+<hr>
+<p>Shannon entropy $H(X) = -\sum_x p(x) \log p(x)$ measures the average uncertainty in a single random variable. But the most important questions in communication and learning involve two variables at once: how much does observing the output of a noisy channel tell you about the input? How much does a feature $Y$ reduce your uncertainty about a label $X$? These questions have a precise answer, and it is called mutual information.</p>
+<p>The key observation is that uncertainty about $X$ before observing $Y$ is $H(X)$, and the average uncertainty remaining after observing $Y$ is the conditional entropy $H(X \mid Y)$. The gap between them - the uncertainty that $Y$ removes - is a quantity that is always non-negative, always symmetric, and connects directly to the deepest results in communication theory. Channel capacity, the data processing inequality, the information bottleneck, and the Shannon-Hartley theorem all flow from this one definition.</p>
+<p>What makes this not just a definition but a theorem is Shannon&rsquo;s channel coding theorem: the capacity $C = \max_{P(X)} I(X;Y)$ is not merely an information-theoretic quantity but a hard operational limit. Any rate below $C$ is achievable with vanishing error. Any rate above $C$ is not, by any code of any complexity. That is the result that turned information theory from a mathematical curiosity into the foundation of every modern communication system.</p>
+<hr>
+<h2 id=mutual-information>Mutual Information</h2>
+<p>Given two random variables $X$ and $Y$ with joint distribution $P(X, Y)$, the <strong>mutual information</strong> is</p>
+<p>$$I(X; Y) = H(X) - H(X \mid Y).$$</p>
+<p>This is the reduction in uncertainty about $X$ from learning $Y$. Three equivalent forms are all useful:</p>
+<p>$$I(X; Y) = H(X) - H(X \mid Y) = H(Y) - H(Y \mid X) = H(X) + H(Y) - H(X, Y).$$</p>
+<p>The second equality establishes <strong>symmetry</strong>: $I(X; Y) = I(Y; X)$. Knowing $X$ tells you exactly as much about $Y$ as knowing $Y$ tells you about $X$. This is not obvious from the definition, but it falls out of the chain rule $H(X, Y) = H(X) + H(Y \mid X) = H(Y) + H(X \mid Y)$.</p>
+<p><strong>The KL divergence interpretation.</strong> There is a third formula that reveals the geometric meaning:</p>
+<p>$$I(X; Y) = D_{\text{KL}}!\left(P(X,Y) ,|, P(X) P(Y)\right) = \sum_{x,y} p(x,y) \log \frac{p(x,y)}{p(x)p(y)}.$$</p>
+<p>Mutual information is the KL divergence between the joint distribution and the product of the marginals. The product $P(X)P(Y)$ is what the joint would look like if $X$ and $Y$ were independent. So $I(X;Y)$ measures how far the actual joint distribution is from independence. Since KL divergence is always non-negative, $I(X; Y) \geq 0$, with equality if and only if $X$ and $Y$ are independent.</p>
+<p><strong>Examples.</strong></p>
+<p>If $Y = X$ (perfect knowledge), then $H(X \mid Y) = 0$ and $I(X; Y) = H(X)$. Learning $X$ perfectly removes all uncertainty.</p>
+<p>If $X \perp Y$ (independence), then $H(X \mid Y) = H(X)$ and $I(X; Y) = 0$.</p>
+<p>If $X$ is a bit and $Y = X \oplus N$ where $N \sim \text{Bernoulli}(p)$ is an independent noise bit, then $I(X; Y) = 1 - H_b(p)$ where $H_b(p) = -p\log p - (1-p)\log(1-p)$ is the binary entropy function. At $p = 0$ (no noise), $I = 1$ bit. At $p = 1/2$ (pure noise), $I = 0$.</p>
+<hr>
+<h2 id=the-data-processing-inequality>The Data Processing Inequality</h2>
+<p>If $X \to Y \to Z$ is a Markov chain - meaning $Z$ is conditionally independent of $X$ given $Y$ - then</p>
+<p>$$I(X; Z) \leq I(X; Y).$$</p>
+<p><strong>Proof sketch.</strong> By the chain rule for mutual information applied in two ways:</p>
+<p>$$I(X; Y, Z) = I(X; Y) + I(X; Z \mid Y) = I(X; Z) + I(X; Y \mid Z).$$</p>
+<p>The Markov condition $X \to Y \to Z$ means $I(X; Z \mid Y) = 0$ (given $Y$, knowing $Z$ adds no information about $X$). Also $I(X; Y \mid Z) \geq 0$ always. Combining: $I(X; Y) = I(X; Z) + I(X; Y \mid Z) \geq I(X; Z)$. $\square$</p>
+<p><strong>What this means.</strong> Any deterministic or randomized processing of $Y$ can only decrease or maintain the information about $X$. You cannot create information about $X$ by transforming $Y$. The further downstream you go, the less you know.</p>
+<p><strong>Machine learning implication.</strong> In a classification pipeline, let $X$ be the input, $Y$ the raw features, and $Z$ the learned representation. Then $I(Z; \text{label}) \leq I(Y; \text{label}) \leq I(X; \text{label})$. Every processing step - preprocessing, dimensionality reduction, intermediate layers - can only lose information about the target. A representation cannot be more informative about the label than the raw input. This bounds what any learned model can achieve.</p>
+<hr>
+<h2 id=channel-capacity>Channel Capacity</h2>
+<p>A <strong>discrete memoryless channel</strong> is a conditional distribution $P(Y \mid X)$ mapping input alphabet $\mathcal{X}$ to output alphabet $\mathcal{Y}$. The channel is fixed - you cannot change $P(Y \mid X)$ - but you can choose the input distribution $P(X)$.</p>
+<p>The <strong>capacity</strong> of the channel is</p>
+<p>$$C = \max_{P(X)} I(X; Y).$$</p>
+<p>Capacity is the maximum mutual information over all possible input distributions. It measures, in bits per channel use, how much information the channel can carry.</p>
+<p><strong>Why this is the right definition</strong> is Shannon&rsquo;s channel coding theorem (below). But intuitively: by choosing $P(X)$, you control how much entropy you inject into the channel. The output $Y$ receives some of that entropy. The capacity is the maximum you can arrange to &ldquo;get through.&rdquo;</p>
+<hr>
+<h2 id=the-binary-symmetric-channel>The Binary Symmetric Channel</h2>
+<p>The simplest non-trivial channel: input $X \in {0,1}$, output $Y \in {0,1}$, and each bit is flipped independently with probability $p$. So $P(Y \neq X) = p$.</p>
+<p>The conditional distributions are $P(Y = x \mid X = x) = 1 - p$ and $P(Y = 1-x \mid X = x) = p$.</p>
+<p>To find capacity, we maximize $I(X; Y) = H(Y) - H(Y \mid X)$ over $P(X)$.</p>
+<p>The conditional entropy $H(Y \mid X)$ does not depend on $P(X)$: given $X$, the output is just $X$ flipped with probability $p$, so $H(Y \mid X) = H_b(p)$ regardless of the input distribution.</p>
+<p>The output entropy $H(Y)$ is maximized when $Y$ is uniform, which happens when $P(X = 0) = P(X = 1) = 1/2$.</p>
+<p>Therefore:</p>
+<p>$$C = \max_{P(X)} I(X;Y) = 1 - H_b(p).$$</p>
+<p><strong>Sanity checks:</strong> At $p = 0$ (no flips), $H_b(0) = 0$ so $C = 1$ bit per use. At $p = 1/2$ (flips are pure noise), $H_b(1/2) = 1$ so $C = 0$. At $p = 1$ (every bit flipped), $H_b(1) = 0$ so $C = 1$ again - you know every output is flipped, so you can correct. The channel is most useless at $p = 1/2$, not $p = 1$.</p>
+<hr>
+<h2 id=the-gaussian-channel-and-shannon-hartley>The Gaussian Channel and Shannon-Hartley</h2>
+<p>The <strong>additive white Gaussian noise (AWGN) channel</strong> is</p>
+<p>$$Y = X + N, \quad N \sim \mathcal{N}(0, \sigma^2), \quad E[X^2] \leq P.$$</p>
+<p>The input has a power constraint $P$ (average energy per symbol), and noise variance $\sigma^2$.</p>
+<p><strong>Theorem (Shannon-Hartley).</strong> The capacity of the AWGN channel is</p>
+<p>$$C = \frac{1}{2} \log_2!\left(1 + \frac{P}{\sigma^2}\right) \text{ bits per channel use.}$$</p>
+<p>The ratio $P/\sigma^2$ is the signal-to-noise ratio (SNR).</p>
+<p><strong>Proof sketch.</strong> The mutual information $I(X; Y) = h(Y) - h(Y \mid X) = h(Y) - h(N)$, where $h$ denotes differential entropy. Since $h(N) = \frac{1}{2}\log_2(2\pi e \sigma^2)$ is fixed, we want to maximize $h(Y)$. The output $Y = X + N$ has variance $\text{Var}(Y) = P + \sigma^2$ under the power constraint. For a fixed variance, Gaussian maximizes differential entropy, so $h(Y) \leq \frac{1}{2}\log_2(2\pi e (P + \sigma^2))$, with equality when $X \sim \mathcal{N}(0, P)$. Subtracting $h(N)$ gives $C = \frac{1}{2}\log_2(1 + P/\sigma^2)$.</p>
+<p><strong>What the formula tells you:</strong></p>
+<ul>
+<li>Doubling the power ($P \to 2P$) adds approximately $\frac{1}{2}\log_2(1 + 2P/\sigma^2) - \frac{1}{2}\log_2(1 + P/\sigma^2)$, which at high SNR is roughly $\frac{1}{2}$ bit per channel use.</li>
+<li>Doubling the bandwidth: with bandwidth $B$ Hz, the channel supports $2B$ independent uses per second (Nyquist), giving capacity $B\log_2(1 + P/(\sigma^2))$ bits/second. Doubling $B$ doubles capacity proportionally.</li>
+<li>This is why bandwidth is more precious than power in wireless systems: you get more from doubling bandwidth than from doubling power.</li>
+</ul>
+<p>The Shannon-Hartley theorem sets the theoretical maximum throughput for every WiFi connection, 5G link, and optical fiber cable. Modern codes (LDPC, turbo, polar) approach within a fraction of a dB of this limit.</p>
+<hr>
+<h2 id=shannons-channel-coding-theorem>Shannon&rsquo;s Channel Coding Theorem</h2>
+<p><strong>Theorem (Shannon, 1948).</strong> For a channel with capacity $C$:</p>
+<ul>
+<li>For any rate $R &lt; C$ and any $\varepsilon > 0$, there exist codes of rate $R$ (i.e., $2^{nR}$ messages encoded in $n$ channel uses) with error probability less than $\varepsilon$ for sufficiently large $n$.</li>
+<li>For any rate $R > C$, the error probability of any code is bounded away from zero.</li>
+</ul>
+<p>This theorem has two parts, and both matter. The achievability part says reliable communication at any rate below capacity is possible - you just need long enough codewords. The converse says rates above capacity are fundamentally impossible, not just hard.</p>
+<p>The proof of achievability uses random coding: draw codewords i.i.d. from $P(X)^n$ and show that, with high probability, the nearest-neighbor decoder succeeds. The proof of the converse uses Fano&rsquo;s inequality.</p>
+<p><strong>The practical gap.</strong> For decades after 1948, the best known codes were far below capacity. In the 1990s, turbo codes (Berrou and Glavieux, 1993) and LDPC codes (rediscovered from Gallager, 1963) were found to approach capacity within a fraction of a dB. Polar codes (Arikan, 2009) are provably capacity-achieving with efficient encoding and decoding. The gap between Shannon&rsquo;s theorem and practical codes was an engineering frontier for 50 years.</p>
+<hr>
+<h2 id=the-information-bottleneck>The Information Bottleneck</h2>
+<p>A powerful application of mutual information to representation learning: you want to learn a compressed representation $Z$ of input $X$ that is maximally predictive of target $Y$. The data processing inequality says $I(Z; Y) \leq I(X; Y)$, so you cannot do better than the raw features. But you want to find the minimal $Z$ that preserves as much relevant information as possible.</p>
+<p>The <strong>information bottleneck</strong> Lagrangian (Tishby, Pereira, Bialek, 1999) is:</p>
+<p>$$\min_{P(Z \mid X)} ; I(X; Z) - \beta , I(Z; Y).$$</p>
+<p>The term $I(X; Z)$ penalizes the amount of information $Z$ retains about $X$ (compression). The term $I(Z; Y)$ rewards how much $Z$ predicts $Y$ (relevance). The tradeoff parameter $\beta$ controls the balance.</p>
+<p>At $\beta \to 0$, the optimal $Z$ is a constant - no information at all. At $\beta \to \infty$, $Z$ retains everything about $X$ that is relevant to $Y$. The <strong>information bottleneck curve</strong> traces the Pareto frontier of compression versus relevance as $\beta$ varies.</p>
+<p>This framework has been connected (with some debate) to understanding why deep networks generalize: intermediate layers may learn to discard information about $X$ that is irrelevant to $Y$, compressing toward the information bottleneck solution.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Formula</th>
+<th>Key fact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mutual information</td>
+<td>$I(X;Y) = H(X) - H(X \mid Y)$</td>
+<td>Symmetric: $I(X;Y) = I(Y;X)$</td>
+</tr>
+<tr>
+<td>KL divergence form</td>
+<td>$I(X;Y) = D_{\text{KL}}(P(X,Y) | P(X)P(Y))$</td>
+<td>Zero iff $X \perp Y$</td>
+</tr>
+<tr>
+<td>Data processing</td>
+<td>$X \to Y \to Z \Rightarrow I(X;Z) \leq I(X;Y)$</td>
+<td>Processing only loses information</td>
+</tr>
+<tr>
+<td>Channel capacity</td>
+<td>$C = \max_{P(X)} I(X;Y)$</td>
+<td>Hard operational limit</td>
+</tr>
+<tr>
+<td>Binary symmetric channel</td>
+<td>$C = 1 - H_b(p)$</td>
+<td>Zero capacity at $p = 1/2$</td>
+</tr>
+<tr>
+<td>Gaussian channel</td>
+<td>$C = \frac{1}{2}\log_2(1 + P/\sigma^2)$</td>
+<td>Bandwidth beats power at high SNR</td>
+</tr>
+<tr>
+<td>Shannon coding theorem</td>
+<td>Rate $R &lt; C$: reliable; $R > C$: impossible</td>
+<td>Capacity is achievable and tight</td>
+</tr>
+<tr>
+<td>Information bottleneck</td>
+<td>$\min I(X;Z) - \beta I(Z;Y)$</td>
+<td>Compression-relevance tradeoff</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/information-theory/data-compression/>Data Compression</a></li>
+<li><a href=/posts/information-theory/rate-distortion-theory/>Rate-Distortion Theory</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

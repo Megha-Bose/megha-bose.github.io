@@ -1,0 +1,254 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Normalizing Flows // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Normalizing Flows">
+<meta name=twitter:description content="Prerequisites:
+ Maximum Likelihood Estimation Variational Autoencoders   Every generative model faces the same fundamental tension: the data distribution is complex, but we need to either sample from it or evaluate its density. VAEs resolve this by approximating the density with a tractable lower bound. GANs sidestep density entirely by learning to sample implicitly. Normalizing flows take a different path - they learn an exact, invertible transformation between the data distribution and a simple reference distribution (usually a Gaussian), so that both sampling and exact density evaluation are possible.">
+<meta property="og:title" content="Normalizing Flows">
+<meta property="og:description" content="Prerequisites:
+ Maximum Likelihood Estimation Variational Autoencoders   Every generative model faces the same fundamental tension: the data distribution is complex, but we need to either sample from it or evaluate its density. VAEs resolve this by approximating the density with a tractable lower bound. GANs sidestep density entirely by learning to sample implicitly. Normalizing flows take a different path - they learn an exact, invertible transformation between the data distribution and a simple reference distribution (usually a Gaussian), so that both sampling and exact density evaluation are possible.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/normalizing-flows/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Normalizing Flows</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+10 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/ml/maximum-likelihood-estimation/>Maximum Likelihood Estimation</a></li>
+<li><a href=/posts/ml/variational-autoencoders/>Variational Autoencoders</a></li>
+</ul>
+<hr>
+<p>Every generative model faces the same fundamental tension: the data distribution is complex, but we need to either sample from it or evaluate its density. VAEs resolve this by approximating the density with a tractable lower bound. GANs sidestep density entirely by learning to sample implicitly. Normalizing flows take a different path - they learn an exact, invertible transformation between the data distribution and a simple reference distribution (usually a Gaussian), so that both sampling and exact density evaluation are possible.</p>
+<p>The idea is conceptually clean. Suppose $f: \mathbb{R}^d \to \mathbb{R}^d$ is a bijection, and $z = f(x)$ maps data points $x$ to latent codes $z$. If $z$ follows a standard Gaussian $p_Z(z) = \mathcal{N}(0, I)$, what density does $x$ follow? The change-of-variables formula gives the answer exactly: the density of $x$ is the density of $f(x)$ scaled by the absolute Jacobian determinant. To generate a new sample, sample $z \sim \mathcal{N}(0,I)$ and apply $f^{-1}(z)$. To evaluate the likelihood of a data point $x$, apply $f(x)$, evaluate the Gaussian density, and scale by the Jacobian determinant. Nothing is approximate - the likelihood is exact.</p>
+<p>The difficulty is entirely in the construction of $f$. For the formula to be useful, $f$ must be invertible (so we can both sample and evaluate likelihood), and its Jacobian determinant must be cheap to compute (otherwise the likelihood computation is intractable). A general neural network satisfies neither constraint. The ingenuity in normalizing flows is in designing architectural families - coupling layers, autoregressive flows, continuous flows - that are simultaneously expressive, invertible, and have tractable Jacobians. These design choices shape a rich model family with exact likelihoods but different tradeoffs in expressivity, sampling speed, and training speed.</p>
+<hr>
+<h2 id=change-of-variables>Change of Variables</h2>
+<p>Let $z \sim p_Z(z)$ be a simple distribution (standard Gaussian) and let $f: \mathbb{R}^d \to \mathbb{R}^d$ be a differentiable bijection. Define $x = f^{-1}(z)$, so $z = f(x)$. The density of $x$ is given by:</p>
+<p>$$p_X(x) = p_Z(f(x)), \left|\det J_f(x)\right|,$$</p>
+<p>where $J_f(x) = \partial f(x) / \partial x \in \mathbb{R}^{d \times d}$ is the Jacobian of $f$ at $x$. In log form:</p>
+<p>$$\log p_X(x) = \log p_Z(f(x)) + \log \left|\det J_f(x)\right|.$$</p>
+<p>The Jacobian determinant accounts for how the transformation $f$ stretches or compresses volume. If $f$ expands a region (large $|\det J_f|$), the density there must decrease to keep total probability at 1. If $f$ compresses a region (small $|\det J_f|$), the density increases.</p>
+<p><strong>Why the Jacobian determinant matters.</strong> Without the Jacobian correction, applying any bijection would change the total probability mass and give a non-normalizing density. The correction term $\log |\det J_f(x)|$ is what makes the transformed distribution a valid probability distribution. It is also the key source of difficulty: computing $\det J$ for a general $d \times d$ matrix costs $O(d^3)$, which is prohibitive for image data where $d$ can be millions.</p>
+<p><strong>Composing flows.</strong> A single bijection may not be expressive enough. A normalizing flow stacks $K$ bijections: $z = f_K \circ f_{K-1} \circ \cdots \circ f_1(x)$. By the chain rule for determinants:</p>
+<p>$$\log p_X(x) = \log p_Z(z) + \sum_{k=1}^K \log \left|\det J_{f_k}(x_k)\right|,$$</p>
+<p>where $x_k = f_k \circ \cdots \circ f_1(x)$. Each $f_k$ must be invertible with tractable Jacobian; the composition inherits both properties. By stacking enough simple bijections, a normalizing flow can approximate arbitrarily complex distributions.</p>
+<p><strong>Training.</strong> Given a dataset ${x^{(1)}, \ldots, x^{(n)}}$, maximize the exact log-likelihood:</p>
+<p>$$\mathcal{L}(\theta) = \frac{1}{n}\sum_{i=1}^n \left[\log p_Z(f_\theta(x^{(i)})) + \log \left|\det J_{f_\theta}(x^{(i)})\right|\right].$$</p>
+<p>This is maximum likelihood estimation with an exact density - no variational approximation, no adversarial training.</p>
+<hr>
+<h2 id=coupling-layers-realnvp>Coupling Layers: RealNVP</h2>
+<p>The challenge is designing $f$ with a tractable Jacobian. The coupling layer, introduced in NICE (Dinh et al., 2015) and extended in RealNVP (Dinh et al., 2017), achieves this through a structured transformation.</p>
+<p>Split the input $x \in \mathbb{R}^d$ into two halves: $x = (x_a, x_b)$ with $x_a \in \mathbb{R}^{d/2}$ and $x_b \in \mathbb{R}^{d/2}$. The coupling layer is:</p>
+<p>$$z_a = x_a, \qquad z_b = x_b \odot \exp(s_\theta(x_a)) + t_\theta(x_a),$$</p>
+<p>where $s_\theta$ and $t_\theta$ are arbitrary neural networks (scale and translation functions), and $\odot$ is elementwise multiplication. The first half $x_a$ passes through unchanged; the second half $x_b$ is scaled and shifted by a function of $x_a$.</p>
+<p><strong>Why this is invertible.</strong> Given $z = (z_a, z_b)$, recover $x$:</p>
+<p>$$x_a = z_a, \qquad x_b = (z_b - t_\theta(z_a)) \odot \exp(-s_\theta(z_a)).$$</p>
+<p>The inversion is exact and does not require solving any equations - just a forward pass of $s_\theta$ and $t_\theta$. Importantly, $s_\theta$ and $t_\theta$ never need to be inverted; they can be arbitrarily complex neural networks.</p>
+<p><strong>Why the Jacobian is triangular.</strong> The Jacobian of the coupling layer has the structure:</p>
+<p>$$J_f = \begin{pmatrix} I & 0 \ \partial z_b / \partial x_a & \text{diag}(\exp(s_\theta(x_a))) \end{pmatrix}.$$</p>
+<p>The top-left block is the identity (since $z_a = x_a$). The bottom-right block is diagonal (since $z_{b,i}$ depends on $x_{b,i}$ only through the elementwise scale). The off-diagonal blocks are zero (top-right) or unconstrained (bottom-left, which does not contribute to the determinant). The determinant of a lower-triangular matrix is the product of its diagonal entries:</p>
+<p>$$\log \left|\det J_f(x)\right| = \sum_{i=1}^{d/2} s_\theta(x_a)_i.$$</p>
+<p>This is $O(d)$ to compute - a single forward pass through $s_\theta$. The entire log-likelihood computation is $O(d)$ per layer, regardless of the complexity of $s_\theta$.</p>
+<p>In practice, the split alternates which half is left unchanged, so that after a few layers every dimension has been transformed as a function of every other. This is the main architectural trick of RealNVP: complex transformations built from simple, tractably invertible pieces.</p>
+<hr>
+<h2 id=autoregressive-flows>Autoregressive Flows</h2>
+<p>Coupling layers transform half the input as a function of the other half. Autoregressive flows generalize this: each dimension $z_i$ is transformed as a function of all previous dimensions $x_1, \ldots, x_{i-1}$.</p>
+<p>The autoregressive transformation is:</p>
+<p>$$z_i = h(x_i;; \mu_i(x_{&lt;i}),; \sigma_i(x_{&lt;i})),$$</p>
+<p>where $h$ is an invertible scalar function (e.g., an affine shift: $z_i = \sigma_i(x_{&lt;i}) \cdot x_i + \mu_i(x_{&lt;i})$) and $\mu_i, \sigma_i$ are functions of the preceding variables. The Jacobian of this transformation is lower-triangular: $\partial z_i / \partial x_j = 0$ for $j > i$ (since $z_i$ does not depend on $x_j$ for $j > i$). The determinant is therefore the product of diagonal entries $\prod_i \sigma_i(x_{&lt;i})$.</p>
+<p><strong>Masked Autoregressive Flow (MAF)</strong> (Papamakarios et al., 2017) implements the autoregressive network $\mu_i(x_{&lt;i}), \sigma_i(x_{&lt;i})$ using a masked neural network (MADE) that enforces the autoregressive constraint by zeroing out connections that would violate it. A single network pass computes all $\mu_i$ and $\sigma_i$ in parallel. This makes density evaluation (forward pass, $O(d)$ in one shot) fast, but sampling requires sequential evaluation: to sample $z_1$, compute $\mu_1, \sigma_1$ (from an empty conditioning set); to sample $z_2$, need $x_1$, which requires inverting the transformation for $z_1$ first. Sampling thus takes $d$ sequential passes.</p>
+<p><strong>Inverse Autoregressive Flow (IAF)</strong> (Kingma et al., 2016) inverts the direction. It is an autoregressive transformation on the latent code $z$, designed to be fast at sampling but slow at density evaluation - the exact reverse of MAF. IAF is useful as a variational posterior in VAEs, where you need fast samples but do not need density evaluation.</p>
+<p>The MAF/IAF duality is a fundamental tradeoff: autoregressive transformations in data space (MAF) give fast density evaluation but slow sampling; in latent space (IAF) give fast sampling but slow density evaluation.</p>
+<hr>
+<h2 id=continuous-normalizing-flows>Continuous Normalizing Flows</h2>
+<p>Discrete flows apply $K$ bijections sequentially. Continuous Normalizing Flows (CNFs), introduced by Chen et al. (2018) with the Neural ODE framework, take the limit $K \to \infty$ and define the transformation via an ordinary differential equation.</p>
+<p>Define a vector field $v_\theta(x, t): \mathbb{R}^d \times [0, 1] \to \mathbb{R}^d$. The transformation is the solution to:</p>
+<p>$$\frac{dx}{dt} = v_\theta(x, t), \qquad x(0) = z \sim p_Z.$$</p>
+<p>Running the ODE from $t=0$ to $t=1$ maps $z$ to a sample $x = x(1)$. The density at any time $t$ evolves according to the instantaneous change of variables (Liouville&rsquo;s theorem):</p>
+<p>$$\frac{\partial \log p_t(x(t))}{\partial t} = -\text{tr}!\left(\frac{\partial v_\theta}{\partial x}\right).$$</p>
+<p>The log-density change is the trace of the Jacobian of the vector field - much cheaper than the determinant, and the trace can be estimated with Hutchinson&rsquo;s estimator using $O(1)$ vector-Jacobian products. The log-likelihood is:</p>
+<p>$$\log p_X(x) = \log p_Z(x(0)) - \int_0^1 \text{tr}!\left(\frac{\partial v_\theta}{\partial x(t)}\right) dt.$$</p>
+<p>This integral is computed by augmenting the ODE state with the log-density and solving the joint ODE numerically. The vector field $v_\theta$ can be any neural network - there is no coupling structure required. CNFs are in principle more expressive than discrete flows, but the ODE integration makes training slower than discrete flows (many function evaluations per gradient step).</p>
+<p><strong>Flow Matching.</strong> Training a CNF by maximum likelihood is expensive because the ODE must be integrated at each training step. Flow Matching (Lipman et al., 2022) avoids this by training $v_\theta$ to match a target conditional vector field that is known in closed form. For straight-line paths between $z \sim \mathcal{N}(0,I)$ and $x \sim p_{\text{data}}$, the target vector field is simply $v = x - z$ at each point. This reduces CNF training to a simple regression problem, with no ODE integration required during training.</p>
+<hr>
+<h2 id=exact-likelihood-vs-other-generative-models>Exact Likelihood vs. Other Generative Models</h2>
+<p>The central advantage of normalizing flows is exact likelihood. VAEs and diffusion models evaluate a lower bound (ELBO) rather than the true log-likelihood. GANs have no density at all. Flows evaluate the exact marginal log-likelihood via the change-of-variables formula.</p>
+<p><strong>What exact likelihood buys.</strong> With exact density, flows can be used as density estimators for anomaly detection (flag points with low $\log p_X(x)$), for lossless compression (optimal codes require exact densities via arithmetic coding), and for model comparison (exact held-out log-likelihood). The ELBO from a VAE is a lower bound, so comparing ELBO values across models is unreliable; comparing exact log-likelihoods is clean.</p>
+<p><strong>The bijection constraint.</strong> The cost of exactness is the constraint that $f$ must be a bijection - the input and output must have the same dimension, and the transformation must be invertible. This is a hard architectural constraint. You cannot use a flow to model a distribution that lives on a lower-dimensional manifold (such as images, which are believed to concentrate near a low-dimensional manifold embedded in pixel space) - the flow treats the full ambient dimension as the effective dimension. VAEs and GANs can use a low-dimensional latent space and map up to data space, naturally encoding a dimensionality reduction. Flows cannot.</p>
+<p>In practice, images are pre-processed with a small amount of dequantization noise to ensure they have positive density in the continuous ambient space, partially mitigating this. But flows fundamentally cannot reduce dimensionality the way VAEs can.</p>
+<hr>
+<h2 id=applications>Applications</h2>
+<p><strong>Density estimation.</strong> Flows were originally proposed for density estimation - fitting a flexible distribution to a dataset and evaluating likelihoods. Glow (Kingma and Dhariwal, 2018) applied flows to face images and showed competitive bits-per-dimension with other generative models while enabling high-quality synthesis and semantic face editing by interpolating in latent space.</p>
+<p><strong>Variational inference.</strong> Flows make variational posteriors more flexible. A normalizing flow posterior $q_\phi(z \mid x) = f_\phi(\mathcal{N}(0,I) \mid x)$ can represent complex, multi-modal, or non-Gaussian posteriors, reducing the gap between the ELBO and the true log-likelihood in a VAE. This is one of the main applications of IAF.</p>
+<p><strong>Sampling and generation.</strong> Flows generate samples by mapping $z \sim \mathcal{N}(0,I)$ through $f^{-1}$. For image generation, discrete flows (Glow) and continuous flows (FFJORD) produce competitive samples but are generally inferior to diffusion models at the same computational budget.</p>
+<p><strong>Molecule generation and scientific applications.</strong> Flows are well-suited to structured continuous data: molecular conformations, 3D protein structures, and lattice field theory configurations. The exact likelihood enables principled comparison of models and direct optimization of physical objectives.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Likelihood</th>
+<th>Sample quality</th>
+<th>Training stability</th>
+<th>Inference speed</th>
+<th>Architecture constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VAE</td>
+<td>Approximate (ELBO)</td>
+<td>Moderate (blurry)</td>
+<td>High</td>
+<td>Fast (one pass)</td>
+<td>Flexible, encoder-decoder</td>
+</tr>
+<tr>
+<td>GAN</td>
+<td>None</td>
+<td>High (sharp)</td>
+<td>Low (mode collapse)</td>
+<td>Fast (one pass)</td>
+<td>Flexible, generator-discriminator</td>
+</tr>
+<tr>
+<td>Normalizing Flow</td>
+<td>Exact</td>
+<td>Moderate</td>
+<td>High</td>
+<td>Fast (for MAF/RealNVP)</td>
+<td>Bijection, same dim in/out</td>
+</tr>
+<tr>
+<td>Diffusion</td>
+<td>Approximate (ELBO via SDE)</td>
+<td>Very high</td>
+<td>High</td>
+<td>Slow (many steps)</td>
+<td>Flexible, U-Net typical</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Change of variables</td>
+<td>$\log p_X(x) = \log p_Z(f(x)) + \log \lvert \det J_f(x) \rvert$</td>
+</tr>
+<tr>
+<td>Normalizing flow</td>
+<td>Composition of invertible, tractable-Jacobian bijections</td>
+</tr>
+<tr>
+<td>Coupling layer</td>
+<td>$z_b = x_b \odot \exp(s(x_a)) + t(x_a)$; triangular Jacobian</td>
+</tr>
+<tr>
+<td>Coupling layer Jacobian</td>
+<td>Lower-triangular; $\log \lvert \det J \rvert = \sum_i s(x_a)_i$, $O(d)$</td>
+</tr>
+<tr>
+<td>Autoregressive flow (MAF)</td>
+<td>Each $z_i = h(x_i; \mu_i(x_{&lt;i}), \sigma_i(x_{&lt;i}))$; fast density, slow sampling</td>
+</tr>
+<tr>
+<td>Inverse autoregressive flow (IAF)</td>
+<td>Autoregressive on latent; fast sampling, slow density</td>
+</tr>
+<tr>
+<td>Continuous normalizing flow</td>
+<td>$dx/dt = v_\theta(x,t)$; log-density via $-\text{tr}(\partial v / \partial x)$</td>
+</tr>
+<tr>
+<td>Instantaneous change of variables</td>
+<td>$d \log p_t / dt = -\text{tr}(\partial v_\theta / \partial x)$</td>
+</tr>
+<tr>
+<td>Flow matching</td>
+<td>Regress $v_\theta$ to known conditional vector field; avoids ODE integration during training</td>
+</tr>
+<tr>
+<td>Bijection constraint</td>
+<td>$f$ must be invertible with same input/output dimension; cannot reduce dimensionality</td>
+</tr>
+<tr>
+<td>Exact likelihood advantage</td>
+<td>Enables anomaly detection, lossless compression, clean model comparison</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/ml/variational-autoencoders/>Variational Autoencoders</a></li>
+<li><a href=/posts/ml/score-based-diffusion/>Score-Based Diffusion</a></li>
+<li><a href=/posts/ml/generative-adversarial-networks/>Generative Adversarial Networks</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

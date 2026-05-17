@@ -1,0 +1,265 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Graph Neural Networks // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Graph Neural Networks">
+<meta name=twitter:description content="Prerequisites:
+ Graph Theory Neural Networks   Most machine learning begins with a table: each row is an example, each column is a feature, and the job of the model is to find patterns in that tabular structure. Even image classifiers treat the input as a flat grid of pixel values - a vector. But a huge class of problems have a fundamentally different shape. A social network is a graph: people are nodes, friendships are edges, and predicting whether two users will connect depends on the topology of the whole network, not just on individual profile attributes.">
+<meta property="og:title" content="Graph Neural Networks">
+<meta property="og:description" content="Prerequisites:
+ Graph Theory Neural Networks   Most machine learning begins with a table: each row is an example, each column is a feature, and the job of the model is to find patterns in that tabular structure. Even image classifiers treat the input as a flat grid of pixel values - a vector. But a huge class of problems have a fundamentally different shape. A social network is a graph: people are nodes, friendships are edges, and predicting whether two users will connect depends on the topology of the whole network, not just on individual profile attributes.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/graph-neural-networks/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Graph Neural Networks</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+13 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/graph-theory-basics/>Graph Theory</a></li>
+<li><a href=/posts/neural-networks-perceptrons/>Neural Networks</a></li>
+</ul>
+<hr>
+<p>Most machine learning begins with a table: each row is an example, each column is a feature, and the job of the model is to find patterns in that tabular structure. Even image classifiers treat the input as a flat grid of pixel values - a vector. But a huge class of problems have a fundamentally different shape. A social network is a graph: people are nodes, friendships are edges, and predicting whether two users will connect depends on the topology of the whole network, not just on individual profile attributes. A molecule is a graph: atoms are nodes, bonds are edges, and whether a compound will bind to a target protein depends on how those atoms are arranged relative to each other. Citation networks, road networks, protein interaction networks, knowledge graphs - all of these have rich relational structure that a flat vector representation cannot capture without an enormous information loss. The challenge for deep learning is to process graphs directly, without forcing them into an inappropriate fixed-size representation.</p>
+<p>The difficulty is not just that graphs are variable-sized. Graphs also have no canonical ordering of their nodes. Give the same molecule to two different software libraries and they may number the atoms in completely different orders. Any useful function on graphs must be permutation invariant: the output should not change if you relabel the nodes. A standard fully connected network applied to a feature matrix of node attributes would produce completely different outputs for the same graph with different node orderings. This invariance requirement, combined with the need to propagate information across edges, is what distinguishes graph learning from all other structured-prediction tasks.</p>
+<p>Graph Neural Networks address both requirements through a single design principle: message passing. Rather than assigning a fixed coordinate to each node, a GNN defines computation in terms of a node&rsquo;s local neighborhood. Each node starts with its own feature vector, and through repeated rounds of aggregation, every node&rsquo;s representation accumulates evidence from progressively larger neighborhoods. Because the aggregation is defined in terms of the graph topology and not in terms of node indices, the resulting representations are automatically permutation equivariant. After enough layers, a node&rsquo;s representation encodes information about its entire connected component.</p>
+<hr>
+<h2 id=the-message-passing-framework>The Message Passing Framework</h2>
+<p>The general message passing update for layer $l$ at node $i$ is:</p>
+<p>$$h_i^{(l+1)} = \text{UPDATE}!\left(h_i^{(l)},; \text{AGGREGATE}!\left(\left{h_j^{(l)} : j \in \mathcal{N}(i)\right}\right)\right)$$</p>
+<p>where $\mathcal{N}(i)$ is the set of neighbors of node $i$, AGGREGATE is some permutation-invariant function (sum, mean, max), and UPDATE combines the node&rsquo;s own representation with the aggregated neighborhood message.</p>
+<p>This is the template. Different GNN architectures are different instantiations of AGGREGATE and UPDATE. The key property is that after $k$ layers, each node&rsquo;s representation $h_i^{(k)}$ encodes information from every node within $k$ hops - the $k$-hop neighborhood. With enough layers and sufficient representational capacity, this can in principle capture any structural information reachable from node $i$.</p>
+<p>Why does permutation invariance follow? Because AGGREGATE is applied to an unordered set, not an ordered sequence. Sum, mean, and max are all invariant to the order in which their inputs are presented. The UPDATE function operates on the fixed-dimensional outputs of AGGREGATE, so it also does not depend on node ordering. The entire computation graph is defined by adjacency, not by index.</p>
+<hr>
+<h2 id=gcn-graph-convolutional-networks>GCN: Graph Convolutional Networks</h2>
+<p>Kipf and Welling (2017) proposed a particularly clean instantiation. Add self-loops to the adjacency matrix $A$: let $\tilde{A} = A + I$. Compute the degree matrix $\tilde{D}$ of $\tilde{A}$ (so $\tilde{D}_{ii} = 1 + \deg(i)$). Define the normalized adjacency:</p>
+<p>$$\hat{A} = \tilde{D}^{-1/2}, \tilde{A}, \tilde{D}^{-1/2}.$$</p>
+<p>The GCN layer update is then:</p>
+<p>$$H^{(l+1)} = \sigma!\left(\hat{A}, H^{(l)}, W^{(l)}\right)$$</p>
+<p>where $H^{(l)} \in \mathbb{R}^{n \times d_l}$ is the matrix of all node representations at layer $l$, $W^{(l)} \in \mathbb{R}^{d_l \times d_{l+1}}$ is a learnable weight matrix, and $\sigma$ is a pointwise nonlinearity (typically ReLU).</p>
+<p>Why the symmetric normalization? Without it, summing over all neighbors gives a value proportional to the neighbor&rsquo;s degree - a high-degree hub would dominate aggregation, and activations would scale differently for high-degree and low-degree nodes, destabilizing training. The factor $\tilde{D}^{-1/2}$ on each side normalizes both the sending and receiving node by the square root of their degree. This is analogous to the normalization in the spectral view of graph convolution and keeps the operator&rsquo;s spectral radius bounded by 1.</p>
+<p>Written out for a single node $i$:</p>
+<p>$$h_i^{(l+1)} = \sigma!\left(W^{(l)\top}\sum_{j \in \mathcal{N}(i) \cup {i}} \frac{h_j^{(l)}}{\sqrt{\tilde{d}_i \tilde{d}_j}}\right)$$</p>
+<p>where $\tilde{d}_i = 1 + \deg(i)$. Each neighbor&rsquo;s contribution is downweighted by the geometric mean of the two nodes' (augmented) degrees.</p>
+<p>The spectral motivation: $\hat{A}$ is a normalized Laplacian-adjacent operator whose eigenvalues lie in $[-1, 1]$. Applying $\hat{A}$ repeatedly performs a smoothing operation on node features, analogous to low-pass filtering on a graph signal. GCN can be understood as applying a fixed graph filter and then learning a linear map - a highly regularized spectral graph convolution.</p>
+<hr>
+<h2 id=graphsage-inductive-learning>GraphSAGE: Inductive Learning</h2>
+<p>GCN is transductive: it operates on a fixed graph and cannot generalize to nodes or graphs not seen during training. If you train on a citation network and a new paper is added, you must retrain. GraphSAGE (Hamilton et al., 2017) makes GNNs inductive by learning an aggregation function that can be applied to any neighborhood.</p>
+<p>The key change: rather than using all neighbors, GraphSAGE samples a fixed-size subset $\mathcal{S}_i^{(l)} \subset \mathcal{N}(i)$ at each layer. The aggregation is:</p>
+<p>$$h_{\mathcal{N}(i)}^{(l)} = \text{AGG}!\left(\left{h_j^{(l)} : j \in \mathcal{S}_i^{(l)}\right}\right)$$</p>
+<p>$$h_i^{(l+1)} = \sigma!\left(W^{(l)} \cdot \left[h_i^{(l)} ;|; h_{\mathcal{N}(i)}^{(l)}\right]\right)$$</p>
+<p>where $|$ denotes concatenation. Three choices for AGG are standard:</p>
+<ul>
+<li><strong>Mean:</strong> $\text{AGG} = \frac{1}{|\mathcal{S}|}\sum_{j \in \mathcal{S}} h_j^{(l)}$ - simple and fast.</li>
+<li><strong>Max-pooling:</strong> $\text{AGG} = \max_{j \in \mathcal{S}} \sigma(W_{\text{pool}} h_j^{(l)})$ - applies an element-wise max after a linear transform.</li>
+<li><strong>LSTM:</strong> pass the (randomly ordered) neighbors through an LSTM - more expressive but loses permutation invariance if order matters.</li>
+</ul>
+<p>The concatenation of the node&rsquo;s own representation with the aggregated neighborhood - rather than GCN&rsquo;s simple averaging including self - preserves the node&rsquo;s own information more explicitly. The fixed-size neighborhood sampling makes each training step $O(k^L)$ in the hop depth $L$, independent of the full graph size. At inference time, the learned AGGREGATE and UPDATE functions apply to any new node with any neighborhood, enabling generalization to unseen nodes and graphs.</p>
+<hr>
+<h2 id=gat-graph-attention-networks>GAT: Graph Attention Networks</h2>
+<p>In GCN, all neighbors contribute equally (up to degree normalization). But not all neighbors are equally relevant. A paper in a citation graph is influenced more by its intellectual predecessors than by coincidental citations. An atom in a molecule contributes differently to a property depending on its chemical context. Graph Attention Networks (Velickovic et al., 2018) replace the fixed normalization with learned attention weights.</p>
+<p>For each edge $(i, j)$, compute an attention score:</p>
+<p>$$e_{ij} = \text{LeakyReLU}!\left(a^\top \left[W h_i ;|; W h_j\right]\right)$$</p>
+<p>where $W \in \mathbb{R}^{d' \times d}$ is a shared linear transform, $a \in \mathbb{R}^{2d'}$ is a learnable attention vector, and $|$ denotes concatenation. Normalize across the neighbors of $i$:</p>
+<p>$$\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})}.$$</p>
+<p>The update is:</p>
+<p>$$h_i^{(l+1)} = \sigma!\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij}, W h_j^{(l)}\right).$$</p>
+<p>In practice, multi-head attention is used: run $K$ independent attention heads and concatenate (or average) their outputs:</p>
+<p>$$h_i^{(l+1)} = \Big|<em>{k=1}^{K}, \sigma!\left(\sum</em>{j \in \mathcal{N}(i)} \alpha_{ij}^{(k)}, W^{(k)} h_j^{(l)}\right).$$</p>
+<p>The attention mechanism allows the model to focus on the most relevant neighbors for each node, which is particularly valuable in heterogeneous graphs where different edges have different semantic significance. The weights $\alpha_{ij}$ are also interpretable - you can inspect which neighbors a node attended to for a given prediction.</p>
+<hr>
+<h2 id=expressive-power-the-weisfeiler-leman-test>Expressive Power: The Weisfeiler-Leman Test</h2>
+<p>How powerful are GNNs? Can they distinguish any two non-isomorphic graphs? The answer is no - and the precise characterization involves the Weisfeiler-Leman (WL) graph isomorphism test.</p>
+<p>The 1-WL test works by iteratively assigning colors to nodes based on their current color and the multiset of neighbors' colors:</p>
+<p>$$c_i^{(t+1)} = \text{HASH}!\left(c_i^{(t)},; \left{!\left{ c_j^{(t)} : j \in \mathcal{N}(i) \right}!\right}\right).$$</p>
+<p>If two graphs are isomorphic, 1-WL assigns identical color sequences. If 1-WL produces different color histograms, the graphs are definitely non-isomorphic. But 1-WL can fail: there exist non-isomorphic pairs of graphs that 1-WL cannot distinguish.</p>
+<p>The key theorem (Xu et al., 2019): any message-passing GNN is at most as powerful as the 1-WL test. A GNN can distinguish two graphs only if 1-WL can. Equality is achieved when the aggregation is injective on multisets - specifically, when AGG uses summation (not mean or max) and the UPDATE is also injective. This is the GIN (Graph Isomorphism Network) architecture:</p>
+<p>$$h_i^{(l+1)} = \text{MLP}^{(l)}!\left((1 + \epsilon^{(l)}), h_i^{(l)} + \sum_{j \in \mathcal{N}(i)} h_j^{(l)}\right)$$</p>
+<p>where $\epsilon$ is learnable. Mean and max aggregators are strictly weaker than sum for distinguishing graph structures.</p>
+<p>1-WL fails on regular graphs: if two nodes have the same degree sequence in their neighborhoods at every hop, 1-WL cannot tell them apart. A classic example: two regular graphs with the same degree but different connectivity structure are indistinguishable by any standard message-passing GNN, no matter how many layers or how large the hidden dimension.</p>
+<hr>
+<h2 id=beyond-1-wl-more-expressive-gnns>Beyond 1-WL: More Expressive GNNs</h2>
+<p>The k-WL hierarchy provides more powerful tests. 2-WL colors pairs of nodes; k-WL colors $k$-tuples. $k$-WL is strictly more powerful than $(k-1)$-WL, but the cost is $O(n^k)$ in the number of nodes - exponential and impractical for large graphs.</p>
+<p>Several practical approaches improve expressiveness without the full k-WL cost:</p>
+<p><strong>Random node features.</strong> Assign each node a unique random feature (e.g., a Gaussian vector) at the start of each forward pass. Two nodes that were structurally identical are now distinguishable because their random seeds differ. This breaks symmetry and provably exceeds 1-WL on structures where 1-WL fails, at the cost of non-determinism (different runs produce different embeddings for structurally equivalent nodes).</p>
+<p><strong>Distance encoding.</strong> Augment each node&rsquo;s input features with structural information: the distance from every node to a set of anchor nodes, or the shortest path distances between pairs. This injects global structural information that message passing cannot compute locally.</p>
+<p><strong>Subgraph GNNs.</strong> For each node $v$, run a GNN on the subgraph obtained by removing $v$ from the graph. The node&rsquo;s representation encodes how the graph changes when it is removed - this captures structural information invisible to 1-WL. This is more expensive ($O(n)$ GNN runs per graph) but more expressive.</p>
+<p><strong>Equivariant GNNs.</strong> For molecular graphs where 3D coordinates are available, architectures like SchNet and DimeNet use geometric invariances (distance, angle, torsion) as structural features.</p>
+<hr>
+<h2 id=task-levels-node-edge-and-graph>Task Levels: Node, Edge, and Graph</h2>
+<p>GNNs are applied at three granularities.</p>
+<p><strong>Node-level tasks.</strong> After $L$ layers of message passing, each node $i$ has a representation $h_i^{(L)} \in \mathbb{R}^d$. Apply a classifier or regressor to each $h_i^{(L)}$ independently. Example: predict whether each node in a citation graph belongs to a research topic (transductive node classification). Because the GNN aggregates neighborhood information, the prediction for node $i$ is informed by its local context, not just its own features.</p>
+<p><strong>Edge-level tasks.</strong> Predict whether an edge exists (link prediction) or its properties. A common approach: for each pair of nodes, form a pair representation $[h_i^{(L)} | h_j^{(L)}]$ or compute their dot product $h_i^{(L)} \cdot h_j^{(L)}$, then apply a classifier. In knowledge graphs, this is entity-relation-entity triple completion.</p>
+<p><strong>Graph-level tasks.</strong> To predict a property of the whole graph (e.g., predict the solubility of a molecule), the per-node representations must be aggregated into a single graph representation:</p>
+<p>$$h_G = \text{READOUT}!\left(\left{h_i^{(L)} : i \in V\right}\right).$$</p>
+<p>Simple choices: mean pooling $h_G = \frac{1}{n}\sum_i h_i^{(L)}$ or max pooling. These are permutation invariant by construction. Differentiable pooling (DiffPool, Ying et al., 2018) learns a soft clustering of nodes into a coarser graph at each pooling step, progressively reducing the number of nodes while preserving hierarchical structure. Sort pooling (SortPool) concatenates the top-$k$ node representations sorted by their last feature dimension.</p>
+<hr>
+<h2 id=applications>Applications</h2>
+<p><strong>AlphaFold2.</strong> DeepMind&rsquo;s protein structure prediction system uses a graph-structured representation of protein residues (the &ldquo;Evoformer&rdquo;). Residues within a threshold distance are connected by edges, and attention-augmented message passing propagates structural information. The result is a learned representation that captures both sequence and spatial context, enabling prediction of 3D structure from amino acid sequence alone.</p>
+<p><strong>Drug discovery.</strong> Molecules are naturally represented as graphs: atoms are nodes with features (element, charge, hybridization), bonds are edges with features (type, stereo). GNNs predict molecular properties (solubility, toxicity, binding affinity) directly from graph structure, replacing hand-engineered fingerprints like ECFP. Trained on databases of experimentally measured properties, GNNs enable virtual screening of billions of candidate molecules.</p>
+<p><strong>Traffic prediction.</strong> Road networks are graphs. DCRNN and related models represent intersections as nodes and road segments as edges, using GNNs with temporal sequence models to predict traffic speed and flow 30-60 minutes ahead. The graph structure allows the model to learn that congestion at one node propagates along connected roads.</p>
+<p><strong>Recommendation systems.</strong> PinSage (Pinterest, Hamilton et al., 2018) represents users and items as nodes in a bipartite graph with edges for user-item interactions. GraphSAGE on this graph produces item embeddings that capture collaborative filtering information, outperforming matrix factorization approaches.</p>
+<hr>
+<h2 id=scalability>Scalability</h2>
+<p>Naive GCN performs full-batch gradient descent: the entire graph must fit in memory, and computing $\hat{A} H W$ requires touching all $n$ nodes and $m$ edges. For billion-node graphs (social networks, web graphs), this is infeasible.</p>
+<p><strong>Mini-batch with neighborhood sampling (GraphSAGE).</strong> Sample a mini-batch of target nodes. For each target node, sample $k_1$ 1-hop neighbors; for each of those, sample $k_2$ 2-hop neighbors; etc. This gives a computation graph that is $O(k_1 k_2 \cdots k_L)$ per target node - small and independent of graph size. The downside: each node&rsquo;s representation is computed with a different sampled neighborhood at each mini-batch step, introducing variance in the gradient estimates.</p>
+<p><strong>Cluster-GCN (Chiang et al., 2019).</strong> Partition the graph into subgraphs using a graph clustering algorithm (METIS). Train on one subgraph at a time. Since nodes within a subgraph are closely connected, mini-batches contain nodes whose $L$-hop neighborhoods are mostly within the subgraph - reducing the &ldquo;neighborhood explosion&rdquo; problem. This also improves memory locality.</p>
+<p><strong>Simplified GCN (SGC, Wu et al., 2019).</strong> Remove all nonlinearities from GCN:</p>
+<p>$$H^{(L)} = \hat{A}^L X W.$$</p>
+<p>The $L$ applications of $\hat{A}$ can be precomputed once (since $\hat{A}$ is fixed), reducing training to simple linear regression on the precomputed features $\hat{A}^L X$. For many node classification benchmarks, SGC performs comparably to GCN at a fraction of the computational cost. This suggests that much of GCN&rsquo;s power comes from the graph propagation operator $\hat{A}$, not from the interleaved nonlinearities.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Aggregation</th>
+<th>Key property</th>
+<th>Limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GCN (Kipf & Welling)</td>
+<td>Normalized sum (fixed)</td>
+<td>Simple, spectral motivation</td>
+<td>Transductive, symmetric normalization may not suit all tasks</td>
+</tr>
+<tr>
+<td>GraphSAGE</td>
+<td>Sampled mean/max/LSTM</td>
+<td>Inductive, scales to large graphs</td>
+<td>Sampling introduces variance</td>
+</tr>
+<tr>
+<td>GAT</td>
+<td>Learned attention weights</td>
+<td>Flexible per-neighbor weighting</td>
+<td>More parameters, slower than GCN</td>
+</tr>
+<tr>
+<td>GIN</td>
+<td>Injective sum + MLP</td>
+<td>As powerful as 1-WL</td>
+<td>Still limited to 1-WL expressiveness</td>
+</tr>
+<tr>
+<td>DiffPool</td>
+<td>Differentiable node clustering</td>
+<td>Hierarchical graph-level representations</td>
+<td>Quadratic in cluster assignments</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Message passing</td>
+<td>Each node aggregates representations from its neighbors and updates its own</td>
+</tr>
+<tr>
+<td>$k$-hop neighborhood</td>
+<td>All nodes reachable in at most $k$ steps; captured after $k$ GNN layers</td>
+</tr>
+<tr>
+<td>GCN normalization</td>
+<td>$\hat{A} = \tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2}$; prevents degree-dependent activation scaling</td>
+</tr>
+<tr>
+<td>Permutation invariance</td>
+<td>Output unchanged under relabeling of nodes</td>
+</tr>
+<tr>
+<td>1-WL test</td>
+<td>Iterative color refinement; standard message-passing GNNs are at most as powerful</td>
+</tr>
+<tr>
+<td>Expressive power gap</td>
+<td>1-WL cannot distinguish all non-isomorphic graphs (e.g., some regular graphs)</td>
+</tr>
+<tr>
+<td>Graph-level readout</td>
+<td>READOUT$({h_i^{(L)}})$ - permutation-invariant pooling to obtain a graph representation</td>
+</tr>
+<tr>
+<td>Inductive vs. transductive</td>
+<td>Inductive: generalizes to unseen nodes/graphs; transductive: operates on fixed graph</td>
+</tr>
+<tr>
+<td>Neighborhood sampling</td>
+<td>Sample fixed-size subsets of neighbors for scalable mini-batch training</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/graph-theory-basics/>Graph Theory</a></li>
+<li><a href=/posts/eigenvalues-eigenvectors/>Eigenvalues and Eigenvectors</a></li>
+<li><a href=/posts/reinforcement-learning/>Reinforcement Learning</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Data Compression // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Data Compression">
+<meta name=twitter:description content="Prerequisites:
+ Entropy & Information Theory Huffman Coding   Shannon&rsquo;s source coding theorem gives you the floor: no lossless code can compress a source $X$ below $H(X)$ bits per symbol on average. But knowing the floor exists is different from knowing how to build a ladder that reaches it. In 1948, the proof was existential - there are codes that get close, but the construction was not practical. The history of data compression since then is the story of building practical codes that approach, and in some cases effectively reach, Shannon&rsquo;s limit.">
+<meta property="og:title" content="Data Compression">
+<meta property="og:description" content="Prerequisites:
+ Entropy & Information Theory Huffman Coding   Shannon&rsquo;s source coding theorem gives you the floor: no lossless code can compress a source $X$ below $H(X)$ bits per symbol on average. But knowing the floor exists is different from knowing how to build a ladder that reaches it. In 1948, the proof was existential - there are codes that get close, but the construction was not practical. The history of data compression since then is the story of building practical codes that approach, and in some cases effectively reach, Shannon&rsquo;s limit.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/data-compression/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Data Compression</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/math/entropy-information/>Entropy & Information Theory</a></li>
+<li><a href=/posts/algorithms/huffman-coding/>Huffman Coding</a></li>
+</ul>
+<hr>
+<p>Shannon&rsquo;s source coding theorem gives you the floor: no lossless code can compress a source $X$ below $H(X)$ bits per symbol on average. But knowing the floor exists is different from knowing how to build a ladder that reaches it. In 1948, the proof was existential - there are codes that get close, but the construction was not practical. The history of data compression since then is the story of building practical codes that approach, and in some cases effectively reach, Shannon&rsquo;s limit.</p>
+<p>The story splits early. Huffman coding, invented in 1952, gets within 1 bit per symbol of entropy - not bad, but that overhead is significant for short messages and small alphabets. Arithmetic coding, developed in the 1970s and 1980s, eliminates most of that gap by coding entire messages rather than individual symbols. Lempel and Ziv showed in 1977 and 1978 that you do not even need to know the source distribution - you can learn it on the fly and still converge to the entropy rate. These three threads - optimal symbol codes, range coding, and universal coding - are the foundations of every modern compression format.</p>
+<p>The second half of the story is lossy compression, where you are willing to accept some distortion in exchange for much higher compression ratios. JPEG images, MP3 audio, and H.265 video all discard information you were not going to notice anyway. The theory behind this trade-off - when you can discard, and how much - is rate-distortion theory. But understanding lossless compression is the prerequisite.</p>
+<hr>
+<h2 id=why-huffman-leaves-a-gap>Why Huffman Leaves a Gap</h2>
+<p>Huffman coding assigns each source symbol an integer-length codeword. If $p(x)$ is the probability of symbol $x$, the ideal codeword length is $-\log_2 p(x)$ bits. But codeword lengths must be integers, so the actual length is $\lceil -\log_2 p(x) \rceil$, which rounds up by at most 1 bit.</p>
+<p>For a single symbol, the expected length satisfies</p>
+<p>$$H(X) \leq L_{\text{Huffman}} &lt; H(X) + 1.$$</p>
+<p>The upper bound of $H(X) + 1$ is tight. Consider a source with two symbols: $p(a) = 0.01$, $p(b) = 0.99$. Entropy is $H \approx 0.081$ bits, but any binary Huffman code assigns at least 1 bit per symbol - nearly a factor of 12 overhead.</p>
+<p>The fix is to code blocks. If you encode $n$ symbols at a time, treating sequences of $n$ symbols as a single &ldquo;super-symbol,&rdquo; the overhead per symbol drops to less than $1/n$ bits. In the limit $n \to \infty$, Huffman codes on blocks approach $H(X)$. But the alphabet of $n$-symbol blocks has size $|\mathcal{X}|^n$, so the table size explodes. Arithmetic coding avoids this by working directly on infinite-length sequences.</p>
+<hr>
+<h2 id=arithmetic-coding-approaching-the-limit>Arithmetic Coding: Approaching the Limit</h2>
+<p>Arithmetic coding encodes an entire message as a single number in $[0, 1)$. The algorithm maintains an interval $[l, r)$ that narrows as symbols are processed. For each new symbol $x$ with probability $p(x)$, the interval is split proportionally, and the sub-interval corresponding to $x$ is retained.</p>
+<p>After processing a sequence $x_1, x_2, \ldots, x_n$ with probability $P(x_1, \ldots, x_n)$, the interval has width $P(x_1, \ldots, x_n)$. Any number in this interval serves as a codeword; it takes $\lceil -\log_2 P(x_1, \ldots, x_n) \rceil + 1$ bits to specify it. For a sequence of $n$ i.i.d. symbols, this is approximately $\sum_i -\log_2 p(x_i) + 1$ bits total - getting within 1 bit of the optimal for the entire message, not per symbol.</p>
+<p>The expected length per symbol is</p>
+<p>$$H(X) \leq \frac{L_{\text{arithmetic}}}{n} &lt; H(X) + \frac{1}{n}.$$</p>
+<p>As $n \to \infty$, this overhead vanishes. Arithmetic coding effectively achieves $H(X)$ bits per symbol for long messages. It is the practical standard when you want to get close to Shannon&rsquo;s limit: JPEG2000, H.265 (HEVC), and CABAC in H.264 all use arithmetic coding internally.</p>
+<p><strong>Implementation note.</strong> Multiplying probabilities causes underflow quickly. Real implementations use integer arithmetic with renormalization (range coding), updating the interval with integer arithmetic and emitting bits as the interval is determined. The result is efficient enough for hardware video encoders.</p>
+<hr>
+<h2 id=prefix-free-codes-and-the-kraft-inequality>Prefix-Free Codes and the Kraft Inequality</h2>
+<p>Both Huffman and arithmetic coding produce <strong>prefix-free codes</strong>: no codeword is a prefix of another. This property is what allows unambiguous decoding: you can read bits from a stream and know exactly when a codeword ends without any delimiter.</p>
+<p>The fundamental constraint on prefix-free codes is the <strong>Kraft inequality</strong>:</p>
+<p>$$\sum_{x} 2^{-\ell(x)} \leq 1,$$</p>
+<p>where $\ell(x)$ is the codeword length for symbol $x$. Conversely, any set of lengths satisfying this inequality can be realized by a prefix-free code. The inequality is tight for Huffman codes (equality holds).</p>
+<p>The Kraft inequality connects code design to probability: assign probability $2^{-\ell(x)}$ to each codeword, and the sum is at most 1. Optimal code design is equivalent to optimal probability assignment, which is why entropy (the expected value of $-\log p(x)$) bounds the expected code length from below.</p>
+<hr>
+<h2 id=lz77-and-lz78-universal-compression>LZ77 and LZ78: Universal Compression</h2>
+<p>Huffman and arithmetic coding require knowledge of the source probabilities. Lempel and Ziv showed in 1977 and 1978 that you can compress without knowing the distribution, and still achieve the entropy rate asymptotically.</p>
+<p><strong>LZ77</strong> (used in gzip, deflate, PNG, HTTP compression): maintains a sliding window of recently seen data. When encoding the next piece of data, search the window for the longest match. Output a triple (offset, length, next character): &ldquo;copy $\ell$ characters starting from position $-d$ in the window, then output character $c$.&rdquo; If the source has any statistical regularity - repeated words in text, repeated patterns in code - the matches will be long and the output will be short.</p>
+<p><strong>LZ78</strong> and its variant LZW (used in GIF, early Unix compress): builds a dictionary incrementally. Start with single-character entries. When encoding, find the longest prefix that is already in the dictionary, output its index, then add the current match extended by one character as a new entry. LZW omits the new character from the output (the decoder can infer it), reducing overhead further.</p>
+<p><strong>Why they work.</strong> Lempel and Ziv proved that both algorithms achieve the entropy rate $H$ of any stationary ergodic source as the message length $n \to \infty$. The dictionary learns the source statistics on the fly - the compression ratio for an English text file will converge to the entropy rate of English, estimated around 1 to 1.5 bits per character, even though the algorithm never sees a probability table.</p>
+<p><strong>Modern descendant: Zstandard (zstd).</strong> Developed at Facebook (now Meta), zstd combines LZ77-style dictionary matching with finite state entropy (FSE), a fast arithmetic coder based on asymmetric numeral systems (Jarek Duda, 2013). It achieves compression ratios close to gzip with 5-10 times faster decompression. Used by the Linux kernel, web servers, database engines, and cloud storage systems.</p>
+<hr>
+<h2 id=jpeg-lossy-compression-in-practice>JPEG: Lossy Compression in Practice</h2>
+<p>JPEG compression illustrates the principle of exploiting perceptual irrelevance:</p>
+<ol>
+<li>
+<p><strong>Color space conversion.</strong> Convert RGB to YCbCr (luminance and chrominance). Human eyes are more sensitive to luminance detail than color detail, so chrominance channels are downsampled.</p>
+</li>
+<li>
+<p><strong>Block DCT.</strong> Divide the image into $8 \times 8$ pixel blocks. Apply the discrete cosine transform to each block. The result is 64 frequency coefficients per block, from low-frequency (large-scale structure) to high-frequency (fine detail).</p>
+</li>
+<li>
+<p><strong>Quantization.</strong> Divide each frequency coefficient by a quantization step size (larger for high frequencies) and round to the nearest integer. This step is lossy - it throws away high-frequency detail that the eye barely perceives. The quality parameter in JPEG controls these quantization step sizes.</p>
+</li>
+<li>
+<p><strong>Entropy coding.</strong> The quantized coefficients are run-length encoded (exploiting the many zeros in high-frequency components) and Huffman-coded.</p>
+</li>
+</ol>
+<p>The quality - distortion tradeoff is entirely in step 3. A larger quantization step means more coefficients round to zero, fewer bits are needed, and more detail is lost. The optimal quantization step for a given bit budget is what rate-distortion theory analyzes formally.</p>
+<hr>
+<h2 id=h265hevc-exploiting-temporal-redundancy>H.265/HEVC: Exploiting Temporal Redundancy</h2>
+<p>Video compression extends the JPEG idea to sequences of frames. Most of a video frame is nearly identical to the previous frame (the background does not move), and this temporal redundancy is the main opportunity.</p>
+<p><strong>H.265 (HEVC)</strong> uses four stages:</p>
+<ol>
+<li><strong>Prediction.</strong> For each block, find a similar block in a previous (or future) reference frame (inter prediction) or predict from neighboring blocks in the same frame (intra prediction). Output the prediction error (residual).</li>
+<li><strong>Transform.</strong> Apply a DCT-like transform to the residual. The residual is small (since prediction is good), so most coefficients will be small or zero.</li>
+<li><strong>Quantization.</strong> Same principle as JPEG - round to reduce bit cost.</li>
+<li><strong>Entropy coding (CABAC).</strong> Context-adaptive binary arithmetic coding, adapting the probability model to local statistics.</li>
+</ol>
+<p>H.265 achieves roughly the same visual quality as H.264 at half the bit rate. This improvement came from larger and more flexible block sizes (up to $64 \times 64$ vs $16 \times 16$), better motion compensation, and improved entropy coding. The mathematical structure - predict, transform, quantize, entropy code - is the same as JPEG.</p>
+<hr>
+<h2 id=the-incompressibility-argument>The Incompressibility Argument</h2>
+<p>A compression algorithm maps $n$-bit strings to shorter strings. But there are $2^n$ strings of length $n$ and only $\sum_{k=0}^{n-1} 2^k = 2^n - 1$ strings of length less than $n$. By pigeonhole, at least one $n$-bit string cannot be compressed to fewer than $n$ bits. In fact, almost all strings cannot be compressed:</p>
+<p><strong>Claim.</strong> At most $2^{n-k}$ strings of length $n$ can be compressed to fewer than $n - k + 1$ bits.</p>
+<p><strong>Proof.</strong> There are only $2^{n-k}$ binary strings of length less than $n - k + 1$. $\square$</p>
+<p>So a uniformly random $n$-bit string can be compressed by more than $k$ bits with probability at most $2^{-k}$. Most bit strings are incompressible. The strings that do compress are exactly those with low entropy - statistical regularities that the compressor can exploit.</p>
+<p><strong>Practical corollary.</strong> Do not compress already-compressed data. ZIP files, JPEGs, and encrypted data are approximately uniformly random. Running gzip on a JPEG file will produce a file the same size or larger, because there is no redundancy left to exploit. Compression exploits structure; random-looking data has none.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Type</th>
+<th>Achieves</th>
+<th>Used in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Huffman coding</td>
+<td>Lossless, symbol code</td>
+<td>$H(X)$ to $H(X)+1$ bits/symbol</td>
+<td>HTTP, older formats</td>
+</tr>
+<tr>
+<td>Arithmetic coding</td>
+<td>Lossless, sequence</td>
+<td>$H(X)$ + $O(1/n)$ bits/symbol</td>
+<td>JPEG2000, HEVC/CABAC</td>
+</tr>
+<tr>
+<td>LZ77</td>
+<td>Lossless, universal</td>
+<td>Entropy rate (no prior needed)</td>
+<td>gzip, deflate, PNG, zstd</td>
+</tr>
+<tr>
+<td>LZ78 / LZW</td>
+<td>Lossless, universal</td>
+<td>Entropy rate</td>
+<td>GIF, early compress</td>
+</tr>
+<tr>
+<td>JPEG</td>
+<td>Lossy</td>
+<td>Determined by quantization step</td>
+<td>Images everywhere</td>
+</tr>
+<tr>
+<td>H.265/HEVC</td>
+<td>Lossy</td>
+<td>Determined by quantization + motion</td>
+<td>Video streaming</td>
+</tr>
+</tbody>
+</table>
+<p>Shannon&rsquo;s source coding theorem sets the floor. Huffman gets close for symbols. Arithmetic coding and LZ methods get essentially all the way there for sequences. The gap between theoretical entropy and practical compression ratio has shrunk to near zero for lossless formats; for lossy compression, the remaining question is how much distortion you are willing to accept.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/information-theory/mutual-information-capacity/>Mutual Information & Channel Capacity</a></li>
+<li><a href=/posts/information-theory/rate-distortion-theory/>Rate-Distortion Theory</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

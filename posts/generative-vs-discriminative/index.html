@@ -1,0 +1,187 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Generative vs Discriminative // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Generative vs Discriminative">
+<meta name=twitter:description content="Prerequisites:
+ ML First Principles Bayesian Inference Conditional Probability & Bayes' Theorem   Suppose you want to build a spam filter. You have a collection of emails, each labeled spam or not-spam. There are two fundamentally different strategies for building a classifier. Strategy one: study each class of emails deeply. Learn what a spam email looks like - its vocabulary, its sentence structure, the kinds of links it contains. Then, when a new email arrives, ask: &ldquo;does this email look more like the spam distribution or the not-spam distribution?">
+<meta property="og:title" content="Generative vs Discriminative">
+<meta property="og:description" content="Prerequisites:
+ ML First Principles Bayesian Inference Conditional Probability & Bayes' Theorem   Suppose you want to build a spam filter. You have a collection of emails, each labeled spam or not-spam. There are two fundamentally different strategies for building a classifier. Strategy one: study each class of emails deeply. Learn what a spam email looks like - its vocabulary, its sentence structure, the kinds of links it contains. Then, when a new email arrives, ask: &ldquo;does this email look more like the spam distribution or the not-spam distribution?">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/generative-vs-discriminative/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Generative vs Discriminative</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/machine-learning-first-principles/>ML First Principles</a></li>
+<li><a href=/posts/bayesian-inference/>Bayesian Inference</a></li>
+<li><a href=/posts/conditional-probability-bayes/>Conditional Probability & Bayes' Theorem</a></li>
+</ul>
+<hr>
+<p>Suppose you want to build a spam filter. You have a collection of emails, each labeled spam or not-spam. There are two fundamentally different strategies for building a classifier. Strategy one: study each class of emails deeply. Learn what a spam email looks like - its vocabulary, its sentence structure, the kinds of links it contains. Then, when a new email arrives, ask: &ldquo;does this email look more like the spam distribution or the not-spam distribution?&rdquo; Strategy two: forget about what emails look like in general. Just learn a decision boundary - the set of features that directly predicts the label. You don&rsquo;t need to know what a typical spam email looks like; you just need to know which features predict &ldquo;spam.&rdquo;</p>
+<p>These two strategies correspond to two fundamentally different probabilistic formulations. The first strategy models the <strong>joint distribution</strong> $P(X, Y)$ - it learns what the data looks like for each class. At prediction time, it uses Bayes' theorem to invert this into a class probability. The second strategy models the <strong>conditional distribution</strong> $P(Y | X)$ directly - it learns to map from features to labels without ever modeling the input distribution. The first approach is <strong>generative</strong>; the second is <strong>discriminative</strong>.</p>
+<p>This distinction is not just a modeling choice - it determines what assumptions you make, what data you can use, what you can do with the model at test time, and how quickly you converge to good performance as data grows. The choice between them has practical consequences that are easy to get wrong.</p>
+<hr>
+<h2 id=the-generative-approach>The Generative Approach</h2>
+<p>A generative model learns the joint distribution $P(X, Y)$, which factorizes as:</p>
+<p>$$P(X, Y) = P(X | Y) \cdot P(Y)$$</p>
+<p>$P(Y)$ is the prior over classes (e.g., 30% of emails are spam). $P(X | Y)$ is the class-conditional distribution: what do features look like given the class? At prediction time, invert via Bayes' theorem:</p>
+<p>$$P(Y | X) = \frac{P(X | Y) \cdot P(Y)}{P(X)}$$</p>
+<p>Since $P(X) = \sum_y P(X | Y=y) P(Y=y)$ is the same for all classes, classification amounts to computing $P(X | Y=y) \cdot P(Y=y)$ for each class $y$ and picking the largest.</p>
+<p><strong>Naive Bayes</strong> is the simplest generative classifier. It models $P(X | Y)$ with the strong assumption that features are conditionally independent given the class:</p>
+<p>$$P(X | Y=y) = \prod_{j=1}^d P(X_j | Y=y)$$</p>
+<p>For text classification, $X_j$ might be the count of word $j$, and $P(X_j | Y = \text{spam})$ is the distribution of that word count in spam emails. This assumption is almost always wrong - words are correlated - but Naive Bayes often works surprisingly well in practice because the classification decision depends only on comparing these products across classes, and the errors in the joint probability estimates can cancel out.</p>
+<p><strong>Gaussian Discriminant Analysis (GDA)</strong> models $P(X | Y=y) = \mathcal{N}(\mu_y, \Sigma)$ - each class has a Gaussian feature distribution with its own mean $\mu_y$ and a shared covariance $\Sigma$. Under this model, the decision boundary between two classes is linear (this is linear discriminant analysis, LDA). If each class has its own covariance $\Sigma_y$, the boundary becomes quadratic (QDA).</p>
+<p><strong>Hidden Markov Models (HMMs)</strong> are generative models for sequences. The hidden state sequence follows a Markov chain; the observed sequence is generated from the hidden states. Given observations, inference (the E-step of Baum-Welch, or the Viterbi algorithm) inverts the generation process to find the most probable hidden state sequence. HMMs were the dominant approach in speech recognition for decades.</p>
+<hr>
+<h2 id=the-discriminative-approach>The Discriminative Approach</h2>
+<p>A discriminative model directly models $P(Y | X)$ without ever representing $P(X)$ or $P(X, Y)$.</p>
+<p><strong>Logistic regression</strong> models $P(Y=1 | X)$ as:</p>
+<p>$$P(Y=1 | X=x) = \sigma(w^\top x + b) = \frac{1}{1 + e^{-(w^\top x + b)}}$$</p>
+<p>It learns the weights $w$ directly from labels by maximizing the conditional log-likelihood $\sum_i \log P(Y_i | X_i)$. It never asks &ldquo;what does a typical positive example look like?&rdquo; It only learns the boundary.</p>
+<p><strong>Support Vector Machines</strong> are discriminative by design - they find the maximum-margin linear boundary between classes. There is no probabilistic model of the input at all.</p>
+<p><strong>Neural networks</strong> model $P(Y | X)$ through a composition of nonlinear transformations. Like logistic regression, the parameters are fit by maximizing conditional likelihood. The model makes no commitment to any distributional form for $X$.</p>
+<p><strong>Conditional Random Fields (CRFs)</strong> are the discriminative counterpart to HMMs for sequence labeling. Rather than modeling the joint $P(X, Y)$ as HMMs do, CRFs model $P(Y | X)$ directly over entire label sequences. This allows the inclusion of arbitrary overlapping features of the input sequence, which generative models cannot easily accommodate.</p>
+<hr>
+<h2 id=why-generative-models-use-more-capacity>Why Generative Models Use More Capacity</h2>
+<p>A generative model must represent $P(X)$, the distribution over inputs. For the spam classifier, this means modeling what email text looks like in general - the vocabulary, the syntax, the typical lengths. This structure has nothing to do with the classification task. Generative models spend representational capacity on the input distribution even though, at prediction time, only the contrast between $P(X | Y=1)$ and $P(X | Y=0)$ matters.</p>
+<p>Discriminative models skip this. They model only the boundary, which is often a much simpler object than the full data distribution. The decision boundary between spam and not-spam can be a linear function of a few word frequencies; modeling the full distribution of email text requires capturing an enormous amount of unrelated structure.</p>
+<p>This is sometimes called &ldquo;wasted capacity&rdquo;: generative models learn about the input distribution, which is irrelevant to classification. The argument for discriminative models is that if your goal is classification, you should model exactly what you need - $P(Y | X)$ - and nothing more.</p>
+<hr>
+<h2 id=why-generative-models-can-win>Why Generative Models Can Win</h2>
+<p>If generative models are less efficient, why use them? Several reasons.</p>
+<p><strong>Limited labeled data with abundant unlabeled data.</strong> Discriminative models require labels to train. Generative models can use unlabeled data to learn $P(X)$, even without knowing the class. If you have 100 labeled emails and 100,000 unlabeled emails, a generative model can use all 100,100 emails during training (semi-supervised learning), while a discriminative model uses only the 100 labeled ones. When labels are expensive (medical imaging, legal documents), this is a decisive advantage.</p>
+<p><strong>Covariate shift.</strong> Suppose the input distribution shifts between training and deployment (e.g., the vocabulary of spam emails evolves over time), but the relationship $P(Y | X)$ stays the same. A discriminative model that modeled $P(Y | X)$ well on the training distribution may degrade if the test distribution is different. A generative model that explicitly models $P(X | Y)$ can in principle detect and adapt to this shift.</p>
+<p><strong>Out-of-distribution detection.</strong> If an input $x$ is very unlikely under $P(X)$, a generative model can flag it as anomalous. A discriminative model will confidently assign it to some class - it has no concept of &ldquo;this input doesn&rsquo;t look like anything I was trained on.&rdquo; This is important for safety-critical applications.</p>
+<p><strong>Generation.</strong> If you want to generate new examples - synthesize new images, augment your training data, explore the input manifold - you need a model of $P(X)$. Discriminative models cannot generate; generative models can sample.</p>
+<hr>
+<h2 id=the-ng-jordan-analysis>The Ng-Jordan Analysis</h2>
+<p>A landmark 2002 paper by Andrew Ng and Michael Jordan compared Naive Bayes (generative) and logistic regression (discriminative) on the same classification problem - an important pair because, as they showed, these two models are actually two ways to fit the same functional form.</p>
+<p>Under the Naive Bayes assumption, the posterior $P(Y | X)$ takes the form of logistic regression:</p>
+<p>$$\log \frac{P(Y=1|X)}{P(Y=0|X)} = w^\top x + b$$</p>
+<p>So the two models make the same predictions if they agree on $w$ and $b$. But they estimate $w$ and $b$ differently. Naive Bayes estimates the parameters of $P(X | Y)$ and $P(Y)$ from the data, then derives $w$ and $b$ via Bayes' theorem. Logistic regression estimates $w$ and $b$ directly by maximizing conditional likelihood.</p>
+<p>The key finding: <strong>generative classifiers converge faster</strong> (in samples), but <strong>discriminative classifiers converge to a lower asymptotic error</strong>.</p>
+<p>With very little data, the generative model&rsquo;s structural assumption (Naive Bayes) acts as a strong prior that reduces variance. The discriminative model, estimating the boundary directly, has higher variance and does worse. As data grows, the discriminative model eventually learns the correct boundary without assuming conditional independence of features. The generative model&rsquo;s incorrect assumption starts hurting it. There is a crossover: at some amount of data, discriminative takes the lead and eventually wins.</p>
+<p>This crossover can happen early (a few dozen examples) or late (thousands), depending on how wrong the generative assumption is. The practical lesson: if you have very little data, consider generative models for their sample efficiency. With abundant data, discriminative models are generally better.</p>
+<hr>
+<h2 id=modern-generative-models>Modern Generative Models</h2>
+<p>Contemporary generative models - Variational Autoencoders (VAEs), Generative Adversarial Networks (GANs), and diffusion models - are not primarily classifiers. They are trained to learn $P(X)$ (or $P(X | Y)$ for conditional generation) for synthesis and representation learning.</p>
+<p><strong>VAEs</strong> learn a latent variable model: $P(X) = \int P(X | Z) P(Z) dZ$. The encoder learns $Q(Z | X)$ and the decoder learns $P(X | Z)$. The training objective (the ELBO) balances reconstruction quality against the structure of the latent space.</p>
+<p><strong>GANs</strong> learn $P(X)$ implicitly, through a game between a generator that produces samples and a discriminator that distinguishes real from fake. The generator never models $P(X)$ explicitly; it just learns to produce samples indistinguishable from the training data.</p>
+<p><strong>Diffusion models</strong> learn to reverse a noise-addition process: starting from Gaussian noise, iteratively denoise to produce a sample from $P(X)$. They currently produce the highest-quality image and audio samples.</p>
+<p>These models are used for data augmentation, representation learning, creative applications, and as components in larger systems (e.g., a generative model trained on unlabeled data can provide a feature representation for downstream classification). They blur the generative/discriminative line: a diffusion model used as a feature extractor for classification is being used discriminatively despite being trained generatively.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Generative</th>
+<th>Discriminative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What is modeled</td>
+<td>$P(X, Y) = P(X | Y)P(Y)$</td>
+<td>$P(Y | X)$ directly</td>
+</tr>
+<tr>
+<td>Examples</td>
+<td>Naive Bayes, GDA, HMM, VAE, GAN</td>
+<td>Logistic regression, SVM, NN, CRF</td>
+</tr>
+<tr>
+<td>Uses unlabeled data</td>
+<td>Yes</td>
+<td>No (standard)</td>
+</tr>
+<tr>
+<td>Can generate samples</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Asymptotic error (abundant data)</td>
+<td>Higher (model misspecification)</td>
+<td>Lower</td>
+</tr>
+<tr>
+<td>Small-data performance</td>
+<td>Often better (strong inductive bias)</td>
+<td>Often worse (high variance)</td>
+</tr>
+<tr>
+<td>Out-of-distribution detection</td>
+<td>Yes (via $P(X)$)</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/bayesian-classifiers/>Bayesian Classifiers</a></li>
+<li><a href=/posts/variational-autoencoders/>Variational Autoencoders</a></li>
+<li><a href=/posts/graphical-models/>Graphical Models</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>
