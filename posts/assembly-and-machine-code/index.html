@@ -72,14 +72,14 @@ Sep 15, 2024
 <p>What separates x86-64 from every competing ISA is a moat built on binary compatibility. When IBM shipped the 8086 in the PC in 1981, a massive installed base of software accumulated. Intel&rsquo;s commitment was that new processors would always run old binaries. The 286 ran 8086 code. The 386 added 32-bit protected mode but ran 286 code. The x86-64 extension (from AMD, licensed to Intel) added 64-bit mode but remained backward compatible. Every new processor generation - from Pentium to Core to Skylake to Alder Lake - runs the same binaries from 1981. This is why x86 survived the RISC vs CISC wars of the 1990s, when RISC architectures (MIPS, Alpha, SPARC) were architecturally cleaner and faster per clock. RISC won the argument. x86 won the market. Binary compatibility beat elegance.</p>
 <p>The irony: modern x86 processors are not actually CISC machines internally. Since the Pentium Pro (1995), Intel decomposes CISC instructions into micro-operations (µops) internally and executes them on a RISC-style out-of-order engine. The CISC instruction set is a compatibility layer - a translator that converts the legacy encoding into the actual operations the CPU executes. You write x86 assembly; the CPU runs something else entirely.</p>
 <h2 id=registers-the-cpus-working-memory>Registers: The CPU&rsquo;s Working Memory</h2>
-<p>Registers are named storage locations inside the CPU itself, directly accessible by the execution units. A memory access (even L1 cache) takes 4–5 cycles. A register access takes 0 cycles - it is already in the execution unit.</p>
+<p>Registers are named storage locations inside the CPU itself, directly accessible by the execution units. A memory access (even L1 cache) takes 4 - 5 cycles. A register access takes 0 cycles - it is already in the execution unit.</p>
 <p>x86-64 general-purpose registers: <code>rax</code>, <code>rbx</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>rsp</code>, <code>rbp</code>, and <code>r8</code> through <code>r15</code>. Each holds 64 bits. The same physical register is accessible at different widths to maintain backward compatibility:</p>
 <ul>
 <li><code>rax</code>: full 64-bit register</li>
 <li><code>eax</code>: low 32 bits (writing to <code>eax</code> zero-extends into <code>rax</code>)</li>
 <li><code>ax</code>: low 16 bits</li>
 <li><code>al</code>: low 8 bits</li>
-<li><code>ah</code>: bits 8–15 (historical artifact, limited use)</li>
+<li><code>ah</code>: bits 8 - 15 (historical artifact, limited use)</li>
 </ul>
 <p>Special-purpose registers:</p>
 <ul>
@@ -90,9 +90,9 @@ Sep 15, 2024
 </ul>
 <p>Floating-point and SIMD work happens in a separate register file:</p>
 <ul>
-<li><code>xmm0</code>–<code>xmm15</code>: 128-bit registers (SSE)</li>
-<li><code>ymm0</code>–<code>ymm15</code>: 256-bit registers (AVX2), each is the upper half of a <code>zmm</code> register plus the corresponding <code>xmm</code> register</li>
-<li><code>zmm0</code>–<code>zmm31</code>: 512-bit registers (AVX-512)</li>
+<li><code>xmm0</code> - <code>xmm15</code>: 128-bit registers (SSE)</li>
+<li><code>ymm0</code> - <code>ymm15</code>: 256-bit registers (AVX2), each is the upper half of a <code>zmm</code> register plus the corresponding <code>xmm</code> register</li>
+<li><code>zmm0</code> - <code>zmm31</code>: 512-bit registers (AVX-512)</li>
 </ul>
 <p>When a function receives a <code>double</code> argument or returns one, it goes through <code>xmm0</code>. When a linear algebra kernel processes 8 floats simultaneously, they live in one <code>ymm</code> register.</p>
 <h2 id=instruction-classes>Instruction Classes</h2>
@@ -109,11 +109,11 @@ Sep 15, 2024
 </code></pre></div><p><code>call target</code> pushes the return address (the address of the instruction after the <code>call</code>) onto the stack, then jumps to <code>target</code>. <code>ret</code> pops that address and jumps to it. This is the entire mechanism behind function calls - no magic, just two instructions and a convention about what&rsquo;s on the stack.</p>
 <h2 id=the-system-v-amd64-calling-convention>The System V AMD64 Calling Convention</h2>
 <p>Linux and macOS agree on how function arguments are passed and returned. This agreement is the ABI (Application Binary Interface), and it is what allows code compiled by different compilers to interoperate.</p>
-<p>Integer and pointer arguments, in order: <code>rdi</code>, <code>rsi</code>, <code>rdx</code>, <code>rcx</code>, <code>r8</code>, <code>r9</code>. Arguments beyond the sixth go on the stack. Floating-point arguments: <code>xmm0</code>–<code>xmm7</code>. Return value: <code>rax</code> for integers/pointers, <code>xmm0</code> for floating-point.</p>
+<p>Integer and pointer arguments, in order: <code>rdi</code>, <code>rsi</code>, <code>rdx</code>, <code>rcx</code>, <code>r8</code>, <code>r9</code>. Arguments beyond the sixth go on the stack. Floating-point arguments: <code>xmm0</code> - <code>xmm7</code>. Return value: <code>rax</code> for integers/pointers, <code>xmm0</code> for floating-point.</p>
 <p>Registers are split into two classes:</p>
 <ul>
-<li><strong>Caller-saved</strong> (volatile): <code>rax</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>r8</code>, <code>r9</code>, <code>r10</code>, <code>r11</code>, <code>xmm0</code>–<code>xmm15</code>. A function may clobber these freely; the caller must save them before the call if it still needs their values afterward.</li>
-<li><strong>Callee-saved</strong> (non-volatile): <code>rbx</code>, <code>rbp</code>, <code>r12</code>–<code>r15</code>. If a function uses these registers, it must save them (push to stack on entry) and restore them (pop from stack on exit) before returning.</li>
+<li><strong>Caller-saved</strong> (volatile): <code>rax</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>r8</code>, <code>r9</code>, <code>r10</code>, <code>r11</code>, <code>xmm0</code> - <code>xmm15</code>. A function may clobber these freely; the caller must save them before the call if it still needs their values afterward.</li>
+<li><strong>Callee-saved</strong> (non-volatile): <code>rbx</code>, <code>rbp</code>, <code>r12</code> - <code>r15</code>. If a function uses these registers, it must save them (push to stack on entry) and restore them (pop from stack on exit) before returning.</li>
 </ul>
 <p>The distinction is a performance optimization: most functions don&rsquo;t need to save many registers, and most callers don&rsquo;t need their caller-saved registers preserved across calls. The ABI minimizes unnecessary save/restore work in the common case.</p>
 <h2 id=stack-frames-in-assembly>Stack Frames in Assembly</h2>
@@ -214,12 +214,12 @@ Sep 15, 2024
 </tr>
 <tr>
 <td>Caller-saved regs</td>
-<td><code>rax</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>r8–r11</code>, <code>xmm0–15</code></td>
+<td><code>rax</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>r8 - r11</code>, <code>xmm0 - 15</code></td>
 <td>Function can clobber these; caller must save if needed</td>
 </tr>
 <tr>
 <td>Callee-saved regs</td>
-<td><code>rbx</code>, <code>rbp</code>, <code>r12–r15</code></td>
+<td><code>rbx</code>, <code>rbp</code>, <code>r12 - r15</code></td>
 <td>Function must save/restore these</td>
 </tr>
 <tr>

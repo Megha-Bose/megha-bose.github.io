@@ -12,12 +12,12 @@
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="Building Sharded Transformers">
 <meta name=twitter:description content="Prerequisites:
- KV Caching & LLM Inference Linear Transformations   GPT-3 has 175 billion parameters. In FP16, that&rsquo;s 350 GB - about five high-end A100 GPUs just to store the weights. Training requires gradients and optimizer states on top of that: roughly 2–3 TB total. No single machine has this memory.
-The solution isn&rsquo;t better hardware. A100s already push the limits of what&rsquo;s physically possible with current chip technology. The solution is distributed computation: split the model across many GPUs, and coordinate them so they collectively behave as a single model.">
+ KV Caching & LLM Inference Linear Transformations   GPT-3 has 175 billion parameters. In FP16, that&rsquo;s 350 GB - about five high-end A100 GPUs just to store the weights. Training requires gradients and optimizer states on top of that: roughly 2 - 3 TB total. No single machine has this memory.
+The solution isn&rsquo;t better hardware. A100s already push the limits of what&rsquo;s physically possible with current chip technology.">
 <meta property="og:title" content="Building Sharded Transformers">
 <meta property="og:description" content="Prerequisites:
- KV Caching & LLM Inference Linear Transformations   GPT-3 has 175 billion parameters. In FP16, that&rsquo;s 350 GB - about five high-end A100 GPUs just to store the weights. Training requires gradients and optimizer states on top of that: roughly 2–3 TB total. No single machine has this memory.
-The solution isn&rsquo;t better hardware. A100s already push the limits of what&rsquo;s physically possible with current chip technology. The solution is distributed computation: split the model across many GPUs, and coordinate them so they collectively behave as a single model.">
+ KV Caching & LLM Inference Linear Transformations   GPT-3 has 175 billion parameters. In FP16, that&rsquo;s 350 GB - about five high-end A100 GPUs just to store the weights. Training requires gradients and optimizer states on top of that: roughly 2 - 3 TB total. No single machine has this memory.
+The solution isn&rsquo;t better hardware. A100s already push the limits of what&rsquo;s physically possible with current chip technology.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="http://megha-bose.github.io/posts/building-sharded-transformers/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
@@ -71,7 +71,7 @@ Mar 6, 2022
 <li><a href=/posts/linear-transformations/>Linear Transformations</a></li>
 </ul>
 <hr>
-<p>GPT-3 has 175 billion parameters. In FP16, that&rsquo;s 350 GB - about five high-end A100 GPUs just to store the weights. Training requires gradients and optimizer states on top of that: roughly 2–3 TB total. No single machine has this memory.</p>
+<p>GPT-3 has 175 billion parameters. In FP16, that&rsquo;s 350 GB - about five high-end A100 GPUs just to store the weights. Training requires gradients and optimizer states on top of that: roughly 2 - 3 TB total. No single machine has this memory.</p>
 <p>The solution isn&rsquo;t better hardware. A100s already push the limits of what&rsquo;s physically possible with current chip technology. The solution is distributed computation: split the model across many GPUs, and coordinate them so they collectively behave as a single model.</p>
 <p>Building and training these &ldquo;sharded&rdquo; transformers is one of the hardest engineering problems in machine learning. The mathematics involves linear algebra (how to split matrices), communication theory (how to synchronize across machines), and numerical methods (how to do it without losing precision). This post covers all three.</p>
 <hr>
@@ -161,7 +161,7 @@ Mar 6, 2022
 </ol>
 <p>After the all-reduce, all GPUs have identical parameters. The effect is mathematically equivalent to training on a batch $P$ times larger than a single GPU&rsquo;s batch.</p>
 <p><strong>Limitation:</strong> the model must fit on a single GPU. Works for 7B models on A100-80GB. Doesn&rsquo;t help for 175B.</p>
-<p><strong>Communication cost:</strong> the all-reduce step transmits $4N$ bytes (the gradients) per step, at a bandwidth cost of $2 \times \frac{N(P-1)}{P} \approx 2N$ parameters transmitted per GPU per step (for large $P$). For $N = 7 \times 10^9$ in FP32: 28 GB per step. This is why NVLink (within a node, 600 GB/s) and InfiniBand (across nodes, 200–400 GB/s) matter.</p>
+<p><strong>Communication cost:</strong> the all-reduce step transmits $4N$ bytes (the gradients) per step, at a bandwidth cost of $2 \times \frac{N(P-1)}{P} \approx 2N$ parameters transmitted per GPU per step (for large $P$). For $N = 7 \times 10^9$ in FP32: 28 GB per step. This is why NVLink (within a node, 600 GB/s) and InfiniBand (across nodes, 200 - 400 GB/s) matter.</p>
 <hr>
 <h2 id=tensor-parallelism>Tensor Parallelism</h2>
 <p>When the model is too large for one GPU, you split individual layers across multiple GPUs. This is <strong>tensor parallelism</strong> (TP), also called model parallelism (Shoeybi et al., 2019, Megatron-LM style).</p>
@@ -206,7 +206,7 @@ Mar 6, 2022
 <p><strong>ZeRO Stage 3:</strong> Also partition the weights. Memory per GPU:</p>
 <p>$$\text{Weights}: 4N/P \quad \text{Grads}: 4N/P \quad \text{Optimizer}: 8N/P \quad \text{Total}: 16N/P.$$</p>
 <p>At $P = 64$ GPUs, ZeRO-3 reduces memory per GPU by $64\times$ compared to standard DP. For 175B parameters in FP32: $2.8$ TB total becomes $43$ GB per GPU - fitting on a single A100.</p>
-<p><strong>Communication overhead of ZeRO-3:</strong> during the forward pass, each GPU needs the weights for the current layer (even though it only stores $1/P$ of them). So ZeRO-3 performs all-gathers to reconstruct weight shards on the fly during forward and backward passes, then discards them. This adds communication volume, but overlapped with compute, the overhead is typically 10–30%.</p>
+<p><strong>Communication overhead of ZeRO-3:</strong> during the forward pass, each GPU needs the weights for the current layer (even though it only stores $1/P$ of them). So ZeRO-3 performs all-gathers to reconstruct weight shards on the fly during forward and backward passes, then discards them. This adds communication volume, but overlapped with compute, the overhead is typically 10 - 30%.</p>
 <p><strong>DeepSpeed</strong> (Microsoft) is the standard implementation of ZeRO. PyTorch&rsquo;s <strong>FSDP</strong> (Fully Sharded Data Parallel) is PyTorch&rsquo;s native equivalent of ZeRO-3.</p>
 <hr>
 <h2 id=3d-parallelism>3D Parallelism</h2>
@@ -254,7 +254,7 @@ Mar 6, 2022
 <p><strong>Ring all-reduce</strong> = reduce-scatter followed by all-gather. Each step transmits $N/P$ values; $P-1$ steps total. Very bandwidth-efficient: total transmitted is $2N(P-1)/P$ regardless of $P$.</p>
 <p><strong>Bandwidth vs. latency:</strong> all-reduce is latency-sensitive (you can&rsquo;t proceed until all GPUs synchronize). At the scale of thousands of GPUs, even microseconds of latency per operation accumulate. High-bandwidth interconnects (NVLink within node, InfiniBand between nodes) are essential.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> These parallelism strategies interact in complex ways that theory doesn&rsquo;t fully capture. TP requires synchronization at every layer; PP requires careful pipeline scheduling; ZeRO-3 adds communication during weight gather. The &ldquo;correct&rdquo; configuration for a given model and cluster is highly empirical - determined by profiling, not analysis. At frontier scale, the engineering of the training run - parallelism strategy, micro-batch size, gradient checkpointing, communication overlap - can make a 3–5× difference in training throughput. This is one reason that training frontier models is so hard to replicate even with equivalent hardware.</p>
+<p><strong>Discomfort check.</strong> These parallelism strategies interact in complex ways that theory doesn&rsquo;t fully capture. TP requires synchronization at every layer; PP requires careful pipeline scheduling; ZeRO-3 adds communication during weight gather. The &ldquo;correct&rdquo; configuration for a given model and cluster is highly empirical - determined by profiling, not analysis. At frontier scale, the engineering of the training run - parallelism strategy, micro-batch size, gradient checkpointing, communication overlap - can make a 3 - 5× difference in training throughput. This is one reason that training frontier models is so hard to replicate even with equivalent hardware.</p>
 </blockquote>
 <hr>
 <h2 id=the-software-stack>The Software Stack</h2>
@@ -338,7 +338,7 @@ Mar 6, 2022
 </tr>
 <tr>
 <td>Activation checkpointing</td>
-<td>Reduce activation memory 10–100×</td>
+<td>Reduce activation memory 10 - 100×</td>
 <td>$\sim 33%$ extra compute</td>
 </tr>
 <tr>

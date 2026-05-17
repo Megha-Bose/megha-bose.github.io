@@ -122,7 +122,7 @@ Mar 6, 2022
 <p>Why does this matter? Because whitespace-based pre-tokenization is English-centric. Chinese and Japanese don&rsquo;t separate words with spaces. Arabic morphology doesn&rsquo;t align neatly with whitespace. SentencePiece handles all of these uniformly, encoding the space character as a special symbol <code>"▁"</code> (so <code>"▁hello"</code> means &ldquo;hello with a preceding space&rdquo;). LLaMA&rsquo;s tokenizer uses this approach, which is part of why it handles multilingual input more gracefully than GPT-2-style tokenizers.</p>
 <hr>
 <h2 id=byte-level-bpe-the-gpt-4-approach>Byte-Level BPE: The GPT-4 Approach</h2>
-<p>GPT-4 uses tiktoken, which implements byte-level BPE. The idea: before doing anything with characters or words, convert all input to UTF-8 bytes. This gives a base vocabulary of exactly 256 symbols (one per byte value, 0–255).</p>
+<p>GPT-4 uses tiktoken, which implements byte-level BPE. The idea: before doing anything with characters or words, convert all input to UTF-8 bytes. This gives a base vocabulary of exactly 256 symbols (one per byte value, 0 - 255).</p>
 <p>BPE then merges these bytes into larger units, exactly as before. The result: any Unicode character can always be represented - at worst, as a sequence of its raw bytes. No unknown tokens. Ever.</p>
 <p>This elegantly handles:</p>
 <ul>
@@ -146,7 +146,7 @@ Mar 6, 2022
 <li>But each token has more training data, so representations are better.</li>
 <li>Smaller model footprint.</li>
 </ul>
-<p>Modern LLMs have settled around 32,000–100,000 tokens:</p>
+<p>Modern LLMs have settled around 32,000 - 100,000 tokens:</p>
 <ul>
 <li>LLaMA-2: 32,000 (SentencePiece BPE)</li>
 <li>GPT-4 (tiktoken): ~100,256</li>
@@ -157,7 +157,7 @@ Mar 6, 2022
 <h2 id=tokenization-pathologies>Tokenization Pathologies</h2>
 <p>The choices made during tokenization have surprising consequences for what models can and cannot do well.</p>
 <p><strong>Numbers and arithmetic.</strong> The number <code>1,000,000</code> might tokenize as <code>["1", ",", "000", ",", "000"]</code> - five tokens with no structure that reflects place value. The model has to learn that <code>"000"</code> followed by a comma followed by <code>"000"</code> is a million, purely from examples. This is one of the core reasons that LLMs struggle with exact arithmetic. The numeric structure is destroyed before the model ever sees the input. Models that perform better on arithmetic (like those trained with special number tokenizers or tool use) often bypass this by calling a calculator.</p>
-<p><strong>Rare languages.</strong> A concept that takes one token in English might take 6–10 tokens in Swahili, Tamil, or Yoruba, because those languages have fewer merges in the tokenizer&rsquo;s training data (which was English-heavy). This has two concrete effects: the effective context window is shorter for those languages, and inference is more expensive. An English sentence of 100 tokens might require 300 tokens to say the same thing in a lower-resource language. Research on tokenizer fairness across languages has quantified this disparity extensively.</p>
+<p><strong>Rare languages.</strong> A concept that takes one token in English might take 6 - 10 tokens in Swahili, Tamil, or Yoruba, because those languages have fewer merges in the tokenizer&rsquo;s training data (which was English-heavy). This has two concrete effects: the effective context window is shorter for those languages, and inference is more expensive. An English sentence of 100 tokens might require 300 tokens to say the same thing in a lower-resource language. Research on tokenizer fairness across languages has quantified this disparity extensively.</p>
 <p><strong>Code.</strong> Code tokenization is sensitive to indentation (Python), bracket matching (Lisp, JSON), and operator sequences. Good code tokenizers handle leading spaces carefully - in Python, the indentation level carries syntactic meaning, and if spaces get merged unpredictably, the model sees garbled syntax. This is why GitHub Copilot and Code Llama use modified tokenizers.</p>
 <p><strong>The &ldquo;SolidGoldMagikarp&rdquo; problem.</strong> Some tokens exist in the vocabulary because they appeared in BPE training data, but appear almost never in language model training data. The embeddings for these tokens are nearly random (never updated). When you prompt a model with these tokens, behavior is unpredictable - the model has no learned behavior for them. This was discovered by probing for unusual tokens in GPT models and finding that certain very long strings of repeated characters produce bizarre outputs.</p>
 <blockquote>
@@ -169,8 +169,8 @@ Mar 6, 2022
 <p>A rough rule of thumb: for conversational English, one token ≈ 0.75 words. So 128,000 tokens ≈ 96,000 words ≈ a full-length novel. But this estimate degrades quickly for other content:</p>
 <ul>
 <li>Dense technical writing (formulas, specialized terms): more tokens per concept.</li>
-<li>Code: typically 1 token per ~3–4 characters, depending on the language.</li>
-<li>Non-English natural language: can be 2–3× more tokens than English for the same semantic content.</li>
+<li>Code: typically 1 token per ~3 - 4 characters, depending on the language.</li>
+<li>Non-English natural language: can be 2 - 3× more tokens than English for the same semantic content.</li>
 </ul>
 <p>This means the effective context length varies substantially by task. A 128k-token window can hold a novel in English but only a chapter in some other languages - not because the architecture changed, but because the tokenizer is less efficient for that content.</p>
 <p>The token count also determines inference cost. Most LLM APIs charge per token (input + output). A query that requires 50,000 tokens of context costs more than the same query with 5,000 tokens - and the tokenizer is the first thing that determines how many tokens your input consumes.</p>
@@ -231,7 +231,7 @@ Mar 6, 2022
 </tr>
 <tr>
 <td>Subword (BPE)</td>
-<td>32k–100k</td>
+<td>32k - 100k</td>
 <td>Medium</td>
 <td>Yes (fallback to chars)</td>
 </tr>

@@ -70,7 +70,7 @@ Sep 15, 2024
 <p>Here is the concrete version. A square matrix of floats, 4096 × 4096 elements. Traverse every element and multiply by 2. Doing it row by row - touching elements in the order they sit in memory - completes in under half a second. Doing it column by column - jumping 4096 × 4 bytes = 16 KB between each access - takes 10× longer on the same hardware with the same CPU doing the same multiplication.</p>
 <p>This is the memory wall, and understanding it is the difference between code that looks efficient and code that actually is.</p>
 <h2 id=why-the-gap-exists-the-memory-hierarchy>Why the Gap Exists: The Memory Hierarchy</h2>
-<p>A modern CPU core can execute 3–5 billion operations per second. Main memory (DRAM) can deliver data at a rate that supports roughly 100–200 million cache-line reads per second. The computation-to-memory-delivery ratio is wildly mismatched.</p>
+<p>A modern CPU core can execute 3 - 5 billion operations per second. Main memory (DRAM) can deliver data at a rate that supports roughly 100 - 200 million cache-line reads per second. The computation-to-memory-delivery ratio is wildly mismatched.</p>
 <p>CPUs bridge this gap with a hierarchy of caches:</p>
 <table>
 <thead>
@@ -91,19 +91,19 @@ Sep 15, 2024
 <tr>
 <td>L1 cache</td>
 <td>~4 cycles</td>
-<td>32–64 KB</td>
+<td>32 - 64 KB</td>
 <td>Per core</td>
 </tr>
 <tr>
 <td>L2 cache</td>
 <td>~12 cycles</td>
-<td>256 KB – 1 MB</td>
+<td>256 KB - 1 MB</td>
 <td>Per core</td>
 </tr>
 <tr>
 <td>L3 cache</td>
 <td>~40 cycles</td>
-<td>8–64 MB</td>
+<td>8 - 64 MB</td>
 <td>Shared across cores</td>
 </tr>
 <tr>
@@ -125,7 +125,7 @@ Sep 15, 2024
 <p>Caches do not operate on individual bytes. They operate on <strong>cache lines</strong> - 64 bytes on virtually every modern CPU. When you access any byte in memory, the entire 64-byte block containing it is loaded into L1 cache.</p>
 <p>This has enormous practical consequences:</p>
 <ul>
-<li>If you access byte 0 of a 64-byte struct, bytes 1–63 are also in L1 cache for free. Access them within the same loop iteration and you pay nothing additional.</li>
+<li>If you access byte 0 of a 64-byte struct, bytes 1 - 63 are also in L1 cache for free. Access them within the same loop iteration and you pay nothing additional.</li>
 <li>If you access memory in a pattern that touches a new cache line on every step, you pay a full DRAM latency on every access.</li>
 </ul>
 <p>You can verify cache-line size on Linux:</p>
@@ -169,7 +169,7 @@ Sep 15, 2024
         <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> k <span style=color:#f92672>=</span> kk; k <span style=color:#f92672>&lt;</span> kk<span style=color:#f92672>+</span>BLOCK; k<span style=color:#f92672>++</span>)
           <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j <span style=color:#f92672>=</span> jj; j <span style=color:#f92672>&lt;</span> jj<span style=color:#f92672>+</span>BLOCK; j<span style=color:#f92672>++</span>)
             C[i][j] <span style=color:#f92672>+=</span> A[i][k] <span style=color:#f92672>*</span> B[k][j];
-</code></pre></div><p>The inner triple loop works on three 64×64 blocks: 64×64×4 bytes = 16 KB each, well within L1 (32–64 KB). The same data is reused repeatedly before eviction. Tiled matrix multiply is 5–10× faster than naive for large matrices, and the performance gap grows with matrix size.</p>
+</code></pre></div><p>The inner triple loop works on three 64×64 blocks: 64×64×4 bytes = 16 KB each, well within L1 (32 - 64 KB). The same data is reused repeatedly before eviction. Tiled matrix multiply is 5 - 10× faster than naive for large matrices, and the performance gap grows with matrix size.</p>
 <p>This is why BLAS (Basic Linear Algebra Subroutines) libraries exist - they implement exactly these optimizations, plus SIMD vectorization, for every architecture. <code>numpy.dot</code> calls BLAS under the hood. Writing matrix multiply yourself and matching BLAS performance takes years of expertise.</p>
 <h2 id=array-of-structs-vs-struct-of-arrays>Array-of-Structs vs Struct-of-Arrays</h2>
 <p>Consider a particle simulation: each particle has position, velocity, and mass. Two ways to represent 1 million particles:</p>
@@ -194,7 +194,7 @@ Sep 15, 2024
     <span style=color:#66d9ef>float</span> charge[<span style=color:#ae81ff>1000000</span>];
 };
 </code></pre></div><p>The AoS layout is intuitive - one particle, one struct. But if your inner loop only updates positions (<code>x, y, z</code>), each cache line loaded for one particle also contains <code>vx, vy, vz, mass, charge</code> - fields you never touch. Half the cache line is wasted.</p>
-<p>The SoA layout keeps all <code>x</code> values contiguous, all <code>y</code> values contiguous, etc. A position-update loop reads exactly the data it needs, filling cache lines with useful values. SoA typically achieves 2–4× speedup for partial-field access.</p>
+<p>The SoA layout keeps all <code>x</code> values contiguous, all <code>y</code> values contiguous, etc. A position-update loop reads exactly the data it needs, filling cache lines with useful values. SoA typically achieves 2 - 4× speedup for partial-field access.</p>
 <p>SoA also enables <strong>SIMD vectorization</strong>: AVX2 can multiply 8 floats in a single instruction, but only if they are contiguous in memory. SoA makes <code>x[i]</code> through <code>x[i+7]</code> contiguous; AoS does not.</p>
 <p>Game engines, physics simulators, and high-performance databases use SoA or a hybrid (structure-of-arrays-of-structs) layout for exactly this reason. This design philosophy is called <strong>Data-Oriented Design</strong> - organize data by access pattern, not by conceptual grouping.</p>
 <h2 id=false-sharing-the-invisible-contention>False Sharing: The Invisible Contention</h2>
@@ -231,7 +231,7 @@ Sep 15, 2024
 </code></pre></div><p>The right prefetch distance depends on memory latency and loop body execution time. Too close: the data is not ready yet. Too far: you evict data you still need. Profile with <code>perf stat -e cache-misses,cache-references</code> before adding manual prefetches - the hardware prefetcher handles most sequential patterns without help.</p>
 <h2 id=numa-when-memory-isnt-uniform>NUMA: When &ldquo;Memory&rdquo; Isn&rsquo;t Uniform</h2>
 <p>In multi-socket servers, each CPU socket has its own directly attached DRAM. Accessing local DRAM takes ~100 ns; accessing the other socket&rsquo;s DRAM through the inter-connect (QPI, NVLink, Infinity Fabric) takes ~300 ns. This Non-Uniform Memory Access (NUMA) topology means where your memory is matters, not just how much you have.</p>
-<p>AWS r5 and r6 instance families (memory-optimized) have multiple NUMA nodes. A process that allocates memory on NUMA node 0 but gets scheduled to run on a core belonging to NUMA node 1 pays the remote access penalty on every memory access - often 2–3× slower than local access.</p>
+<p>AWS r5 and r6 instance families (memory-optimized) have multiple NUMA nodes. A process that allocates memory on NUMA node 0 but gets scheduled to run on a core belonging to NUMA node 1 pays the remote access penalty on every memory access - often 2 - 3× slower than local access.</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>numactl --hardware          <span style=color:#75715e># show NUMA topology</span>
 numactl --membind<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span> ./prog  <span style=color:#75715e># bind memory allocation to node 0</span>
 </code></pre></div><p>Kubernetes and Linux&rsquo;s NUMA-aware scheduling try to place processes on cores local to their memory. When this fails - due to memory pressure or scheduling errors - performance degrades silently. Database servers (especially PostgreSQL and MySQL) have NUMA configuration knobs precisely because this matters.</p>
@@ -284,7 +284,7 @@ numactl --membind<span style=color:#f92672>=</span><span style=color:#ae81ff>0</
 </tr>
 <tr>
 <td>NUMA</td>
-<td>Remote memory is 2–3× slower; pin processes to local NUMA nodes</td>
+<td>Remote memory is 2 - 3× slower; pin processes to local NUMA nodes</td>
 </tr>
 </tbody>
 </table>

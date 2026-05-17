@@ -90,7 +90,7 @@ Sep 15, 2024
 <tbody>
 <tr>
 <td>SSE</td>
-<td>xmm0–xmm15</td>
+<td>xmm0 - xmm15</td>
 <td>128 bits</td>
 <td>4</td>
 <td>2</td>
@@ -98,7 +98,7 @@ Sep 15, 2024
 </tr>
 <tr>
 <td>AVX</td>
-<td>ymm0–ymm15</td>
+<td>ymm0 - ymm15</td>
 <td>256 bits</td>
 <td>8</td>
 <td>4</td>
@@ -106,7 +106,7 @@ Sep 15, 2024
 </tr>
 <tr>
 <td>AVX2</td>
-<td>ymm0–ymm15</td>
+<td>ymm0 - ymm15</td>
 <td>256 bits</td>
 <td>8</td>
 <td>4</td>
@@ -114,7 +114,7 @@ Sep 15, 2024
 </tr>
 <tr>
 <td>AVX-512</td>
-<td>zmm0–zmm31</td>
+<td>zmm0 - zmm31</td>
 <td>512 bits</td>
 <td>16</td>
 <td>8</td>
@@ -122,7 +122,7 @@ Sep 15, 2024
 </tr>
 </tbody>
 </table>
-<p>One <code>vaddps ymm0, ymm1, ymm2</code> instruction adds 8 float32 pairs simultaneously. Theoretical throughput: 8x over scalar. In practice, real speedups are 4–6x for compute-bound loops due to overhead from loop control, horizontal reductions, and the occasional scalar epilogue for array lengths not divisible by 8.</p>
+<p>One <code>vaddps ymm0, ymm1, ymm2</code> instruction adds 8 float32 pairs simultaneously. Theoretical throughput: 8x over scalar. In practice, real speedups are 4 - 6x for compute-bound loops due to overhead from loop control, horizontal reductions, and the occasional scalar epilogue for array lengths not divisible by 8.</p>
 <h2 id=auto-vectorization-the-compiler-does-it-for-you>Auto-Vectorization: The Compiler Does It For You</h2>
 <p>Modern compilers (GCC, Clang, MSVC) automatically translate scalar loops into SIMD instructions when they can prove it&rsquo;s safe. The optimization is called auto-vectorization, and it&rsquo;s enabled by default at <code>-O2</code> and above when combined with <code>-march=native</code> (which allows the compiler to use any instruction the current CPU supports).</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>// This loop is an ideal auto-vectorization target:
@@ -204,7 +204,7 @@ Particle particles[N];
     <span style=color:#66d9ef>float</span> mass[N];
 };
 <span style=color:#75715e>// In memory: x0 x1 x2 x3 x4 x5 x6 x7 | ... | y0 y1 y2 ...
-</span></code></pre></div><p>If you want to update all x-positions using a vectorized computation, AoS requires strided access - load x from <code>particles[0].x</code>, then <code>particles[1].x</code>, 16 bytes later. Strided gather loads are 3–5x slower than contiguous loads on AVX2. SoA stores all x-values contiguously: <code>particles.x[0..7]</code> is one <code>vmovups</code> instruction.</p>
+</span></code></pre></div><p>If you want to update all x-positions using a vectorized computation, AoS requires strided access - load x from <code>particles[0].x</code>, then <code>particles[1].x</code>, 16 bytes later. Strided gather loads are 3 - 5x slower than contiguous loads on AVX2. SoA stores all x-values contiguously: <code>particles.x[0..7]</code> is one <code>vmovups</code> instruction.</p>
 <p>For any computation that operates on one field across all particles (update all positions, compute all forces), SoA is dramatically better for SIMD. The cost: code that reads all fields of one particle at once (access pattern along the particle axis) needs to load from four separate arrays, which can be cache-unfriendly if particles don&rsquo;t fit in cache.</p>
 <p>The standard recommendation for SIMD-optimized code: prefer SoA unless the access pattern is clearly particle-centric. Many high-performance simulation libraries (OpenFOAM, Gromacs) use SoA internally even though their public API presents objects.</p>
 <h2 id=why-numpy-is-fast-and-when-it-isnt>Why NumPy Is Fast (and When It Isn&rsquo;t)</h2>
@@ -213,7 +213,7 @@ Particle particles[N];
 <ol>
 <li>No Python overhead (the function drops into C immediately)</li>
 <li>OpenBLAS dispatches to an AVX2 or AVX-512 inner loop</li>
-<li>The inner loop uses FMA instructions, 8–16 floats per cycle</li>
+<li>The inner loop uses FMA instructions, 8 - 16 floats per cycle</li>
 </ol>
 <p>A Python loop <code>sum(a[i] * b[i] for i in range(n))</code> is slow because:</p>
 <ol>
@@ -221,7 +221,7 @@ Particle particles[N];
 <li>Python function calls are ~100ns each</li>
 <li>For $n = 1024$, that&rsquo;s ~2048 function calls vs 128 AVX2 instructions</li>
 </ol>
-<p>The speedup of NumPy over Python loops is typically 50–200x for such operations. The lesson: the bottleneck is almost always the Python interpreter, not the arithmetic.</p>
+<p>The speedup of NumPy over Python loops is typically 50 - 200x for such operations. The lesson: the bottleneck is almost always the Python interpreter, not the arithmetic.</p>
 <p>When NumPy isn&rsquo;t fast: custom per-element operations. <code>np.vectorize(your_python_function)</code> is a convenience wrapper, not a performance tool - it still calls your Python function once per element. For custom elementwise operations, Numba (JIT compilation with SIMD) or Cython (C extension with type annotations) are the practical solutions.</p>
 <h2 id=the-avx-512-controversy-frequency-throttling>The AVX-512 Controversy: Frequency Throttling</h2>
 <p>AVX-512 doubles the number of floating-point operations per cycle compared to AVX2. It also consumes significantly more power, which causes Intel CPUs to reduce their clock frequency (&ldquo;throttle&rdquo;) when executing AVX-512 code.</p>
@@ -273,7 +273,7 @@ Particle particles[N];
 <td>256 bits</td>
 <td>512 bits</td>
 <td>128 bits</td>
-<td>128–2048 bits (runtime)</td>
+<td>128 - 2048 bits (runtime)</td>
 </tr>
 <tr>
 <td>float32 lanes</td>
@@ -281,7 +281,7 @@ Particle particles[N];
 <td>8</td>
 <td>16</td>
 <td>4</td>
-<td>4–64</td>
+<td>4 - 64</td>
 </tr>
 <tr>
 <td>Available since</td>

@@ -58,7 +58,7 @@
 Aug 3, 2021
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-6 min read
+7 min read
 </div>
 </div>
 </header>
@@ -90,13 +90,13 @@ Aug 3, 2021
 <p><strong>Beam width 1</strong> = greedy decoding. Fast, myopic.</p>
 <p><strong>Beam width $k$</strong> = keep the $k$ best partial sequences at each step. More exploration, higher quality, $k$ times more computation than greedy.</p>
 <p><strong>Beam width $\to \infty$</strong> = exhaustive BFS. Optimal (finds the highest-probability complete sequence), exponential.</p>
-<p>In practice for language generation, the quality gain from increasing beam width diminishes quickly. Going from $k=1$ (greedy) to $k=4$ is a large gain. Going from $k=4$ to $k=10$ is modest. Going from $k=10$ to $k=100$ is often negligible. This is the empirical justification for using beam widths in the range 4–10.</p>
+<p>In practice for language generation, the quality gain from increasing beam width diminishes quickly. Going from $k=1$ (greedy) to $k=4$ is a large gain. Going from $k=4$ to $k=10$ is modest. Going from $k=10$ to $k=100$ is often negligible. This is the empirical justification for using beam widths in the range 4 - 10.</p>
 <hr>
 <h2 id=length-normalization>Length Normalization</h2>
 <p>Longer sequences accumulate more log-probability terms - each one negative - so raw log-probability is biased toward short sequences. Beam search without length normalization produces unnaturally short outputs.</p>
 <p><strong>Length normalization</strong> adjusts the score of a hypothesis $y = (y_1, \ldots, y_T)$ as:</p>
 <p>$$\text{score}(y) = \frac{\log P(y \mid x)}{T^\alpha},$$</p>
-<p>where $\alpha \in [0, 1]$ controls normalization strength. With $\alpha = 0$ there&rsquo;s no correction. With $\alpha = 1$ you normalize fully by length. Values around $\alpha = 0.6$–$0.7$ work well empirically for neural machine translation.</p>
+<p>where $\alpha \in [0, 1]$ controls normalization strength. With $\alpha = 0$ there&rsquo;s no correction. With $\alpha = 1$ you normalize fully by length. Values around $\alpha = 0.6$ - $0.7$ work well empirically for neural machine translation.</p>
 <p>The intuition: dividing by $T^\alpha$ penalizes very short sequences (small denominator, but short sequences had fewer penalty terms) and rewards longer sequences by making each additional token &ldquo;cheaper&rdquo; in the score. You&rsquo;re trading off length against probability in a calibrated way.</p>
 <hr>
 <h2 id=diverse-beam-search>Diverse Beam Search</h2>
@@ -108,7 +108,7 @@ Aug 3, 2021
 <p><strong>Discomfort check.</strong> Beam search with beam width $k$ is not guaranteed to find any solution within $k$ times optimal. It&rsquo;s a pure heuristic. Why use it?</p>
 </blockquote>
 <p>Because it works empirically in structured search spaces. Language generation, machine translation, and speech recognition all have the property that the model&rsquo;s probability distribution over next tokens is well-calibrated and locally smooth. Good completions tend to follow from good prefixes. The beam search assumption - that the best completions of a sequence are the completions of the best partial sequences - is usually approximately correct.</p>
-<p>The alternatives are either too slow (exact search) or too low quality (greedy). Beam search sits in the practical sweet spot. In machine translation specifically, BLEU scores are typically maximized around beam width 4–8; beyond that, quality often slightly decreases (a phenomenon called &ldquo;beam search curse&rdquo; - very high-probability sequences tend to be short and generic, so larger beams paradoxically find worse outputs in some settings).</p>
+<p>The alternatives are either too slow (exact search) or too low quality (greedy). Beam search sits in the practical sweet spot. In machine translation specifically, BLEU scores are typically maximized around beam width 4 - 8; beyond that, quality often slightly decreases (a phenomenon called &ldquo;beam search curse&rdquo; - very high-probability sequences tend to be short and generic, so larger beams paradoxically find worse outputs in some settings).</p>
 <hr>
 <h2 id=beam-search-vs-sampling>Beam Search vs. Sampling</h2>
 <p>The alternative to beam search for language models is <strong>sampling</strong> - drawing the next token from the model&rsquo;s distribution rather than taking the argmax.</p>
@@ -118,7 +118,7 @@ Aug 3, 2021
 <p>Beam search maximizes probability - it finds the most likely sequence. Sampling draws from the distribution - it finds a typical sequence. For tasks with a definite correct answer (translation, transcription, structured prediction), beam search consistently wins. For open-ended creative generation (stories, dialogue, brainstorming), sampling wins - beam search produces repetitive, safe outputs.</p>
 <hr>
 <h2 id=applications>Applications</h2>
-<p><strong>Neural machine translation.</strong> Every major NMT system - Google Translate, DeepL, Meta&rsquo;s NLLB - uses beam search at inference time with beam width 4–5. The computation cost $O(k \cdot T \cdot V)$ is easily parallelized on GPU with batched matrix multiplications.</p>
+<p><strong>Neural machine translation.</strong> Every major NMT system - Google Translate, DeepL, Meta&rsquo;s NLLB - uses beam search at inference time with beam width 4 - 5. The computation cost $O(k \cdot T \cdot V)$ is easily parallelized on GPU with batched matrix multiplications.</p>
 <p><strong>Speech recognition.</strong> Acoustic models produce per-frame phone probabilities; beam search over word lattices combines acoustic model scores with language model scores. Both constrain the search jointly, and beam search allows this combination to operate efficiently.</p>
 <p><strong>Theorem proving.</strong> Neural theorem provers (like AlphaCode for competition math, or systems based on Lean) use beam search over proof step sequences, keeping multiple partial proofs alive simultaneously to avoid committing to one proof strategy too early.</p>
 <p><strong>Robot motion planning.</strong> Beam search over discretized action sequences finds near-optimal plans in structured environments faster than exhaustive search.</p>

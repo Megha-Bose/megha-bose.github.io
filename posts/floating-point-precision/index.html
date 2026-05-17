@@ -101,7 +101,7 @@ Sep 15, 2024
 </table>
 <p>The represented value is:</p>
 <p>$$(-1)^{\text{sign}} \times 1.\text{mantissa} \times 2^{\text{exponent} - 1023}$$</p>
-<p>The leading <code>1.</code> before the mantissa is <strong>implicit</strong> - since every normalized binary number starts with 1, storing that bit would waste space. This &ldquo;hidden bit&rdquo; gives <code>float64</code> an effective 53 bits of mantissa, producing about 15–16 significant decimal digits of precision. The range spans roughly $5 \times 10^{-324}$ to $1.8 \times 10^{308}$.</p>
+<p>The leading <code>1.</code> before the mantissa is <strong>implicit</strong> - since every normalized binary number starts with 1, storing that bit would waste space. This &ldquo;hidden bit&rdquo; gives <code>float64</code> an effective 53 bits of mantissa, producing about 15 - 16 significant decimal digits of precision. The range spans roughly $5 \times 10^{-324}$ to $1.8 \times 10^{308}$.</p>
 <p>A 32-bit float (<code>float32</code>) has 8 exponent bits and 23 mantissa bits - about 7 significant decimal digits and range $1.2 \times 10^{-38}$ to $3.4 \times 10^{38}$.</p>
 <h2 id=special-values-ieee-754s-edge-cases>Special Values: IEEE 754&rsquo;s Edge Cases</h2>
 <p>IEEE 754 reserves certain bit patterns for special values:</p>
@@ -161,10 +161,10 @@ a <span style=color:#f92672>=</span> Decimal(<span style=color:#e6db74>&#39;0.1&
 b <span style=color:#f92672>=</span> Decimal(<span style=color:#e6db74>&#39;0.2&#39;</span>)
 print(a <span style=color:#f92672>+</span> b)   <span style=color:#75715e># Decimal(&#39;0.3&#39;) - exact in decimal</span>
 </code></pre></div><p>This is the right choice for financial calculations. A bank that stores $0.10 as a float will occasionally compute $0.09999&mldr; and round incorrectly. Banks store amounts in integer cents (or millicents for FX), or use <code>Decimal</code>. The US Federal Reserve&rsquo;s payment processing systems use decimal arithmetic exactly for this reason.</p>
-<p>But <code>Decimal</code> is <strong>50–100x slower</strong> than native float. For scientific computing, ML, simulation, signal processing - anything where you&rsquo;re computing thousands of operations per second - <code>Decimal</code> is prohibitively slow. The question is not &ldquo;should I use float or Decimal&rdquo; but &ldquo;does the rounding error matter for this computation?&rdquo;</p>
+<p>But <code>Decimal</code> is <strong>50 - 100x slower</strong> than native float. For scientific computing, ML, simulation, signal processing - anything where you&rsquo;re computing thousands of operations per second - <code>Decimal</code> is prohibitively slow. The question is not &ldquo;should I use float or Decimal&rdquo; but &ldquo;does the rounding error matter for this computation?&rdquo;</p>
 <p>For most ML training, the answer is emphatically no. Using <code>float32</code> instead of <code>float64</code> costs you 7 decimal digits of precision vs 15, but the gradients in a neural network are noisy anyway - the difference between <code>float64</code> and <code>float32</code> is swamped by stochastic gradient descent&rsquo;s inherent randomness.</p>
 <h2 id=how-ml-uses-float16-and-bfloat16>How ML Uses float16 and bfloat16</h2>
-<p>Modern ML hardware (NVIDIA A100, Google TPU, Apple Neural Engine) can perform <code>float16</code> or <code>bfloat16</code> operations at 2–8x the throughput of <code>float32</code>. This is not an approximation - it is the designed operating mode.</p>
+<p>Modern ML hardware (NVIDIA A100, Google TPU, Apple Neural Engine) can perform <code>float16</code> or <code>bfloat16</code> operations at 2 - 8x the throughput of <code>float32</code>. This is not an approximation - it is the designed operating mode.</p>
 <p><code>float16</code> has 5 exponent bits and 10 mantissa bits:</p>
 <ul>
 <li>Range: $6 \times 10^{-5}$ to $65504$ - very limited</li>
@@ -173,11 +173,11 @@ print(a <span style=color:#f92672>+</span> b)   <span style=color:#75715e># Deci
 <p><code>bfloat16</code> (Brain Floating Point, developed at Google Brain) has 8 exponent bits and 7 mantissa bits:</p>
 <ul>
 <li>Range: same as <code>float32</code> (the exponent field is identical)</li>
-<li>Precision: ~2–3 significant decimal digits</li>
+<li>Precision: ~2 - 3 significant decimal digits</li>
 </ul>
 <p>The choice was deliberate. ML training suffers from <strong>gradient overflow</strong> and <strong>gradient underflow</strong> more than from insufficient mantissa precision. <code>bfloat16</code> preserves <code>float32</code>&rsquo;s dynamic range (crucial for avoiding overflow in activations and gradients) while halving the storage and bandwidth requirement. You can train most models in <code>bfloat16</code> mixed precision with minimal accuracy loss.</p>
 <p><code>float16</code>&rsquo;s narrow range causes training instability when gradients occasionally become very large or very small - a problem that led to the invention of loss scaling in mixed-precision training. <code>bfloat16</code> sidesteps this by keeping the full exponent range.</p>
-<p><strong>float8</strong> is now emerging (NVIDIA H100 has hardware support). Two variants: <code>E4M3</code> (4 exponent bits, 3 mantissa bits, for forward pass) and <code>E5M2</code> (5 exponent bits, 2 mantissa bits, for gradients). At 8 bits, a float holds 2–3 significant decimal digits at most. That this is sufficient for inference - and sometimes training - tells you something about the inherent noise tolerance of large neural networks.</p>
+<p><strong>float8</strong> is now emerging (NVIDIA H100 has hardware support). Two variants: <code>E4M3</code> (4 exponent bits, 3 mantissa bits, for forward pass) and <code>E5M2</code> (5 exponent bits, 2 mantissa bits, for gradients). At 8 bits, a float holds 2 - 3 significant decimal digits at most. That this is sufficient for inference - and sometimes training - tells you something about the inherent noise tolerance of large neural networks.</p>
 <h2 id=the-1985-standard-ruling-2024-ml>The 1985 Standard Ruling 2024 ML</h2>
 <p>IEEE 754 was designed for scientific computing on workstations. Its authors could not have imagined matrix multiply units running at 312 TFLOPS on <code>bfloat16</code>. The standard has been extended (IEEE 754-2008 added <code>bfloat16</code>-adjacent concepts; hardware vendors added float8 before standards caught up), but the core model - sign, exponent, mantissa, hidden bit - has not changed.</p>
 <p>This has practical consequences. The default rounding mode (round-to-nearest-even) was chosen to minimize statistical bias in scientific computing. It is not necessarily optimal for ML training. Research into stochastic rounding - round up or down randomly in proportion to proximity - shows lower training loss for small models, but hardware does not support it by default.</p>
@@ -209,7 +209,7 @@ print(a <span style=color:#f92672>+</span> b)   <span style=color:#75715e># Deci
 <td>float8 E5M2</td>
 <td>5</td>
 <td>2</td>
-<td>~1–2</td>
+<td>~1 - 2</td>
 <td>±57344</td>
 </tr>
 <tr>
@@ -223,7 +223,7 @@ print(a <span style=color:#f92672>+</span> b)   <span style=color:#75715e># Deci
 <td>bfloat16</td>
 <td>8</td>
 <td>7</td>
-<td>~2–3</td>
+<td>~2 - 3</td>
 <td>±3.4×10³⁸</td>
 </tr>
 <tr>
@@ -237,7 +237,7 @@ print(a <span style=color:#f92672>+</span> b)   <span style=color:#75715e># Deci
 <td>float64</td>
 <td>11</td>
 <td>52</td>
-<td>~15–16</td>
+<td>~15 - 16</td>
 <td>±1.8×10³⁰⁸</td>
 </tr>
 </tbody>

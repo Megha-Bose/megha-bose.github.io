@@ -80,7 +80,7 @@ Sep 15, 2024
 <p>The first principle of fault tolerance is to have more than one of everything.</p>
 <p><strong>Active-active redundancy</strong> runs multiple instances simultaneously, all serving live traffic. If one fails, the others absorb its load - failover is instantaneous because there&rsquo;s no promotion required. Load balancers automatically stop routing to the failed instance. The cost: you must provision enough capacity in the surviving instances to absorb the failed instance&rsquo;s share, which means steady-state over-provisioning.</p>
 <p><strong>Active-passive redundancy</strong> runs a primary that serves traffic and one or more standbys that replicate data but sit idle. When the primary fails, a standby is promoted. Promotion takes time: leader election, health check propagation, DNS update. This means a brief outage - seconds to minutes depending on the system. The advantage: lower steady-state cost because standbys don&rsquo;t need full serving capacity.</p>
-<p><strong>AWS Multi-AZ</strong> is the canonical active-passive pattern for databases. An RDS instance in us-east-1 has a synchronous standby in a different availability zone. AWS handles promotion automatically on failure; the failover typically completes in 60–120 seconds. This is table stakes for any production database - a single-AZ RDS instance is one hardware failure away from downtime.</p>
+<p><strong>AWS Multi-AZ</strong> is the canonical active-passive pattern for databases. An RDS instance in us-east-1 has a synchronous standby in a different availability zone. AWS handles promotion automatically on failure; the failover typically completes in 60 - 120 seconds. This is table stakes for any production database - a single-AZ RDS instance is one hardware failure away from downtime.</p>
 <p><strong>AWS Multi-Region</strong> is the next level: separate deployments in geographically distinct regions (us-east-1 and eu-west-1). Replication is asynchronous (synchronous cross-region replication is physically expensive - 100ms round-trip latency per write). Route 53 health checks and failover routing records implement the DNS-level switch. Recovery Time Objective (RTO) in this configuration is typically minutes, not seconds, because DNS TTLs and health check evaluation add delay.</p>
 <h2 id=the-circuit-breaker-pattern>The Circuit Breaker Pattern</h2>
 <p>A slow or failing downstream service is contagious. When service A calls service B, and B starts returning errors or timing out, A&rsquo;s threads pile up waiting for B. A&rsquo;s thread pool exhausts. A&rsquo;s own response times spike. Services C and D, which call A, start to fail. The failure has propagated sideways through the service graph - a cascade.</p>
@@ -135,7 +135,7 @@ Sep 15, 2024
 </tr>
 <tr>
 <td>AWS Multi-AZ vs Multi-Region</td>
-<td>Multi-AZ: 60–120s failover. Multi-Region: minutes; asynchronous replication</td>
+<td>Multi-AZ: 60 - 120s failover. Multi-Region: minutes; asynchronous replication</td>
 </tr>
 <tr>
 <td>Circuit breaker</td>

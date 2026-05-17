@@ -82,9 +82,9 @@ Sep 15, 2024
 <h2 id=the-history-vxworks-to-preempt_rt>The History: VxWorks to PREEMPT_RT</h2>
 <p>Real-time operating systems predate Linux. The needs arose first in aerospace and industrial control.</p>
 <p><strong>VxWorks</strong> was developed in the 1980s by Wind River Systems and became the standard RTOS for safety-critical applications. It powered the Mars Pathfinder lander (1997), the Mars Exploration Rovers Spirit and Opportunity, the Boeing 787 avionics system, and dozens of spacecraft and aircraft. VxWorks provided deterministic preemptive scheduling, priority inheritance, and certification paths for DO-178C (aviation software safety standard).</p>
-<p><strong>FreeRTOS</strong> emerged as the dominant open-source RTOS for microcontrollers in the 2000s. With a footprint of 4–12KB of RAM, it runs on everything from 8-bit AVR microcontrollers to ARM Cortex-M series. Amazon acquired FreeRTOS in 2017 and released it under the MIT license, integrating it with AWS IoT Greengrass for edge compute.</p>
-<p>Linux was never designed for real-time use. The kernel holds non-preemptible locks during various operations, disables preemption during critical sections, and takes hardware interrupts at unpredictable times. A regular Linux kernel can have scheduling latency spikes of 1–10 milliseconds - completely unacceptable for hard real-time, tolerable for soft real-time with careful tuning.</p>
-<p>The <strong>PREEMPT_RT patchset</strong> (started in 2004 by Ingo Molnár and others) progressively converted the Linux kernel into a fully preemptible system. It replaced spinlocks with preemptible mutexes, made interrupt handlers run in preemptible kernel threads, and eliminated the longest non-preemptible sections. With PREEMPT_RT, Linux achieves worst-case scheduling latencies of 50–100μs on commodity hardware. After years as an out-of-tree patchset, PREEMPT_RT was merged into the Linux mainline kernel in version 6.12 (November 2024). Industrial Linux distributions (SUSE, Red Hat&rsquo;s MRG) have shipped PREEMPT_RT in production for over a decade.</p>
+<p><strong>FreeRTOS</strong> emerged as the dominant open-source RTOS for microcontrollers in the 2000s. With a footprint of 4 - 12KB of RAM, it runs on everything from 8-bit AVR microcontrollers to ARM Cortex-M series. Amazon acquired FreeRTOS in 2017 and released it under the MIT license, integrating it with AWS IoT Greengrass for edge compute.</p>
+<p>Linux was never designed for real-time use. The kernel holds non-preemptible locks during various operations, disables preemption during critical sections, and takes hardware interrupts at unpredictable times. A regular Linux kernel can have scheduling latency spikes of 1 - 10 milliseconds - completely unacceptable for hard real-time, tolerable for soft real-time with careful tuning.</p>
+<p>The <strong>PREEMPT_RT patchset</strong> (started in 2004 by Ingo Molnár and others) progressively converted the Linux kernel into a fully preemptible system. It replaced spinlocks with preemptible mutexes, made interrupt handlers run in preemptible kernel threads, and eliminated the longest non-preemptible sections. With PREEMPT_RT, Linux achieves worst-case scheduling latencies of 50 - 100μs on commodity hardware. After years as an out-of-tree patchset, PREEMPT_RT was merged into the Linux mainline kernel in version 6.12 (November 2024). Industrial Linux distributions (SUSE, Red Hat&rsquo;s MRG) have shipped PREEMPT_RT in production for over a decade.</p>
 <h2 id=scheduling-theory-rate-monotonic-and-edf>Scheduling Theory: Rate-Monotonic and EDF</h2>
 <p>For hard real-time systems, <strong>schedulability analysis</strong> determines at design time whether a given task set can always meet its deadlines. This is a formal guarantee - not a performance measurement, but a mathematical proof.</p>
 <p>Assume $n$ periodic tasks, each with worst-case execution time $C_i$ and period $T_i$ (the task must complete within $T_i$ of being released). Utilization $U_i = C_i / T_i$ is the fraction of CPU time the task requires.</p>
@@ -213,10 +213,10 @@ pthread_setaffinity_np<span style=color:#f92672>(</span>tid, sizeof<span style=c
 cyclictest --mlockall --smp --priority<span style=color:#f92672>=</span><span style=color:#ae81ff>99</span> --interval<span style=color:#f92672>=</span><span style=color:#ae81ff>200</span> <span style=color:#ae81ff>\
 </span><span style=color:#ae81ff></span>           --loops<span style=color:#f92672>=</span><span style=color:#ae81ff>1000000</span> --histogram<span style=color:#f92672>=</span><span style=color:#ae81ff>400</span>
 
-<span style=color:#75715e># Standard kernel:     max latency 500μs–5ms</span>
-<span style=color:#75715e># PREEMPT_RT kernel:   max latency 50–200μs</span>
-<span style=color:#75715e># + isolcpus + nohz:   max latency 10–50μs</span>
-<span style=color:#75715e># + interrupt routing: max latency 5–20μs</span>
+<span style=color:#75715e># Standard kernel:     max latency 500μs - 5ms</span>
+<span style=color:#75715e># PREEMPT_RT kernel:   max latency 50 - 200μs</span>
+<span style=color:#75715e># + isolcpus + nohz:   max latency 10 - 50μs</span>
+<span style=color:#75715e># + interrupt routing: max latency 5 - 20μs</span>
 </code></pre></div><p><code>cyclictest</code> measures how accurately a thread can wake up at a specified interval. The worst-case deviation over one million iterations is the practical floor on scheduling jitter.</p>
 <h2 id=the-financial-trading-case-microsecond-determinism>The Financial Trading Case: Microsecond Determinism</h2>
 <p>High-frequency trading (HFT) systems represent an interesting case: they are not hard real-time (a missed deadline does not crash anything), but they operate under soft real-time constraints so stringent that the engineering resembles hard real-time in practice.</p>
@@ -290,7 +290,7 @@ cyclictest --mlockall --smp --priority<span style=color:#f92672>=</span><span st
 <tr>
 <td>PREEMPT_RT</td>
 <td>Fully preemptible Linux kernel</td>
-<td>Brings Linux to 50–100μs worst-case; mainline since 6.12</td>
+<td>Brings Linux to 50 - 100μs worst-case; mainline since 6.12</td>
 </tr>
 <tr>
 <td>cyclictest</td>

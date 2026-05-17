@@ -76,7 +76,7 @@ Sep 15, 2024
 <p><strong>x86-64</strong> (also called AMD64) dominates laptops, desktops, and most cloud servers. It is a CISC architecture - Complex Instruction Set Computer - with variable-length instructions ranging from 1 to 15 bytes. It accumulated decades of extensions (MMX, SSE, AVX, AVX-512) that make its encoding table a historical artifact rather than a clean design. It has 16 general-purpose 64-bit registers: <code>rax</code>, <code>rbx</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>rsp</code>, <code>rbp</code>, and <code>r8</code> through <code>r15</code>.</p>
 <p><strong>ARM</strong> (AArch64) dominates mobile, embedded, and increasingly servers. It is RISC - Reduced Instruction Set Computer - with fixed 32-bit instruction width, a simpler instruction set, and a power efficiency advantage that is the direct reason your phone lasts all day and AWS Graviton instances exist.</p>
 <p><strong>RISC-V</strong> is the new entrant: an open ISA, no licensing fees, designed from scratch with 50 years of hindsight. It is fragmentary today but growing fast - SiFive, StarFive, and dozens of chip startups are betting their futures on it.</p>
-<p>Why do cloud providers care about ISA? AWS Graviton (ARM-based) offers the same workloads as x86 instances at 20–40% better price-performance. Apple Silicon (also ARM) made the &ldquo;x86 is inevitable&rdquo; argument obsolete almost overnight. The era of x86 monoculture in servers is ending, not because x86 is bad, but because the ISA contract is just as enforceable on ARM.</p>
+<p>Why do cloud providers care about ISA? AWS Graviton (ARM-based) offers the same workloads as x86 instances at 20 - 40% better price-performance. Apple Silicon (also ARM) made the &ldquo;x86 is inevitable&rdquo; argument obsolete almost overnight. The era of x86 monoculture in servers is ending, not because x86 is bad, but because the ISA contract is just as enforceable on ARM.</p>
 <h2 id=registers-the-cpus-working-memory>Registers: The CPU&rsquo;s Working Memory</h2>
 <p>Before the CPU can do anything, it needs somewhere to put the numbers it is working with. That somewhere is registers - a small set of extremely fast storage locations inside the CPU itself, connected directly to the arithmetic logic unit.</p>
 <p>Key registers to know:</p>
@@ -87,7 +87,7 @@ Sep 15, 2024
 <li><code>rbp</code> - the base pointer, historically used to anchor a stack frame&rsquo;s local variables.</li>
 <li><code>rflags</code> - a collection of condition bits set by arithmetic operations. The zero flag, carry flag, overflow flag. Conditional branches read these.</li>
 </ul>
-<p>x86-64 has 16 general-purpose registers, plus SIMD registers (XMM0–XMM15, YMM, ZMM) for vectorized arithmetic. ARM has 31 general-purpose registers (X0–X30). RISC-V has 32.</p>
+<p>x86-64 has 16 general-purpose registers, plus SIMD registers (XMM0 - XMM15, YMM, ZMM) for vectorized arithmetic. ARM has 31 general-purpose registers (X0 - X30). RISC-V has 32.</p>
 <p>The number of registers matters enormously for performance. More registers means the compiler can keep more values in fast storage without &ldquo;spilling&rdquo; to the stack. One reason RISC architectures often outperform CISC at equivalent clock speeds is that they have more registers to work with.</p>
 <h2 id=the-fetch-decode-execute-cycle>The Fetch-Decode-Execute Cycle</h2>
 <p>The CPU&rsquo;s fundamental operation is a loop:</p>
@@ -97,9 +97,9 @@ Sep 15, 2024
 <p><strong>Write back:</strong> Store the result to a register or memory.</p>
 <p>Then increment <code>rip</code> and repeat. Forever.</p>
 <p>On a 3 GHz CPU, this cycle happens roughly three billion times per second per core. But &ldquo;per cycle&rdquo; is a simplification - modern CPUs execute multiple instructions per cycle through techniques that fundamentally complicate the simple loop:</p>
-<p><strong>Pipelining:</strong> Overlap the stages. While instruction N executes, instruction N+1 is being decoded, and instruction N+2 is being fetched. A modern out-of-order CPU has 10–20 pipeline stages. The downside: a mispredicted branch flushes the pipeline, wasting those in-flight instructions.</p>
+<p><strong>Pipelining:</strong> Overlap the stages. While instruction N executes, instruction N+1 is being decoded, and instruction N+2 is being fetched. A modern out-of-order CPU has 10 - 20 pipeline stages. The downside: a mispredicted branch flushes the pipeline, wasting those in-flight instructions.</p>
 <p><strong>Out-of-order execution:</strong> The CPU does not execute instructions in program order. It maintains a reorder buffer, finds instructions whose operands are ready, and executes them ahead of later instructions that are stalled waiting for data. The result is committed in order, but execution is opportunistic.</p>
-<p><strong>Branch prediction:</strong> Conditional branches depend on values not yet computed. The CPU predicts which way the branch will go - using history tables tracking recent branch behavior - and speculatively executes the predicted path. Modern predictors are right 95–99% of the time. When they are wrong, the speculative work is discarded and the pipeline restarts.</p>
+<p><strong>Branch prediction:</strong> Conditional branches depend on values not yet computed. The CPU predicts which way the branch will go - using history tables tracking recent branch behavior - and speculatively executes the predicted path. Modern predictors are right 95 - 99% of the time. When they are wrong, the speculative work is discarded and the pipeline restarts.</p>
 <p>This is where Spectre and Meltdown came from. Speculative execution crossed security boundaries: the CPU would speculatively read memory it was not authorized to access, leave traces in the cache, and - even after squashing the speculative result - the cache state change persisted. Side-channel attacks could read that trace. Out-of-order execution and branch prediction are why modern CPUs are fast, and they are also why they had the most serious hardware vulnerabilities ever disclosed.</p>
 <h2 id=what-running-means-at-the-silicon-level>What &ldquo;Running&rdquo; Means at the Silicon Level</h2>
 <p>A transistor is a switch. It is either on (passing current, representing 1) or off (blocking current, representing 0). A modern CPU has tens of billions of transistors.</p>
@@ -109,7 +109,7 @@ Sep 15, 2024
 <h2 id=system-calls-where-programs-meet-the-kernel>System Calls: Where Programs Meet the Kernel</h2>
 <p>User programs run in <strong>user mode</strong> - a restricted execution context where they cannot directly access hardware, other processes' memory, or kernel data structures. This restriction is enforced by the CPU itself: certain instructions are privileged and raise a fault if executed in user mode.</p>
 <p>To do anything interesting - write to a file, open a network connection, allocate more memory - a program must cross into <strong>kernel mode</strong> via a <strong>system call</strong>.</p>
-<p>On x86-64 Linux, the <code>syscall</code> instruction triggers a controlled mode switch. The CPU saves the current state, switches to a kernel stack, and jumps to the kernel&rsquo;s system call handler. The kernel validates arguments, performs the operation, and returns. The entire round trip costs 100–1000 ns.</p>
+<p>On x86-64 Linux, the <code>syscall</code> instruction triggers a controlled mode switch. The CPU saves the current state, switches to a kernel stack, and jumps to the kernel&rsquo;s system call handler. The kernel validates arguments, performs the operation, and returns. The entire round trip costs 100 - 1000 ns.</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>// This C code:
 </span><span style=color:#75715e></span>write(<span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;hello</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, <span style=color:#ae81ff>6</span>);
 
@@ -215,7 +215,7 @@ objdump -d -M intel hello.o      <span style=color:#75715e># disassemble: see th
 </tr>
 <tr>
 <td>System calls</td>
-<td>The user/kernel boundary; 100–1000 ns crossing cost</td>
+<td>The user/kernel boundary; 100 - 1000 ns crossing cost</td>
 </tr>
 <tr>
 <td>Out-of-order execution</td>

@@ -170,12 +170,12 @@ Mar 6, 2022
 <p>The simplest way to serve multiple users is to form batches: group several requests together and process them in parallel. Batching lets the GPU amortize the weight reads across multiple sequences simultaneously, improving throughput.</p>
 <p>But requests have different lengths. A batch of 8 sequences might have 3 sequences that finish at step 50 and 5 that continue to step 200. With naive batching, you wait for the longest sequence before releasing any GPU slots - the 3 fast sequences sit idle for 150 steps.</p>
 <p><strong>Continuous batching</strong> (Orca, Yu et al., 2022): on every decode step, check if any sequence has finished generating. If so, immediately inject the next waiting request into the batch, filling the empty slot. The batch size stays constant; its membership changes dynamically.</p>
-<p>Result: GPU utilization improves dramatically. Sequences aren&rsquo;t waiting in a queue behind slower requests. Throughput improvements of 5–10× over naive batching are typical.</p>
+<p>Result: GPU utilization improves dramatically. Sequences aren&rsquo;t waiting in a queue behind slower requests. Throughput improvements of 5 - 10× over naive batching are typical.</p>
 <hr>
 <h2 id=pagedattention-managing-kv-cache-memory>PagedAttention: Managing KV Cache Memory</h2>
 <p>Even with continuous batching, KV cache memory management is tricky.</p>
 <p>Each request needs a KV cache proportional to its maximum sequence length. But you don&rsquo;t know in advance how long a response will be. If you over-allocate (reserve memory for the maximum context length), you waste memory. If you under-allocate, the request may fail mid-generation.</p>
-<p>The standard solution before vLLM: pre-allocate a large contiguous block per request. This causes severe <strong>fragmentation</strong> - gaps of unused memory between allocations, similar to heap fragmentation in C programs. GPU memory utilization of 20–40% was common.</p>
+<p>The standard solution before vLLM: pre-allocate a large contiguous block per request. This causes severe <strong>fragmentation</strong> - gaps of unused memory between allocations, similar to heap fragmentation in C programs. GPU memory utilization of 20 - 40% was common.</p>
 <p><strong>PagedAttention</strong> (vLLM, Kwon et al., 2023): inspired by OS virtual memory paging.</p>
 <p>Instead of one contiguous KV cache block per sequence, allocate KV cache in fixed-size <strong>pages</strong> (blocks), each holding the key-value pairs for $B$ tokens. Maintain a page table per sequence mapping logical positions to physical pages. Pages can be non-contiguous in GPU memory.</p>
 <p>When a sequence needs more KV cache space, allocate a new page - which can go anywhere in memory. When a sequence finishes, its pages are returned to a free pool.</p>
@@ -185,7 +185,7 @@ Mar 6, 2022
 <li><strong>Memory utilization near 100%</strong>: across a batch of sequences, almost all KV memory is actively used.</li>
 <li><strong>Sharing</strong>: if multiple sequences share a prefix (common in instruction-tuned models where the system prompt is repeated), the shared prefix pages are stored once and referenced by all sequences. Copy-on-write semantics for the diverging parts.</li>
 </ul>
-<p>In practice, vLLM&rsquo;s PagedAttention enables 2–4× more concurrent requests for the same GPU memory budget, compared to prior approaches.</p>
+<p>In practice, vLLM&rsquo;s PagedAttention enables 2 - 4× more concurrent requests for the same GPU memory budget, compared to prior approaches.</p>
 <hr>
 <h2 id=speculative-decoding>Speculative Decoding</h2>
 <p>The decode phase bottleneck - sequential token generation - seems fundamental to autoregressive models. But there&rsquo;s a clever trick.</p>
@@ -197,13 +197,13 @@ Mar 6, 2022
 <li>Accept or reject each proposal using a rejection sampling criterion that guarantees the accepted tokens follow the target model&rsquo;s distribution exactly (not an approximation).</li>
 <li>If all $k$ are accepted, you&rsquo;ve generated $k$ tokens with roughly one large model forward pass. If some are rejected, you&rsquo;ve still generated the accepted prefix.</li>
 </ol>
-<p>Expected tokens per large model forward pass: $k \cdot \alpha + 1$, where $\alpha$ is the acceptance rate. For draft/target model pairs with similar distributions, $\alpha \approx 0.7$–$0.9$, giving 4–8 tokens per large model call instead of 1.</p>
-<p>Speedup: 2–3× for typical use cases, with no change to output quality (the output distribution is mathematically identical to the target model&rsquo;s).</p>
+<p>Expected tokens per large model forward pass: $k \cdot \alpha + 1$, where $\alpha$ is the acceptance rate. For draft/target model pairs with similar distributions, $\alpha \approx 0.7$ - $0.9$, giving 4 - 8 tokens per large model call instead of 1.</p>
+<p>Speedup: 2 - 3× for typical use cases, with no change to output quality (the output distribution is mathematically identical to the target model&rsquo;s).</p>
 <hr>
 <h2 id=kv-cache-quantization>KV Cache Quantization</h2>
 <p>Recall the LLaMA-7B cache: 0.5 MB per token. At 4096 tokens, that&rsquo;s 2 GB in FP16. If you quantize the cached KV values to INT8 (1 byte instead of 2), the cache halves to 1 GB. INT4 cuts it to 0.5 GB.</p>
 <p><strong>KV cache quantization</strong> compresses the cached keys and values to lower precision. The quality impact is typically small - the attention mechanism is robust to quantization noise in the keys and values, especially compared to quantizing model weights. INT8 KV cache is nearly lossless on most benchmarks; INT4 shows slight degradation on demanding reasoning tasks.</p>
-<p>Combining KV cache quantization with PagedAttention: you can serve sequences 2–4× longer for the same GPU memory, or run 2–4× more concurrent sequences.</p>
+<p>Combining KV cache quantization with PagedAttention: you can serve sequences 2 - 4× longer for the same GPU memory, or run 2 - 4× more concurrent sequences.</p>
 <hr>
 <h2 id=grouped-query-attention>Grouped-Query Attention</h2>
 <p>Standard multi-head attention (MHA) uses $H$ query heads, $H$ key heads, and $H$ value heads. The KV cache stores $H$ heads of keys and values per token.</p>
@@ -246,7 +246,7 @@ Mar 6, 2022
 </tr>
 <tr>
 <td>Continuous batching</td>
-<td>Dynamically swap finished sequences out; 5–10× throughput gain</td>
+<td>Dynamically swap finished sequences out; 5 - 10× throughput gain</td>
 </tr>
 <tr>
 <td>PagedAttention</td>
@@ -254,11 +254,11 @@ Mar 6, 2022
 </tr>
 <tr>
 <td>Speculative decoding</td>
-<td>Draft model proposes $k$ tokens; target verifies in parallel; 2–3× speedup</td>
+<td>Draft model proposes $k$ tokens; target verifies in parallel; 2 - 3× speedup</td>
 </tr>
 <tr>
 <td>KV quantization</td>
-<td>Compress cached KV to INT8/INT4; 2–4× memory reduction</td>
+<td>Compress cached KV to INT8/INT4; 2 - 4× memory reduction</td>
 </tr>
 <tr>
 <td>GQA</td>

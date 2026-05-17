@@ -104,8 +104,8 @@ data    <span style=color:#f92672>=</span> [<span style=color:#ae81ff>1</span>, 
     <span style=color:#66d9ef>for</span> j_idx <span style=color:#f92672>in</span> range(indptr[i], indptr[i<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>]):
         y[i] <span style=color:#f92672>+=</span> data[j_idx] <span style=color:#f92672>*</span> x[indices[j_idx]]
 </code></pre></div><p>This looks simple. The problem is the line <code>x[indices[j_idx]]</code>.</p>
-<p>For a graph with random structure, <code>indices[j_idx]</code> is essentially a random number between 0 and $n$. The memory access pattern into <code>x</code> is therefore random. If <code>x</code> doesn&rsquo;t fit in L3 cache - and for a billion-node graph it absolutely doesn&rsquo;t - each access is a full DRAM fetch: 60–100 nanoseconds. The multiply itself takes less than a nanosecond. The computation is bottlenecked by memory latency, not arithmetic.</p>
-<p>This is what engineers mean when they say SpMV is <em>memory-bandwidth-bound</em>. Worse: it isn&rsquo;t even bandwidth-bound, it&rsquo;s <em>latency-bound</em> - random access can&rsquo;t be prefetched because the hardware prefetcher only recognizes sequential and stride patterns. Achieved memory bandwidth for SpMV is often 10–20% of peak.</p>
+<p>For a graph with random structure, <code>indices[j_idx]</code> is essentially a random number between 0 and $n$. The memory access pattern into <code>x</code> is therefore random. If <code>x</code> doesn&rsquo;t fit in L3 cache - and for a billion-node graph it absolutely doesn&rsquo;t - each access is a full DRAM fetch: 60 - 100 nanoseconds. The multiply itself takes less than a nanosecond. The computation is bottlenecked by memory latency, not arithmetic.</p>
+<p>This is what engineers mean when they say SpMV is <em>memory-bandwidth-bound</em>. Worse: it isn&rsquo;t even bandwidth-bound, it&rsquo;s <em>latency-bound</em> - random access can&rsquo;t be prefetched because the hardware prefetcher only recognizes sequential and stride patterns. Achieved memory bandwidth for SpMV is often 10 - 20% of peak.</p>
 <p>The mitigations are:</p>
 <ul>
 <li><strong>Reordering</strong>: Reverse Cuthill-McKee reorders rows and columns to reduce the bandwidth of the matrix, making the nonzeros cluster closer to the diagonal, which improves locality in <code>x</code>.</li>
@@ -120,7 +120,7 @@ data    <span style=color:#f92672>=</span> [<span style=color:#ae81ff>1</span>, 
 <li><strong>Symmetric positive definite with banded pattern</strong>: direct Cholesky factorization (CHOLMOD) is fast; fill-in is minimal.</li>
 <li><strong>General sparse with random pattern</strong>: iterative solvers (CG, GMRES) with preconditioning, because direct factorization produces catastrophic fill-in.</li>
 <li><strong>Nearly dense blocks</strong>: BSR and BLAS-3 operations.</li>
-<li><strong>Ultra-sparse graphs (average degree 2–3)</strong>: breadth-first search-style traversal beats SpMV.</li>
+<li><strong>Ultra-sparse graphs (average degree 2 - 3)</strong>: breadth-first search-style traversal beats SpMV.</li>
 </ul>
 <h2 id=iterative-solvers-and-why-theyre-necessary>Iterative Solvers and Why They&rsquo;re Necessary</h2>
 <p>For dense systems, Gaussian elimination costs $O(n^3)$. For sparse systems, even direct factorization (CHOLMOD, SuperLU) can produce dense factors from sparse inputs - a phenomenon called fill-in. Factoring a sparse $10^6 \times 10^6$ matrix might produce a factor with $10^{10}$ nonzeros, which is worse than the original dense problem.</p>
@@ -132,7 +132,7 @@ data    <span style=color:#f92672>=</span> [<span style=color:#ae81ff>1</span>, 
 <p>A preconditioner $M \approx A$ transforms $Ax = b$ into $M^{-1}Ax = M^{-1}b$. If $M^{-1}A$ has a smaller condition number, the iterative solver converges much faster. The trade-off: computing $M^{-1}v$ (applying the preconditioner) must be cheap.</p>
 <ul>
 <li><strong>Diagonal (Jacobi)</strong>: $M = \text{diag}(A)$. Application is $O(n)$. Modest benefit for diagonal-dominant systems; ineffective for most real problems.</li>
-<li><strong>Incomplete LU (ILU)</strong>: Compute an approximate LU factorization that drops small fill-in entries. Expensive to compute ($O(\text{nnz})$ to $O(n^{1.5})$ depending on the drop tolerance) but can reduce iteration counts by 10–100x for elliptic PDE systems.</li>
+<li><strong>Incomplete LU (ILU)</strong>: Compute an approximate LU factorization that drops small fill-in entries. Expensive to compute ($O(\text{nnz})$ to $O(n^{1.5})$ depending on the drop tolerance) but can reduce iteration counts by 10 - 100x for elliptic PDE systems.</li>
 <li><strong>Algebraic Multigrid (AMG)</strong>: Builds a hierarchy of coarser problems, solving the coarse problem exactly and interpolating back. Near-optimal for elliptic PDEs ($O(n \log n)$ total work), but expensive to set up and complex to implement. BOOMERAMG (from hypre) is the production implementation.</li>
 </ul>
 <p>Choosing a preconditioner is more art than science. ILU works for fluid dynamics PDEs. AMG works for elasticity. Diagonal works only as a sanity check.</p>
@@ -174,14 +174,14 @@ x_sol, info <span style=color:#f92672>=</span> gmres(A, b, M<span style=color:#f
 </code></pre></div><p>For GPU sparse operations, NVIDIA&rsquo;s cuSPARSE library provides GPU-accelerated SpMV, accessible from Python via <code>cupy.sparse</code>. PyTorch also exposes <code>torch.sparse_csr_tensor</code> and <code>torch.sparse.mm</code> for SpMM on GPU, though the performance is highly shape-dependent.</p>
 <h2 id=when-to-use-dense-instead>When to Use Dense Instead</h2>
 <p>Here is an uncomfortable truth: for many ML workloads on GPU, sparse is slower than dense.</p>
-<p>The break-even density depends on the operation and the hardware. For SpMV on GPU, dense matrix-vector multiply (cuBLAS) tends to win at densities above 1–5% because:</p>
+<p>The break-even density depends on the operation and the hardware. For SpMV on GPU, dense matrix-vector multiply (cuBLAS) tends to win at densities above 1 - 5% because:</p>
 <ol>
 <li><strong>Dense operations saturate memory bandwidth efficiently</strong> - sequential access is prefetchable.</li>
 <li><strong>GPU SpMV has load imbalance</strong> - rows with different lengths cause warp divergence and idle threads.</li>
 <li><strong>cuBLAS is extremely well optimized</strong> - it uses hand-tuned CUDA kernels, tensor cores, and autotuning.</li>
 </ol>
 <p>The rule of thumb: if your matrix is more than ~1% dense and you&rsquo;re doing repeated SpMV on GPU, benchmark dense vs sparse before committing to a sparse format. You may find the 99% zeros are faster to multiply through than the overhead of the sparse format.</p>
-<p>For CPU, the crossover is lower (roughly 0.1–0.5% density) because CPU memory bandwidth is more favorable for irregular access patterns, and the overhead of sparse indexing is lower.</p>
+<p>For CPU, the crossover is lower (roughly 0.1 - 0.5% density) because CPU memory bandwidth is more favorable for irregular access patterns, and the overhead of sparse indexing is lower.</p>
 <h2 id=the-critique-sparse-is-hard-to-parallelize>The Critique: Sparse is Hard to Parallelize</h2>
 <p>The fundamental problem with sparse linear algebra is that irregular memory access conflicts with the hardware assumptions of both CPUs (prefetching, cache lines) and GPUs (coalesced memory access, warp uniformity). Every optimization in dense linear algebra - blocking, register tiling, cache reuse - becomes harder to apply when the memory access pattern is data-dependent.</p>
 <p>This has produced a fragmented ecosystem. scipy.sparse works well for CPU. cuSPARSE works for GPU but is notoriously hard to use correctly and has historically had poor performance for graph workloads. PyTorch Geometric has its own custom CUDA extensions. DGL has yet another implementation. There is no single library that handles sparse-dense mixed computation efficiently across all sparsity patterns and hardware targets.</p>

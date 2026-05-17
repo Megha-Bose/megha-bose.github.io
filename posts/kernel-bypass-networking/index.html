@@ -60,7 +60,7 @@ The problem is the software stack between the hardware and your application. A p
 Sep 15, 2024
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-13 min read
+14 min read
 </div>
 </div>
 </header>
@@ -73,7 +73,7 @@ Sep 15, 2024
 <hr>
 <p>A 100Gbps NIC can push 12.5 gigabytes per second. That is not a bottleneck. At 100Gbps, a minimum-size 64-byte Ethernet frame arrives every 5.12 nanoseconds - roughly 150 million packets per second. The hardware is not the problem.</p>
 <p>The problem is the software stack between the hardware and your application. A packet arriving at the NIC raises a hardware interrupt. The kernel interrupt handler runs. The packet is copied into a kernel socket buffer. The TCP/IP stack processes protocol headers across multiple layers. The packet is placed in the socket&rsquo;s receive queue. Your application calls <code>recv()</code>, which copies data from kernel space to user space - a second copy, across the kernel-user boundary. Context switches, cache pollution, memory copies.</p>
-<p>The total cost for a typical UDP packet on a modern Linux system: 1–10 microseconds of added latency. At moderate packet rates this is acceptable. At 10 million packets per second, the CPU spends more time in the kernel stack than in application logic. At 150 million packets per second, the kernel stack cannot keep up at all - you will see packet drops before you even open the application code.</p>
+<p>The total cost for a typical UDP packet on a modern Linux system: 1 - 10 microseconds of added latency. At moderate packet rates this is acceptable. At 10 million packets per second, the CPU spends more time in the kernel stack than in application logic. At 150 million packets per second, the kernel stack cannot keep up at all - you will see packet drops before you even open the application code.</p>
 <p>For most applications - web servers, database backends, message queues - the kernel network stack is correct, well-understood, and fast enough. For applications that need every microsecond - high-frequency trading, 100G packet processing, GPU-to-GPU gradient synchronization across a 2000-node training cluster - the kernel itself is the bottleneck. The answer is to bypass it entirely.</p>
 <h2 id=the-history-from-c10k-to-kernel-bypass>The History: From C10K to Kernel Bypass</h2>
 <p>The first major inflection point in Linux networking performance was the <strong>C10K problem</strong> (1999): how do you handle 10,000 simultaneous connections without a thread per connection? The answer was <code>epoll</code> - an event-driven I/O multiplexing interface that scales to millions of connections. <code>epoll</code> remains the foundation of every high-performance Linux network server: nginx, Node.js, Redis.</p>
@@ -83,7 +83,7 @@ Sep 15, 2024
 <p><strong>io_uring</strong> is the most recent addition (Linux 5.1, 2019). It does not bypass the kernel but minimizes the cost of talking to it, using a shared ring buffer between kernel and user space to submit and collect I/O operations with zero or near-zero syscall overhead.</p>
 <h2 id=why-the-kernel-network-stack-is-slow>Why the Kernel Network Stack Is Slow</h2>
 <p>Understanding the sources of overhead tells you which solution to apply.</p>
-<p><strong>Syscall cost</strong>: every <code>send()</code> and <code>recv()</code> crosses the user-kernel boundary. On x86, a syscall takes roughly 100-300 nanoseconds on modern hardware (the cost increased after Spectre/Meltdown mitigations added retpoline and IBRS overhead). At 10 million send operations per second, syscall cost alone consumes 1–3 seconds of CPU per second - more than one full core dedicated to syscall overhead.</p>
+<p><strong>Syscall cost</strong>: every <code>send()</code> and <code>recv()</code> crosses the user-kernel boundary. On x86, a syscall takes roughly 100-300 nanoseconds on modern hardware (the cost increased after Spectre/Meltdown mitigations added retpoline and IBRS overhead). At 10 million send operations per second, syscall cost alone consumes 1 - 3 seconds of CPU per second - more than one full core dedicated to syscall overhead.</p>
 <p><strong>Data copies</strong>: the kernel cannot directly DMA received packets into user-space memory (it does not know which user-space process the packet belongs to yet, and user memory may not be pinned or physically contiguous). The packet is copied into a kernel socket buffer, then <code>recv()</code> copies it again to user space. Two copies per packet. At 10Gbps, that is 1.25 GB/s of copy bandwidth just for the receive path.</p>
 <p><strong>Interrupt overhead</strong>: the NIC interrupts the CPU for every packet (or batch, with interrupt coalescing). Each interrupt preempts the current thread, invokes the interrupt handler, processes the packet, and returns. On the receive path, this creates latency spikes whenever a high-priority thread gets interrupted.</p>
 <p><strong>Lock contention in the network stack</strong>: the kernel socket receive queue is protected by a spinlock. Under high receive rates with many cores, this becomes a contention point.</p>
@@ -128,7 +128,7 @@ Sep 15, 2024
     rte_eal_remote_launch(lcore_rx, NULL, <span style=color:#ae81ff>1</span>);  <span style=color:#75715e>// launch on lcore 1
 </span><span style=color:#75715e></span>    rte_eal_mp_wait_lcore();
 }
-</code></pre></div><p>A single DPDK core on modern hardware can sustain <strong>10–40 million packets per second</strong> - compared to 1–3 million with kernel networking on the same hardware. For 100Gbps at minimum frame size (150M pps), you need multiple cores and careful batching.</p>
+</code></pre></div><p>A single DPDK core on modern hardware can sustain <strong>10 - 40 million packets per second</strong> - compared to 1 - 3 million with kernel networking on the same hardware. For 100Gbps at minimum frame size (150M pps), you need multiple cores and careful batching.</p>
 <p><strong>The cost of DPDK</strong>: you own the entire network stack. DPDK gives you raw packets; if you want TCP, you implement TCP (or use a user-space TCP stack like MTCP or VPP&rsquo;s built-in stack). The polling core is 100% utilized regardless of traffic - idle 100Gbps DPDK burns a core doing nothing. Operational complexity is significant: hugepage configuration, driver binding (<code>dpdk-devbind</code>), NUMA-aware memory placement. Most applications should not use DPDK.</p>
 <h2 id=rdma-moving-data-without-cpu-involvement>RDMA: Moving Data Without CPU Involvement</h2>
 <p>RDMA takes a more radical approach: eliminate the CPU from the <em>data transfer path</em> entirely, on both ends.</p>
@@ -159,7 +159,7 @@ ibv_post_send(qp, <span style=color:#f92672>&amp;</span>wr, <span style=color:#f
 </span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> ibv_wc wc;
 <span style=color:#66d9ef>while</span> (ibv_poll_cq(cq, <span style=color:#ae81ff>1</span>, <span style=color:#f92672>&amp;</span>wc) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>);  <span style=color:#75715e>// spin until complete
 </span><span style=color:#75715e>// wc.status == IBV_WC_SUCCESS → the write landed in remote memory
-</span></code></pre></div><p>RDMA latency: <strong>1–2 microseconds</strong> end-to-end for a round trip on InfiniBand. Compare to 50–100 microseconds for a TCP round trip on kernel networking. A factor of 50–100x difference in latency.</p>
+</span></code></pre></div><p>RDMA latency: <strong>1 - 2 microseconds</strong> end-to-end for a round trip on InfiniBand. Compare to 50 - 100 microseconds for a TCP round trip on kernel networking. A factor of 50 - 100x difference in latency.</p>
 <p><strong>Three transports implement RDMA</strong>:</p>
 <p><strong>InfiniBand</strong>: purpose-built HPC interconnect with native RDMA. No IP addressing - its own fabric protocol. Lowest latency, highest bandwidth (up to 400Gb/s per link, NDR generation). Requires dedicated InfiniBand switches and HCAs (Mellanox/NVIDIA ConnectX series are the standard). Used in almost every large GPU training cluster for NCCL AllReduce operations. The cost is significant: InfiniBand switches are 3-5x more expensive than equivalent Ethernet switches.</p>
 <p><strong>RoCE (RDMA over Converged Ethernet)</strong>: RDMA semantics over Ethernet. RoCEv2 encapsulates RDMA packets in UDP/IP, making them routable. Works on standard Ethernet hardware with RDMA-capable NICs. Requires a <strong>lossless fabric</strong> - Priority Flow Control (PFC) to prevent packet drops, since the RDMA protocol assumes lossless delivery and has no built-in retransmission for data packets. Used in hyperscale data centers (Microsoft Azure uses RoCEv2 extensively; AWS uses a custom protocol in the same design space).</p>
@@ -256,7 +256,7 @@ io_uring_cqe_seen(<span style=color:#f92672>&amp;</span>ring, cqe);
 <tr>
 <td>Standard Linux sockets + epoll</td>
 <td>None (kernel)</td>
-<td>1–10μs per packet</td>
+<td>1 - 10μs per packet</td>
 <td>General purpose</td>
 </tr>
 <tr>
@@ -280,7 +280,7 @@ io_uring_cqe_seen(<span style=color:#f92672>&amp;</span>ring, cqe);
 <tr>
 <td>RDMA (InfiniBand/RoCEv2)</td>
 <td>Full kernel + CPU bypass</td>
-<td>1–2μs round trip</td>
+<td>1 - 2μs round trip</td>
 <td>Distributed ML, HPC</td>
 </tr>
 <tr>

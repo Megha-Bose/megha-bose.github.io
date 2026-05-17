@@ -70,7 +70,7 @@ Sep 15, 2024
 <h2 id=b-trees-why-not-a-binary-search-tree>B-Trees: Why Not a Binary Search Tree?</h2>
 <p>The obvious data structure for a sorted index is a binary search tree. O(log n) lookup, easy to understand. Why doesn&rsquo;t every database use a BST?</p>
 <p>Disk physics. A BST node holds one key and two children. Traversing a BST requires following pointers - each pointer is a disk read. For a table with 50 million rows, a BST has depth ~26. That&rsquo;s 26 random disk reads per lookup. At 0.1ms per random disk read (a fast SSD), 26 reads is 2.6ms of pure seek time before you&rsquo;ve even found your row.</p>
-<p>A B-tree node can hold hundreds of keys. The exact number is tuned to fill one disk page (typically 4KB or 8KB). PostgreSQL&rsquo;s default page size is 8KB; a B-tree node at this size holds roughly 100–200 keys plus pointers. A tree over 50 million rows with branching factor 200 has depth ~4. That&rsquo;s 4 disk reads instead of 26 - a 6x improvement just from the data structure choice.</p>
+<p>A B-tree node can hold hundreds of keys. The exact number is tuned to fill one disk page (typically 4KB or 8KB). PostgreSQL&rsquo;s default page size is 8KB; a B-tree node at this size holds roughly 100 - 200 keys plus pointers. A tree over 50 million rows with branching factor 200 has depth ~4. That&rsquo;s 4 disk reads instead of 26 - a 6x improvement just from the data structure choice.</p>
 <p>The B+ tree variant (used by PostgreSQL and MySQL InnoDB) goes further: all actual data resides in leaf nodes, and leaf nodes are linked in a doubly-linked list. This makes range scans - <code>WHERE user_id BETWEEN 1000 AND 2000</code> - extremely efficient: find the first matching leaf node, then follow the linked list forward until the range is exhausted. No backtracking through internal nodes.</p>
 <p>B-trees support:</p>
 <ul>
@@ -118,7 +118,7 @@ Sep 15, 2024
 <h2 id=cardinality-when-indexes-make-things-worse>Cardinality: When Indexes Make Things Worse</h2>
 <p>An index on a boolean column has cardinality 2. Suppose <code>is_active</code> is true for 60% of rows. An index scan on <code>WHERE is_active = true</code> must follow index pointers to 60% of the rows scattered across the heap. Accessing 60% of a heap scattered randomly is slower than a single sequential scan.</p>
 <p>The query planner knows this. It estimates the selectivity of the predicate and chooses the plan with the lowest expected cost. When you run <code>EXPLAIN</code> and find the planner chose a sequential scan despite an existing index, it&rsquo;s usually correct - don&rsquo;t force it.</p>
-<p>The threshold is roughly: if a predicate matches more than 5–10% of rows, a sequential scan is often faster than an index scan (the exact threshold depends on table size, page cache warmth, and hardware).</p>
+<p>The threshold is roughly: if a predicate matches more than 5 - 10% of rows, a sequential scan is often faster than an index scan (the exact threshold depends on table size, page cache warmth, and hardware).</p>
 <p>This is why composite indexes with a high-cardinality leading column (user_id, UUID, email) are effective: they narrow the result set dramatically before the scan begins.</p>
 <h2 id=full-text-search-gin-indexes>Full-Text Search: GIN Indexes</h2>
 <p>GIN (Generalized Inverted Index) handles composite values: arrays, JSONB, and full-text. For full-text search, a GIN index builds an inverted index - a mapping from each lexeme (stemmed word) to the rows containing it.</p>
@@ -200,7 +200,7 @@ users <span style=color:#f92672>=</span> session<span style=color:#f92672>.</spa
 </tr>
 <tr>
 <td>B-tree vs BST</td>
-<td>B-tree has high branching factor (100–200); fits disk pages; fewer random reads</td>
+<td>B-tree has high branching factor (100 - 200); fits disk pages; fewer random reads</td>
 </tr>
 <tr>
 <td>Hash index</td>
