@@ -66,7 +66,7 @@ And yet, nobody uses this algorithm to train modern neural networks. The researc
 Dec 11, 2020
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-19 min read
+22 min read
 </div>
 </div>
 </header>
@@ -204,7 +204,16 @@ Dec 11, 2020
 <p>The weight decay $-\alpha\lambda\mathbf{x_t}$ is not passed through the adaptive denominator. Every parameter is shrunk toward zero by the same factor $\alpha\lambda$, regardless of gradient history. This is the correct implementation of L2 regularization with Adam.</p>
 <p>For large language models - where proper regularization is critical for generalization - this distinction matters substantially. The GPT, BERT, and most modern transformer models are trained with AdamW, not Adam. The decoupled weight decay is not a minor detail; it is part of the recipe.</p>
 <hr>
-<h2 id=section-9-learning-rate-schedules>Section 9: Learning Rate Schedules</h2>
+<h2 id=section-9-muon---matrix-level-optimization>Section 9: Muon - Matrix-Level Optimization</h2>
+<p>AdamW adapts learning rates per scalar parameter, treating each weight independently. Muon (Moore-Penrose Orthogonal Update Newton) treats each weight matrix as a single object and updates it via a matrix-level operation.</p>
+<p>The key operation is the Newton-Schulz iteration, which approximates the matrix sign function. For a gradient matrix $G$, define the update:</p>
+<p>$$W_{t+1} = W_t - \eta \cdot \text{NS}(G_t)$$</p>
+<p>where $\text{NS}(G)$ iteratively applies $X \leftarrow 1.5X - 0.5 X X^T X$ until convergence. This has the effect of orthogonalizing the gradient - replacing $G$ with a matrix that has the same singular vectors but uniform singular values. Geometrically, Muon takes steps in the direction of the gradient but removes the scale distortion from large vs small singular values.</p>
+<p><strong>Why this helps.</strong> AdamW&rsquo;s per-parameter adaptivity can create an axis-aligned bias - it preferentially updates parameters along coordinate axes, suppressing updates in directions that individual parameters don&rsquo;t vary much. Muon&rsquo;s matrix-level normalization removes this bias, allowing the optimizer to explore directions that AdamW would suppress. Empirically, Muon is more sample-efficient than AdamW at large batch sizes, where AdamW&rsquo;s gradient variance reduction becomes less important.</p>
+<p><strong>Practical implementation.</strong> Muon requires access to the full gradient matrix before the optimizer step, which conflicts with FSDP&rsquo;s sharded gradient representation. Two approaches: (1) all-to-all collectives that temporarily reassemble full gradient matrices on each rank, apply Muon, then re-shard; (2) overlapping round-robin where each rank owns a subset of matrices. The all-to-all approach requires fewer collectives and scales better.</p>
+<p><strong>Hybrid Muon.</strong> Several frontier models (Arcee&rsquo;s Trinity Large) use Muon for hidden layers only, keeping AdamW for embeddings and the output projection. Embeddings benefit from per-parameter adaptivity (different tokens have very different update frequencies). Hidden layers capture more benefit from Muon&rsquo;s matrix-level structure awareness.</p>
+<hr>
+<h2 id=section-10-learning-rate-schedules>Section 10: Learning Rate Schedules</h2>
 <p>The learning rate $\alpha$ is not a static choice. Different phases of training call for different values.</p>
 <p><strong>Warmup.</strong> Start training with a very small learning rate and ramp it up over the first few hundred or thousand steps. The motivation: at initialization, the weights are random and the gradient estimates (especially via momentum/Adam&rsquo;s first moment) are poorly calibrated. Taking large steps with random gradients in the very first steps can destabilize training - large, poorly directed steps move the model to a regime where later gradients are also bad, compounding the problem.</p>
 <p>Warmup solves this by letting the moving averages build up reliable estimates before the learning rate becomes large. Linear warmup (ramp from $\alpha_{\min}$ to $\alpha_{\max}$ over the first $T_\text{warm}$ steps) is standard for transformers. BERT uses 10,000 warmup steps; GPT-style models use 1% to 5% of total training.</p>
@@ -212,6 +221,10 @@ Dec 11, 2020
 <p>$$\alpha_t = \alpha_{\min} + \frac{1}{2}(\alpha_{\max} - \alpha_{\min})\left(1 + \cos\left(\frac{\pi (t - T_\text{warm})}{T - T_\text{warm}}\right)\right),$$</p>
 <p>where $T$ is the total number of training steps. The learning rate decreases smoothly from $\alpha_{\max}$ to $\alpha_{\min}$ following the shape of a cosine half-period.</p>
 <p>Cosine annealing is preferred over step decay (sudden drops) or linear decay because it is smooth, has no discontinuities, and automatically tapers to near-zero at the end of training, allowing fine-grained convergence. It is the default schedule for most large-scale training runs.</p>
+<p><strong>Warmup-Stable-Decay (WSD).</strong> Cosine annealing requires knowing the total training duration upfront - the decay phase is tied to the end of training. WSD decouples them: a warmup phase (1-5% of steps), a stable phase at peak learning rate, then a short decay phase (10-20% of steps) at the very end. This is more flexible: you can extend training by extending the stable phase without changing the decay schedule.</p>
+<p>WSD tends to underperform cosine annealing during the stable phase (when the learning rate is constant, not decaying), but once it enters decay, it catches up rapidly and matches cosine annealing performance by the end. The practical advantage: if you&rsquo;re running ablations at multiple token budgets, you only need to retrain the short decay phase for each budget, not the entire run.</p>
+<p><strong>Multi-step schedule.</strong> Discrete learning rate drops (e.g., divide by 10 at 80% and 90% of training). DeepSeek-V3 combined cosine annealing within stages with sharp drops between stages. Simpler to implement than WSD but less smooth.</p>
+<p><strong>Batch size warmup.</strong> Start training with a small batch size and gradually increase it. Early in training, the model makes large updates and benefits from the regularization effect of noisy small-batch gradients. As training stabilizes, larger batches provide more efficient gradient estimates. The critical batch size (below which reducing batch size doesn&rsquo;t help) grows throughout training. Batch warmup exploits this: small batches early, large batches late, matching the evolving critical batch size.</p>
 <p><strong>Reduce on plateau.</strong> Monitor a validation metric. When it stops improving for $k$ consecutive evaluations, multiply the learning rate by a factor (typically $0.1$). This is adaptive: training proceeds at a high learning rate while progress is fast, and automatically slows when progress stalls. Common in computer vision training (ResNet on ImageNet often uses 3 decays of $\times 0.1$).</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> The learning rate is described as a single number, but it interacts with everything else in training. Is there a &ldquo;correct&rdquo; learning rate?</p>
@@ -219,7 +232,7 @@ Dec 11, 2020
 <p>Community defaults exist as starting points: Adam $\alpha = 3 \times 10^{-4}$ (sometimes called the &ldquo;Karpathy constant&rdquo; for its ubiquity in language model training), SGD $\alpha = 0.1$ for vision. These are not magic numbers - they are empirically validated starting points that should be tuned for each specific problem.</p>
 </blockquote>
 <hr>
-<h2 id=section-10-sgd-vs-adam---the-generalization-debate>Section 10: SGD vs Adam - the Generalization Debate</h2>
+<h2 id=section-11-sgd-vs-adam---the-generalization-debate>Section 11: SGD vs Adam - the Generalization Debate</h2>
 <p>A surprising empirical fact emerged around 2018 and has not been fully explained theoretically: carefully tuned SGD with momentum often achieves better test error than Adam on image classification tasks, even when Adam achieves lower training loss faster.</p>
 <p><strong>Why Adam converges faster.</strong> The adaptive step sizes of Adam allow it to make progress even when the loss landscape is ill-conditioned. For different parameters, Adam effectively uses a different step size, exploiting the geometry of the loss landscape more efficiently than SGD&rsquo;s uniform step size.</p>
 <p><strong>Why SGD sometimes generalizes better.</strong> Adam&rsquo;s adaptive step sizes mean that it can take very large steps for some parameters (those with small $\hat{v}_t$). This allows Adam to find solutions in narrow, sharp valleys of the loss landscape where ordinary SGD would not venture. Sharp minima tend to be more sensitive to perturbations - the loss increases rapidly when weights change slightly. Since test data differs from training data (distribution shift), the model&rsquo;s test loss is essentially the training loss at perturbed weights. Flat minima degrade gracefully; sharp minima can fail.</p>
@@ -241,7 +254,7 @@ Dec 11, 2020
 </ul>
 <p>There is no universal winner. The optimizer is part of the model design decision, not an afterthought.</p>
 <hr>
-<h2 id=section-11-practical-starting-points>Section 11: Practical Starting Points</h2>
+<h2 id=section-12-practical-starting-points>Section 12: Practical Starting Points</h2>
 <p>For practitioners who need defaults without extensive tuning:</p>
 <p><strong>Adam for deep learning:</strong></p>
 <p>$$\beta_1 = 0.9, \quad \beta_2 = 0.999, \quad \epsilon = 10^{-8}, \quad \alpha = 10^{-3}.$$</p>
@@ -261,6 +274,7 @@ Dec 11, 2020
 <li>Train loss low, validation loss high: increase weight decay, reduce model size, add dropout.</li>
 <li>Optimizer diverges: $\alpha$ too large, or numerical issues (try float32 instead of float16 for debugging).</li>
 </ul>
+<p>For frontier-scale training: consider WSD over cosine annealing for flexibility in extending runs; consider Muon for hidden layers if you have the infrastructure to handle all-to-all gradient collectives; use batch size warmup if training stability is a concern in early steps. These are not defaults for all settings - they require careful ablation to confirm benefit in your specific setup.</p>
 <p>The modern optimizer zoo exists because no single optimizer is optimal for all problems. Adam is the safe default. SGD with momentum is often better for vision with careful tuning. AdamW is the standard for transformers. Understanding why each optimizer behaves as it does - what problem it was designed to solve - is what allows you to debug failures and make principled choices rather than cargo-culting hyperparameters.</p>
 <hr>
 <p><strong>Read Next:</strong></p>

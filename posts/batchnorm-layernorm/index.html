@@ -58,7 +58,7 @@
 Mar 6, 2022
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-10 min read
+12 min read
 </div>
 </div>
 </header>
@@ -137,6 +137,20 @@ Mar 6, 2022
 <p>$$\hat{x}<em>j = \frac{x_j}{\sqrt{\frac{1}{d}\sum</em>{k=1}^{d} x_k^2 + \varepsilon}}.$$</p>
 <p>Then apply a learnable scale $\gamma_j$ (no bias term).</p>
 <p>Why drop the mean centering? Empirically, it often doesn&rsquo;t hurt performance, and it reduces compute and memory. It&rsquo;s also slightly simpler to implement correctly. RMSNorm is used in Llama, PaLM, and many other recent models. As the field moves toward extreme computational efficiency, simpler normalization schemes become attractive.</p>
+<hr>
+<h2 id=training-stability-techniques-logit-softcapping-z-loss-qk-norm>Training Stability Techniques: Logit Softcapping, Z-Loss, QK-Norm</h2>
+<p>At frontier scale, attention logits and output logits can grow unboundedly during training, causing loss spikes and instability. Three techniques address this at different points in the forward pass.</p>
+<p><strong>Z-loss.</strong> Add a regularization term to the standard cross-entropy loss that penalizes large logit magnitudes:</p>
+<p>$$\mathcal{L}_{\text{z}} = \alpha \cdot \mathbb{E}!\left[\log^2 Z\right]$$</p>
+<p>where $Z = \sum_i e^{z_i}$ is the softmax partition function and $\alpha$ is a small coefficient (typically $10^{-4}$ to $10^{-5}$). When logits are large, $Z$ is large, $\log Z$ is large, and $\mathcal{L}_z$ penalizes this. Z-loss adds a gradient signal that keeps logits from drifting to large values, stabilising the softmax distribution. It has negligible impact on task performance when $\alpha$ is small.</p>
+<p><strong>Logit softcapping.</strong> Rather than penalising large logits via loss, softcapping bounds them directly in the forward pass using a smooth, differentiable compression:</p>
+<p>$$z_{\text{capped}} = s \cdot \tanh!\left(\frac{z}{s}\right)$$</p>
+<p>where $s$ is the cap threshold (e.g., $s = 50$ for attention logits, $s = 30$ for the final language model head). Unlike hard clipping (which has zero gradient at the boundary), $\tanh$ has nonzero gradient everywhere, so training signal still flows through the cap. Values well within $[-s, s]$ are unaffected; values outside are smoothly compressed.</p>
+<p>Gemma 2 and Gemma 3 apply softcapping to both attention logits (pre-softmax) and the final LM head, which substantially reduces loss spikes. One caveat: logit softcapping is incompatible with FlashAttention&rsquo;s fused kernel during training (which assumes standard attention). Training must use eager attention; inference can still use FlashAttention with negligible quality difference.</p>
+<p><strong>QK-Norm.</strong> Apply LayerNorm to query and key vectors before computing attention:</p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}!\left(\frac{\text{LN}(Q),\text{LN}(K)^T}{\sqrt{d_k}}\right)V$$</p>
+<p>By normalising $Q$ and $K$, the dot product $QK^T$ is bounded, preventing attention logit explosion without any additional loss term or forward-pass modification. The drawback: LayerNorm strips the magnitude from $Q$ and $K$, which carries useful information (a large magnitude indicates high confidence). For long-context tasks, QK-norm has been found to hurt performance by de-emphasising relevant tokens - the normalisation removes exactly the signal that distinguishes attended-to from ignored positions.</p>
+<p><strong>Which to use.</strong> Logit softcapping (Gemma-style) is currently the most widely adopted in frontier models - it is effective, adds no loss term overhead, and is well-understood. Z-loss is a simpler alternative with less forward-pass modification. QK-norm is an option if you want bounded attention without modifying the loss or forward pass, but avoid it for long-context tasks.</p>
 <hr>
 <h2 id=pre-norm-vs-post-norm>Pre-Norm vs. Post-Norm</h2>
 <p>Where you apply normalization in the network architecture matters.</p>

@@ -58,7 +58,7 @@
 Mar 6, 2022
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-11 min read
+13 min read
 </div>
 </div>
 </header>
@@ -156,6 +156,10 @@ Mar 6, 2022
 <li><strong>Expert specialization:</strong> do experts learn different things? Evidence suggests they partially specialize by topic, syntax, and language - but the specialization is soft, not crisp.</li>
 <li><strong>Communication overhead:</strong> in distributed training, expert outputs from different GPUs must be aggregated. This &ldquo;all-to-all&rdquo; communication becomes a bottleneck.</li>
 </ul>
+<p><strong>Load balancing is the hardest part.</strong> A naive MoE collapses: the router learns to always send tokens to the same 1-2 experts (they get more gradient signal, get better, attract more tokens - a rich-get-richer collapse). Every serious MoE implementation adds a load balancing auxiliary loss:</p>
+<p>$$\mathcal{L}<em>{\text{aux}} = \alpha \sum</em>{i=1}^{E} f_i \cdot P_i$$</p>
+<p>where $f_i$ is the fraction of tokens routed to expert $i$, $P_i$ is the average routing probability for expert $i$, and $\alpha$ controls the strength. In perfect balance, $f_i = P_i = 1/E$ for all $i$, so $\mathcal{L}_{\text{aux}} = \alpha/E$. Any deviation increases this loss. The coefficient $\alpha$ must be tuned carefully - too small and experts collapse, too large and the router becomes uniform (ignoring token content entirely).</p>
+<p><strong>Shared experts</strong> (used in DeepSeek-V2/V3) are always-active experts that absorb common patterns, freeing specialised experts to focus on rarer distributions. One shared expert is typically sufficient. <strong>Expert granularity</strong> - more experts with smaller dimensions vs fewer with larger - trades off parameter efficiency against specialization. Recent models (DeepSeek, Kimi K2) use high sparsity: 8 active experts out of 64-384 total. Loss-free load balancing (DeepSeek-V3 approach) adds a learned bias to routing scores rather than a loss term, avoiding interference with the primary training objective.</p>
 <hr>
 <h2 id=grouped-query-attention-and-multi-query-attention>Grouped Query Attention and Multi-Query Attention</h2>
 <p>During inference, the KV cache is a major memory consumer. For every token generated, the model must store the key and value vectors for all previous tokens in all layers - because attention is computed against the full history.</p>
@@ -165,6 +169,22 @@ Mar 6, 2022
 <p><strong>Multi-Query Attention (MQA)</strong> (Shazeer, 2019): use one shared $K$ head and one shared $V$ head across all query heads. Queries retain their per-head projections. This reduces the KV cache by $H \times$ - for 64 heads, a 64× reduction. The tradeoff: slightly lower model quality, because the keys and values can&rsquo;t specialize per head.</p>
 <p><strong>Grouped Query Attention (GQA)</strong> (Ainslie et al., 2023): a middle ground. Group the $H$ query heads into $G$ groups ($G$ divides $H$). Each group shares one $K$ head and one $V$ head. KV cache reduction: $G \times$ instead of $H \times$, but with less quality degradation than MQA.</p>
 <p>LLaMA-2 70B uses GQA with $G = 8$ (8 KV heads for 64 query heads). This gives an 8× reduction in KV cache compared to standard MHA, enabling much longer contexts at the same memory budget.</p>
+<hr>
+<h2 id=multi-head-latent-attention>Multi-Head Latent Attention</h2>
+<p>Grouped Query Attention reduces the KV cache by sharing key-value heads across query groups. Multi-Head Latent Attention (MLA), introduced in DeepSeek-V2, takes a different approach: compress the KV cache into a low-dimensional latent vector, then project it back to full keys and values at inference time.</p>
+<p>Instead of storing $n_h$ key-value pairs per token (as in MHA), MLA stores a single compressed latent $c_t^{KV} \in \mathbb{R}^{d_c}$ where $d_c \ll n_h \cdot d_h$:</p>
+<p>$$c_t^{KV} = W^{DKV} h_t$$</p>
+<p>At attention time, keys and values are recovered via learned up-projections:</p>
+<p>$$K_t = W^{UK} c_t^{KV}, \qquad V_t = W^{UV} c_t^{KV}$$</p>
+<p>The KV cache stores only $c_t^{KV}$ (dimension $d_c$ per token), not the full $n_h \cdot d_h$ key-value pairs. Compression ratios of 4-8x over MHA are typical, with performance comparable to or better than GQA.</p>
+<p>A complication: RoPE applies position-dependent rotations to queries and keys. But if keys are computed from a shared latent, applying RoPE to keys would require materializing the full key matrix at every position - defeating the compression. MLA handles this by splitting queries and keys into two parts: a position-dependent component (where RoPE is applied) and a position-independent component (compressed in the latent). The position-dependent components use a separate low-rank compression called $c_t^Q$ for queries.</p>
+<p><strong>MHA vs GQA vs MQA vs MLA - when to use which:</strong></p>
+<ul>
+<li>MHA: highest quality, largest KV cache, use when memory is not a constraint</li>
+<li>GQA (groups 4-8): 4-8x KV cache reduction, minimal quality loss, current default for most models</li>
+<li>MQA: maximum compression, but quality degrades noticeably in practice</li>
+<li>MLA: comparable KV cache to GQA, MHA-level quality, but complex implementation (RoPE decomposition, custom kernels required)</li>
+</ul>
 <hr>
 <h2 id=summary>Summary</h2>
 <table>
@@ -226,6 +246,13 @@ Mar 6, 2022
 <td>$O(n)$ KV</td>
 <td>Approx quality</td>
 <td>Shared KV heads</td>
+</tr>
+<tr>
+<td>MLA</td>
+<td>$O(n^2 d)$</td>
+<td>$O(n \cdot d_c)$ KV</td>
+<td>Exact</td>
+<td>Low-rank KV latent compression</td>
 </tr>
 </tbody>
 </table>

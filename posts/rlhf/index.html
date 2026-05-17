@@ -60,7 +60,7 @@ Ask it a question and it will produce text that looks like it might follow that 
 Mar 6, 2022
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-10 min read
+12 min read
 </div>
 </div>
 </header>
@@ -174,6 +174,15 @@ Mar 6, 2022
 </ol>
 <p>This scales more readily than human labeling: once the Constitution is written, the AI can generate preference data automatically. The tradeoff is that the quality of the reward model depends on the quality of the AI&rsquo;s self-evaluation, which depends on the quality of the base model.</p>
 <hr>
+<h2 id=rlvr-reinforcement-learning-from-verifiable-rewards>RLVR: Reinforcement Learning from Verifiable Rewards</h2>
+<p>RLHF requires a learned reward model - a neural network trained on human preference data that scores responses. This creates two problems: reward hacking (the policy learns to fool the reward model rather than actually improve) and the cost of human annotation at scale.</p>
+<p><strong>Verifiable rewards</strong> sidestep both problems. For tasks where correctness can be checked automatically - mathematics, code, formal logic - the reward signal is the answer to &ldquo;is this solution correct?&rdquo; A math problem either has the right answer or it doesn&rsquo;t. Code either passes tests or it doesn&rsquo;t. No learned reward model, no reward hacking.</p>
+<p><strong>RLVR setup.</strong> The language model generates a chain-of-thought reasoning trace followed by a final answer. A deterministic verifier checks whether the answer is correct and returns reward 1 (correct) or 0 (incorrect). The policy is updated via GRPO (Group Relative Policy Optimization) or similar on-policy RL: generate $G$ solutions per problem, compute rewards, use the group mean and variance to normalise advantages, update with a clipped policy gradient loss identical in structure to PPO.</p>
+<p>$$\mathcal{L}<em>{\text{GRPO}} = -\mathbb{E}!\left[\min!\left(\frac{\pi</em>\theta(o|q)}{\pi_{\theta_{\text{old}}}(o|q)} A, ;\text{clip}!\left(\frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}, 1-\varepsilon, 1+\varepsilon\right) A\right)\right]$$</p>
+<p>where $A$ is the advantage normalised within the group of $G$ outputs for the same question, and $o$ is the output sequence.</p>
+<p><strong>Why it works.</strong> The key insight is that the verifiable reward provides a training signal exactly where you want it - at the final answer - without requiring a learned reward model that can be gamed. The chain-of-thought is not directly supervised; the model is free to develop whatever reasoning process leads to correct answers. This is how DeepSeek-R1 and similar &ldquo;reasoning models&rdquo; are trained: start from a base model, apply RLVR on math/code problems with ground-truth verifiers, and the model spontaneously develops longer, more structured reasoning chains.</p>
+<p><strong>Limitations.</strong> RLVR only works when correctness is verifiable. Open-ended tasks (writing, summarisation, subjective judgements) have no ground-truth verifier. For these, RLHF with a learned reward model remains necessary. RLVR also requires a base model that already has enough capability to solve some fraction of problems - if the initial success rate is near zero, the RL signal vanishes. &ldquo;Rubric-based&rdquo; RLVR extends verifiable rewards to partially-correct answers using structured rubrics evaluated by a stronger model.</p>
+<hr>
 <h2 id=the-bigger-picture>The Bigger Picture</h2>
 <p>RLHF is a paradigm, not a single algorithm. The key ideas:</p>
 <ol>
@@ -228,6 +237,10 @@ Mar 6, 2022
 <tr>
 <td>Why PPO is hard</td>
 <td>Requires 4 models; sensitive to $\beta$, clip ratio, learning rate; can destabilize</td>
+</tr>
+<tr>
+<td>RLVR</td>
+<td>Uses deterministic verifiers (math, code) as reward signal; no learned reward model; trained with GRPO; produces reasoning models like DeepSeek-R1</td>
 </tr>
 </tbody>
 </table>

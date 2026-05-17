@@ -60,7 +60,7 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
 Mar 6, 2022
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-10 min read
+12 min read
 </div>
 </div>
 </header>
@@ -155,6 +155,17 @@ Mar 6, 2022
 <p><strong>RoPE interpolation</strong> (Chen et al. 2023): instead of rotating by $m \cdot \theta_i$, rotate by $(m / s) \cdot \theta_i$ where $s$ is a scaling factor $s = L_{\text{new}} / L_{\text{train}}$. This compresses new positions into the range of trained positions. Combined with fine-tuning on longer sequences, this extends context from 4096 to 32768 tokens.</p>
 <p><strong>YaRN</strong> (Peng et al. 2023) and <strong>LongRoPE</strong> (Ding et al. 2024) refine this further, using different scaling for different frequency components - low-frequency dimensions extrapolate well; high-frequency dimensions need interpolation. These techniques have extended context windows from 4K to 128K or even 1M tokens in production models.</p>
 <hr>
+<h2 id=extending-rope-to-long-contexts>Extending RoPE to Long Contexts</h2>
+<p>RoPE was designed for training lengths up to a few thousand tokens. At longer contexts, the rotation angles grow large and the model sees angle combinations it never encountered during training, causing degradation.</p>
+<p><strong>YaRN (Yet Another RoPE Extension)</strong> addresses this with three modifications. First, frequency interpolation: scale the position indices by $\text{scale} = L_{\text{train}} / L_{\text{target}}$ so the angles stay within the trained range. But interpolating all frequencies equally is suboptimal - low-frequency components (slow rotation, long-range information) need less scaling than high-frequency components (fast rotation, local information). YaRN applies different interpolation factors per frequency band. Second, dynamic scaling: the effective temperature of the softmax (controlled by $\sqrt{d_k}$) needs adjustment as context grows - YaRN multiplies attention logits by a length-dependent temperature factor. Third, NTK-aware interpolation: distribute the position information more evenly across dimensions using number-theoretic properties of the RoPE basis.</p>
+<p>In practice, YaRN can extend a model trained to 4k tokens to handle 128k tokens with fine-tuning on a small amount of long-context data. It is used in gpt-oss-120b (extending to 131k tokens), Kimi K2, and most other frontier long-context models.</p>
+<hr>
+<h2 id=nope-rnope-and-document-masking>NoPE, RNoPE, and Document Masking</h2>
+<p><strong>NoPE (No Positional Embedding).</strong> Some transformer layers can learn useful representations without any positional encoding - relying purely on causal masking and attention patterns to infer relative order. Tokens can still infer position from the causal attention mask (future tokens are masked, so attending to a specific number of past tokens implies a position). NoPE layers have no extrapolation problem because they never saw position-encoded input, but they underperform on short-context reasoning tasks where absolute position matters.</p>
+<p><strong>RNoPE (Rotary NoPE).</strong> Alternate between RoPE layers (which handle local context and benefit from position information) and NoPE layers (which handle long-range retrieval without extrapolation issues). SmolLM3 uses RNoPE with one NoPE layer every 4 layers, achieving similar short-context performance to pure RoPE while extending better to long contexts. The intuition: local syntactic patterns need precise position information (RoPE layers handle this), while long-range semantic retrieval benefits from position-agnostic attention (NoPE layers handle this).</p>
+<p><strong>Document masking (intra-document attention masking).</strong> When packing multiple short documents into a single training sequence (to avoid padding waste), standard causal masking lets tokens in document $B$ attend to tokens in document $A$, even though they are unrelated. This cross-document attention degrades performance and, more importantly, makes long-context extension harder - the model learns to attend across arbitrary document boundaries rather than within coherent contexts.</p>
+<p>Document masking modifies the attention mask so that token $i$ in document $B$ can only attend to previous tokens in document $B$, not to any token in document $A$. This adds implementation complexity (the attention mask is no longer a simple lower-triangular matrix) and is incompatible with standard FlashAttention without modification. But the benefit is substantial: models with document masking extend more cleanly from 4k to 64k+ tokens because they learn coherent long-range attention within documents rather than spurious cross-document patterns.</p>
+<hr>
 <h2 id=alibi-vs-rope-a-direct-comparison>ALiBi vs. RoPE: A Direct Comparison</h2>
 <table>
 <thead>
@@ -234,6 +245,24 @@ Mar 6, 2022
 <td>Rotation of Q and K vectors</td>
 <td>None</td>
 <td>Good + extendable</td>
+</tr>
+<tr>
+<td>YaRN</td>
+<td>Per-frequency RoPE interpolation + temperature scaling</td>
+<td>None</td>
+<td>Very strong (4k to 128k+)</td>
+</tr>
+<tr>
+<td>NoPE / RNoPE</td>
+<td>No position encoding on select layers; alternate with RoPE layers</td>
+<td>None</td>
+<td>Strong on long range</td>
+</tr>
+<tr>
+<td>Document masking</td>
+<td>Intra-document attention mask during training</td>
+<td>None</td>
+<td>Improves long-context coherence</td>
 </tr>
 </tbody>
 </table>
