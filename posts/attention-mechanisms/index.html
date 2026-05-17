@@ -60,7 +60,7 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 Mar 6, 2022
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-11 min read
+14 min read
 </div>
 </div>
 </header>
@@ -74,6 +74,12 @@ Mar 6, 2022
 <p>Read this sentence: &ldquo;The trophy doesn&rsquo;t fit in the suitcase because it is too big.&rdquo;</p>
 <p>You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is what&rsquo;s too big to fit. You didn&rsquo;t run through every possible referent and weigh them consciously. Your eye slid back to &ldquo;trophy&rdquo; and the meaning snapped into place. You attended selectively to the relevant earlier word.</p>
 <p>For two decades, neural networks had no analog of this ability. They processed sequences left to right, compressing everything into a fixed-size hidden state. By the time the model generated an output, the beginning of the input had been smeared into a bottleneck vector and partially lost. Attention mechanisms change this - they give neural networks a structured, differentiable way to look back at any earlier part of the input and decide what to focus on.</p>
+<hr>
+<h2 id=what-attention-actually-does>What Attention Actually Does</h2>
+<p>Before attention, sequence-to-sequence models routed all information through a single fixed-dimensional hidden state - the final hidden state of the encoder had to compress the entire input sequence. This is an information bottleneck: a 1000-word document compressed into a 512-dimensional vector. Long-range dependencies were theoretically possible (an RNN can in principle carry information across many steps) but practically difficult (gradients vanish over long distances, and the hidden state has to serve too many purposes at once).</p>
+<p>Attention does not solve a problem that was previously unsolvable. It changes <em>where</em> the solution lives. Instead of learning to route information implicitly through hidden states over many timesteps, attention makes routing an explicit, differentiable operation at every layer. The model computes, at each step, a weighted mixture over all positions - and the weights are learned, input-dependent, and directly supervised by the downstream loss.</p>
+<p>This explicitness has two consequences. First, gradients flow directly from any output position to any input position, regardless of sequence length - the gradient path length is O(1), not O(n). This is why attention is better at long-range dependencies than RNNs. Second, the attention weights are interpretable: you can look at which positions the model attends to and understand (to some degree) what information it&rsquo;s using. The implicit routing in RNN hidden states had no such interpretable structure.</p>
+<p>The quadratic cost - $O(n^2)$ in sequence length - is the price of this directness. Every position attends to every other position. For short sequences, this is fast. For sequences of length 10,000 (long documents, high-resolution images), it becomes the bottleneck. Most &ldquo;efficient attention&rdquo; research is about approximating the full attention matrix while preserving its key properties.</p>
 <hr>
 <h2 id=the-original-attention-bahdanau-et-al-2015>The Original Attention: Bahdanau et al. 2015</h2>
 <p>The first widely adopted attention mechanism appeared in the context of neural machine translation. The problem was exactly the information bottleneck we identified in seq2seq models: the encoder&rsquo;s final hidden state cannot hold everything relevant about a long source sentence.</p>
@@ -141,6 +147,8 @@ Mar 6, 2022
 <p>$$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h) , W_O.$$</p>
 <p>In the original transformer, $h = 8$ heads, $d = 512$, $d_k = d_v = d/h = 64$. Total computation is roughly the same as a single head of dimension 512.</p>
 <p>The heads do not divide responsibilities by fiat - they learn to specialize through training. Empirically, different heads attend to different patterns: one head may track subject-verb dependencies, another may track modifier-noun relationships, another may focus on coreference. Each head operates in a different learned subspace of the representation, and different subspaces capture different relationship types.</p>
+<p><strong>Why heads specialize.</strong> Running $h$ attention heads in parallel and projecting them down to the model dimension creates $h$ independently learned routing patterns. Do heads specialize? Empirically, yes - and the specialization is partly explained by the projection matrices. Each head projects queries, keys, and values into a lower-dimensional subspace before computing attention. Different heads project into different subspaces, so they &ldquo;see&rdquo; different aspects of the representation. The softmax is sensitive to scale (which is why we divide by $\sqrt{d_k}$), so heads that project to subspaces emphasizing different features will learn to attend to different patterns.</p>
+<p>Specifically, in trained transformers: some heads attend to adjacent tokens (local syntax), some to the corresponding position in the other sequence (alignment), some to specific token types (e.g., &ldquo;[CLS]&rdquo; or punctuation), and some to semantically related tokens across long distances. This is not engineered - it emerges from gradient descent on the language modeling objective. The fact that it emerges consistently across models and languages suggests it reflects real structure in language, not random variation.</p>
 <hr>
 <h2 id=cross-attention>Cross-Attention</h2>
 <p>When you have two sequences - a source and a target - you can use <strong>cross-attention</strong>:</p>
@@ -153,6 +161,7 @@ Mar 6, 2022
 <p>Scaled dot-product attention has a cost: $O(n^2)$ in sequence length, where $n$ is the number of tokens.</p>
 <p>The attention matrix $\text{softmax}(QK^\top / \sqrt{d})$ is $n \times n$. Computing it requires $n^2$ dot products. Storing it requires $O(n^2)$ memory. For $n = 1000$, that&rsquo;s $10^6$ entries per head per layer - manageable. For $n = 100{,}000$, it&rsquo;s $10^{10}$ entries per head per layer - not manageable without specialized algorithms.</p>
 <p>This quadratic scaling is the central computational bottleneck of transformer models. It is why efficient attention - FlashAttention, sparse attention, linear attention - is an active research area. And it is why the context length of a language model is a meaningful constraint, not just an arbitrary limit.</p>
+<p>The quadratic cost is not merely a theoretical concern. At sequence length 512 (typical for BERT), the attention matrix has 262,144 entries per head per layer - manageable. At sequence length 32,768 (a long document), it has over 1 billion entries - not manageable with standard GPU memory. This is why document-length tasks require either chunking (attend within windows), sparse attention (attend to a fixed set of positions), or linearized attention (approximate the attention matrix with a lower-rank structure). None of these fully preserves the properties of full attention. The choice of approximation is the central engineering decision in deploying attention to long-context tasks.</p>
 <hr>
 <h2 id=hierarchical-attention>Hierarchical Attention</h2>
 <p>Flat attention attends over all tokens in a sequence simultaneously. But some structures are hierarchically organized: a document is made of paragraphs, each paragraph is made of sentences, each sentence is made of words. Attending over thousands of words at once is expensive and ignores this structure.</p>

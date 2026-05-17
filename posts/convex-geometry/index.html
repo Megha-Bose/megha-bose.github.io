@@ -11,9 +11,11 @@
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="Convex Geometry">
-<meta name=twitter:description content="Geometry, at its core, is the study of shape. But not every shape is created equal. Convex sets - those in which you can draw a straight line between any two points and stay inside the set - have a richness of structure that non-convex sets entirely lack. They admit clean separation theorems, unique projections, and a duality theory that underpins all of modern optimization. They are, in a precise sense, the simplest &ldquo;nice&rdquo; sets beyond subspaces.">
+<meta name=twitter:description content="A convex set is one where local structure reflects global structure. In optimization, this translates into the single most important fact about convex sets: local optima are global optima. Every other theorem in convex geometry - separation, support, duality - is ultimately a consequence of or a tool for exploiting this property.
+To see why this matters, contrast with the non-convex case. A non-convex problem can have exponentially many local optima, none of which need be globally optimal.">
 <meta property="og:title" content="Convex Geometry">
-<meta property="og:description" content="Geometry, at its core, is the study of shape. But not every shape is created equal. Convex sets - those in which you can draw a straight line between any two points and stay inside the set - have a richness of structure that non-convex sets entirely lack. They admit clean separation theorems, unique projections, and a duality theory that underpins all of modern optimization. They are, in a precise sense, the simplest &ldquo;nice&rdquo; sets beyond subspaces.">
+<meta property="og:description" content="A convex set is one where local structure reflects global structure. In optimization, this translates into the single most important fact about convex sets: local optima are global optima. Every other theorem in convex geometry - separation, support, duality - is ultimately a consequence of or a tool for exploiting this property.
+To see why this matters, contrast with the non-convex case. A non-convex problem can have exponentially many local optima, none of which need be globally optimal.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="http://megha-bose.github.io/posts/convex-geometry/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2024-11-01T00:00:00+00:00">
@@ -56,15 +58,16 @@
 Nov 1, 2024
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-19 min read
+21 min read
 </div>
 </div>
 </header>
 <div class=post-content>
 <hr>
-<p>Geometry, at its core, is the study of shape. But not every shape is created equal. Convex sets - those in which you can draw a straight line between any two points and stay inside the set - have a richness of structure that non-convex sets entirely lack. They admit clean separation theorems, unique projections, and a duality theory that underpins all of modern optimization. They are, in a precise sense, the simplest &ldquo;nice&rdquo; sets beyond subspaces.</p>
-<p>The theory developed here is not merely abstract. Every linear program is an optimization over a polyhedron. Every support vector machine finds a separating hyperplane. Every projected gradient descent step computes a closest point in a convex set. Understanding convex geometry is understanding why these algorithms work at all - and what guarantees they carry.</p>
-<p>This post builds the theory from the ground up: from affine sets and convex sets, through the hull operations that generate them, to the three central theorems - closest point, separating hyperplane, and supporting hyperplane - and their applications to Farkas' lemma and the structure of extreme points. Proofs are complete. The goal is not just to know the statements but to see why they must be true.</p>
+<p>A convex set is one where local structure reflects global structure. In optimization, this translates into the single most important fact about convex sets: <strong>local optima are global optima</strong>. Every other theorem in convex geometry - separation, support, duality - is ultimately a consequence of or a tool for exploiting this property.</p>
+<p>To see why this matters, contrast with the non-convex case. A non-convex problem can have exponentially many local optima, none of which need be globally optimal. Gradient descent gets trapped in whichever basin it starts in. There is no certificate that a found solution is globally best. Convex problems have exactly one basin. Gradient descent converges to the global minimum regardless of initialization. The geometry enforces it.</p>
+<p>The concrete picture: minimize $f$ over a convex set $C$. Any point where you cannot improve by moving in any feasible direction is the global minimum - because convexity rules out the possibility of hidden better points elsewhere. On a non-convex set, you might be trapped in a valley with a lower valley across an impassable ridge.</p>
+<p>This post builds the geometry that makes this precise. The theorems here - separating hyperplane, supporting hyperplane, Farkas' lemma - are the tools that make optimization over convex sets tractable. They give certificates of optimality, characterize feasibility, and underpin LP duality. Understanding them is understanding why convex optimization is a fundamentally different (and tractable) class of problems.</p>
 <hr>
 <h2 id=affine-sets>Affine Sets</h2>
 <p>A set $C \subseteq \mathbb{R}^n$ is <strong>affine</strong> if for any $x, y \in C$ and any $\theta \in \mathbb{R}$, the point $\theta x + (1 - \theta)y \in C$.</p>
@@ -230,6 +233,16 @@ Nov 1, 2024
 <p>$$C = \text{conv}(\text{ext}(C))$$</p>
 <p>where $\text{ext}(C)$ denotes the set of extreme points of $C$. This theorem (stated here without proof) is fundamental: it says that compact convex sets are completely determined by their &ldquo;corners.&rdquo; For polytopes, $\text{ext}(C)$ is finite and equals the vertex set, and the theorem reduces to the statement that every polytope is the convex hull of its vertices.</p>
 <p>The Krein-Milman theorem has a key consequence for optimization: the minimum of any linear function over a compact convex set is attained at an extreme point. This is the geometric foundation of the simplex method - when optimizing a linear objective over a polytope, it suffices to search over vertices.</p>
+<hr>
+<h2 id=why-convexity-local-equals-global>Why Convexity: Local Equals Global</h2>
+<p>The entire edifice of convex analysis rests on one fact. Let $f: \mathbb{R}^n \to \mathbb{R}$ be a convex function and $C \subseteq \mathbb{R}^n$ a convex set. Any local minimum of $f$ over $C$ is a global minimum.</p>
+<p><strong>Proof.</strong> Suppose $x^<em>$ is a local minimum: $f(x^</em>) \leq f(x)$ for all $x$ in some neighborhood $B(x^<em>, \varepsilon) \cap C$. Suppose for contradiction that there exists $y \in C$ with $f(y) &lt; f(x^</em>)$. Consider the point $z_\lambda = (1-\lambda)x^* + \lambda y$ for small $\lambda > 0$. By convexity of $C$, $z_\lambda \in C$. By convexity of $f$:
+$$f(z_\lambda) \leq (1-\lambda) f(x^<em>) + \lambda f(y) &lt; (1-\lambda) f(x^</em>) + \lambda f(x^<em>) = f(x^</em>)$$
+For sufficiently small $\lambda$, $z_\lambda \in B(x^<em>, \varepsilon)$. So $f(z_\lambda) &lt; f(x^</em>)$ with $z_\lambda$ in the local neighborhood - contradicting local minimality. $\square$</p>
+<p>This is why convex optimization is a fundamentally different class of problem from non-convex optimization. Gradient descent on a convex function provably converges to the global minimum. On a non-convex function, it finds a local minimum - which may be arbitrarily worse than the global.</p>
+<p><strong>The geometric picture.</strong> A convex function has exactly one &ldquo;bowl.&rdquo; You can think of gradient descent as rolling a ball down a bowl - it always reaches the bottom. Non-convex functions have multiple bowls, and a ball starting in the wrong basin gets stuck.</p>
+<p><strong>When convexity breaks down.</strong> Neural networks have non-convex loss surfaces. The composition of a convex output loss with a non-linear network is generally non-convex. Deep learning practitioners work in a regime where the function has many local minima - and, empirically, many of them are nearly as good as the global minimum. This is a lucky accident of overparameterization, not a guarantee. Theoretical understanding of why non-convex deep learning works remains one of the central open problems in machine learning.</p>
+<p><strong>The Separating Hyperplane as a certificate.</strong> The separating hyperplane theorem is the mechanism behind convex duality. If $x^<em>$ is optimal, the supporting hyperplane at $x^</em>$ (tangent to the feasible set) is a certificate: it says &ldquo;no feasible point does better than $x^*$&rdquo; without having to check the entire feasible set. This is why LP duality works - the dual solution is exactly this certificate.</p>
 <hr>
 <h2 id=summary>Summary</h2>
 <table>

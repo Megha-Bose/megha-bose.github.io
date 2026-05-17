@@ -58,7 +58,7 @@
 Aug 3, 2021
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-9 min read
+11 min read
 </div>
 </div>
 </header>
@@ -79,6 +79,15 @@ Aug 3, 2021
 <p><strong>Optimal substructure.</strong> The optimal answer to the problem uses optimal answers to smaller subproblems. This sounds tautological, but it isn&rsquo;t - many problems don&rsquo;t have this property. If you&rsquo;re trying to find the shortest path in a graph with negative cycles, knowing the optimal solution to a smaller subgraph doesn&rsquo;t help you.</p>
 <p><strong>Overlapping subproblems.</strong> The recursive approach to solving the problem visits the same subproblems repeatedly. This is what separates DP from divide-and-conquer: in merge sort, the subproblems are disjoint - you never sort the same subarray twice. In DP, you do.</p>
 <p>When both properties hold, you can trade memory for time. Compute each subproblem once, store the result, and look it up whenever you need it again. This transforms exponential algorithms into polynomial ones.</p>
+<hr>
+<h2 id=how-to-recognize-a-dp-problem>How to Recognize a DP Problem</h2>
+<p>The two conditions for DP are necessary but recognizing them in a new problem is non-trivial. Here is the diagnostic process.</p>
+<p><strong>Step 1: Is there a natural notion of &ldquo;subproblem&rdquo;?</strong> DP requires that the problem decompose into smaller instances of the same problem. If you can describe the problem as &ldquo;find the best X of length/size n,&rdquo; ask: does the best X of size n always contain the best X of size n-1 as a prefix/suffix/substructure? If yes, that&rsquo;s optimal substructure.</p>
+<p><strong>Step 2: Do subproblems overlap?</strong> If the recursion tree has repeated subproblems, memoization saves work. If every recursive call touches a fresh subproblem (like merge sort, which never revisits the same subarray), divide-and-conquer suffices and DP adds no benefit.</p>
+<p><strong>Step 3: Design the state.</strong> The hardest part of DP is often choosing what to memoize. The state must capture everything needed to compute the answer to a subproblem, without including unnecessary information that explodes the state space. For sequence problems, the state is usually a pair of indices. For graph problems, it might be (current node, visited set) - but &ldquo;visited set&rdquo; has $2^n$ possibilities, so only works for small n (the TSP approach).</p>
+<p><strong>Step 4: Write the recurrence and check base cases.</strong> The recurrence should have strictly smaller subproblems on the right-hand side - otherwise the recursion may not terminate.</p>
+<p><strong>When DP beats greedy.</strong> Greedy works when a locally optimal choice is globally optimal - when the problem has the <em>greedy choice property</em> (taking the best immediate option never closes off a better future). DP is needed when the best local choice depends on what else you&rsquo;ve already chosen. Coin change is the canonical example: with coins {1, 3, 4} and target 6, greedy picks 4 then two 1s (cost 3), while DP finds 3+3 (cost 2). Greedy fails because the best first coin depends on future choices.</p>
+<p><strong>When neither works.</strong> If the subproblem graph is cyclic (circular dependencies), neither DP nor greedy applies directly. Many NP-hard problems have optimal substructure but exponential state spaces (TSP, subset sum with arbitrary weights). DP on exponential state spaces is still exponential - just with better constants.</p>
 <hr>
 <h2 id=the-fibonacci-disaster>The Fibonacci Disaster</h2>
 <p>Start with the simplest example. The Fibonacci sequence: $F(0) = 0$, $F(1) = 1$, $F(n) = F(n-1) + F(n-2)$.</p>
@@ -275,6 +284,11 @@ return dp[n]
 <blockquote>
 <p><strong>Discomfort check.</strong> Knapsack runs in $O(nW)$. Isn&rsquo;t that polynomial? No - this is the key subtlety. $W$ is a number in the input, but it&rsquo;s encoded in $\log_2 W$ bits. &ldquo;Polynomial time&rdquo; means polynomial in the input size (number of bits), not in the numeric values. An algorithm running in $O(nW)$ is polynomial in $n$ and the value of $W$, but exponential in the bit-length of $W$. Double the number of bits used to store $W$ - say from 10 bits to 20 bits - and $W$ goes from about 1,000 to about 1,000,000. Runtime multiplies by 1,000, not 2. This is why knapsack is NP-hard despite having a &ldquo;polynomial-looking&rdquo; DP. The term for this is <strong>pseudopolynomial</strong>.</p>
 </blockquote>
+<hr>
+<h2 id=failure-modes-when-dp-goes-wrong>Failure Modes: When DP Goes Wrong</h2>
+<p><strong>State space explosion.</strong> The 0/1 knapsack runs in $O(nW)$ - pseudopolynomial, not polynomial. When $W$ is exponentially large (e.g., weights are exponential in $n$), this is no better than brute force. Choosing the right state representation is crucial.</p>
+<p><strong>Wrong subproblem definition.</strong> A subtle trap: defining subproblems that don&rsquo;t compose correctly. If OPT(n) doesn&rsquo;t contain OPT(n-1) as a substructure - if the optimal solution to size n uses a completely different approach than size n-1 - the recurrence is wrong. This happens with problems where the &ldquo;best so far&rdquo; depends on global context that can&rsquo;t be captured in a local state.</p>
+<p><strong>Confusing overlapping with repeated.</strong> Just because a recursive solution is slow doesn&rsquo;t mean DP helps. If the slowness is from exponential branching with no repeated subproblems, memoization doesn&rsquo;t help. Profile the recursion tree before adding DP.</p>
 <hr>
 <h2 id=dp-on-trees-and-dags>DP on Trees and DAGs</h2>
 <p>Not all DP problems fit neatly in a 1D or 2D table. Two important generalizations.</p>

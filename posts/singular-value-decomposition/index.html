@@ -60,7 +60,7 @@ The SVD Theorem Theorem (Existence of SVD). Let $A \in \mathbb{R}^{m \times n}$ 
 Dec 11, 2020
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-10 min read
+12 min read
 </div>
 </div>
 </header>
@@ -80,9 +80,11 @@ Dec 11, 2020
 <li>a matrix $\Sigma \in \mathbb{R}^{m \times n}$ with nonneg entries on the main diagonal and zeros elsewhere,</li>
 </ul>
 <p>such that</p>
-<p>$$\boxed{A = U \Sigma V^T.}$$</p>
+<p>$$A = U \Sigma V^T.$$</p>
 <p>The diagonal entries $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_{\min(m,n)} \geq 0$ are the <strong>singular values</strong> of $A$. The columns of $U$ are the <strong>left singular vectors</strong>; the columns of $V$ are the <strong>right singular vectors</strong>.</p>
 <p>The SVD always exists, over any field, for any shape of matrix. This is the key advantage over eigendecomposition.</p>
+<p><strong>Why SVD, not something else?</strong> Any matrix $A$ has infinitely many factorizations: $A = BC$ for any invertible $C$ with $B = AC^{-1}$. SVD is special because it simultaneously diagonalizes both $A^T A$ and $A A^T$ using the <em>same</em> singular values. Eigendecomposition requires a square matrix and may not exist over the reals. LU factorization reflects elimination order, not intrinsic structure. QR reflects a specific basis choice. SVD alone extracts the intrinsic geometry: the input directions (columns of $V$) that the matrix stretches, the output directions (columns of $U$) it stretches into, and how much stretching happens (singular values). These are not choices made by the analyst - they are properties of the matrix itself.</p>
+<p>Another way to see it: $A^T A$ is symmetric positive semidefinite, so it has a real eigendecomposition $A^T A = V \Lambda V^T$. The columns of $V$ are the &ldquo;natural&rdquo; input directions for $A$ - the orthonormal basis in which $A$&rsquo;s action is simplest. SVD is what you get when you ask: what is the most natural coordinate system for understanding what $A$ does?</p>
 <h2 id=geometric-interpretation>Geometric Interpretation</h2>
 <p>Every linear map $A: \mathbb{R}^n \to \mathbb{R}^m$ decomposes into three steps:</p>
 <pre tabindex=0><code>R^n ---V^T--&gt; R^n ---Sigma--&gt; R^m ---U--&gt; R^m
@@ -199,6 +201,11 @@ k = 1          Best rank-1 approximation: u1 v1^T (one outer product)
 <p>Queries are matched against documents in the reduced rank-$k$ space, allowing for synonymy (words with similar meaning land near each other in concept space) and polysemy handling.</p>
 <h3 id=collaborative-filtering>Collaborative Filtering</h3>
 <p>User-item rating matrices (e.g., Netflix ratings) are large, sparse, and low-rank in practice (users have latent preference dimensions). SVD (or its variants like SVD++) finds a low-rank factorization $A \approx U\Sigma V^T$ where $U$ encodes user preferences and $V^T$ encodes item features in a shared latent space. Missing ratings are predicted by the corresponding entries of $U\Sigma V^T$.</p>
+<h2 id=when-low-rank-is-not-enough>When Low Rank Is Not Enough</h2>
+<p>Low-rank approximation via SVD is optimal in Frobenius norm - but Frobenius optimality does not guarantee interpretability. A matrix can be numerically low-rank (singular values decay quickly after the first few) without the leading singular vectors being semantically meaningful.</p>
+<p><strong>The dark side of PCA.</strong> PCA finds the directions of maximum variance. If the data has a low-dimensional structure aligned with variance, PCA recovers it. But if the structure is in a subspace that does not explain maximum variance - for example, a rare but important cluster of points - PCA discards it. Variance is not the same as importance.</p>
+<p><strong>Rotation ambiguity.</strong> If $A \approx U_k \Sigma_k V_k^T$, any rotation $R$ gives an equally valid factorization: $A \approx (U_k R)(R^T \Sigma_k V_k^T)$. The columns of $U_k$ and $V_k$ are not uniquely identified - they can be rotated freely within the rank-$k$ subspace. Methods like Independent Component Analysis (ICA) and Non-negative Matrix Factorization (NMF) add additional constraints (independence, non-negativity) to select a specific rotation that is more interpretable for specific domains.</p>
+<p><strong>When to use it and when not to.</strong> Use SVD when you need the best low-rank approximation in Frobenius norm, when you need the pseudoinverse, or when you want to understand the condition number and numerical rank. Do not expect SVD to reveal semantically meaningful structure unless the data&rsquo;s meaningful structure happens to align with directions of maximum variance.</p>
 <h2 id=formal-summary>Formal Summary</h2>
 <table>
 <thead>
