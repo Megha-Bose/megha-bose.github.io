@@ -133,7 +133,8 @@ Sep 15, 2024
 <p><strong>User-space threads vs kernel threads:</strong> Early threading models (Green threads in early Java, early Python gevent) scheduled threads entirely in user space. The kernel saw only one kernel thread and had no idea there were many &ldquo;threads&rdquo; above it. This allowed cheap context switches (no kernel involvement) but meant the OS could only schedule one green thread per CPU core. Modern systems use <strong>kernel threads</strong> - each thread is a schedulable entity from the kernel&rsquo;s perspective, allowing true parallelism on multi-core hardware.</p>
 <p>Linux does not actually distinguish between processes and threads in its internal representation. <code>fork()</code> and <code>pthread_create()</code> both call <code>clone()</code>, differing only in which resources are shared. A &ldquo;thread&rdquo; in Linux is just a process that shares its parent&rsquo;s virtual memory.</p>
 <h2 id=virtual-memory-and-paging-deeper>Virtual Memory and Paging: Deeper</h2>
-<p>The <a href=/posts/memory-management/>Memory Management post</a> covers virtual memory from the allocator perspective. From the OS perspective, the kernel&rsquo;s job is maintaining page tables and handling page faults.</p>
+<p>The <a href=/posts/memory-management/ target=_blank rel="noopener noreferrer">Memory Management post</a>
+covers virtual memory from the allocator perspective. From the OS perspective, the kernel&rsquo;s job is maintaining page tables and handling page faults.</p>
 <p>Linux uses a 4-level page table on x86-64: PGD (Page Global Directory) → PUD (Upper) → PMD (Middle) → PTE (Page Table Entry). Each level indexes 9 bits of the 48-bit virtual address, with 12 bits for the offset within a 4 KB page. A full page table for a 48-bit address space would require 128 GB - but only mapped regions have entries, so sparse address spaces use little memory.</p>
 <p><strong>Page replacement:</strong> When physical RAM is exhausted and a page fault requires loading a new page, something must be evicted. Linux uses a variant of the <strong>clock algorithm</strong> (second-chance LRU): pages are arranged in a circular list with an &ldquo;accessed&rdquo; bit. The clock hand sweeps; if the accessed bit is set, it is cleared and the hand moves on. The first page with a cleared bit is evicted. This approximates LRU without the overhead of a true LRU list.</p>
 <p><strong>Memory pressure and OOM:</strong> When the system is completely out of physical memory and swap, the kernel&rsquo;s Out-of-Memory killer selects a process to terminate - typically the one using the most memory with the lowest &ldquo;OOM score.&rdquo; In Kubernetes, when a pod exceeds its memory limit, the cgroup limit causes the OOM killer to trigger within that container, producing <code>OOMKilled</code>. This is not a kernel bug; it is the designed enforcement mechanism.</p>
@@ -255,7 +256,8 @@ sudo bpftrace -e <span style=color:#e6db74>&#39;tracepoint:syscalls:sys_enter_ex
 </table>
 <p><strong>Read Next:</strong></p>
 <ul>
-<li><a href=/posts/concurrency-race-conditions/>Concurrency & Race Conditions</a></li>
+<li><a href=/posts/concurrency-race-conditions/ target=_blank rel="noopener noreferrer">Concurrency & Race Conditions</a>
+</li>
 </ul>
 </div>
 <div class=post-footer>
