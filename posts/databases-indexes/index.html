@@ -1,67 +1,112 @@
-<!doctype html><html lang="en-us">
-<head>
-<title>Databases & Indexes // Megha Bose</title>
-<link rel="shortcut icon" href="/favicon.ico">
-<meta charset="utf-8">
-<meta name="generator" content="Hugo 0.92.2">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="author" content="Megha Bose">
-<meta name="description" content>
-<link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Databases & Indexes">
-<meta name="twitter:description" content="A startup runs a query: &ldquo;get all orders for this user.&rdquo; The table has fifty thousand rows. The query returns in 3ms. A year later, the table has fifty million rows. The same query takes 30 seconds. The CTO declares a database crisis. The engineer who wrote the query adds one line - CREATE INDEX idx_orders_user_id ON orders(user_id) - and the query returns in 2ms. Fifty million rows. Two milliseconds.">
-<meta property="og:title" content="Databases & Indexes">
-<meta property="og:description" content="A startup runs a query: &ldquo;get all orders for this user.&rdquo; The table has fifty thousand rows. The query returns in 3ms. A year later, the table has fifty million rows. The same query takes 30 seconds. The CTO declares a database crisis. The engineer who wrote the query adds one line - CREATE INDEX idx_orders_user_id ON orders(user_id) - and the query returns in 2ms. Fifty million rows. Two milliseconds.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://megha-bose.github.io/posts/databases-indexes/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
-<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
-<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
-</head>
-<body>
-<header class="app-header">
-<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
-<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-<nav class="app-header-menu">
-<a class="app-header-menu-item" href="/about/">About Me</a>
-<br>
-<a class="app-header-menu-item" href="/resume/"> Resume</a>
-<br>
-<a class="app-header-menu-item" href="/categories/">Blog Topics</a>
-<br>
-<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-</nav>
-<div class="app-header-social">
-<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
-</a>
-<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</a>
-<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-</a>
-<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-</a>
-</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-<span class="theme-toggle-icon"></span>
-</button>
-</header>
-<main class="app-container">
-<article class="post">
-<header class="post-header">
-<h1 class="post-title">Databases & Indexes</h1>
-<div class="post-meta">
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-Sep 15, 2024
-</div>
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-14 min read
-</div>
-</div>
-</header>
-<div class="post-content">
-<p>A startup runs a query: &ldquo;get all orders for this user.&rdquo; The table has fifty thousand rows. The query returns in 3ms. A year later, the table has fifty million rows. The same query takes 30 seconds. The CTO declares a database crisis. The engineer who wrote the query adds one line - <code>CREATE INDEX idx_orders_user_id ON orders(user_id)</code> - and the query returns in 2ms. Fifty million rows. Two milliseconds.</p>
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Databases &amp; Indexes // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Databases &amp; Indexes"/>
+<meta name="twitter:description" content="A startup runs a query: &ldquo;get all orders for this user.&rdquo; The table has fifty thousand rows. The query returns in 3ms. A year later, the table has fifty million rows. The same query takes 30 seconds. The CTO declares a database crisis. The engineer who wrote the query adds one line - CREATE INDEX idx_orders_user_id ON orders(user_id) - and the query returns in 2ms. Fifty million rows. Two milliseconds."/>
+
+    <meta property="og:title" content="Databases &amp; Indexes" />
+<meta property="og:description" content="A startup runs a query: &ldquo;get all orders for this user.&rdquo; The table has fifty thousand rows. The query returns in 3ms. A year later, the table has fifty million rows. The same query takes 30 seconds. The CTO declares a database crisis. The engineer who wrote the query adds one line - CREATE INDEX idx_orders_user_id ON orders(user_id) - and the query returns in 2ms. Fifty million rows. Two milliseconds." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/databases-indexes/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Blog Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Databases &amp; Indexes</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          14 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p>A startup runs a query: &ldquo;get all orders for this user.&rdquo; The table has fifty thousand rows. The query returns in 3ms. A year later, the table has fifty million rows. The same query takes 30 seconds. The CTO declares a database crisis. The engineer who wrote the query adds one line - <code>CREATE INDEX idx_orders_user_id ON orders(user_id)</code> - and the query returns in 2ms. Fifty million rows. Two milliseconds.</p>
 <p>What just happened? The answer involves B-trees, disk physics, and a counterintuitive truth: the data structure holding your index is more important than the data structure holding your data.</p>
 <h2 id="why-indexes-exist-the-disk-problem">Why Indexes Exist: The Disk Problem</h2>
 <p>A table without an index is a heap - an unordered pile of rows. Finding orders for user 42 means reading every single row and checking whether <code>user_id = 42</code>. This is a full table scan. At 50 million rows, reading every row from disk takes seconds even with fast SSDs.</p>
@@ -101,7 +146,7 @@ Sep 15, 2024
 <li><code>WHERE status = 'shipped'</code> - starts with the second column, skipping the first</li>
 </ul>
 <p>Think of a physical phone book sorted by (last name, first name). You can find everyone named &ldquo;Smith&rdquo; (leading column). You can find &ldquo;Smith, Megha&rdquo; (both columns). But finding everyone named &ldquo;Megha&rdquo; without knowing their last name requires reading the entire book - the second column is only useful after the first has constrained the search space.</p>
-<p>For query optimization: put equality conditions first, range conditions last. A query <code>WHERE user_id = 42 AND created_at > '2024-01-01'</code> is best served by <code>(user_id, created_at)</code>. User ID equality narrows to one user&rsquo;s rows, then the B-tree&rsquo;s ordered structure scans the <code>created_at</code> range efficiently within that subset.</p>
+<p>For query optimization: put equality conditions first, range conditions last. A query <code>WHERE user_id = 42 AND created_at &gt; '2024-01-01'</code> is best served by <code>(user_id, created_at)</code>. User ID equality narrows to one user&rsquo;s rows, then the B-tree&rsquo;s ordered structure scans the <code>created_at</code> range efficiently within that subset.</p>
 <h2 id="covering-indexes-and-index-only-scans">Covering Indexes and Index-Only Scans</h2>
 <p>After a B-tree lookup finds the matching key, the database normally does a second lookup - a &ldquo;heap fetch&rdquo; - to retrieve the actual row from the main table. This is a second random disk read per result row.</p>
 <p>A covering index includes all columns a query needs in the index itself, eliminating the heap fetch entirely:</p>
@@ -113,7 +158,7 @@ Sep 15, 2024
 <p>A partial index covers only rows matching a predicate:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">INDEX</span> idx_orders_pending <span style="color:#66d9ef">ON</span> orders(created_at)
 <span style="color:#66d9ef">WHERE</span> status <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;pending&#39;</span>;
-</code></pre></div><p>If your application frequently queries <code>WHERE status = 'pending' AND created_at > X</code>, this index is far smaller than a full index on <code>created_at</code> - it only contains pending orders, not the vastly larger set of completed and cancelled orders. Smaller index means faster scans, less write overhead, and less memory pressure on the buffer cache.</p>
+</code></pre></div><p>If your application frequently queries <code>WHERE status = 'pending' AND created_at &gt; X</code>, this index is far smaller than a full index on <code>created_at</code> - it only contains pending orders, not the vastly larger set of completed and cancelled orders. Smaller index means faster scans, less write overhead, and less memory pressure on the buffer cache.</p>
 <p>Partial indexes are underused. Common patterns that benefit: <code>WHERE is_deleted = false</code> (active records only), <code>WHERE status IN ('processing', 'pending')</code> (open transactions), <code>WHERE account_tier = 'premium'</code> (premium features for a small percentage of users).</p>
 <h2 id="cardinality-when-indexes-make-things-worse">Cardinality: When Indexes Make Things Worse</h2>
 <p>An index on a boolean column has cardinality 2. Suppose <code>is_active</code> is true for 60% of rows. An index scan on <code>WHERE is_active = true</code> must follow index pointers to 60% of the rows scattered across the heap. Accessing 60% of a heap scattered randomly is slower than a single sequential scan.</p>
@@ -253,16 +298,47 @@ users <span style="color:#f92672">=</span> session<span style="color:#f92672">.<
 <ul>
 <li><a href="/posts/transactions-2pc-vs-saga/" target="_blank" rel="noopener noreferrer">Transactions: 2PC vs Saga</a>
 </li>
-<li><a href="/posts/sharding-data-replication/" target="_blank" rel="noopener noreferrer">Sharding & Data Replication</a>
+<li><a href="/posts/sharding-data-replication/" target="_blank" rel="noopener noreferrer">Sharding &amp; Data Replication</a>
 </li>
 </ul>
-</div>
-<div class="post-footer">
-</div>
-</article>
-</main>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
-<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
-</body>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>
