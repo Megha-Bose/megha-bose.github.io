@@ -1,0 +1,334 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Writing Clean, Testable Code // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Writing Clean, Testable Code">
+<meta name=twitter:description content="Prerequisite: Debugging and Profiling
+ You open a file from six months ago. The function is called proc. It takes d, x, and flag. There are no comments. The logic involves a nested loop, three early returns, and a magic number 17 that you no longer remember the significance of. You wrote this. It made perfect sense at the time.
+This experience is so universal that it has become the canonical argument for clean code: code is written once and read many times.">
+<meta property="og:title" content="Writing Clean, Testable Code">
+<meta property="og:description" content="Prerequisite: Debugging and Profiling
+ You open a file from six months ago. The function is called proc. It takes d, x, and flag. There are no comments. The logic involves a nested loop, three early returns, and a magic number 17 that you no longer remember the significance of. You wrote this. It made perfect sense at the time.
+This experience is so universal that it has become the canonical argument for clean code: code is written once and read many times.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/writing-clean-testable-code/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Writing Clean, Testable Code</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+14 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/debugging-and-profiling/>Debugging and Profiling</a></p>
+<hr>
+<p>You open a file from six months ago. The function is called <code>proc</code>. It takes <code>d</code>, <code>x</code>, and <code>flag</code>. There are no comments. The logic involves a nested loop, three early returns, and a magic number 17 that you no longer remember the significance of. You wrote this. It made perfect sense at the time.</p>
+<p>This experience is so universal that it has become the canonical argument for clean code: code is written once and read many times. Industry estimates put the ratio at roughly ten reads for every write, across code review, debugging, onboarding, and future modification. The primary audience for your code is not the compiler - it is the next programmer who has to understand it, which is often yourself.</p>
+<p>But &ldquo;clean code&rdquo; has also become a loaded term, attached to a particular book (Robert C. Martin&rsquo;s <em>Clean Code</em>, 2008) and a set of rules that have since generated significant debate. This post tries to give you the underlying principles - the reasons the rules exist - and the judgment to know when to break them.</p>
+<h2 id=the-historical-arc-clean-code-tdd-and-the-backlash>The Historical Arc: Clean Code, TDD, and the Backlash</h2>
+<p>The Clean Code movement emerged in the late 1990s and early 2000s from the Extreme Programming (XP) school, which advocated short iterations, pair programming, and - centrally - test-driven development (TDD). The thesis was that tests written before code would force better design, because untestable code is usually bad code.</p>
+<p>Martin&rsquo;s <em>Clean Code</em> (2008) codified a set of practices: functions should be tiny (often under five lines), names should be verbose, comments should be rare, classes should have single responsibilities. These rules produced cleaner code in many contexts and became influential across the industry.</p>
+<p>By the 2010s, the backlash had begun. Critics pointed out that Martin&rsquo;s examples often fragmented simple logic into dozens of tiny functions, making code harder to follow, not easier. The &ldquo;function should do one thing&rdquo; rule, taken to an extreme, produces code where understanding a simple operation requires tracing through ten layers of abstraction. Dan McKinley&rsquo;s &ldquo;Choose Boring Technology&rdquo; and similar pragmatist writing pushed back against over-engineering. The Hacker News thread when Martin posted his response to the &ldquo;FizzBuzz enterprise edition&rdquo; parody is worth reading if you want to understand the fault lines.</p>
+<p>Where have we landed? The underlying principles are sound: clear names, small well-defined functions, tests that verify behavior. The rigid rules about maximum function length or banning comments entirely are now understood as heuristics that apply in many contexts but not all. The job is judgment.</p>
+<h2 id=naming-the-cheapest-documentation-you-have>Naming: The Cheapest Documentation You Have</h2>
+<p>A good name is the cheapest form of documentation. It costs nothing at runtime and communicates intent to every reader.</p>
+<p>The goal is that a reader should understand what a function does from its name without reading its body. If reading the body is required to understand the name, the name is wrong.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Unclear: what is d? what does it compute? what does flag do?</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>calc</span>(d, x, flag):
+    <span style=color:#66d9ef>return</span> d <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> flag)
+
+<span style=color:#75715e># Clear: the intent is unambiguous from the signature alone</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>compute_discounted_price</span>(
+    unit_price: float,
+    quantity: int,
+    discount_rate: float
+) <span style=color:#f92672>-&gt;</span> float:
+    <span style=color:#66d9ef>return</span> unit_price <span style=color:#f92672>*</span> quantity <span style=color:#f92672>*</span> (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> discount_rate)
+</code></pre></div><p>Practical naming rules:</p>
+<ul>
+<li><strong>Functions are verb phrases:</strong> <code>calculate_tax</code>, <code>fetch_user</code>, <code>validate_email</code>. Not <code>taxCalc</code>, not <code>email</code>.</li>
+<li><strong>Variables are nouns:</strong> <code>user</code>, <code>order_total</code>, <code>retry_count</code>.</li>
+<li><strong>Booleans are assertions:</strong> <code>is_valid</code>, <code>has_permission</code>, <code>user_exists</code>. Not <code>valid</code>, <code>permission</code>, <code>flag</code>.</li>
+<li><strong>Collections are plural:</strong> <code>users</code>, <code>orders</code>, <code>error_messages</code>.</li>
+<li><strong>Avoid abbreviations</strong> unless they are universally known (e.g., <code>url</code>, <code>id</code>). <code>usr</code>, <code>cnt</code>, <code>tmp</code> obscure rather than compress.</li>
+<li><strong>Be specific about units:</strong> <code>timeout_ms</code> or <code>duration_seconds</code> rather than <code>timeout</code> or <code>duration</code>. Units in names eliminate entire categories of bugs.</li>
+</ul>
+<p>The naming question to ask yourself: if I showed only this function&rsquo;s name to someone who hasn&rsquo;t seen the code, would they know what it does and why it exists?</p>
+<h2 id=functions-one-thing-testably-well>Functions: One Thing, Testably Well</h2>
+<p>A function should do one thing. The test: can you describe what the function does without using the word &ldquo;and&rdquo;? If the honest description is &ldquo;it fetches the data and parses it and writes to the database,&rdquo; you have three functions pretending to be one.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Three responsibilities in one function</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>process_report</span>(url: str, filename: str) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+    response <span style=color:#f92672>=</span> requests<span style=color:#f92672>.</span>get(url)        <span style=color:#75715e># responsibility 1: fetch</span>
+    data <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>loads(response<span style=color:#f92672>.</span>text)   <span style=color:#75715e># responsibility 2: parse</span>
+    <span style=color:#66d9ef>with</span> open(filename, <span style=color:#e6db74>&#34;w&#34;</span>) <span style=color:#66d9ef>as</span> f:     <span style=color:#75715e># responsibility 3: write</span>
+        json<span style=color:#f92672>.</span>dump(data, f)
+
+<span style=color:#75715e># Three separate, testable functions</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fetch_report</span>(url: str) <span style=color:#f92672>-&gt;</span> dict:
+    response <span style=color:#f92672>=</span> requests<span style=color:#f92672>.</span>get(url)
+    <span style=color:#66d9ef>return</span> json<span style=color:#f92672>.</span>loads(response<span style=color:#f92672>.</span>text)
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>save_report</span>(data: dict, filename: str) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+    <span style=color:#66d9ef>with</span> open(filename, <span style=color:#e6db74>&#34;w&#34;</span>) <span style=color:#66d9ef>as</span> f:
+        json<span style=color:#f92672>.</span>dump(data, f)
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>process_report</span>(url: str, filename: str) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+    data <span style=color:#f92672>=</span> fetch_report(url)
+    save_report(data, filename)
+</code></pre></div><p>The separated version is more testable: <code>fetch_report</code> can be tested with a mock HTTP response, <code>save_report</code> can be tested with a temporary file, and neither needs the other to be exercised. The monolithic version requires mocking both the HTTP call and the file system simultaneously to test anything.</p>
+<p><strong>Pure functions are the gold standard.</strong> A pure function has no side effects and returns the same output for the same input, always. It does not modify global state, write to disk, make network calls, or depend on the current time. Pure functions are trivially testable (no setup required, no cleanup needed), easy to reason about (no hidden state), and safe to parallelize.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Pure: output depends only on input, no side effects</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>calculate_tax</span>(amount: float, rate: float) <span style=color:#f92672>-&gt;</span> float:
+    <span style=color:#66d9ef>return</span> amount <span style=color:#f92672>*</span> rate
+
+<span style=color:#75715e># Impure: depends on external state (current time)</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>is_business_hours</span>() <span style=color:#f92672>-&gt;</span> bool:
+    <span style=color:#f92672>from</span> datetime <span style=color:#f92672>import</span> datetime
+    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>9</span> <span style=color:#f92672>&lt;=</span> datetime<span style=color:#f92672>.</span>now()<span style=color:#f92672>.</span>hour <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>17</span>
+</code></pre></div><p>Push impurity to the edges of your system. Business logic should be pure where possible; side effects (database writes, API calls, file I/O) should be isolated in thin outer layers. This is the architecture behind the Hexagonal Architecture and Ports-and-Adapters patterns - not coincidentally, also the architecture that is easiest to unit test.</p>
+<h2 id=comments-explain-why-not-what>Comments: Explain Why, Not What</h2>
+<p>Code shows what is happening. Comments should explain why - the business rule, the historical constraint, the non-obvious performance decision.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Bad: restates what the code already shows</span>
+i <span style=color:#f92672>+=</span> <span style=color:#ae81ff>1</span>   <span style=color:#75715e># increment i by 1</span>
+
+<span style=color:#75715e># Bad: &#34;explains&#34; code that should just be clearer</span>
+<span style=color:#75715e># Check if list is not empty and has valid first element</span>
+<span style=color:#66d9ef>if</span> len(items) <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>and</span> items[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>is</span> <span style=color:#f92672>not</span> <span style=color:#66d9ef>None</span>:
+    process(items[<span style=color:#ae81ff>0</span>])
+
+<span style=color:#75715e># Good: explains a non-obvious business rule</span>
+<span style=color:#75715e># Skip the first row - it is always the header, even in auto-generated exports</span>
+<span style=color:#66d9ef>for</span> row <span style=color:#f92672>in</span> csv_rows[<span style=color:#ae81ff>1</span>:]:
+    process(row)
+
+<span style=color:#75715e># Good: documents a known limitation or tradeoff</span>
+<span style=color:#75715e># Using a list here instead of a set because the downstream renderer</span>
+<span style=color:#75715e># depends on insertion order, and sets do not guarantee ordering in</span>
+<span style=color:#75715e># Python &lt; 3.7 (which some deployment targets still use). See issue #412.</span>
+ordered_items <span style=color:#f92672>=</span> []
+</code></pre></div><p>If a comment explains what the code does rather than why, ask: could I write the code so clearly that the comment is unnecessary? Often yes. Sometimes no - and in those cases, a good comment is worth more than a forced simplification.</p>
+<h2 id=the-dry-principle-and-its-limits>The DRY Principle and Its Limits</h2>
+<p>DRY - Don&rsquo;t Repeat Yourself - says each piece of knowledge should have a single, authoritative representation in the codebase. If you copy-paste a block of logic three times and the logic later changes, you must find and update all three copies. Miss one, and you have a bug.</p>
+<p>The tension is <strong>premature abstraction</strong>: extracting a shared abstraction before you understand the actual pattern. Two pieces of code that look similar might be similar by coincidence rather than by shared meaning. If you abstract them prematurely, you couple two things that should be free to evolve independently.</p>
+<p>The heuristic: wait until you have three concrete instances before abstracting. Two is coincidence; three is a pattern. This is sometimes called the &ldquo;rule of three.&rdquo;</p>
+<p>Sandi Metz has a useful inversion: &ldquo;duplication is far cheaper than the wrong abstraction.&rdquo; A copy-pasted function can be independently modified. A wrong abstraction causes every caller to adapt to its mistakes.</p>
+<h2 id=type-hints-lightweight-specification>Type Hints: Lightweight Specification</h2>
+<p>Python&rsquo;s type hints are optional annotations that document the expected types of function arguments and return values. They do not affect runtime behavior, but they enable static analysis tools (<code>mypy</code>, <code>pyright</code>) to catch type errors before execution, and they serve as machine-checkable documentation.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>send_email</span>(
+    recipient: str,
+    subject: str,
+    body: str,
+    cc: list[str] <span style=color:#f92672>|</span> <span style=color:#66d9ef>None</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>None</span>,
+    priority: int <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>,
+) <span style=color:#f92672>-&gt;</span> bool:
+    <span style=color:#e6db74>&#34;&#34;&#34;Returns True if the email was successfully queued.&#34;&#34;&#34;</span>
+    <span style=color:#f92672>...</span>
+</code></pre></div><p>The signature tells you everything you need to know to call this function correctly: what each parameter expects, which are optional, and what you get back. Without type hints, you might need to read the function body or the docs to know whether <code>cc</code> can be omitted.</p>
+<p>Run <code>mypy</code> in CI to catch regressions:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>pip install mypy
+mypy my_module.py
+</code></pre></div><p>Type annotations are not all-or-nothing. Annotating function signatures (the public interface) is high value; annotating every local variable is often noise. Start with function signatures, especially in code that crosses module boundaries.</p>
+<h2 id=unit-testing-with-pytest>Unit Testing with pytest</h2>
+<p>A unit test verifies one isolated behavior of the code. The <strong>Arrange-Act-Assert</strong> pattern gives each test a clear structure:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># calculator.py</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>divide</span>(a: float, b: float) <span style=color:#f92672>-&gt;</span> float:
+    <span style=color:#66d9ef>if</span> b <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>:
+        <span style=color:#66d9ef>raise</span> <span style=color:#a6e22e>ValueError</span>(<span style=color:#e6db74>&#34;Cannot divide by zero&#34;</span>)
+    <span style=color:#66d9ef>return</span> a <span style=color:#f92672>/</span> b
+</code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># test_calculator.py</span>
+<span style=color:#f92672>import</span> pytest
+<span style=color:#f92672>from</span> calculator <span style=color:#f92672>import</span> divide
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>test_divide_normal_case</span>():
+    <span style=color:#75715e># Arrange: nothing to set up, pure function</span>
+    <span style=color:#75715e># Act</span>
+    result <span style=color:#f92672>=</span> divide(<span style=color:#ae81ff>10</span>, <span style=color:#ae81ff>2</span>)
+    <span style=color:#75715e># Assert</span>
+    <span style=color:#66d9ef>assert</span> result <span style=color:#f92672>==</span> <span style=color:#ae81ff>5.0</span>
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>test_divide_by_zero_raises_value_error</span>():
+    <span style=color:#66d9ef>with</span> pytest<span style=color:#f92672>.</span>raises(<span style=color:#a6e22e>ValueError</span>, match<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;divide by zero&#34;</span>):
+        divide(<span style=color:#ae81ff>10</span>, <span style=color:#ae81ff>0</span>)
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>test_divide_returns_float_not_int</span>():
+    result <span style=color:#f92672>=</span> divide(<span style=color:#ae81ff>7</span>, <span style=color:#ae81ff>2</span>)
+    <span style=color:#66d9ef>assert</span> result <span style=color:#f92672>==</span> <span style=color:#ae81ff>3.5</span>
+    <span style=color:#66d9ef>assert</span> isinstance(result, float)
+</code></pre></div><p>Each test function tests exactly one behavior. The test name says what behavior it tests. When a test fails, you know from the name alone what broke.</p>
+<p>Run with <code>pytest</code> from the command line. pytest discovers tests automatically in files matching <code>test_*.py</code> or <code>*_test.py</code>.</p>
+<h2 id=mocking-isolating-your-code-from-the-world>Mocking: Isolating Your Code from the World</h2>
+<p>Tests should be fast and deterministic. Network calls, database queries, and filesystem operations are neither. Use mocking to replace them with controlled stand-ins.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> unittest.mock <span style=color:#f92672>import</span> patch, MagicMock
+<span style=color:#f92672>from</span> my_module <span style=color:#f92672>import</span> fetch_user_data
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>test_fetch_user_data_returns_parsed_json</span>():
+    mock_response <span style=color:#f92672>=</span> MagicMock()
+    mock_response<span style=color:#f92672>.</span>json<span style=color:#f92672>.</span>return_value <span style=color:#f92672>=</span> {<span style=color:#e6db74>&#34;id&#34;</span>: <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;name&#34;</span>: <span style=color:#e6db74>&#34;alice&#34;</span>}
+    mock_response<span style=color:#f92672>.</span>status_code <span style=color:#f92672>=</span> <span style=color:#ae81ff>200</span>
+
+    <span style=color:#66d9ef>with</span> patch(<span style=color:#e6db74>&#34;my_module.requests.get&#34;</span>, return_value<span style=color:#f92672>=</span>mock_response):
+        result <span style=color:#f92672>=</span> fetch_user_data(user_id<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>)
+
+    <span style=color:#66d9ef>assert</span> result[<span style=color:#e6db74>&#34;name&#34;</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;alice&#34;</span>
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>test_fetch_user_data_handles_404</span>():
+    mock_response <span style=color:#f92672>=</span> MagicMock()
+    mock_response<span style=color:#f92672>.</span>status_code <span style=color:#f92672>=</span> <span style=color:#ae81ff>404</span>
+
+    <span style=color:#66d9ef>with</span> patch(<span style=color:#e6db74>&#34;my_module.requests.get&#34;</span>, return_value<span style=color:#f92672>=</span>mock_response):
+        result <span style=color:#f92672>=</span> fetch_user_data(user_id<span style=color:#f92672>=</span><span style=color:#ae81ff>999</span>)
+
+    <span style=color:#66d9ef>assert</span> result <span style=color:#f92672>is</span> <span style=color:#66d9ef>None</span>
+</code></pre></div><p>The real HTTP call never happens. The test is instant, requires no network, and controls both the success and failure paths. Mocking is essential precisely because <code>fetch_user_data</code> was designed with <strong>dependency inversion</strong> - it calls <code>requests.get</code> (which can be replaced) rather than creating its own HTTP session (which cannot).</p>
+<h2 id=test-driven-development-when-it-is-worth-it>Test-Driven Development: When It Is Worth It</h2>
+<p>TDD (test-driven development) is a discipline where you write the failing test first, then write the minimum code to make it pass, then refactor. The cycle is: Red → Green → Refactor.</p>
+<p>The argued benefits are real: tests written first force you to think about the interface before the implementation, which often produces better-designed code. It is harder to write a test for a function that mixes IO with logic - the pain of testing pushes you toward separation.</p>
+<p><strong>The honest critique:</strong> TDD feels slower, especially at first, and especially for exploratory code where you do not yet know what the interface should be. For code you are writing to figure out what it should do, writing tests first can be counterproductive - you end up throwing away both the tests and the code.</p>
+<p>The resolution that most experienced practitioners have landed on: TDD is most valuable for code that is well-understood, highly consequential, and will change frequently. It is least valuable for exploratory prototypes and stable, rarely-modified library code. For a payment processing system or a cryptographic implementation, write the tests first. For a script to parse a one-off data format, just write the script.</p>
+<p>The testing instinct - that code should be tested, that untested critical paths are a liability - is always right. The specific discipline of tests-first is a useful tool, not a moral requirement.</p>
+<h2 id=test-coverage-a-proxy-not-a-goal>Test Coverage: A Proxy, Not a Goal</h2>
+<p>Test coverage measures what percentage of your code was executed by your test suite. High coverage is generally good, but 100% coverage is not the goal and pursuing it mechanically causes harm.</p>
+<p>Coverage can be 100% with tests that make no assertions. Coverage at 85% might mean every critical code path is tested and only some trivial utility functions are not. Coverage at 100% might mean every line is executed but no edge cases are tested.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>pip install pytest-cov
+pytest --cov<span style=color:#f92672>=</span>my_module --cov-report<span style=color:#f92672>=</span>term-missing
+</code></pre></div><p>The <code>term-missing</code> flag shows which lines were not executed. Use this to find important paths that are not tested - error handlers, edge cases, boundary conditions. Do not use it to find lines to write trivial tests for in order to hit a percentage target.</p>
+<p>The real goal is <strong>confidence</strong>: you want to be confident that the code does what you think it does, and that changes you make do not break things you care about. Coverage is one signal toward that goal, not the goal itself.</p>
+<h2 id=the-critique-of-clean-code-dogma>The Critique of Clean Code Dogma</h2>
+<p>Martin&rsquo;s <em>Clean Code</em> has specific rules that deserve scrutiny, not wholesale acceptance:</p>
+<p><strong>&ldquo;Functions should be very small&rdquo; taken to extremes</strong> produces call graphs so deep that understanding any single operation requires tracing through dozens of functions. The human short-term memory holds about seven things; a ten-layer call stack exceeds that. Sometimes a 50-line function that does its job completely is easier to understand than five 10-line functions that must be mentally assembled.</p>
+<p><strong>&ldquo;Never use comments&rdquo;</strong> is an overstatement. The real rule is &ldquo;do not use comments to explain what code does.&rdquo; Comments that explain why - architectural decisions, business rules, known limitations - are valuable. Eliminating them in pursuit of &ldquo;self-documenting code&rdquo; produces code that is opaque to anyone who wasn&rsquo;t there when the decision was made.</p>
+<p><strong>&ldquo;Getters and setters for everything&rdquo;</strong> (from the related advice to encapsulate fields) often produces Java-style boilerplate in Python where it adds no value. Python&rsquo;s <code>@property</code> decorator exists exactly so you can start with a plain attribute and add behavior later without changing the interface. Start plain; add encapsulation when you need it.</p>
+<p>The healthier framing: these are heuristics, not laws. They were derived from real problems in real codebases, and they solve those problems in many contexts. Learn why they exist. Apply them with judgment.</p>
+<h2 id=future-directions-property-based-testing-and-beyond>Future Directions: Property-Based Testing and Beyond</h2>
+<p><strong>Property-based testing</strong> (Hypothesis for Python) is a step beyond example-based testing. Instead of testing specific inputs, you define properties that should hold for all inputs, and the framework generates hundreds of random inputs trying to find a counterexample.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> hypothesis <span style=color:#f92672>import</span> given, strategies <span style=color:#66d9ef>as</span> st
+
+<span style=color:#a6e22e>@given</span>(st<span style=color:#f92672>.</span>lists(st<span style=color:#f92672>.</span>integers()))
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>test_sort_is_idempotent</span>(lst):
+    <span style=color:#e6db74>&#34;&#34;&#34;Sorting an already-sorted list should produce the same result.&#34;&#34;&#34;</span>
+    sorted_once <span style=color:#f92672>=</span> sorted(lst)
+    sorted_twice <span style=color:#f92672>=</span> sorted(sorted_once)
+    <span style=color:#66d9ef>assert</span> sorted_once <span style=color:#f92672>==</span> sorted_twice
+
+<span style=color:#a6e22e>@given</span>(st<span style=color:#f92672>.</span>lists(st<span style=color:#f92672>.</span>integers()))
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>test_sort_length_preserved</span>(lst):
+    <span style=color:#e6db74>&#34;&#34;&#34;Sorting should not change the number of elements.&#34;&#34;&#34;</span>
+    <span style=color:#66d9ef>assert</span> len(sorted(lst)) <span style=color:#f92672>==</span> len(lst)
+</code></pre></div><p>Hypothesis found a bug in the Python <code>sort</code> algorithm itself (a specific edge case with a custom comparison function) - a test suite of manually chosen examples would likely never have found it. Property-based testing is particularly effective for: pure functions with well-defined mathematical properties, parsers and serializers (encode then decode should round-trip), and data transformations that should preserve invariants.</p>
+<p><strong>Type annotations as specification</strong> are becoming more powerful. <code>mypy</code> and <code>pyright</code> can now catch a wide range of errors that would previously only surface at runtime: calling a function with the wrong number of arguments, passing <code>None</code> where a non-None value is required, accessing attributes that don&rsquo;t exist on a type. The trend is toward stricter typing as a lightweight formal specification layer.</p>
+<p><strong>Tests in CI/CD</strong> are the gatekeepers between development and deployment. Every pull request should trigger the full test suite. Failing tests block merging. This is not just a tooling detail - it is the cultural signal that tests are non-negotiable, not aspirational. Code review culture that takes testing seriously is the environment where clean, testable code becomes the norm rather than the exception.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>What It Solves</th>
+<th>When to Bend the Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Descriptive naming</td>
+<td>&ldquo;What does this do?&rdquo; at a glance</td>
+<td>Domain jargon that teams know universally</td>
+</tr>
+<tr>
+<td>Small, focused functions</td>
+<td>Testability, reasoning in isolation</td>
+<td>When splitting fragments logic unnaturally</td>
+</tr>
+<tr>
+<td>Pure functions</td>
+<td>Triviality of testing, reasoning</td>
+<td>IO and side effects are unavoidable at boundaries</td>
+</tr>
+<tr>
+<td>Comments explain why, not what</td>
+<td>Undocumented intent and constraints</td>
+<td>Eliminate by clarifying code when possible</td>
+</tr>
+<tr>
+<td>Unit tests with Arrange-Act-Assert</td>
+<td>Confidence in isolated behaviors</td>
+<td>Exploratory prototyping phases</td>
+</tr>
+<tr>
+<td>TDD</td>
+<td>Better interface design, earlier feedback</td>
+<td>Exploratory code, stable library code</td>
+</tr>
+<tr>
+<td>Type hints</td>
+<td>Interface documentation, static analysis</td>
+<td>One-off scripts, internal variables</td>
+</tr>
+<tr>
+<td>Coverage as proxy metric</td>
+<td>Finding untested critical paths</td>
+<td>Never chase 100% mechanically</td>
+</tr>
+<tr>
+<td>Property-based testing</td>
+<td>Finding edge cases you wouldn&rsquo;t think to test</td>
+<td>Mathematical/invariant-heavy transformations</td>
+</tr>
+</tbody>
+</table>
+<p>Clean code is not a destination. It is a direction. The practical version of the principle: leave code easier to understand than you found it, test the things that matter, and design systems so that the next person (including future you) can work in them without dread.</p>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/how-computers-execute-programs/>How Computers Execute Programs</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Objective Functions & Loss Design // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Objective Functions & Loss Design">
+<meta name=twitter:description content="Prerequisites:
+ Autodiff: Forward & Reverse Mode Entropy & Information Theory KL Divergence   A self-driving car trained to minimize the number of accidents might learn to stay parked forever. A recommendation system trained to maximize clicks might learn to recommend outrage. Neither model is broken - both are doing exactly what they were told. The loss function you choose is the most consequential design decision in any ML system.">
+<meta property="og:title" content="Objective Functions & Loss Design">
+<meta property="og:description" content="Prerequisites:
+ Autodiff: Forward & Reverse Mode Entropy & Information Theory KL Divergence   A self-driving car trained to minimize the number of accidents might learn to stay parked forever. A recommendation system trained to maximize clicks might learn to recommend outrage. Neither model is broken - both are doing exactly what they were told. The loss function you choose is the most consequential design decision in any ML system.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/objective-functions/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Objective Functions & Loss Design</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/autodiff-forwardreverse/>Autodiff: Forward & Reverse Mode</a></li>
+<li><a href=/posts/entropy-information/>Entropy & Information Theory</a></li>
+<li><a href=/posts/kl-divergence/>KL Divergence</a></li>
+</ul>
+<hr>
+<p>A self-driving car trained to minimize the number of accidents might learn to stay parked forever. A recommendation system trained to maximize clicks might learn to recommend outrage. Neither model is broken - both are doing exactly what they were told. The loss function you choose is the most consequential design decision in any ML system. It defines what &ldquo;good&rdquo; means.</p>
+<p>This is not a peripheral concern. Training is just optimization: the optimizer finds the parameters that minimize the loss. If the loss is misspecified, the optimizer will find a model that does exactly what you measured, not what you wanted. Get the loss wrong and nothing else matters.</p>
+<hr>
+<h2 id=what-is-a-loss-function>What Is a Loss Function?</h2>
+<p>A loss function $L(\theta)$ maps model parameters $\theta$ to a real number measuring how badly the model performs on training data. Given predictions $\hat{y}_1, \ldots, \hat{y}_n$ and true targets $y_1, \ldots, y_n$, the loss aggregates individual errors into a single scalar that the optimizer tries to minimize.</p>
+<p>The choice of aggregation is a design choice. The choice of how to measure individual errors is a design choice. Both encode assumptions about what kinds of mistakes are acceptable and what the underlying data-generating process looks like.</p>
+<hr>
+<h2 id=regression-losses>Regression Losses</h2>
+<h3 id=mean-squared-error>Mean Squared Error</h3>
+<p>The most common loss for regression:</p>
+<p>$$L_{\text{MSE}} = \frac{1}{n}\sum_{i=1}^{n}(\hat{y}_i - y_i)^2.$$</p>
+<p>The squaring does two things: it makes all errors positive, and it penalizes large errors quadratically. An error of 2 is penalized four times as much as an error of 1.</p>
+<p>MSE has a clean probabilistic interpretation. If you assume the true targets are generated by your model plus independent Gaussian noise,</p>
+<p>$$y_i = f(x_i;\theta) + \epsilon_i, \quad \epsilon_i \sim \mathcal{N}(0,\sigma^2),$$</p>
+<p>then maximizing the likelihood of the data under this model is equivalent to minimizing MSE. This is the formal justification: MSE is the right loss when your noise is Gaussian.</p>
+<p>Practical properties: MSE is differentiable everywhere (smooth gradient landscape), but sensitive to outliers. A single data point with error 10 contributes 100 to the loss, while ten points with error 1 each contribute only 10 total. If your data has outliers, MSE will distort the model toward them.</p>
+<h3 id=mean-absolute-error>Mean Absolute Error</h3>
+<p>$$L_{\text{MAE}} = \frac{1}{n}\sum_{i=1}^{n}|\hat{y}_i - y_i|.$$</p>
+<p>Errors are penalized linearly. A point with error 10 contributes 10, not 100. This makes MAE much more robust to outliers.</p>
+<p>The probabilistic interpretation: MAE is the right loss when noise is Laplace-distributed rather than Gaussian. The Laplace distribution has heavier tails than the Gaussian, which matches the robustness property.</p>
+<p>There is a cost. MAE is not differentiable at zero - the gradient is $\pm 1$ everywhere except the kink. This can cause gradient-based optimizers to oscillate near the minimum. And where MSE produces the conditional mean of $y$ given $x$, MAE produces the conditional median. For skewed distributions, the median can be very different from the mean.</p>
+<h3 id=huber-loss>Huber Loss</h3>
+<p>Huber loss is a pragmatic compromise: quadratic for small errors, linear for large ones.</p>
+<p>$$L_\delta(\hat{y}, y) = \begin{cases} \frac{1}{2}(\hat{y} - y)^2 & \text{if } |\hat{y} - y| \leq \delta \\ \delta\left(|\hat{y} - y| - \frac{\delta}{2}\right) & \text{otherwise.} \end{cases}$$</p>
+<p>For errors smaller than the threshold $\delta$, you get the smooth, well-conditioned gradient of MSE. For large errors (potential outliers), you cap the penalty linearly like MAE. The result is differentiable everywhere, robust to outliers, and well-behaved near the minimum.</p>
+<p>The downside: you have to choose $\delta$. This is a hyperparameter that affects the tradeoff between robustness and smoothness. In practice, $\delta = 1$ is a common default, but it may need tuning for your data&rsquo;s scale.</p>
+<hr>
+<h2 id=classification-losses>Classification Losses</h2>
+<h3 id=binary-cross-entropy>Binary Cross-Entropy</h3>
+<p>For binary classification, the model outputs a probability $\hat{y}_i = \sigma(z_i) \in (0,1)$ via sigmoid, and the true label is $y_i \in {0, 1}$. The loss is:</p>
+<p>$$L_{\text{BCE}} = -\frac{1}{n}\sum_{i=1}^{n}\left[y_i \log \hat{y}_i + (1 - y_i)\log(1 - \hat{y}_i)\right].$$</p>
+<p>When $y_i = 1$, only the first term matters: $-\log \hat{y}_i$. As $\hat{y}_i \to 1$, the loss goes to 0. As $\hat{y}_i \to 0$, the loss goes to $+\infty$. When $y_i = 0$, only the second term matters, with the same pattern.</p>
+<p>The probabilistic derivation is clean. Assume each label $y_i$ is a Bernoulli random variable with success probability $\hat{y}_i$. The log-likelihood is:</p>
+<p>$$\log P(\text{data}) = \sum_{i=1}^{n}\left[y_i \log \hat{y}_i + (1-y_i)\log(1-\hat{y}_i)\right].$$</p>
+<p>Minimizing BCE is exactly maximizing this log-likelihood. The loss is not arbitrary - it is the principled choice under the Bernoulli model.</p>
+<p>One crucial property: BCE penalizes confident wrong predictions catastrophically. If the model outputs $\hat{y}_i = 0.001$ for a true positive, the loss is $-\log(0.001) \approx 6.9$. This is what makes the loss effective - and what makes it important that the output is a real probability, not a score.</p>
+<h3 id=categorical-cross-entropy>Categorical Cross-Entropy</h3>
+<p>For multi-class classification with $K$ classes, the model outputs a probability vector $\hat{y}_i \in \mathbb{R}^K$ via softmax, and the true label is a one-hot vector. The loss is:</p>
+<p>$$L_{\text{CE}} = -\frac{1}{n}\sum_{i=1}^{n}\sum_{k=1}^{K} y_{ik} \log \hat{y}_{ik}.$$</p>
+<p>Since $y_{ik} = 1$ for exactly one $k$ per sample, this simplifies to $-\log \hat{y}_{i, \text{true}}$ for each sample - the negative log probability assigned to the correct class. The same MLE derivation applies, now under the categorical distribution.</p>
+<hr>
+<h2 id=kl-divergence-as-a-loss>KL Divergence as a Loss</h2>
+<p>The connection between cross-entropy and KL divergence matters for understanding what you&rsquo;re optimizing.</p>
+<p>Recall the KL divergence from a true distribution $p$ to a model distribution $q$:</p>
+<p>$$D_{\text{KL}}(p | q) = \sum_k p_k \log \frac{p_k}{q_k}.$$</p>
+<p>The cross-entropy between $p$ and $q$ decomposes as:</p>
+<p>$$H(p, q) = H(p) + D_{\text{KL}}(p | q),$$</p>
+<p>where $H(p) = -\sum_k p_k \log p_k$ is the entropy of the true distribution.</p>
+<p>When you minimize cross-entropy over the model parameters $\theta$ (which affect $q$ but not $p$), $H(p)$ is a constant and drops out. So minimizing cross-entropy is exactly minimizing KL divergence. The loss is zero when $q = p$ - when your model perfectly captures the true distribution.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The loss function should match the probabilistic model. If you assume Gaussian noise, use MSE. If you assume Bernoulli outcomes, use binary cross-entropy. If you assume categorical outcomes, use categorical cross-entropy. This is not just a recommendation - it is a theorem. MLE under each noise model gives the corresponding loss. Using MSE for a classification problem is not &ldquo;wrong&rdquo; in a catastrophic sense, but it is misspecified: the model will still train, but it is optimizing a quantity that doesn&rsquo;t correspond to any meaningful probability model, and the resulting predictions are harder to interpret and often worse calibrated. The loss defines your model&rsquo;s worldview.</p>
+</blockquote>
+<hr>
+<h2 id=contrastive-losses>Contrastive Losses</h2>
+<p>Standard supervised losses compare each prediction to its label independently. Contrastive losses instead compare pairs or groups of examples, encouraging the model to learn a geometry where similar inputs are close and dissimilar inputs are far.</p>
+<p><strong>Triplet loss</strong> takes an anchor $a$, a positive $p$ (same class as $a$), and a negative $n$ (different class):</p>
+<p>$$L_{\text{triplet}} = \max(0,, |f(a) - f(p)|^2 - |f(a) - f(n)|^2 + \alpha),$$</p>
+<p>where $\alpha$ is a margin. The loss is zero when the positive is already closer than the negative by at least $\alpha$; positive otherwise.</p>
+<p><strong>InfoNCE</strong> (used in SimCLR, CLIP) is a more modern formulation. Given a positive pair $(x, x^+)$ and $K-1$ negative samples $x^-<em>1, \ldots, x^-</em>{K-1}$:</p>
+<p>$$L_{\text{InfoNCE}} = -\log \frac{\exp(f(x)^\top f(x^+)/\tau)}{\exp(f(x)^\top f(x^+)/\tau) + \sum_{j}\exp(f(x)^\top f(x^-_j)/\tau)},$$</p>
+<p>where $\tau$ is a temperature hyperparameter. This is a softmax over similarities - the loss encourages the model to identify the positive pair among the negatives.</p>
+<p>Contrastive losses are the core of self-supervised learning. They allow representation learning without labels: you can define positive pairs as augmented views of the same image, or aligned image-text pairs, without any human annotation.</p>
+<hr>
+<h2 id=regularization-as-a-loss-component>Regularization as a Loss Component</h2>
+<p>A loss function often has two components: the data fit term and a regularization term:</p>
+<p>$$L(\theta) = L_{\text{data}}(\theta) + \lambda R(\theta).$$</p>
+<p>The regularization term $R(\theta)$ penalizes model complexity and reduces overfitting. The hyperparameter $\lambda$ controls the tradeoff.</p>
+<p><strong>L2 regularization</strong> (weight decay):</p>
+<p>$$R(\theta) = |\theta|^2 = \sum_j \theta_j^2.$$</p>
+<p>This penalizes large weights. The probabilistic interpretation: L2 corresponds to placing a Gaussian prior $\theta_j \sim \mathcal{N}(0, 1/\lambda)$ on each weight. MAP estimation under this prior gives L2 regularization. The effect is to shrink all weights toward zero, reducing the model&rsquo;s ability to rely on any single feature.</p>
+<p><strong>L1 regularization</strong> (Lasso):</p>
+<p>$$R(\theta) = |\theta|_1 = \sum_j |\theta_j|.$$</p>
+<p>The probabilistic interpretation: L1 corresponds to a Laplace prior on weights. The key property is sparsity: L1 regularization tends to set many weights exactly to zero, effectively performing feature selection. L2 shrinks everything; L1 zeroes things out.</p>
+<p><strong>Elastic net</strong>: combine both.</p>
+<p>$$R(\theta) = \alpha |\theta|_1 + (1-\alpha)|\theta|^2.$$</p>
+<p>You get both sparsity from L1 and the stability of L2.</p>
+<p><strong>Dropout</strong> is a different mechanism: during training, randomly zero out each neuron with probability $p$. This is not added to the loss function - it is applied during the forward pass. The effect is similar to ensembling many sub-networks, which reduces overfitting. At inference, all neurons are active and weights are scaled by $(1-p)$.</p>
+<hr>
+<h2 id=choosing-a-loss-in-practice>Choosing a Loss in Practice</h2>
+<p>There is no universal answer. The right loss depends on your problem structure:</p>
+<p><strong>What is the output type?</strong></p>
+<ul>
+<li>Real-valued output (price, temperature): MSE, MAE, or Huber.</li>
+<li>Probability (is this spam?): binary cross-entropy.</li>
+<li>Category (which digit?): categorical cross-entropy.</li>
+<li>Distribution: KL divergence or cross-entropy.</li>
+</ul>
+<p><strong>What is the noise model?</strong></p>
+<ul>
+<li>Gaussian noise → MSE.</li>
+<li>Heavy-tailed noise or outliers likely → Huber or MAE.</li>
+<li>Bernoulli outcomes → binary cross-entropy.</li>
+<li>Categorical outcomes → categorical cross-entropy.</li>
+</ul>
+<p><strong>Are there outliers?</strong></p>
+<ul>
+<li>Yes: Huber or MAE. No: MSE is fine.</li>
+</ul>
+<p><strong>Do you need sparse predictions?</strong></p>
+<ul>
+<li>Yes: add L1 regularization.</li>
+</ul>
+<p><strong>Is calibration important?</strong></p>
+<ul>
+<li>Use proper scoring rules (cross-entropy for classification). MSE applied to probabilities is not a proper scoring rule.</li>
+</ul>
+<p><strong>Is interpretability important?</strong></p>
+<ul>
+<li>Simpler losses are easier to debug. A model trained with a complex custom loss is harder to reason about when something goes wrong.</li>
+</ul>
+<hr>
+<h2 id=the-loss-landscape>The Loss Landscape</h2>
+<p>The loss function you choose doesn&rsquo;t just determine the optimal solution - it shapes the entire optimization landscape through which gradient descent must navigate.</p>
+<p>An MSE loss with well-normalized inputs tends to produce a smooth, well-conditioned landscape: saddle points are rare and the gradient always points roughly toward the minimum. A cross-entropy loss can have plateaus (where the model is confident and correct, so the gradient is nearly zero) and cliffs (where the model is confident and wrong, producing large gradient spikes).</p>
+<p>Ill-conditioned loss landscapes - where the loss changes rapidly in some directions and slowly in others - slow down training dramatically. This is one reason batch normalization was such a breakthrough: it smooths the loss landscape by ensuring activations remain well-scaled, allowing much higher learning rates.</p>
+<p>Non-convex losses (which all deep networks have) mean there are multiple local minima. The practical finding is that most local minima in large networks have similar loss values, and the global minimum is not necessary to find good solutions. But saddle points - where gradient descent can stall - are more common and more problematic than local minima.</p>
+<p>The connection to regularization: regularization doesn&rsquo;t just prevent overfitting, it shapes the loss landscape. L2 regularization makes the landscape more convex (it adds a bowl-shaped term to every parameter), which improves conditioning and speeds convergence.</p>
+<hr>
+<h2 id=rlhf-and-preference-objectives>RLHF and Preference Objectives</h2>
+<p>In reinforcement learning from human feedback, the loss is more complex. You are not minimizing a pointwise error - you are training a reward model to predict human preferences.</p>
+<p>The <strong>Bradley-Terry model</strong> says that if a human prefers response $y_1$ over $y_2$ given prompt $x$, the probability of this preference is:</p>
+<p>$$P(y_1 \succ y_2 \mid x) = \sigma(r(x, y_1) - r(x, y_2)),$$</p>
+<p>where $r$ is the learned reward function and $\sigma$ is sigmoid. The reward model is trained with cross-entropy to predict which response was preferred. This is still a cross-entropy loss, but now over pairwise comparisons rather than class labels.</p>
+<p>The reward model is then used to fine-tune a language model with PPO or similar policy gradient methods. The full RLHF objective is a combination of maximizing expected reward plus a KL penalty to prevent the model from drifting too far from the base model:</p>
+<p>$$L_{\text{RLHF}} = -\mathbb{E}[r(x,y)] + \beta, D_{\text{KL}}(\pi_\theta | \pi_{\text{ref}}).$$</p>
+<p>The loss has become a design artifact encoding what &ldquo;better&rdquo; means according to human raters. Every choice in this pipeline - what questions to rate, who rates them, how to aggregate ratings - becomes encoded in the loss.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Loss</th>
+<th>Formula</th>
+<th>When to Use</th>
+<th>Properties</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MSE</td>
+<td>$\frac{1}{n}\sum(\hat{y}-y)^2$</td>
+<td>Regression, Gaussian noise</td>
+<td>Differentiable, outlier-sensitive</td>
+</tr>
+<tr>
+<td>MAE</td>
+<td>$\frac{1}{n}\sum|\hat{y}-y|$</td>
+<td>Robust regression</td>
+<td>Outlier-robust, non-differentiable at 0</td>
+</tr>
+<tr>
+<td>Huber</td>
+<td>Quadratic then linear</td>
+<td>Regression with outliers</td>
+<td>Smooth, robust, needs $\delta$</td>
+</tr>
+<tr>
+<td>Binary CE</td>
+<td>$-\frac{1}{n}\sum[y\log\hat{y}+(1-y)\log(1-\hat{y})]$</td>
+<td>Binary classification</td>
+<td>Bernoulli MLE, penalizes confident errors</td>
+</tr>
+<tr>
+<td>Categorical CE</td>
+<td>$-\frac{1}{n}\sum\sum y_k\log\hat{y}_k$</td>
+<td>Multi-class classification</td>
+<td>Categorical MLE</td>
+</tr>
+<tr>
+<td>L2 reg</td>
+<td>$\lambda|\theta|^2$</td>
+<td>General regularization</td>
+<td>Gaussian prior, shrinks weights</td>
+</tr>
+<tr>
+<td>L1 reg</td>
+<td>$\lambda|\theta|_1$</td>
+<td>Sparse models</td>
+<td>Laplace prior, zeroes weights</td>
+</tr>
+</tbody>
+</table>
+<p>The loss function is the ML system&rsquo;s constitution. It encodes what you value, what you&rsquo;re willing to trade off, and what you&rsquo;re willing to get wrong. No amount of architecture sophistication or optimization tuning will fix a misspecified loss. Choose deliberately.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/bias-variance-overfitting/>Bias, Variance & Overfitting</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

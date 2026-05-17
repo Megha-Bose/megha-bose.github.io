@@ -1,0 +1,314 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Kernel-Bypass Networking // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Kernel-Bypass Networking">
+<meta name=twitter:description content="Prerequisite:
+ CPU Affinity & NUMA Networking: IP, TCP, HTTP   A 100Gbps NIC can push 12.5 gigabytes per second. That is not a bottleneck. At 100Gbps, a minimum-size 64-byte Ethernet frame arrives every 5.12 nanoseconds - roughly 150 million packets per second. The hardware is not the problem.
+The problem is the software stack between the hardware and your application. A packet arriving at the NIC raises a hardware interrupt.">
+<meta property="og:title" content="Kernel-Bypass Networking">
+<meta property="og:description" content="Prerequisite:
+ CPU Affinity & NUMA Networking: IP, TCP, HTTP   A 100Gbps NIC can push 12.5 gigabytes per second. That is not a bottleneck. At 100Gbps, a minimum-size 64-byte Ethernet frame arrives every 5.12 nanoseconds - roughly 150 million packets per second. The hardware is not the problem.
+The problem is the software stack between the hardware and your application. A packet arriving at the NIC raises a hardware interrupt.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/kernel-bypass-networking/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Kernel-Bypass Networking</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+13 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong></p>
+<ul>
+<li><a href=/posts/cpu-affinity-and-numa/>CPU Affinity & NUMA</a></li>
+<li><a href=/posts/networking-ip-tcp-http/>Networking: IP, TCP, HTTP</a></li>
+</ul>
+<hr>
+<p>A 100Gbps NIC can push 12.5 gigabytes per second. That is not a bottleneck. At 100Gbps, a minimum-size 64-byte Ethernet frame arrives every 5.12 nanoseconds - roughly 150 million packets per second. The hardware is not the problem.</p>
+<p>The problem is the software stack between the hardware and your application. A packet arriving at the NIC raises a hardware interrupt. The kernel interrupt handler runs. The packet is copied into a kernel socket buffer. The TCP/IP stack processes protocol headers across multiple layers. The packet is placed in the socket&rsquo;s receive queue. Your application calls <code>recv()</code>, which copies data from kernel space to user space - a second copy, across the kernel-user boundary. Context switches, cache pollution, memory copies.</p>
+<p>The total cost for a typical UDP packet on a modern Linux system: 1–10 microseconds of added latency. At moderate packet rates this is acceptable. At 10 million packets per second, the CPU spends more time in the kernel stack than in application logic. At 150 million packets per second, the kernel stack cannot keep up at all - you will see packet drops before you even open the application code.</p>
+<p>For most applications - web servers, database backends, message queues - the kernel network stack is correct, well-understood, and fast enough. For applications that need every microsecond - high-frequency trading, 100G packet processing, GPU-to-GPU gradient synchronization across a 2000-node training cluster - the kernel itself is the bottleneck. The answer is to bypass it entirely.</p>
+<h2 id=the-history-from-c10k-to-kernel-bypass>The History: From C10K to Kernel Bypass</h2>
+<p>The first major inflection point in Linux networking performance was the <strong>C10K problem</strong> (1999): how do you handle 10,000 simultaneous connections without a thread per connection? The answer was <code>epoll</code> - an event-driven I/O multiplexing interface that scales to millions of connections. <code>epoll</code> remains the foundation of every high-performance Linux network server: nginx, Node.js, Redis.</p>
+<p><code>epoll</code> solved the concurrency problem but not the per-packet overhead problem. Each <code>recv()</code> is still a syscall crossing the kernel-user boundary. Each packet still passes through the full kernel TCP/IP stack.</p>
+<p><strong>DPDK</strong> (Data Plane Development Kit) emerged from Intel in 2010 as the answer to packet-processing performance. The insight: move the NIC driver entirely into user space and have application threads poll the NIC directly, bypassing the kernel entirely. Early adopters were network appliance vendors (firewalls, load balancers, intrusion detection systems) building high-performance middleboxes on commodity x86 hardware.</p>
+<p><strong>RDMA</strong> (Remote Direct Memory Access) has older roots - it came from InfiniBand, a purpose-built HPC interconnect developed in the late 1990s for supercomputer clusters. The idea: let the NIC transfer data between hosts without involving either host&rsquo;s CPU. The CPU sets up the transfer; the NIC does the rest. HPC clusters adopted RDMA for MPI message passing; ML training clusters adopted it for gradient synchronization.</p>
+<p><strong>io_uring</strong> is the most recent addition (Linux 5.1, 2019). It does not bypass the kernel but minimizes the cost of talking to it, using a shared ring buffer between kernel and user space to submit and collect I/O operations with zero or near-zero syscall overhead.</p>
+<h2 id=why-the-kernel-network-stack-is-slow>Why the Kernel Network Stack Is Slow</h2>
+<p>Understanding the sources of overhead tells you which solution to apply.</p>
+<p><strong>Syscall cost</strong>: every <code>send()</code> and <code>recv()</code> crosses the user-kernel boundary. On x86, a syscall takes roughly 100-300 nanoseconds on modern hardware (the cost increased after Spectre/Meltdown mitigations added retpoline and IBRS overhead). At 10 million send operations per second, syscall cost alone consumes 1–3 seconds of CPU per second - more than one full core dedicated to syscall overhead.</p>
+<p><strong>Data copies</strong>: the kernel cannot directly DMA received packets into user-space memory (it does not know which user-space process the packet belongs to yet, and user memory may not be pinned or physically contiguous). The packet is copied into a kernel socket buffer, then <code>recv()</code> copies it again to user space. Two copies per packet. At 10Gbps, that is 1.25 GB/s of copy bandwidth just for the receive path.</p>
+<p><strong>Interrupt overhead</strong>: the NIC interrupts the CPU for every packet (or batch, with interrupt coalescing). Each interrupt preempts the current thread, invokes the interrupt handler, processes the packet, and returns. On the receive path, this creates latency spikes whenever a high-priority thread gets interrupted.</p>
+<p><strong>Lock contention in the network stack</strong>: the kernel socket receive queue is protected by a spinlock. Under high receive rates with many cores, this becomes a contention point.</p>
+<p><strong>Context switch overhead</strong>: when a thread blocks on <code>recv()</code> waiting for data, it is descheduled. When data arrives, it is rescheduled. The context switch cost - saving and restoring registers, TLB flush, cache warming - adds hundreds of microseconds of latency in the worst case.</p>
+<h2 id=dpdk-polling-mode-user-space-networking>DPDK: Polling-Mode User-Space Networking</h2>
+<p>DPDK&rsquo;s approach: eliminate the kernel from the packet path entirely.</p>
+<p><strong>Poll-mode drivers (PMDs)</strong>: instead of the NIC interrupting the CPU, a DPDK application dedicates one or more CPU cores to spinning in a tight polling loop, calling <code>rte_eth_rx_burst()</code> to drain packets from the NIC&rsquo;s hardware receive queues. Latency is bounded by the polling interval - typically under 1 microsecond, often under 100 nanoseconds.</p>
+<p><strong>Hugepage memory</strong>: DPDK allocates packet buffers (<code>rte_mbuf</code>) in hugepages (2MB or 1GB pages). Hugepages reduce TLB pressure (fewer TLB entries needed to cover the same address range) and allow the NIC to DMA directly into them without physically contiguous mapping constraints.</p>
+<p><strong>Zero-copy</strong>: the NIC writes received packets directly into DPDK&rsquo;s preallocated hugepage buffers via DMA. The application reads packets directly from those buffers. No copies between kernel and user space - the kernel is never involved.</p>
+<p><strong>Dedicated CPU isolation</strong>: DPDK pins its polling cores using <code>isolcpus</code> and <code>rte_eal_remote_launch</code>, preventing the OS from scheduling other tasks there. The core spins continuously with no interruptions.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;rte_ethdev.h&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;rte_mbuf.h&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span>
+<span style=color:#75715e>// DPDK polling loop - runs on a dedicated isolated core
+</span><span style=color:#75715e></span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>lcore_rx</span>(<span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>arg) {
+    <span style=color:#66d9ef>struct</span> rte_mbuf <span style=color:#f92672>*</span>pkts[BURST_SIZE];
+    <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>uint16_t</span> port <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>, queue <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+
+    <span style=color:#66d9ef>while</span> (running) {
+        <span style=color:#66d9ef>uint16_t</span> nb_rx <span style=color:#f92672>=</span> rte_eth_rx_burst(port, queue, pkts, BURST_SIZE);
+        <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>uint16_t</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> nb_rx; i<span style=color:#f92672>++</span>) {
+            process_packet(pkts[i]);
+            rte_pktmbuf_free(pkts[i]);
+        }
+        <span style=color:#75715e>// No sleep, no yield. Pure spin.
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// This core is 100% utilized regardless of traffic rate.
+</span><span style=color:#75715e></span>    }
+    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+}
+
+<span style=color:#66d9ef>int</span> <span style=color:#a6e22e>main</span>(<span style=color:#66d9ef>int</span> argc, <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>argv[]) {
+    rte_eal_init(argc, argv);
+
+    <span style=color:#66d9ef>struct</span> rte_mempool <span style=color:#f92672>*</span>pool <span style=color:#f92672>=</span> rte_pktmbuf_pool_create(
+        <span style=color:#e6db74>&#34;pool&#34;</span>, <span style=color:#ae81ff>8192</span>, <span style=color:#ae81ff>256</span>, <span style=color:#ae81ff>0</span>, RTE_MBUF_DEFAULT_BUF_SIZE, rte_socket_id());
+
+    rte_eth_dev_configure(<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>, <span style=color:#f92672>&amp;</span>port_conf);
+    rte_eth_rx_queue_setup(<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>128</span>, rte_eth_dev_socket_id(<span style=color:#ae81ff>0</span>), NULL, pool);
+    rte_eth_tx_queue_setup(<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>128</span>, rte_eth_dev_socket_id(<span style=color:#ae81ff>0</span>), NULL);
+    rte_eth_dev_start(<span style=color:#ae81ff>0</span>);
+
+    rte_eal_remote_launch(lcore_rx, NULL, <span style=color:#ae81ff>1</span>);  <span style=color:#75715e>// launch on lcore 1
+</span><span style=color:#75715e></span>    rte_eal_mp_wait_lcore();
+}
+</code></pre></div><p>A single DPDK core on modern hardware can sustain <strong>10–40 million packets per second</strong> - compared to 1–3 million with kernel networking on the same hardware. For 100Gbps at minimum frame size (150M pps), you need multiple cores and careful batching.</p>
+<p><strong>The cost of DPDK</strong>: you own the entire network stack. DPDK gives you raw packets; if you want TCP, you implement TCP (or use a user-space TCP stack like MTCP or VPP&rsquo;s built-in stack). The polling core is 100% utilized regardless of traffic - idle 100Gbps DPDK burns a core doing nothing. Operational complexity is significant: hugepage configuration, driver binding (<code>dpdk-devbind</code>), NUMA-aware memory placement. Most applications should not use DPDK.</p>
+<h2 id=rdma-moving-data-without-cpu-involvement>RDMA: Moving Data Without CPU Involvement</h2>
+<p>RDMA takes a more radical approach: eliminate the CPU from the <em>data transfer path</em> entirely, on both ends.</p>
+<p>The NIC (called an HCA, Host Channel Adapter, in RDMA terminology) handles all protocol processing autonomously. To perform an RDMA write, the application posts a work request to a queue pair; the HCA reads the source buffer via local DMA, constructs the network packet, and transmits it. On the remote end, the receiving HCA receives the packet, validates it, and writes the payload directly into the destination memory region via DMA - without ever interrupting the remote CPU. The remote CPU has no idea a write happened until it polls its completion queue.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>// Register memory with the RDMA HCA
+</span><span style=color:#75715e>// The memory must be pinned (cannot be paged out)
+</span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> ibv_mr <span style=color:#f92672>*</span>mr <span style=color:#f92672>=</span> ibv_reg_mr(pd, buffer, size,
+    IBV_ACCESS_LOCAL_WRITE <span style=color:#f92672>|</span> IBV_ACCESS_REMOTE_WRITE <span style=color:#f92672>|</span> IBV_ACCESS_REMOTE_READ);
+
+<span style=color:#75715e>// Post an RDMA Write work request
+</span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> ibv_sge sge <span style=color:#f92672>=</span> {
+    .addr   <span style=color:#f92672>=</span> (<span style=color:#66d9ef>uint64_t</span>)buffer,
+    .length <span style=color:#f92672>=</span> size,
+    .lkey   <span style=color:#f92672>=</span> mr<span style=color:#f92672>-&gt;</span>lkey,
+};
+<span style=color:#66d9ef>struct</span> ibv_send_wr wr <span style=color:#f92672>=</span> {
+    .opcode          <span style=color:#f92672>=</span> IBV_WR_RDMA_WRITE,
+    .sg_list         <span style=color:#f92672>=</span> <span style=color:#f92672>&amp;</span>sge,
+    .num_sge         <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>,
+    .wr.rdma.remote_addr <span style=color:#f92672>=</span> remote_addr,
+    .wr.rdma.rkey        <span style=color:#f92672>=</span> remote_rkey,
+    .send_flags      <span style=color:#f92672>=</span> IBV_SEND_SIGNALED,
+};
+<span style=color:#66d9ef>struct</span> ibv_send_wr <span style=color:#f92672>*</span>bad_wr;
+ibv_post_send(qp, <span style=color:#f92672>&amp;</span>wr, <span style=color:#f92672>&amp;</span>bad_wr);
+
+<span style=color:#75715e>// Poll for completion
+</span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> ibv_wc wc;
+<span style=color:#66d9ef>while</span> (ibv_poll_cq(cq, <span style=color:#ae81ff>1</span>, <span style=color:#f92672>&amp;</span>wc) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>);  <span style=color:#75715e>// spin until complete
+</span><span style=color:#75715e>// wc.status == IBV_WC_SUCCESS → the write landed in remote memory
+</span></code></pre></div><p>RDMA latency: <strong>1–2 microseconds</strong> end-to-end for a round trip on InfiniBand. Compare to 50–100 microseconds for a TCP round trip on kernel networking. A factor of 50–100x difference in latency.</p>
+<p><strong>Three transports implement RDMA</strong>:</p>
+<p><strong>InfiniBand</strong>: purpose-built HPC interconnect with native RDMA. No IP addressing - its own fabric protocol. Lowest latency, highest bandwidth (up to 400Gb/s per link, NDR generation). Requires dedicated InfiniBand switches and HCAs (Mellanox/NVIDIA ConnectX series are the standard). Used in almost every large GPU training cluster for NCCL AllReduce operations. The cost is significant: InfiniBand switches are 3-5x more expensive than equivalent Ethernet switches.</p>
+<p><strong>RoCE (RDMA over Converged Ethernet)</strong>: RDMA semantics over Ethernet. RoCEv2 encapsulates RDMA packets in UDP/IP, making them routable. Works on standard Ethernet hardware with RDMA-capable NICs. Requires a <strong>lossless fabric</strong> - Priority Flow Control (PFC) to prevent packet drops, since the RDMA protocol assumes lossless delivery and has no built-in retransmission for data packets. Used in hyperscale data centers (Microsoft Azure uses RoCEv2 extensively; AWS uses a custom protocol in the same design space).</p>
+<p><strong>iWARP</strong>: RDMA over TCP. Inherits TCP&rsquo;s reliability and congestion control, eliminating the lossless fabric requirement. Runs on standard Ethernet with no special fabric configuration. Higher overhead than RoCE (TCP processing) but simpler to deploy. Used where the network is not under tight control.</p>
+<h2 id=io_uring-fewer-syscalls-same-kernel>io_uring: Fewer Syscalls, Same Kernel</h2>
+<p>io_uring (2019, merged into Linux 5.1) takes a different approach from DPDK and RDMA. Instead of bypassing the kernel, it minimizes the cost of interacting with it.</p>
+<p>The kernel and application share two ring buffers in a memory region mapped into both address spaces: a <strong>submission queue (SQ)</strong> where the application writes I/O requests, and a <strong>completion queue (CQ)</strong> where the kernel writes results. No copying - both sides read and write the same memory.</p>
+<p>In <strong>sqpoll mode</strong>, a kernel thread continuously polls the submission queue. The application writes requests to the SQ ring and the kernel thread picks them up immediately - <strong>no syscall needed for submission</strong>. Completions appear in the CQ ring; the application polls the CQ with <code>io_uring_peek_cqe()</code> without a syscall. The only required syscall is the initial setup.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;liburing.h&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span>
+<span style=color:#66d9ef>struct</span> io_uring ring;
+io_uring_queue_init(<span style=color:#ae81ff>256</span>, <span style=color:#f92672>&amp;</span>ring, IORING_SETUP_SQPOLL);
+
+<span style=color:#75715e>// Submit a read - no syscall if sqpoll is active and the kernel thread is spinning
+</span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> io_uring_sqe <span style=color:#f92672>*</span>sqe <span style=color:#f92672>=</span> io_uring_get_sqe(<span style=color:#f92672>&amp;</span>ring);
+io_uring_prep_read(sqe, fd, buf, len, offset);
+io_uring_sqe_set_data(sqe, user_data);
+io_uring_submit(<span style=color:#f92672>&amp;</span>ring);  <span style=color:#75715e>// no-op if SQPOLL is consuming fast enough
+</span><span style=color:#75715e></span>
+<span style=color:#75715e>// Collect completion - no syscall if CQ ring is not empty
+</span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> io_uring_cqe <span style=color:#f92672>*</span>cqe;
+<span style=color:#66d9ef>while</span> (io_uring_peek_cqe(<span style=color:#f92672>&amp;</span>ring, <span style=color:#f92672>&amp;</span>cqe) <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>);  <span style=color:#75715e>// spin on CQ
+</span><span style=color:#75715e></span><span style=color:#66d9ef>int</span> result <span style=color:#f92672>=</span> cqe<span style=color:#f92672>-&gt;</span>res;
+io_uring_cqe_seen(<span style=color:#f92672>&amp;</span>ring, cqe);
+</code></pre></div><p>As of Linux 5.19+, io_uring supports network sockets fully: <code>send</code>, <code>recv</code>, <code>accept</code>, <code>connect</code>, <code>sendmsg</code>, <code>recvmsg</code>. For a high-throughput web server or database backend, io_uring reduces syscall overhead from O(requests) to O(1) at steady state, while keeping the full kernel TCP/IP stack for correctness and congestion control.</p>
+<p>io_uring is the right choice for: web servers (Rust&rsquo;s tokio runtime supports io_uring via the io-uring crate), database backends (ScyllaDB uses io_uring for storage I/O), any high-IOPS application that is not processing raw packets. It provides 80% of the performance benefit of kernel bypass with 10% of the operational complexity.</p>
+<h2 id=af_xdp-selective-bypass>AF_XDP: Selective Bypass</h2>
+<p><strong>AF_XDP</strong> (eXpress Data Path socket, Linux 4.18+) sits between the full kernel stack and DPDK&rsquo;s all-or-nothing approach. An eBPF/XDP program runs at the NIC driver level and redirects specific packets - matched by port, protocol, or any arbitrary rule - into a user-space ring buffer, while all other traffic continues through the normal kernel stack.</p>
+<p>This is ideal for: processing a specific high-throughput flow (say, all UDP packets on port 8000) with user-space speed, while leaving TCP connections and other traffic to the kernel. You keep the kernel stack for management traffic, control protocols, and general connectivity; you bypass it only for the hot data path.</p>
+<h2 id=aws-how-cloud-abstracts-kernel-bypass>AWS: How Cloud Abstracts Kernel Bypass</h2>
+<p>AWS builds DPDK-like kernel bypass into its networking infrastructure so you get the performance without managing it directly.</p>
+<p><strong>AWS ENA (Elastic Network Adapter)</strong> is the virtual NIC used on most current-generation instances. ENA supports SR-IOV (Single Root I/O Virtualization), which gives EC2 instances direct hardware access to a physical NIC queue - bypassing the hypervisor&rsquo;s software networking path. The ENA driver is open-source and can be used with DPDK in DPDK-mode for applications that need raw packet processing.</p>
+<p><strong>AWS EFA (Elastic Fabric Adapter)</strong> exposes RDMA-like semantics between EC2 instances. EFA uses the <strong>SRD (Scalable Reliable Datagram)</strong> protocol - a custom AWS protocol designed for low-latency, high-bandwidth inter-instance communication in ML training and HPC workloads. SRD uses multiple network paths simultaneously (multipathing), spreading load across the full bisection bandwidth of the network, which RDMA over a single path cannot do. NCCL, the NVIDIA collective communication library, has native EFA support; PyTorch distributed training on <code>p4d.24xlarge</code> instances uses NCCL over EFA for gradient AllReduce.</p>
+<p>For Placement Groups (cluster placement groups), EFA achieves ~100Gbps bandwidth per instance with sub-100-microsecond latency - competitive with on-premises InfiniBand for most training workloads.</p>
+<h2 id=smartnics-programmable-offload>SmartNICs: Programmable Offload</h2>
+<p>The next evolution is moving the network stack <em>into</em> the NIC itself - programmable network processing without any host CPU involvement.</p>
+<p>The <strong>AWS Nitro card</strong> is a custom ASIC that handles network I/O, EBS storage I/O, and hypervisor functions. The Nitro card processes packets at line rate without using host CPU cycles, which is why C5 and later instances can dedicate all host CPU to the application. The Nitro card is itself a small ARM-based computer running a specialized OS.</p>
+<p><strong>NVIDIA BlueField</strong> (formerly Mellanox) is the commercial SmartNIC in this space: an ARM processor complex integrated with a 100/200/400Gbps NIC. You can run arbitrary Linux software on the BlueField&rsquo;s onboard ARM cores - storage encryption, firewall rules, load balancing - while the host CPU is freed from all network processing. BlueField is deployed in data centers for secure multi-tenant networking, DPU (Data Processing Unit) offload, and storage acceleration.</p>
+<p>SmartNICs represent the logical endpoint of kernel bypass: the NIC becomes a full network computer, and the host CPU is entirely off the critical path.</p>
+<h2 id=the-right-tool-for-each-problem>The Right Tool for Each Problem</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Right Approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>>10M concurrent connections, normal latency</td>
+<td>epoll-based async I/O (nginx, Node.js model)</td>
+</tr>
+<tr>
+<td>High IOPS, reduced syscall overhead</td>
+<td>io_uring with SQPOLL</td>
+</tr>
+<tr>
+<td>10M+ packets/second, custom protocol</td>
+<td>DPDK with user-space stack</td>
+</tr>
+<tr>
+<td>Sub-2μs remote memory access</td>
+<td>RDMA (InfiniBand / RoCEv2 / EFA)</td>
+</tr>
+<tr>
+<td>Specific flow bypass, normal stack for rest</td>
+<td>AF_XDP + eBPF</td>
+</tr>
+<tr>
+<td>AWS inter-instance ML training</td>
+<td>EFA + NCCL</td>
+</tr>
+<tr>
+<td>Line-rate network processing without host CPU</td>
+<td>SmartNIC (BlueField / Nitro)</td>
+</tr>
+</tbody>
+</table>
+<h2 id=the-critique>The Critique</h2>
+<p>DPDK&rsquo;s polling model wastes CPU on idle systems. A DPDK application spinning on an empty 100Gbps NIC burns a full CPU core doing nothing. This is a real cost in any environment where CPU is shared or expensive. The answer is to only use DPDK when the NIC is near saturation - which is precisely the use case it was designed for, but means you cannot use the same binary for both low-traffic and high-traffic deployments without reconfiguring.</p>
+<p>RDMA&rsquo;s requirement for lossless fabric (for RoCE) or dedicated hardware (for InfiniBand) makes it expensive and operationally complex. A single misconfigured PFC priority can cause head-of-line blocking that cascades into cluster-wide slowdowns. This is not theoretical: RDMA fabric incidents in large ML clusters are a known failure mode, and teams managing them need deep networking expertise most software engineers do not have.</p>
+<p>io_uring is the safest choice for most applications that need performance improvement. It is kernel-maintained, does not require dedicated hardware, and integrates with the existing TCP/IP stack. If io_uring + zero-copy (<code>MSG_ZEROCOPY</code>) does not meet your latency budget, <em>then</em> consider DPDK. The vast majority of applications that believe they need DPDK actually need io_uring.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Technology</th>
+<th>Bypass Level</th>
+<th>Latency</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard Linux sockets + epoll</td>
+<td>None (kernel)</td>
+<td>1–10μs per packet</td>
+<td>General purpose</td>
+</tr>
+<tr>
+<td>io_uring + SQPOLL</td>
+<td>Syscall bypass</td>
+<td>~0.5μs per op</td>
+<td>High-IOPS servers</td>
+</tr>
+<tr>
+<td>AF_XDP</td>
+<td>Selective packet bypass</td>
+<td>~200ns for bypassed flows</td>
+<td>Hybrid: kernel + fast path</td>
+</tr>
+<tr>
+<td>DPDK</td>
+<td>Full kernel bypass</td>
+<td>&lt;100ns</td>
+<td>10M+ pps packet processing</td>
+</tr>
+<tr>
+<td>RDMA (InfiniBand/RoCEv2)</td>
+<td>Full kernel + CPU bypass</td>
+<td>1–2μs round trip</td>
+<td>Distributed ML, HPC</td>
+</tr>
+<tr>
+<td>EFA (AWS)</td>
+<td>Managed RDMA-like</td>
+<td>~20μs intra-VPC</td>
+<td>ML training on EC2</td>
+</tr>
+<tr>
+<td>SmartNIC</td>
+<td>Host CPU bypass</td>
+<td>Line-rate</td>
+<td>Data center infrastructure</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/real-time-systems/>Real-Time Systems</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

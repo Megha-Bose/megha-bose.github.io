@@ -1,0 +1,277 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Memory Management // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Memory Management">
+<meta name=twitter:description content="Here is a thought experiment: open two terminal windows and run the same Python program in each. Print the memory address of a variable in both. You might see the same address in both processes - 0x7ffcd3a0b2f0, say. But each program has its own copy of that variable. They cannot read each other&rsquo;s memory. They are operating in completely separate universes that happen to use the same coordinate system.
+How is that possible?">
+<meta property="og:title" content="Memory Management">
+<meta property="og:description" content="Here is a thought experiment: open two terminal windows and run the same Python program in each. Print the memory address of a variable in both. You might see the same address in both processes - 0x7ffcd3a0b2f0, say. But each program has its own copy of that variable. They cannot read each other&rsquo;s memory. They are operating in completely separate universes that happen to use the same coordinate system.
+How is that possible?">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/memory-management/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Memory Management</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p>Here is a thought experiment: open two terminal windows and run the same Python program in each. Print the memory address of a variable in both. You might see the same address in both processes - <code>0x7ffcd3a0b2f0</code>, say. But each program has its own copy of that variable. They cannot read each other&rsquo;s memory. They are operating in completely separate universes that happen to use the same coordinate system.</p>
+<p>How is that possible?</p>
+<p>The answer - virtual memory - is the foundation of everything else in this post. Memory management is the story of how programs get memory, use it safely, share it securely, and - in some languages - give it back automatically. Getting it wrong causes the majority of serious security vulnerabilities ever found.</p>
+<h2 id=two-programs-same-address-virtual-memory>Two Programs, Same Address: Virtual Memory</h2>
+<p>Every process runs in a <strong>virtual address space</strong> - an illusion of private, contiguous memory that the OS and hardware maintain on its behalf. The CPU&rsquo;s Memory Management Unit (MMU) intercepts every memory access and translates virtual addresses to physical RAM addresses using <strong>page tables</strong> maintained by the kernel.</p>
+<p>Physical RAM is divided into fixed-size <strong>pages</strong> (typically 4 KB on x86-64, 16 KB on Apple Silicon). Each virtual page maps to a physical frame - or to nothing, in which case accessing it triggers a page fault. The kernel handles the fault, allocates a physical frame if appropriate, updates the page table, and restarts the instruction.</p>
+<p>This mechanism provides three things:</p>
+<p><strong>Isolation:</strong> Process A&rsquo;s virtual address <code>0x400000</code> maps to a different physical frame than Process B&rsquo;s <code>0x400000</code>. The MMU enforces this separation in hardware. No matter how buggy Process A is, it cannot corrupt Process B&rsquo;s memory without a kernel vulnerability.</p>
+<p><strong>Overcommit:</strong> You can allocate 16 GB of virtual address space on a machine with 8 GB of RAM. The kernel only maps physical pages on first access. Many allocations that are reserved but never touched cost nothing real.</p>
+<p><strong>Swap:</strong> When physical RAM is exhausted, the kernel can evict a page to disk (swap), freeing the physical frame for something else. When that virtual address is accessed again, a page fault fires, the kernel reads the page from disk, and execution resumes. Major page faults - requiring disk I/O - cost ~10 ms. That is six orders of magnitude slower than an L1 cache hit.</p>
+<h3 id=the-tlb-caching-translations>The TLB: Caching Translations</h3>
+<p>Translating every memory access through a multi-level page table would be catastrophically slow. The <strong>Translation Lookaside Buffer</strong> (TLB) is a small hardware cache of recent virtual-to-physical translations, sitting inside the CPU core. A TLB hit costs ~1 cycle. A TLB miss - requiring a page table walk - costs ~10–100 cycles.</p>
+<p>This is why <strong>huge pages</strong> (2 MB or 1 GB instead of 4 KB) exist. One TLB entry covers 2 MB instead of 4 KB, so a 2 GB working set needs 1000 entries vs 500,000. Databases (PostgreSQL, MySQL) configure huge pages to reduce TLB pressure. Kubernetes workloads can configure <code>hugepages-2Mi</code> resource limits for the same reason.</p>
+<p>A context switch flushes the TLB (on CPUs without ASID support), which is one reason context switches have hidden costs beyond the register save/restore.</p>
+<h2 id=memory-layout-the-map-of-a-process>Memory Layout: The Map of a Process</h2>
+<p>A process&rsquo;s virtual address space follows a standard layout:</p>
+<table>
+<thead>
+<tr>
+<th>Segment</th>
+<th>Contents</th>
+<th>Grows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Text</td>
+<td>Executable code (read-only)</td>
+<td>Fixed</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>Initialized globals</td>
+<td>Fixed</td>
+</tr>
+<tr>
+<td>BSS</td>
+<td>Uninitialized globals (zero-filled)</td>
+<td>Fixed</td>
+</tr>
+<tr>
+<td>Heap</td>
+<td>Dynamic allocations (<code>malloc</code>)</td>
+<td>Upward</td>
+</tr>
+<tr>
+<td>Stack</td>
+<td>Call frames, local variables</td>
+<td>Downward</td>
+</tr>
+</tbody>
+</table>
+<p>The heap and stack grow toward each other from opposite ends of the address space. Stack overflow (the actual phenomenon, not the website) occurs when the call stack grows deep enough to collide with the heap - typically the result of unbounded recursion.</p>
+<p><strong>Stack memory</strong> is automatic and fast. Each function call pushes a frame containing the return address, saved registers, and local variables. The frame is popped when the function returns. Stack allocation is a single instruction - subtract from the stack pointer - and costs essentially nothing. The constraint: stack frames cannot outlive their function, and the total stack is small (usually 1–8 MB).</p>
+<p><strong>Heap memory</strong> is dynamic. You request a block of arbitrary size, use it as long as needed, and - in C - release it explicitly. In managed languages, the runtime handles release automatically.</p>
+<h2 id=malloc-not-magic-just-engineering>malloc: Not Magic, Just Engineering</h2>
+<p><code>malloc</code> sits on top of OS primitives (<code>brk</code> and <code>mmap</code> on Linux) and manages a pool of memory. The allocator&rsquo;s job is to satisfy arbitrary-sized requests quickly while minimizing wasted space.</p>
+<p>Common strategies:</p>
+<p><strong>Free list:</strong> Maintain a linked list of free blocks. On allocation, find a block that fits (first-fit, best-fit, or worst-fit heuristics); on free, return the block and coalesce adjacent free blocks. glibc&rsquo;s allocator (ptmalloc2) uses this with size-class buckets for small allocations.</p>
+<p><strong>Slab allocator:</strong> Pre-allocate pools of fixed-size objects. The Linux kernel&rsquo;s slab allocator handles objects like <code>task_struct</code> in O(1) - grab the next pre-zeroed slot from the appropriate slab. No search, no fragmentation for uniform-size objects.</p>
+<p><strong>Buddy system:</strong> Split memory in powers of two. Allocating 256 bytes splits a 512-byte block; freeing coalesces adjacent &ldquo;buddy&rdquo; blocks back up. Linux&rsquo;s page allocator uses this.</p>
+<h3 id=the-heap-is-slow-myth>The &ldquo;Heap is Slow&rdquo; Myth</h3>
+<p>Here is a common misconception worth addressing: that heap allocation is inherently slow. It is not. <code>malloc</code> for a small object typically takes 20–100 ns - fast enough that it is almost never the bottleneck. What is slow is <em>fragmentation</em> and <em>allocation patterns</em>.</p>
+<p>External fragmentation occurs when free memory is scattered in holes too small for new requests. A 1 GB heap can have 400 MB free, but fragmented into thousands of tiny gaps, unable to satisfy a 1 MB allocation.</p>
+<p>Internal fragmentation occurs when the allocator rounds up your request (you asked for 17 bytes, got 32). The 15 bytes inside the allocation are wasted.</p>
+<p>A long-running server that allocates and frees objects of many sizes will gradually fragment its heap. This is why some production systems use a custom pool allocator for objects they create at high frequency - not because <code>malloc</code> is slow, but because they want predictable, unfragmented memory patterns.</p>
+<h2 id=garbage-collection-automatic-memory-management>Garbage Collection: Automatic Memory Management</h2>
+<p>In managed languages - Python, Java, Go, C# - the runtime tracks live objects and reclaims dead ones automatically. Several strategies exist, each with different tradeoffs.</p>
+<h3 id=reference-counting>Reference Counting</h3>
+<p>CPython, Swift, and Rust&rsquo;s <code>Arc</code> use reference counting: each object stores a count of references pointing to it. When the count drops to zero, the object is freed immediately.</p>
+<p>This is deterministic - objects are freed exactly when their last reference disappears - which makes resource cleanup predictable. The fatal flaw: <strong>cycles</strong>. Two objects that reference each other will never reach count zero even when no external reference exists.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Node</span>:
+    <span style=color:#66d9ef>def</span> __init__(self):
+        self<span style=color:#f92672>.</span>partner <span style=color:#f92672>=</span> <span style=color:#66d9ef>None</span>
+
+a, b <span style=color:#f92672>=</span> Node(), Node()
+a<span style=color:#f92672>.</span>partner <span style=color:#f92672>=</span> b
+b<span style=color:#f92672>.</span>partner <span style=color:#f92672>=</span> a   <span style=color:#75715e># cycle: a→b→a</span>
+
+<span style=color:#66d9ef>del</span> a, b        <span style=color:#75715e># refcounts don&#39;t hit 0; both objects leak</span>
+</code></pre></div><p>CPython solves this with a supplementary <strong>cycle detector</strong> that runs periodically and collects unreachable cyclic structures. It is opt-out (<code>gc.disable()</code>) but rarely worth disabling in practice.</p>
+<h3 id=mark-and-sweep>Mark-and-Sweep</h3>
+<p>The GC pauses the program, marks all objects reachable from roots (global variables, stack frames, registers), then sweeps through the heap freeing everything unmarked.</p>
+<p>This handles cycles cleanly. The downside is <strong>stop-the-world pauses</strong> proportional to heap size - genuinely problematic for latency-sensitive applications. Early Java GC was notorious for multi-second pauses on large heaps.</p>
+<h3 id=generational-garbage-collection>Generational Garbage Collection</h3>
+<p>The key empirical insight: <strong>most objects die young</strong>. In typical programs, the vast majority of heap objects are short-lived temporaries - intermediate results, request objects, string buffers. A small fraction survive long enough to be considered &ldquo;old.&rdquo;</p>
+<p>Generational GC exploits this:</p>
+<ul>
+<li>The <strong>nursery</strong> (young generation) is small and collected frequently. Collection is fast because most objects are dead.</li>
+<li>Long-lived objects are <strong>promoted</strong> to the old generation, which is collected infrequently.</li>
+</ul>
+<p>JVM&rsquo;s G1 collector divides memory into regions and prioritizes collecting regions with the most garbage - hence &ldquo;Garbage First.&rdquo; Go&rsquo;s GC is concurrent (runs alongside your code) with sub-millisecond pauses. CPython&rsquo;s cycle detector is a simple mark-and-sweep layered on top of reference counting, not a full generational system.</p>
+<h2 id=why-python-objects-are-slow-the-pyobject-tax>Why Python Objects Are Slow: The PyObject Tax</h2>
+<p>Every Python value - integer, string, list, <code>True</code>, <code>None</code> - is a <code>PyObject</code> on the heap. The <code>PyObject</code> header alone consumes 16 bytes on 64-bit systems: 8 bytes for the reference count and 8 bytes for a pointer to the type object.</p>
+<p>A Python integer like <code>42</code> is not just four bytes. It is a heap-allocated <code>PyObject</code> with a refcount, a type pointer, and then the actual integer value - roughly 28 bytes for something that fits in a register in C.</p>
+<p>Multiply this by a list of 10 million integers and you have: 10M × 28 bytes = 280 MB, plus the list object itself (8 bytes per pointer for the array of pointers to those 280 MB of <code>PyObject</code>s). A NumPy array of 10M int64 values uses exactly 80 MB - and the data is contiguous, cache-friendly, and can be processed with SIMD instructions.</p>
+<p>This is not a Python design mistake. It is a deliberate tradeoff: every value is an object, so every value is first-class, introspectable, and dynamically typed. The overhead is the cost of that flexibility. When you need raw numeric throughput, you use NumPy, which stores data in C arrays and calls into C code.</p>
+<p>Reference counting also means every assignment and variable scope exit involves incrementing and decrementing counts - memory traffic that adds up in tight loops.</p>
+<h2 id=c-manual-memory-management-total-control-total-responsibility>C Manual Memory Management: Total Control, Total Responsibility</h2>
+<p>In C, you own every byte:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>process_requests</span>(<span style=color:#66d9ef>int</span> n) {
+    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n; i<span style=color:#f92672>++</span>) {
+        <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>buf <span style=color:#f92672>=</span> malloc(<span style=color:#ae81ff>4096</span>);
+        <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>buf) { perror(<span style=color:#e6db74>&#34;malloc&#34;</span>); exit(<span style=color:#ae81ff>1</span>); }
+        handle_request(buf);
+        free(buf);    <span style=color:#75715e>// miss this once → leak 4KB per iteration
+</span><span style=color:#75715e></span>    }
+}
+</code></pre></div><p>Common failures:</p>
+<p><strong>Use-after-free:</strong> Access memory after it has been freed. The memory may have been reallocated to something else. This is the root cause of the majority of browser CVEs.</p>
+<p><strong>Double-free:</strong> Call <code>free()</code> on the same pointer twice. Corrupts the allocator&rsquo;s internal state; often exploitable.</p>
+<p><strong>Buffer overflow:</strong> Write past the end of an allocation. Overwrites adjacent memory - possibly another object&rsquo;s data, a function pointer, or a return address on the stack. The basis of stack smashing attacks.</p>
+<p><strong>Memory leak:</strong> Forget to free. In a long-running server, leaked memory accumulates until the OOM killer arrives.</p>
+<p>Microsoft, Google, and the Chrome security team have all published analyses showing that ~70% of their critical security vulnerabilities involve memory safety bugs in C and C++. This is not a skill issue - it is a property of the language model.</p>
+<h2 id=rust-a-third-path>Rust: A Third Path</h2>
+<p>Rust&rsquo;s ownership system enforces memory safety at compile time, with zero runtime overhead.</p>
+<p>Each value has exactly one <strong>owner</strong>. When the owner goes out of scope, the value is dropped (freed). Ownership can be transferred (moved) or temporarily lent out (borrowed). The borrow checker verifies at compile time that:</p>
+<ul>
+<li>No two parts of the program can mutably access the same data simultaneously</li>
+<li>No reference outlives the data it points to</li>
+</ul>
+<p>The result: no use-after-free, no double-free, no data races - guaranteed at compile time, without a garbage collector and without runtime overhead. The tradeoff is learning the borrow checker, which requires thinking about ownership explicitly rather than relying on GC or careful manual tracking.</p>
+<p>Rust is why the Linux kernel began accepting Rust code in 2022 - not because Rust is faster than C (it is not, meaningfully) but because the kernel cannot afford use-after-free bugs, and Rust is the first systems language that can prevent them without sacrificing performance.</p>
+<h2 id=kubernetes-oomkilled-memory-management-in-production>Kubernetes OOMKilled: Memory Management in Production</h2>
+<p>When a Kubernetes pod exceeds its memory limit, the container runtime kills the container with an OOM (out-of-memory) kill - visible as <code>OOMKilled</code> in <code>kubectl describe pod</code>. This is the kernel&rsquo;s OOM killer, triggered when the cgroup&rsquo;s memory usage hits the configured limit.</p>
+<p>Why does this happen?</p>
+<ol>
+<li>The application allocates memory that it never frees (a leak).</li>
+<li>The application&rsquo;s working set is genuinely larger than the limit - the limit is set too low.</li>
+<li>A managed language&rsquo;s GC has not yet collected dead objects when the limit is checked - the OS sees a larger RSS than the application &ldquo;uses.&rdquo;</li>
+</ol>
+<p>Go is notorious for the third case: Go&rsquo;s GC can hold onto pages even after objects are freed, not immediately returning them to the OS. The RSS grows, Kubernetes sees the limit hit, OOMKilled. The fix is <code>GODEBUG=madvdontneed=1</code> or tuning the GC with <code>runtime/debug.SetMemoryLimit</code> (Go 1.19+).</p>
+<p>JVM applications have similar patterns: the heap is pre-allocated at startup (<code>-Xmx</code>), and the OS sees that entire heap as RSS even if most of it contains dead objects the next GC cycle will collect.</p>
+<p>Setting Kubernetes memory limits requires understanding not just what your code does with memory, but what the runtime beneath it does.</p>
+<h2 id=serverless-cold-starts-memory-as-latency>Serverless Cold Starts: Memory as Latency</h2>
+<p>AWS Lambda cold starts happen partly because of memory allocation. A cold start involves:</p>
+<ol>
+<li>Provisioning a micro-VM (Firecracker)</li>
+<li>Loading the container image</li>
+<li>Starting the language runtime (Python: importing the standard library; JVM: class loading)</li>
+<li>Running your initialization code</li>
+</ol>
+<p>Step 3 is memory allocation under a different name: the runtime must allocate heap space, initialize data structures, and load libraries. Python&rsquo;s startup allocates memory for the interpreter, the GC structures, the module cache. The JVM&rsquo;s class loading allocates method tables, constant pools, bytecode arrays.</p>
+<p>This is why Lambda&rsquo;s provisioned concurrency exists: keep warm instances around to avoid the cold start cost. The warm instance already has all that memory allocated and initialized. You pay for idle memory to avoid paying for allocation latency on each request.</p>
+<h2 id=memory-mapped-files-the-shortcut>Memory-Mapped Files: The Shortcut</h2>
+<p><code>mmap</code> maps a file directly into the virtual address space. Reading from those addresses reads the file; writing to them writes the file. The OS handles paging transparently.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> mmap
+
+<span style=color:#66d9ef>with</span> open(<span style=color:#e6db74>&#34;data.bin&#34;</span>, <span style=color:#e6db74>&#34;r+b&#34;</span>) <span style=color:#66d9ef>as</span> f:
+    <span style=color:#66d9ef>with</span> mmap<span style=color:#f92672>.</span>mmap(f<span style=color:#f92672>.</span>fileno(), <span style=color:#ae81ff>0</span>) <span style=color:#66d9ef>as</span> mm:
+        header <span style=color:#f92672>=</span> mm[:<span style=color:#ae81ff>16</span>]          <span style=color:#75715e># read bytes 0–15</span>
+        mm[<span style=color:#ae81ff>0</span>:<span style=color:#ae81ff>4</span>] <span style=color:#f92672>=</span> <span style=color:#e6db74>b</span><span style=color:#e6db74>&#34;NEW!&#34;</span>         <span style=color:#75715e># write directly to file</span>
+</code></pre></div><p>Databases use <code>mmap</code> (SQLite, LMDB, RocksDB&rsquo;s table files) because it delegates caching to the OS page cache. The OS automatically evicts cold pages when memory is needed, re-faults them on access. The database does not need to implement its own buffer pool - or it implements one on top.</p>
+<p>The tradeoff: the OS page cache does not know about your database&rsquo;s access patterns, so it evicts pages that your database would prefer to keep. High-performance databases (PostgreSQL at larger scales) implement their own buffer pool precisely to take control of this.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Tradeoff</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Virtual memory</td>
+<td>Isolation + overcommit vs. TLB pressure; huge pages reduce TLB misses</td>
+</tr>
+<tr>
+<td>Stack vs heap</td>
+<td>Stack is automatic/fast but size-limited; heap is flexible but requires management</td>
+</tr>
+<tr>
+<td>Reference counting</td>
+<td>Deterministic destruction vs. cycle problem; CPython&rsquo;s approach</td>
+</tr>
+<tr>
+<td>Mark-and-sweep</td>
+<td>Handles cycles vs. stop-the-world pauses</td>
+</tr>
+<tr>
+<td>Generational GC</td>
+<td>Fast minor GC for short-lived objects vs. occasional major GC pauses</td>
+</tr>
+<tr>
+<td>C manual memory</td>
+<td>Maximum control vs. use-after-free, double-free, leaks; 70% of CVEs</td>
+</tr>
+<tr>
+<td>Rust ownership</td>
+<td>Compile-time safety with zero runtime overhead vs. borrow checker learning curve</td>
+</tr>
+<tr>
+<td>PyObject overhead</td>
+<td>First-class dynamic objects vs. 28 bytes for an integer</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/floating-point-precision/>Floating-Point Precision</a></li>
+<li><a href=/posts/cache-friendly-code/>Cache-Friendly Code</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

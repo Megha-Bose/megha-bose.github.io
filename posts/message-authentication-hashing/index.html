@@ -1,0 +1,222 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Message Authentication, Hashing, and HMAC // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Message Authentication, Hashing, and HMAC">
+<meta name=twitter:description content="Encryption provides confidentiality but not integrity. An adversary who cannot read a ciphertext can still modify it - flipping bits, reordering blocks, or splicing together parts of different ciphertexts - and the recipient may decrypt a meaningless or adversarially controlled message without knowing anything went wrong. The solution is a message authentication code: a keyed tag attached to the message that an adversary cannot forge without knowing the key. Prerequisites: Symmetric Encryption, Computational Cryptography.">
+<meta property="og:title" content="Message Authentication, Hashing, and HMAC">
+<meta property="og:description" content="Encryption provides confidentiality but not integrity. An adversary who cannot read a ciphertext can still modify it - flipping bits, reordering blocks, or splicing together parts of different ciphertexts - and the recipient may decrypt a meaningless or adversarially controlled message without knowing anything went wrong. The solution is a message authentication code: a keyed tag attached to the message that an adversary cannot forge without knowing the key. Prerequisites: Symmetric Encryption, Computational Cryptography.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/message-authentication-hashing/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-07-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-07-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Message Authentication, Hashing, and HMAC</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jul 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+8 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<hr>
+<p>Encryption provides confidentiality but not integrity. An adversary who cannot read a ciphertext can still modify it - flipping bits, reordering blocks, or splicing together parts of different ciphertexts - and the recipient may decrypt a meaningless or adversarially controlled message without knowing anything went wrong. The solution is a message authentication code: a keyed tag attached to the message that an adversary cannot forge without knowing the key. Prerequisites: <a href=/posts/math/symmetric-encryption/>Symmetric Encryption</a>, <a href=/posts/math/computational-cryptography/>Computational Cryptography</a>.</p>
+<p>Hash functions add another layer: collision-resistant functions that compress arbitrary-length inputs to short digests, enabling efficient commitments and combined authentication. The two ideas - keyed MACs and unkeyed collision-resistant hashing - interact in subtle ways. A naive attempt to combine them (just prepend the key to the message and hash) breaks in ways that are not immediately obvious. Building secure constructions requires understanding exactly what each primitive guarantees and where each one fails.</p>
+<p>This post builds both from scratch. We start with the definition of a MAC and the precise security game it must win, examine several constructions that look plausible but break, build up to provably secure CBC-MAC variants, then develop collision-resistant hashing and the Merkle-Damgård transform before arriving at HMAC - the construction that ties everything together and eliminates the length extension problem that undermines simpler hash-based MACs.</p>
+<hr>
+<h2 id=data-integrity>Data Integrity</h2>
+<p>The data integrity problem: given a message $m$ and a tag $t$, verify that $m$ was not modified in transit by anyone who doesn&rsquo;t know the secret key.</p>
+<p><strong>MAC definition.</strong> A message authentication code is a pair $(\text{Mac}, \text{Vrfy})$:</p>
+<ul>
+<li>$\text{Mac}_k(m)$ produces a tag $t$.</li>
+<li>$\text{Vrfy}_k(m, t)$ outputs accept or reject.</li>
+<li>Correctness: $\text{Vrfy}_k(m, \text{Mac}_k(m)) = \text{accept}$ always.</li>
+</ul>
+<p><strong>Security (EUF-CMA: existential unforgeability under chosen message attack).</strong> The adversary can adaptively query $\text{Mac}_k(\cdot)$ on any messages of its choice. It wins if it produces a valid $(m^<em>, t^</em>)$ where $m^*$ was not previously queried. The advantage must be negligible for all PPT adversaries.</p>
+<hr>
+<h2 id=problematic-taggings>Problematic Taggings</h2>
+<p>Before building a secure MAC, it helps to see what breaks.</p>
+<p><strong>Issue 1: Fixed-prefix extension.</strong> Tag $m$ by computing $t = F_k(m)$ (one PRF evaluation). For variable-length messages, append blocks: $t = F_k(m_1) | F_k(m_2) | \cdots$. Attack: the adversary queries $\text{Mac}$ on separate single-block messages $m_1$ and $m_2$, getting $t_1 = F_k(m_1)$ and $t_2 = F_k(m_2)$. It then forges a tag for the two-block message $m_1 | m_2$ as $(t_1, t_2)$ - a valid concatenated tag it never queried.</p>
+<p><strong>Issue 2: Length extension.</strong> Many naive hash-based MACs suffer from length extension: given $H(k | m)$, an adversary can compute $H(k | m | \text{pad} | m')$ without knowing $k$, simply by continuing the hash computation from the internal state. This breaks any MAC of the form $H(k | m)$.</p>
+<p><strong>Issue 3: Prefix reuse in CBC-MAC.</strong> If the adversary knows $\text{Mac}_k(m) = t$, and the MAC is computed by running a CBC chain, it can often forge a tag for a related message by XOR-ing the first block with $t$ - because that cancels out the chaining and reuses the MAC computation.</p>
+<hr>
+<h2 id=cbc-mac>CBC-MAC</h2>
+<p><strong>Construction.</strong> For a fixed-length message $m = m_1 | m_2 | \cdots | m_\ell$ of $\ell$ blocks:
+$$t_0 = 0^n, \quad t_i = F_k(t_{i-1} \oplus m_i), \quad \text{Mac}<em>k(m) = t</em>\ell$$
+Apply the block cipher in CBC mode, starting from the all-zeros IV, and output the final block.</p>
+<p><strong>Security.</strong> For a fixed message length $\ell$, CBC-MAC (also called raw CBC-MAC) is EUF-CMA secure assuming $F_k$ is a PRF. The proof uses the PRF security to replace $F_k$ with a random function, then argues directly that the random-function CBC chain is unpredictable.</p>
+<hr>
+<h2 id=variable-length-cbc-mac-and-the-attack>Variable-Length CBC-MAC and the Attack</h2>
+<p><strong>Problem.</strong> If we use the same key for messages of different lengths, CBC-MAC is broken.</p>
+<p><strong>Attack.</strong> Let $m = m_1$ be a single block and suppose $\text{Mac}_k(m_1) = t$. Now consider the two-block message $m_1 | (t \oplus m_1)$:</p>
+<ul>
+<li>$t_1 = F_k(0 \oplus m_1) = t$</li>
+<li>$t_2 = F_k(t \oplus (t \oplus m_1)) = F_k(m_1) = t$</li>
+</ul>
+<p>The two-block message gets the same tag as the one-block message, and the adversary never queried it. This is a valid forgery.</p>
+<p>The root cause: the chaining structure means a one-block MAC output perfectly predicts where the two-block computation will land.</p>
+<hr>
+<h2 id=secure-cbc-mac-for-variable-lengths>Secure CBC-MAC for Variable Lengths</h2>
+<p><strong>Fix 1: Prepend the length.</strong> Mac the message $\ell | m_1 | m_2 | \cdots | m_\ell$ (prepend the block count). Now the attack above fails: $m_1$ is tagged as $(1 | m_1)$ while the two-block message is tagged as $(2 | m_1 | t \oplus m_1)$ - different starting blocks, different computations.</p>
+<p><strong>Fix 2: ECBC-MAC (encrypted CBC-MAC).</strong> Use two independent keys $k_1, k_2$. Compute the raw CBC-MAC under $k_1$, then encrypt the final tag with $F_{k_2}$: $\text{Mac} = F_{k_2}(\text{CBC-MAC}_{k_1}(m))$. The extra encryption destroys the algebraic structure that the variable-length attack exploits. ECBC-MAC is provably secure for variable-length messages.</p>
+<p><strong>Fix 3: CMAC (standardized variant).</strong> Use the length prefix approach with a specific padding scheme: pad the last block with 1 followed by zeros ($10^*$ padding) to make it distinguishable, then XOR with one of two subkeys derived from $k$ depending on whether the message was already block-aligned. CMAC is the NIST standard.</p>
+<p>The general requirement: the MAC over messages of different lengths must ensure that a valid $(\ell, m)$ pair cannot help forge a tag for any different $(\ell', m')$. The internal prefix trick ($| \ell | m |$ or $| i | m |$) ensures this by making each call to the MAC function structurally distinct.</p>
+<hr>
+<h2 id=collision-resistant-hash-functions>Collision-Resistant Hash Functions</h2>
+<p>A hash function $H: {0,1}^* \to {0,1}^n$ is <strong>collision-resistant</strong> if no PPT algorithm can find $x \neq x'$ with $H(x) = H(x')$ except with negligible probability.</p>
+<p>Note: collisions must exist (infinitely many inputs, finite outputs - pigeonhole). The question is whether they can be found efficiently.</p>
+<p>Hash functions are public (no key). They provide a short, fixed-size &ldquo;fingerprint&rdquo; of data: if $H(x) = H(y)$, the parties can check large files by comparing $n$-bit digests.</p>
+<p><strong>Applications of collision resistance.</strong> If $H$ is collision-resistant:</p>
+<ul>
+<li>Commitments: commit to $x$ by publishing $H(x)$; reveal $x$ later.</li>
+<li>Hash-and-sign: to sign a long message $m$, sign $H(m)$ instead. If the signature scheme is secure and $H$ is collision-resistant, no adversary can forge $H(m') = H(m)$ to substitute a different message.</li>
+</ul>
+<hr>
+<h2 id=birthday-attack>Birthday Attack</h2>
+<p><strong>The birthday paradox.</strong> If we evaluate $H$ on $q$ random inputs, the expected number of collisions becomes $\approx q^2 / 2^n$. A collision occurs with probability $\approx 1/2$ when $q \approx 2^{n/2}$.</p>
+<p><strong>Birthday attack on hash functions.</strong> An adversary finding a collision:</p>
+<ol>
+<li>Sample $q = 2^{n/2}$ random messages.</li>
+<li>Compute $H(m_i)$ for each.</li>
+<li>By birthday bound, with probability $\approx 1/2$, two messages have the same hash.</li>
+</ol>
+<p>This means an $n$-bit hash function gives only $n/2$ bits of collision resistance. SHA-256 (256-bit output) has 128-bit collision resistance; this is why MD5 (128-bit output, only 64-bit collision resistance) is broken for collision resistance.</p>
+<hr>
+<h2 id=merkle-damgård-transform>Merkle-Damgård Transform</h2>
+<p>The MD transform builds a collision-resistant hash over arbitrary-length inputs from a collision-resistant <strong>compression function</strong> $h: {0,1}^{n+t} \to {0,1}^n$ (fixed input size).</p>
+<p><strong>Construction.</strong> Pad the message to a multiple of $t$ blocks. Append the length in the final padding block. Then:
+$$z_0 = \text{IV}, \quad z_i = h(z_{i-1} | m_i), \quad H(m) = z_\ell$$</p>
+<p><strong>Theorem.</strong> If $h$ is collision-resistant, then the MD hash is collision-resistant.</p>
+<p><em>Proof sketch.</em> Any collision $H(m) = H(m')$ with $m \neq m'$ implies a collision in $h$: trace back the chains to find the first block where they diverge. $\square$</p>
+<p>SHA-1, SHA-2 (SHA-256, SHA-512) all use Merkle-Damgård. The weakness: MD hashes are vulnerable to <strong>length extension attacks</strong> - given $H(m)$, one can compute $H(m | \text{pad} | m')$ for any $m'$ by continuing the computation from the final state $z_\ell$. This is why $H(k | m)$ is not a secure MAC (the adversary can extend without knowing $k$).</p>
+<p>SHA-3 (Keccak) uses a sponge construction instead of MD, eliminating length extension.</p>
+<hr>
+<h2 id=hmac>HMAC</h2>
+<p><strong>Construction.</strong> Given a hash function $H$ and a key $k$:
+$$\text{HMAC}_k(m) = H\bigl((k \oplus \text{opad}) | H((k \oplus \text{ipad}) | m)\bigr)$$
+where $\text{opad} = 0x5c5c\ldots$ and $\text{ipad} = 0x3636\ldots$ are fixed constants (the outer and inner padding).</p>
+<p><strong>Why this works.</strong> The inner hash $H((k \oplus \text{ipad}) | m)$ commits to both the key and the message. The outer hash $H((k \oplus \text{opad}) | \cdot)$ with a different key-derived value prevents length extension: even if an adversary can extend the inner hash, the outer key makes that useless. HMAC is provably secure under the assumption that $H$ is a PRF (or under weaker assumptions about the compression function).</p>
+<p>HMAC-SHA256 is the standard MAC in TLS, SSH, and most modern protocols. It inherits SHA-256&rsquo;s 128-bit collision resistance and, crucially, is not vulnerable to length extension.</p>
+<hr>
+<h2 id=bit-commitment-protocol>Bit Commitment Protocol</h2>
+<p>A <strong>commitment scheme</strong> lets a sender commit to a value without revealing it, then reveal it later - with two properties:</p>
+<ul>
+<li><strong>Hiding:</strong> the commitment reveals nothing about the committed value.</li>
+<li><strong>Binding:</strong> the sender cannot open the commitment to a different value.</li>
+</ul>
+<p><strong>Hash-based construction.</strong> To commit to a bit $b$: choose random $r \leftarrow {0,1}^n$; send $c = H(b | r)$. To reveal: send $(b, r)$. The receiver checks $H(b | r) = c$.</p>
+<ul>
+<li><em>Hiding:</em> $H(b | r)$ is computationally indistinguishable from random (pseudorandom output of $H$).</li>
+<li><em>Binding:</em> opening to a different $b'$ requires finding $r'$ with $H(b' | r') = H(b | r)$ - a collision in $H$.</li>
+</ul>
+<p>Bit commitment is a foundational primitive for zero-knowledge proofs, coin-flipping protocols, and contract signing.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key idea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MAC (EUF-CMA)</td>
+<td>Adversary with encryption oracle cannot forge a new tag</td>
+</tr>
+<tr>
+<td>CBC-MAC (fixed length)</td>
+<td>Secure for fixed $\ell$; broken for variable length</td>
+</tr>
+<tr>
+<td>Variable-length attack</td>
+<td>One-block MAC used to forge two-block tag</td>
+</tr>
+<tr>
+<td>ECBC-MAC / length prefix</td>
+<td>Fix variable-length by encrypting final block or prepending $|\ell|$</td>
+</tr>
+<tr>
+<td>Collision resistance</td>
+<td>Hard to find $x \neq x'$ with $H(x) = H(x')$</td>
+</tr>
+<tr>
+<td>Birthday attack</td>
+<td>$2^{n/2}$ evaluations find collision; halves effective security</td>
+</tr>
+<tr>
+<td>Merkle-Damgård</td>
+<td>CR compression function $\to$ CR hash over ${0,1}^*$</td>
+</tr>
+<tr>
+<td>Length extension</td>
+<td>MD hash leaks internal state; $H(k|m)$ is insecure</td>
+</tr>
+<tr>
+<td>HMAC</td>
+<td>Double hash with key-derived padding; eliminates length extension</td>
+</tr>
+<tr>
+<td>Commitment</td>
+<td>Hiding + binding; collision resistance implies binding</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/math/public-key-cryptography/>Public Key Cryptography</a></li>
+<li><a href=/posts/math/symmetric-encryption/>Symmetric Encryption</a></li>
+<li><a href=/posts/math/entropy-information/>Collision-Resistant Hashing / SHA</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Word Embeddings // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Word Embeddings">
+<meta name=twitter:description content="Prerequisites:
+ Neural Networks & Perceptrons Probability as a Language Linear Transformations   king $-$ man $+$ woman $\approx$ queen.
+This arithmetic works. In a well-trained word embedding space, if you take the vector for &ldquo;king,&rdquo; subtract the vector for &ldquo;man,&rdquo; and add the vector for &ldquo;woman,&rdquo; the result is close to the vector for &ldquo;queen.&rdquo; Not approximately, not usually - reliably, with cosine similarity above 0.8.
+That words have geometry - that language has spatial structure, that analogical relationships correspond to linear transformations in a high-dimensional space - is one of the most surprising empirical findings in the history of NLP.">
+<meta property="og:title" content="Word Embeddings">
+<meta property="og:description" content="Prerequisites:
+ Neural Networks & Perceptrons Probability as a Language Linear Transformations   king $-$ man $+$ woman $\approx$ queen.
+This arithmetic works. In a well-trained word embedding space, if you take the vector for &ldquo;king,&rdquo; subtract the vector for &ldquo;man,&rdquo; and add the vector for &ldquo;woman,&rdquo; the result is close to the vector for &ldquo;queen.&rdquo; Not approximately, not usually - reliably, with cosine similarity above 0.8.
+That words have geometry - that language has spatial structure, that analogical relationships correspond to linear transformations in a high-dimensional space - is one of the most surprising empirical findings in the history of NLP.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/word-embeddings/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Word Embeddings</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+10 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/neural-networks-perceptrons/>Neural Networks & Perceptrons</a></li>
+<li><a href=/posts/probability-as-a-language/>Probability as a Language</a></li>
+<li><a href=/posts/linear-transformations/>Linear Transformations</a></li>
+</ul>
+<hr>
+<p>king $-$ man $+$ woman $\approx$ queen.</p>
+<p>This arithmetic works. In a well-trained word embedding space, if you take the vector for &ldquo;king,&rdquo; subtract the vector for &ldquo;man,&rdquo; and add the vector for &ldquo;woman,&rdquo; the result is close to the vector for &ldquo;queen.&rdquo; Not approximately, not usually - reliably, with cosine similarity above 0.8.</p>
+<p>That words have geometry - that language has spatial structure, that analogical relationships correspond to linear transformations in a high-dimensional space - is one of the most surprising empirical findings in the history of NLP. How did we get there? And more importantly: why does it work?</p>
+<hr>
+<h2 id=the-input-representation-problem>The Input Representation Problem</h2>
+<p>Computers don&rsquo;t understand words. Every machine learning system ultimately operates on numbers. To apply any mathematical model to language, you first need to turn words into vectors. This is the representation problem, and it is harder than it sounds.</p>
+<p><strong>One-hot encoding</strong> is the naive solution. Assign each word in your vocabulary an index from 1 to $|V|$, where $|V|$ is the vocabulary size. The one-hot vector for word $w$ is a vector of length $|V|$ with a 1 at position $w$ and 0 everywhere else.</p>
+<p>With a vocabulary of 50,000 words, each word is a 50,000-dimensional vector. This has three serious problems:</p>
+<ol>
+<li>
+<p><strong>Dimensionality.</strong> Vectors of length 50,000 are expensive to store and compute with. Multiplying by a weight matrix means a $50000 \times d$ matrix multiplication.</p>
+</li>
+<li>
+<p><strong>Sparsity.</strong> Every one-hot vector is 99.998% zeros. Most of the information capacity is wasted.</p>
+</li>
+<li>
+<p><strong>No notion of similarity.</strong> The one-hot vectors for &ldquo;cat&rdquo; and &ldquo;kitten&rdquo; are orthogonal - their dot product is zero, just like &ldquo;cat&rdquo; and &ldquo;democracy.&rdquo; The representation cannot express that these words are semantically related.</p>
+</li>
+</ol>
+<p>What we want is a dense, low-dimensional representation that encodes semantic and syntactic similarity. Words that are used similarly should have similar vectors.</p>
+<hr>
+<h2 id=the-distributional-hypothesis>The Distributional Hypothesis</h2>
+<p>The key insight predates neural networks by decades. J.R. Firth wrote in 1957: &ldquo;you shall know a word by the company it keeps.&rdquo;</p>
+<p>Words that appear in similar contexts tend to have similar meanings. &ldquo;Dog&rdquo; and &ldquo;cat&rdquo; appear with &ldquo;pet,&rdquo; &ldquo;feed,&rdquo; &ldquo;veterinarian,&rdquo; &ldquo;fur.&rdquo; &ldquo;Paris&rdquo; and &ldquo;London&rdquo; appear with &ldquo;capital,&rdquo; &ldquo;city,&rdquo; &ldquo;flight,&rdquo; &ldquo;visit.&rdquo; The contextual distribution of a word is a fingerprint of its meaning.</p>
+<p>This is the <strong>distributional hypothesis</strong>: distributional similarity predicts semantic similarity. It is an approximation - two words with identical contextual distributions might have opposite meanings (&ldquo;good&rdquo; and &ldquo;bad&rdquo; both follow &ldquo;the movie was&rdquo;). But as an approximation, it is remarkably powerful.</p>
+<p>If you could encode the distributional information of each word into a dense vector, words with similar distributions would have similar vectors. This is exactly what word embeddings do.</p>
+<hr>
+<h2 id=word2vec-the-key-insight>Word2Vec: The Key Insight</h2>
+<p>Mikolov et al. (2013) introduced Word2Vec, a method for learning word embeddings by training a neural network on a prediction task. The prediction task is discarded after training; the embeddings are what you keep.</p>
+<p>The two variants are:</p>
+<p><strong>Skip-gram:</strong> Given a center word, predict its surrounding context words.</p>
+<p><strong>CBOW (Continuous Bag of Words):</strong> Given the surrounding context words, predict the center word.</p>
+<p>Skip-gram is more commonly used and tends to work better for rare words, so let&rsquo;s focus on that.</p>
+<h3 id=the-skip-gram-objective>The Skip-gram Objective</h3>
+<p>Given a corpus of text, for each word $w_t$ at position $t$, define a context window of radius $r$: the words at positions $t-r, \ldots, t-1, t+1, \ldots, t+r$. The objective is to maximize:</p>
+<p>$$\mathcal{L} = \sum_{t=1}^{T} \sum_{-r \leq j \leq r, j \neq 0} \log P(w_{t+j} \mid w_t).$$</p>
+<p>The probability $P(c \mid w)$ (probability of context word $c$ given center word $w$) is modeled as a softmax over all vocabulary words:</p>
+<p>$$P(c \mid w) = \frac{\exp(v_c^\top u_w)}{\sum_{c' \in V} \exp(v_{c'}^\top u_w)}.$$</p>
+<p>Here $u_w \in \mathbb{R}^d$ is the embedding of word $w$ as a center word, and $v_c \in \mathbb{R}^d$ is the embedding of word $c$ as a context word. The model has two matrices: one for center words ($U$) and one for context words ($V$), each of size $|V| \times d$. The final embedding used for a word is typically $u_w$ (the center word embedding), or the average $(u_w + v_w)/2$.</p>
+<p>The network architecture is simple: a single hidden layer of size $d$, no nonlinearity. Input is a one-hot vector of size $|V|$; the hidden layer is $W^{\text{in}} \in \mathbb{R}^{|V| \times d}$; the output layer is $W^{\text{out}} \in \mathbb{R}^{d \times |V|}$ followed by softmax. The rows of $W^{\text{in}}$ are the word embeddings. Training updates these weights to predict context words better.</p>
+<h3 id=the-softmax-problem>The Softmax Problem</h3>
+<p>Computing the denominator of the softmax requires summing over all $|V|$ vocabulary words for every training example. With $|V| = 50000$ and millions of training examples, this is computationally infeasible.</p>
+<p><strong>Negative sampling</strong> is the standard solution. Instead of computing the full softmax, train a binary classifier: &ldquo;is $(w, c)$ a real word-context pair, or is $c$ a randomly sampled &lsquo;negative&rsquo; word?&rdquo;</p>
+<p>$$\mathcal{L}<em>{\text{NEG}} = \log \sigma(v_c^\top u_w) + \sum</em>{k=1}^{K} \mathbb{E}<em>{c_k \sim P_n}[\log \sigma(-v</em>{c_k}^\top u_w)],$$</p>
+<p>where $P_n$ is a noise distribution (typically the unigram distribution raised to the 3/4 power) and $K$ is the number of negative samples (typically 5-20). This replaces the $|V|$-way softmax with $K+1$ logistic regressions - tractable with large vocabularies.</p>
+<hr>
+<h2 id=why-word2vec-works>Why Word2Vec Works</h2>
+<p>The embeddings capture distributional information because the model is forced to encode it. To predict that &ldquo;food&rdquo; appears in the context of &ldquo;dog,&rdquo; the model must encode something about &ldquo;dog&rdquo; that makes it predict food-related words. That something, compressed into a $d$-dimensional vector, is the word&rsquo;s distributional fingerprint.</p>
+<p>Words that appear in similar contexts will end up with similar vectors because they must predict similar sets of context words. The model cannot afford to give &ldquo;cat&rdquo; and &ldquo;dog&rdquo; very different vectors if they appear in nearly identical contexts - it would have to learn separate prediction functions for nearly identical problems.</p>
+<p>The reason word arithmetic works is deeper. Consider the relationship &ldquo;is the capital of&rdquo;: Paris is to France as Berlin is to Germany. In the training corpus, &ldquo;Paris&rdquo; appears with &ldquo;France&rdquo; in many of the same syntactic patterns as &ldquo;Berlin&rdquo; appears with &ldquo;Germany&rdquo; (&ldquo;the capital of France,&rdquo; &ldquo;fly to Paris from France,&rdquo; etc.). These similar syntactic relationships push the vector offsets to be similar: $v_{\text{Paris}} - v_{\text{France}} \approx v_{\text{Berlin}} - v_{\text{Germany}}$.</p>
+<p>Analogical relationships become linear transformations because analogies are encoded as consistent syntactic patterns in text, and syntactic patterns produce consistent distributional patterns, and distributional patterns get compressed into consistent vector offsets.</p>
+<hr>
+<h2 id=glove-global-co-occurrence-statistics>GloVe: Global Co-occurrence Statistics</h2>
+<p>Word2Vec uses local context windows: it sees a narrow window around each word. GloVe (Global Vectors, Pennington et al. 2014) uses global statistics: the full word-word co-occurrence matrix across the corpus.</p>
+<p>Let $X_{ij}$ be the number of times word $j$ appears in the context of word $i$ across the entire corpus. GloVe trains word vectors $w_i$ and context vectors $\tilde{w}_j$ by minimizing:</p>
+<p>$$\mathcal{L} = \sum_{i,j=1}^{|V|} f(X_{ij})\left(w_i^\top \tilde{w}_j + b_i + \tilde{b}<em>j - \log X</em>{ij}\right)^2,$$</p>
+<p>where $f(X_{ij})$ is a weighting function that down-weights very frequent co-occurrences (common words like &ldquo;the&rdquo; and &ldquo;is&rdquo; co-occur with everything but are not informative). The target is $\log X_{ij}$: the model tries to make the dot product of two word vectors match the log co-occurrence count.</p>
+<p>GloVe has a cleaner mathematical story: the dot product of word vectors directly models log co-occurrence ratios, and this can be derived from a low-rank factorization of the co-occurrence matrix. In practice, GloVe and Word2Vec produce embeddings of similar quality; the choice often comes down to the corpus and computational budget.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Word embeddings are not semantic. They are distributional. &ldquo;Good&rdquo; and &ldquo;bad&rdquo; often have similar embeddings - not because they mean the same thing, but because they appear in identical syntactic environments: &ldquo;the movie was ___,&rdquo; &ldquo;it was really ___,&rdquo; &ldquo;I feel ___.&rdquo; Distributional similarity is a proxy for semantic similarity that works well on average but fails badly for antonyms, negation, and sarcasm. When you use word embeddings for a downstream task, you are importing this limitation. If your task requires distinguishing good from bad, you need a model that goes beyond distributional co-occurrence - which is exactly what contextual language models (BERT, GPT) provide.</p>
+</blockquote>
+<hr>
+<h2 id=subword-embeddings>Subword Embeddings</h2>
+<p>Word2Vec and GloVe assign one vector per word. This creates problems:</p>
+<ul>
+<li>Rare words have very few training examples; their embeddings are noisy.</li>
+<li>Words not seen during training (out-of-vocabulary words) have no embedding at all.</li>
+<li>Morphological relationships are not captured: &ldquo;unhappy,&rdquo; &ldquo;happiness,&rdquo; &ldquo;happy,&rdquo; and &ldquo;happily&rdquo; each get separate vectors with no forced relationship.</li>
+</ul>
+<p><strong>Byte-pair encoding (BPE)</strong> addresses this by splitting words into subword units. Start with individual characters; repeatedly merge the most frequent adjacent pair into a new subword unit. After enough merges, frequent words become single tokens, rare words are split into subwords, and unknown words are split all the way to character sequences.</p>
+<p>FastText (Bojanowski et al. 2017) takes this further: each word is represented as the sum of embeddings of its character $n$-grams. The embedding of &ldquo;unhappy&rdquo; is influenced by the embeddings of &ldquo;un&rdquo;, &ldquo;happy&rdquo;, &ldquo;hap&rdquo;, &ldquo;app&rdquo;, etc. This allows morphological information to be shared across words, and handles rare and unknown words gracefully.</p>
+<p>SentencePiece is a language-independent subword tokenization algorithm used in many modern models (including T5 and multilingual BERT) that learns subword units from raw text without relying on whitespace.</p>
+<hr>
+<h2 id=static-vs-contextual-embeddings>Static vs. Contextual Embeddings</h2>
+<p>The fundamental limitation of Word2Vec, GloVe, and FastText is that each word gets exactly one vector. The word &ldquo;bank&rdquo; has one embedding, whether it appears as a riverbank or a financial institution. The word &ldquo;light&rdquo; has one embedding whether it means a physical lamp or &ldquo;not heavy.&rdquo; These are completely different senses that happen to share a spelling.</p>
+<p>Contextual language models solve this. BERT, GPT, and their descendants produce a different embedding for each occurrence of a word, based on the full surrounding context. The embedding of &ldquo;bank&rdquo; in &ldquo;the river bank was muddy&rdquo; is different from its embedding in &ldquo;the bank approved my mortgage.&rdquo; These models don&rsquo;t look up a fixed vector; they compute a vector by running the full network over the context.</p>
+<p>This is the key advance that makes modern NLP systems so much more capable. Word2Vec embeddings are a useful baseline and a good way to understand the distributional hypothesis, but for any serious application you will want contextual embeddings.</p>
+<hr>
+<h2 id=training-your-own-vs-using-pretrained>Training Your Own vs. Using Pretrained</h2>
+<p>For most tasks, you should use pretrained embeddings rather than training from scratch. Word2Vec and GloVe embeddings trained on large corpora (Google News, Common Crawl) are publicly available. They encode knowledge from billions of words of text and generalize well to many downstream tasks.</p>
+<p>Training from scratch makes sense when:</p>
+<ul>
+<li>Your domain is highly specialized (medical, legal, code) and standard corpora are not representative.</li>
+<li>Your corpus is large enough to support good estimation (hundreds of millions of tokens).</li>
+<li>You need subword-level representations that standard pretrained embeddings don&rsquo;t provide.</li>
+</ul>
+<p>In most settings, pretrained embeddings as initialization, fine-tuned on your downstream task, outperform both random initialization and frozen pretrained embeddings.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Key Idea</th>
+<th>Input</th>
+<th>Global Stats?</th>
+<th>OOV Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One-hot</td>
+<td>Index encoding</td>
+<td>Word</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Word2Vec</td>
+<td>Predict context from word</td>
+<td>Word</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>GloVe</td>
+<td>Factorize co-occurrence matrix</td>
+<td>Word</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>FastText</td>
+<td>Sum of character n-gram vectors</td>
+<td>Subword</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>BPE/SentencePiece</td>
+<td>Subword tokenization</td>
+<td>Subword</td>
+<td>Varies</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>BERT/GPT</td>
+<td>Context-dependent embeddings</td>
+<td>Token</td>
+<td>Yes (via pretraining)</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<p>Word embeddings are the bridge between raw text and the mathematical operations of machine learning. They transform the question &ldquo;what is a word?&rdquo; into &ldquo;what does this word predict, and what predicts it?&rdquo; - a distributional question that is answerable from data. The surprising finding is that this distributional approach, applied at scale, recovers much of the structure we associate with meaning: analogies, synonymy, syntactic relationships.</p>
+<p>The limitation is real: distributional similarity is not semantic similarity, and context matters. That limitation is what drove the field from static embeddings to contextual ones. But the intuition from word embeddings - that linguistic meaning can be encoded in geometric structure - carries through to every modern language model.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/recurrent-neural-networks/>Recurrent Neural Networks</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

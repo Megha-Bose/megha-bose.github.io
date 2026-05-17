@@ -1,0 +1,206 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Parallelism at Scale // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Parallelism at Scale">
+<meta name=twitter:description content="Prerequisite: Real-Time Systems | GPU vs TPU Architectures
+ Count Every Word in Wikipedia Here is a concrete problem. Wikipedia is roughly 22 GB of text. You need to count the frequency of every word. You have 2 hours and 1,000 machines. How do you split the work?
+The naive answer - read the whole thing on one machine - takes several hours even with fast I/O, and one machine doesn&rsquo;t have 2 hours.">
+<meta property="og:title" content="Parallelism at Scale">
+<meta property="og:description" content="Prerequisite: Real-Time Systems | GPU vs TPU Architectures
+ Count Every Word in Wikipedia Here is a concrete problem. Wikipedia is roughly 22 GB of text. You need to count the frequency of every word. You have 2 hours and 1,000 machines. How do you split the work?
+The naive answer - read the whole thing on one machine - takes several hours even with fast I/O, and one machine doesn&rsquo;t have 2 hours.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/parallelism-at-scale/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Parallelism at Scale</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+13 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/real-time-systems/>Real-Time Systems</a> | <a href=/posts/gpu-vs-tpu-architectures/>GPU vs TPU Architectures</a></p>
+<hr>
+<h2 id=count-every-word-in-wikipedia>Count Every Word in Wikipedia</h2>
+<p>Here is a concrete problem. Wikipedia is roughly 22 GB of text. You need to count the frequency of every word. You have 2 hours and 1,000 machines. How do you split the work?</p>
+<p>The naive answer - read the whole thing on one machine - takes several hours even with fast I/O, and one machine doesn&rsquo;t have 2 hours. You need to parallelize. But parallelizing isn&rsquo;t free: if each machine counts words independently and reports results, you have 1,000 partial counts that still need to be combined. How do you merge them? Who coordinates the merge? What happens if three machines crash midway?</p>
+<p>This problem - how to apply computation to data that is too large to fit on one machine, reliably, at scale - is the fundamental problem of distributed computing. Google&rsquo;s 2004 MapReduce paper was the first widely adopted answer. Everything since is a variation on the same theme.</p>
+<h2 id=the-mapreduce-insight>The MapReduce Insight</h2>
+<p>The Google MapReduce paper (Dean and Ghemawat, 2004) made a specific observation: a huge fraction of large-scale data processing can be decomposed into two operations.</p>
+<p><strong>Map</strong>: apply a function to each element of the input independently, producing zero or more key-value pairs. For word count: input is a line of text; output is one <code>(word, 1)</code> pair per word. Each mapper handles a chunk of input independently. No coordination needed.</p>
+<p><strong>Reduce</strong>: for each unique key, aggregate all the values associated with that key. For word count: for every unique word, sum all the <code>1</code>s. Each reducer handles one key (or a range of keys). No coordination needed - within a reducer.</p>
+<p>The brilliance is what happens in between. The <strong>shuffle</strong> phase collects all the output from all mappers and routes each key&rsquo;s values to the correct reducer. The MapReduce framework handles this automatically: sorting, partitioning, network transfer, and fault tolerance. The programmer writes map and reduce functions; the framework handles the rest.</p>
+<p>For word count:</p>
+<ol>
+<li>Split Wikipedia across 1,000 mappers. Each mapper reads its chunk and emits <code>(word, 1)</code> pairs.</li>
+<li>The framework shuffles: it sorts all intermediate <code>(word, 1)</code> pairs by key and routes each word&rsquo;s pairs to one reducer. All <code>(the, 1)</code> pairs go to the same reducer.</li>
+<li>Each reducer sums its values: <code>(the, 1), (the, 1), (the, 1)...</code> becomes <code>(the, 4,523,821)</code>.</li>
+</ol>
+<p>The programmer wrote roughly 10 lines of code. The framework handled fault tolerance (if a mapper crashes, re-run that task on another machine), data locality (try to run mappers on machines that already have the data), and the entire network transfer. This was genuinely revolutionary in 2004.</p>
+<h2 id=why-hadoop-lost-to-spark>Why Hadoop Lost to Spark</h2>
+<p>Hadoop was the open-source reimplementation of MapReduce that became the dominant big data platform from roughly 2008 to 2015. It worked. Thousands of organizations ran production Hadoop clusters. And then Spark came along and largely replaced it.</p>
+<p>The reason is disk. Hadoop MapReduce writes intermediate results to disk after every step. A pipeline with ten MapReduce stages - ETL, filtering, aggregation, joining, more aggregation - writes to disk ten times and reads from disk ten times. Disk I/O is slow. The latency of a complex Hadoop job was measured in hours.</p>
+<p><strong>Apache Spark</strong> (developed at UC Berkeley AMPLab, 2009-2012) asked: what if the intermediate results live in memory instead? The <strong>Resilient Distributed Dataset (RDD)</strong> is Spark&rsquo;s core abstraction: a distributed, immutable collection partitioned across a cluster, computed lazily. Intermediate RDDs live in memory; only the final output hits disk. For iterative algorithms - machine learning, graph algorithms, anything that processes the same data repeatedly - this makes Spark 10-100x faster than Hadoop MapReduce.</p>
+<p>Spark also introduced a richer API. MapReduce has two operations. Spark has <code>map</code>, <code>filter</code>, <code>flatMap</code>, <code>groupByKey</code>, <code>reduceByKey</code>, <code>join</code>, <code>union</code>, <code>sort</code>, and dozens more, composable in arbitrary pipelines. The Spark SQL interface allows analysts to write SQL and get distributed execution automatically. DataFrame and Dataset APIs added columnar processing with schema awareness.</p>
+<p>Hadoop didn&rsquo;t die. HDFS (the Hadoop Distributed File System) is still the storage layer for many Spark clusters. But Hadoop MapReduce as a compute engine is effectively obsolete.</p>
+<h2 id=the-shuffle-where-distributed-computing-gets-hard>The Shuffle: Where Distributed Computing Gets Hard</h2>
+<p>The shuffle is the most expensive operation in distributed data processing, and understanding why is essential for diagnosing performance problems.</p>
+<p>After the map phase, intermediate data exists on each mapper&rsquo;s local disk. The reduce phase needs all pairs with the same key on the same machine. This requires network transfer of potentially all intermediate data. If your mappers produce 1 TB of intermediate data and you have 1,000 reducers, each reducer pulls 1 GB over the network on average.</p>
+<p>The fundamental problem: <strong>network is the bottleneck</strong>. A typical cluster has 10–25 Gbps per node, but the aggregate shuffle traffic across all nodes can saturate the network fabric. A cross-datacenter shuffle is worse by orders of magnitude - which is why distributed compute jobs should almost never span availability zones, let alone regions.</p>
+<p><strong>Data skew</strong> makes the shuffle catastrophic. If 30% of your records have <code>key = "USA"</code> and each unique key goes to one reducer, the USA reducer gets 300x more data than average. The entire job waits for that one reducer. This is called the straggler problem. Solutions include salting (append a random suffix to hot keys and split the reduce), pre-aggregation in the map phase (reduce locally before shuffling), and manual repartitioning.</p>
+<p>In Spark specifically, the shuffle partition count (<code>spark.sql.shuffle.partitions</code>, defaulting to 200) is one of the most important tuning parameters. Too few partitions: each is large and the shuffle is slow. Too many partitions: overhead from task scheduling and small file problems. The right value depends on your data volume and cluster size, and getting it wrong by a factor of 10 in either direction can make a job run 5x slower.</p>
+<h2 id=data-parallelism-vs-task-parallelism>Data Parallelism vs. Task Parallelism</h2>
+<p><strong>Data parallelism</strong> applies the same operation to different chunks of data simultaneously. Word count is data parallelism: the map function is identical on every machine; only the data differs. This is also how distributed ML training works: each GPU processes a different batch, all running the same forward-backward pass. Workers rarely need to coordinate.</p>
+<p><strong>Task parallelism</strong> runs different operations concurrently. A web server handling one request that queries a database while another request fetches from a cache is task parallelism. The tasks are heterogeneous; coordination is the challenge, but the coordination points are predictable (request boundaries).</p>
+<p><strong>Pipeline parallelism</strong> chains stages like an assembly line. Stage 1 preprocesses data and hands it to Stage 2 for feature extraction, which hands it to Stage 3 for inference. At steady state, all stages run concurrently on different items. Pipeline parallelism is a natural fit for streaming processing and for large model inference where the model is split across layers.</p>
+<p><strong>Embarrassingly parallel</strong> workloads - where workers never need to coordinate - scale linearly. Each additional machine adds proportional capacity. Rendering frames in a movie is embarrassingly parallel. Amdahl&rsquo;s Law captures the fundamental limit: if a fraction $p$ of the computation is parallelizable, the maximum speedup across $n$ workers is:</p>
+<p>$$S(n) \leq \frac{1}{(1 - p) + \frac{p}{n}}$$</p>
+<p>If 10% of the computation is sequential, the maximum possible speedup is 10x, regardless of how many machines you add. The sequential fraction is the ceiling. Most real distributed systems have a sequential fraction somewhere between 5% and 20%, which puts their practical scaling ceiling between 5x and 20x - sobering when you&rsquo;re provisioning 100-node clusters.</p>
+<h2 id=cloud-managed-distributed-computing>Cloud-Managed Distributed Computing</h2>
+<p>Running your own Hadoop or Spark cluster is operational work that most teams don&rsquo;t need to do. The cloud providers offer managed equivalents that remove the cluster management burden while retaining the programming model.</p>
+<p><strong>AWS EMR</strong> (Elastic MapReduce) runs managed Spark, Hive, and Hadoop clusters on EC2. You specify the instance types and count; EMR handles cluster bootstrapping, configuration, and HDFS or S3-backed storage. Spot instances (unused EC2 capacity available at 60-90% discount) are commonly used for EMR workloads because jobs can be checkpointed and restarted. EMR Serverless removes even the cluster provisioning step: you submit a Spark job and the service handles capacity automatically.</p>
+<p><strong>AWS Glue</strong> is serverless Spark with additional ETL tooling: a data catalog, a visual job editor, and native integration with S3, Redshift, and RDS. Glue is the right choice for straightforward ETL pipelines that fit the Spark model. It&rsquo;s more expensive per compute-hour than EMR but eliminates all cluster management.</p>
+<p><strong>BigQuery</strong> (GCP) is a different philosophy: instead of bringing your Spark code to managed infrastructure, you write SQL and the service executes it on Google&rsquo;s <strong>Colossus</strong> distributed file system using a massive-scale query execution engine (Dremel). There are no clusters, no tuning parameters exposed to users, and no shuffle partitions to configure. You pay per byte scanned. For SQL-expressible analytics at scale, BigQuery has made explicit Spark code unnecessary for many use cases.</p>
+<p><strong>Athena</strong> (AWS) is the S3-based equivalent: SQL over data in S3, using Presto under the hood. Like BigQuery, it&rsquo;s serverless and pay-per-query.</p>
+<p>The trend is clear: for analytics workloads that fit a SQL model, serverless SQL (BigQuery, Athena) has replaced Spark for many teams. Spark&rsquo;s value proposition is strongest for ML pipelines, complex graph algorithms, and workloads that can&rsquo;t be expressed in SQL.</p>
+<h2 id=mapreduce-and-ml-the-connection>MapReduce and ML: The Connection</h2>
+<p>Distributed ML training is MapReduce applied to gradient computation.</p>
+<p>In <strong>synchronous data parallelism</strong>, the model is replicated on each GPU (or machine). Each replica processes a different shard of the training batch, computes the forward pass and the gradient. Then an <strong>AllReduce</strong> operation aggregates gradients across all replicas - each device sends its gradients and receives the global sum. Each replica updates its weights identically. The model stays synchronized.</p>
+<p>The AllReduce is the reduce step of MapReduce. The map step is the per-device gradient computation. The &ldquo;shuffle&rdquo; is the gradient communication - and like the Spark shuffle, it can be the bottleneck at scale.</p>
+<p>At the scale of GPT-3 or larger models, gradient communication alone takes a significant fraction of training time. This drives the investment in high-bandwidth interconnects (NVLink within a node, InfiniBand between nodes, Google&rsquo;s proprietary TPU interconnect within a pod). It also drives the algorithmic work on gradient compression, asynchronous SGD, and communication-efficient distributed training schemes.</p>
+<h2 id=spark-in-practice-where-it-gets-complex>Spark in Practice: Where It Gets Complex</h2>
+<p>Spark is not simple to tune well. The common failure modes:</p>
+<p><strong>Executor memory configuration</strong> is where most newcomers struggle. Each Spark executor has a fixed memory budget divided between execution (shuffle buffers, sort buffers, aggregation hash tables) and storage (cached RDDs). Getting the ratio wrong causes either excessive spilling to disk (OOM on execution) or cache thrashing (the data you cached gets evicted before you need it).</p>
+<p><strong>Skew</strong> shows up constantly in real data. Any groupBy or join operation on a column with a highly non-uniform distribution - customer IDs where 1% of customers generate 50% of transactions - will produce skewed partitions. The standard debugging signal is a Spark UI that shows 999 tasks completing in 30 seconds and 1 task running for 45 minutes.</p>
+<p><strong>Small file problems</strong> are the inverse of skew. If your upstream data is stored as millions of tiny files in S3, each Spark task processes one file, and the task overhead dominates the compute time. Coalescing upstream data (combining small files into larger ones before processing) is often the most impactful optimization.</p>
+<p><strong>Structured Streaming</strong> extends Spark&rsquo;s batch model to streaming data. A streaming query processes micro-batches of data from Kafka or Kinesis and maintains state across batches. The state management (for windowed aggregations, for example) is sophisticated, but watermarking semantics for late data are subtle and easy to get wrong.</p>
+<h2 id=ray-the-python-native-alternative>Ray: The Python-Native Alternative</h2>
+<p><strong>Ray</strong> is the most significant alternative to Spark for ML workloads, developed at the same UC Berkeley AMPLab that produced Spark. Where Spark&rsquo;s origins are in the JVM big-data world, Ray is Python-native from the start.</p>
+<p>The core model: a <code>@ray.remote</code> decorator turns a Python function into a distributed task, and a <code>@ray.remote</code> class into an actor with persistent state. Ray&rsquo;s scheduler handles placement, fault tolerance, and memory management across the cluster.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> ray
+
+ray<span style=color:#f92672>.</span>init()
+
+<span style=color:#a6e22e>@ray</span><span style=color:#f92672>.</span>remote
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>train_model</span>(config: dict) <span style=color:#f92672>-&gt;</span> float:
+    model <span style=color:#f92672>=</span> build_model(config)
+    <span style=color:#66d9ef>return</span> cross_validate(model)
+
+<span style=color:#75715e># Launch 100 hyperparameter search jobs in parallel</span>
+configs <span style=color:#f92672>=</span> generate_search_space(n<span style=color:#f92672>=</span><span style=color:#ae81ff>100</span>)
+futures <span style=color:#f92672>=</span> [train_model<span style=color:#f92672>.</span>remote(cfg) <span style=color:#66d9ef>for</span> cfg <span style=color:#f92672>in</span> configs]
+results <span style=color:#f92672>=</span> ray<span style=color:#f92672>.</span>get(futures)
+</code></pre></div><p><strong>Ray Tune</strong> builds hyperparameter search on top of Ray, with support for Bayesian optimization, Hyperband early stopping, and distributed trial execution. <strong>Ray Train</strong> provides distributed ML training abstractions for PyTorch and TensorFlow. <strong>Ray Data</strong> handles distributed data preprocessing pipelines with deep integration with PyArrow and Parquet.</p>
+<p>Where Spark excels at SQL-expressible batch analytics, Ray excels at Python-native ML pipelines: data preprocessing into model training into hyperparameter search into deployment, all in one framework, all in Python, without requiring Spark&rsquo;s JVM or its SQL mental model.</p>
+<p>On AWS, Ray clusters run on EC2 (often using the Ray Cluster Launcher or KubeRay on EKS). Anyscale provides a managed Ray platform. For ML workloads that currently use Spark for preprocessing before training on a separate GPU cluster, Ray&rsquo;s unified model is often more efficient.</p>
+<h2 id=when-parallelism-hurts>When Parallelism Hurts</h2>
+<p>Not every problem benefits from parallelization. The coordination overhead can exceed the compute savings.</p>
+<p><strong>False sharing</strong> in shared-memory parallelism: two cores write to different variables that share a cache line (typically 64 bytes). Each write invalidates the other&rsquo;s cache line. The cores thrash even though they&rsquo;re logically independent. Padding data structures to cache line boundaries eliminates false sharing, at the cost of memory.</p>
+<p><strong>Coordination-heavy workloads</strong> - where workers frequently need results from each other before proceeding - are poor fits for distributed computing. Iterative graph algorithms where every node&rsquo;s next value depends on all its neighbors' current values require a global synchronization step per iteration. This is the AllReduce pattern, and it works, but the synchronization cost scales with cluster size.</p>
+<p><strong>Stragglers</strong> are unavoidable at scale. In a cluster of 1,000 machines, at any given time, some machines are slower than average due to network contention, garbage collection, noisy neighbors in cloud environments, or hardware wear. A job that waits for all workers to complete before moving to the next stage is limited by its slowest worker. At 1,000 machines, the slowest machine is very slow. Speculative execution (re-running slow tasks on other machines and using whichever completes first) is one mitigation; designing jobs to tolerate stragglers is another.</p>
+<p><strong>Data locality</strong> matters more at scale. Moving computation to the data is faster than moving data to the computation. A Spark job that reads 10 TB from S3 into a cluster that&rsquo;s geographically distant from the S3 bucket pays cross-region data transfer costs (both in dollars and in latency) that can dominate the compute cost. Running EMR in the same region as the S3 bucket is the baseline; running it in the same AZ is better.</p>
+<h2 id=future-serverless-and-ray>Future: Serverless and Ray</h2>
+<p>The trajectory for distributed compute is toward less visibility into infrastructure. BigQuery and Athena have already made cluster management invisible for SQL workloads. The same trajectory is underway for Spark: EMR Serverless and Glue remove cluster management for most ETL teams.</p>
+<p>For ML, the consolidation is happening around Ray. The combination of Ray Data for preprocessing, Ray Train for distributed training, and Ray Serve for model serving is increasingly the standard ML platform architecture on AWS and GCP.</p>
+<p>The fundamental trade-off has not changed: the shuffle is still the bottleneck; Amdahl&rsquo;s Law still applies; data skew still causes stragglers. Understanding these limits makes you a better user of any distributed computing framework, regardless of what the framework calls itself.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Paradigm</th>
+<th>Best For</th>
+<th>Bottleneck</th>
+<th>Cloud Option</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MapReduce (Hadoop)</td>
+<td>One-pass batch ETL</td>
+<td>Disk I/O between stages</td>
+<td>AWS EMR (legacy)</td>
+</tr>
+<tr>
+<td>Spark</td>
+<td>Iterative batch, complex ETL, ML preprocessing</td>
+<td>Shuffle, skew, memory tuning</td>
+<td>AWS EMR, AWS Glue, Databricks</td>
+</tr>
+<tr>
+<td>Serverless SQL (BigQuery, Athena)</td>
+<td>SQL-expressible analytics</td>
+<td>Query cost at large data volumes</td>
+<td>BigQuery (GCP), Athena (AWS)</td>
+</tr>
+<tr>
+<td>Ray</td>
+<td>Python-native ML pipelines, hyperparameter search</td>
+<td>Actor state management, scheduler overhead</td>
+<td>Anyscale, KubeRay on EKS</td>
+</tr>
+<tr>
+<td>Data parallelism (AllReduce)</td>
+<td>Distributed ML training</td>
+<td>Gradient communication bandwidth</td>
+<td>p4d/p5 EC2, TPU pods</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/gpu-vs-tpu-architectures/>GPU vs TPU Architectures</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Computational Cryptography: OWF, PRG, and Hardcore Predicates // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Computational Cryptography: OWF, PRG, and Hardcore Predicates">
+<meta name=twitter:description content="Prerequisites: Classical Cryptography, Modular Arithmetic
+ Perfect security requires keys as long as messages - a condition that makes it unusable in practice. The resolution is a conceptual shift: instead of demanding security against all-powerful adversaries, demand security only against efficient adversaries. An adversary running in polynomial time cannot break the scheme except with negligible probability. This sounds weaker, but it is sufficient for every practical purpose, and it enables encryption with short keys.">
+<meta property="og:title" content="Computational Cryptography: OWF, PRG, and Hardcore Predicates">
+<meta property="og:description" content="Prerequisites: Classical Cryptography, Modular Arithmetic
+ Perfect security requires keys as long as messages - a condition that makes it unusable in practice. The resolution is a conceptual shift: instead of demanding security against all-powerful adversaries, demand security only against efficient adversaries. An adversary running in polynomial time cannot break the scheme except with negligible probability. This sounds weaker, but it is sufficient for every practical purpose, and it enables encryption with short keys.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/computational-cryptography/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-07-05T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-07-05T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Computational Cryptography: OWF, PRG, and Hardcore Predicates</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jul 5, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+7 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<hr>
+<p><strong>Prerequisites:</strong> <a href=/posts/math/classical-cryptography/>Classical Cryptography</a>, <a href=/posts/math/modular-arithmetic/>Modular Arithmetic</a></p>
+<hr>
+<p>Perfect security requires keys as long as messages - a condition that makes it unusable in practice. The resolution is a conceptual shift: instead of demanding security against all-powerful adversaries, demand security only against <em>efficient</em> adversaries. An adversary running in polynomial time cannot break the scheme except with negligible probability. This sounds weaker, but it is sufficient for every practical purpose, and it enables encryption with short keys. The entire edifice rests on a single unproven but widely believed assumption: that one-way functions exist.</p>
+<p>The shift from information-theoretic to computational security is not a concession - it is a reframing that unlocks everything. Shannon&rsquo;s perfect security tells us that a one-time pad with a key as long as the message is unbreakable. But that insight, while mathematically clean, offers no path forward for real systems. Computational security offers a different bargain: accept that an adversary with unlimited time could eventually break the scheme, but ensure that no efficient adversary can break it within the lifetime of the universe. This is not a gap in the theory; it is the theory becoming useful.</p>
+<p>The key ingredient that makes this work is asymmetry. Some functions are easy to compute but hard to invert. Multiplying two large primes takes milliseconds; factoring their product is believed to take longer than the age of the universe with any known algorithm. Computational cryptography is the systematic exploitation of this asymmetry. What follows is the formal structure that makes that intuition precise.</p>
+<hr>
+<h2 id=two-relaxations>Two Relaxations</h2>
+<p>Shannon&rsquo;s perfect security is defined for computationally unbounded adversaries. Computational security makes two relaxations:</p>
+<ol>
+<li><strong>Efficient adversaries only.</strong> The adversary is restricted to probabilistic polynomial-time (PPT) algorithms. This models realistic attackers with bounded resources.</li>
+<li><strong>Negligible advantage.</strong> The adversary&rsquo;s success probability may exceed random guessing, but only by a negligible amount - a function that shrinks faster than any inverse polynomial.</li>
+</ol>
+<p>These relaxations are not arbitrary: they exactly capture what a realistic adversary can do, and they allow key lengths $n$ much shorter than the message length.</p>
+<hr>
+<h2 id=negligible-functions>Negligible Functions</h2>
+<p>A function $\varepsilon: \mathbb{N} \to \mathbb{R}^{\geq 0}$ is <strong>negligible</strong> if for every polynomial $p(\cdot)$, there exists $N$ such that for all $n > N$:
+$$\varepsilon(n) &lt; \frac{1}{p(n)}$$
+It shrinks faster than any inverse polynomial. Examples:</p>
+<ul>
+<li>$2^{-n}$ - negligible (shrinks exponentially)</li>
+<li>$n^{-100}$ - not negligible (inverse polynomial)</li>
+<li>$2^{-\sqrt{n}}$ - negligible (sub-exponential decay)</li>
+</ul>
+<p><strong>Closure properties.</strong> If $\varepsilon_1, \varepsilon_2$ are negligible and $p$ is a polynomial:</p>
+<ul>
+<li>$\varepsilon_1 + \varepsilon_2$ is negligible (finite sums of negligible are negligible)</li>
+<li>$p(n) \cdot \varepsilon_1(n)$ is negligible (polynomial factor does not rescue a negligible function)</li>
+</ul>
+<p><strong>Proof (sum is negligible).</strong> For any polynomial $q(n)$, we need $\varepsilon_1(n) + \varepsilon_2(n) &lt; 1/q(n)$ for large $n$. Since $\varepsilon_1$ is negligible, it is eventually $&lt; 1/(2q(n))$; same for $\varepsilon_2$. For large enough $n$, both hold simultaneously, so the sum is $&lt; 1/q(n)$. $\square$</p>
+<p>The security parameter $n$ is the key length (or the input length to Gen). All security guarantees are stated asymptotically in $n$.</p>
+<hr>
+<h2 id=one-way-functions>One-Way Functions</h2>
+<p>A function $f: {0,1}^* \to {0,1}^*$ is a <strong>one-way function (OWF)</strong> if:</p>
+<ol>
+<li><strong>Easy to compute:</strong> there is a polynomial-time algorithm computing $f(x)$.</li>
+<li><strong>Hard to invert:</strong> for every PPT algorithm $A$ and all polynomials $p$, for large enough $n$:
+$$\Pr_{x \leftarrow {0,1}^n}[A(f(x)) \in f^{-1}(f(x))] &lt; \frac{1}{p(n)}$$
+Any PPT inverter succeeds with negligible probability over a random input.</li>
+</ol>
+<p><strong>Candidate OWFs.</strong> No function is proven to be one-way (this would imply P $\neq$ NP), but strong candidates exist:</p>
+<ul>
+<li><strong>Discrete logarithm problem (DLP):</strong> given a cyclic group $\mathbb{G}$ of prime order $q$ with generator $g$, and $y = g^x$, find $x$. $f: x \mapsto g^x$ is conjectured to be one-way.</li>
+<li><strong>Integer factoring:</strong> given $N = pq$ (product of two large primes), find $p$ and $q$. $f: (p,q) \mapsto pq$ is conjectured one-way.</li>
+<li><strong>Subset sum:</strong> given $a_1, \ldots, a_n, t$, decide if some subset sums to $t$. Average-case hard.</li>
+</ul>
+<p><strong>OWF vs. Trapdoor OWF.</strong> A <strong>trapdoor OWF</strong> is a OWF that is easy to invert given a secret trapdoor $td$. RSA is the canonical example: $f(x) = x^e \bmod N$ is hard to invert without the factorization of $N$ (the trapdoor), but easy to invert with it ($x = c^d \bmod N$ where $d = e^{-1} \bmod \phi(N)$). Trapdoor OWFs enable public key cryptography; plain OWFs are sufficient for symmetric key constructions.</p>
+<hr>
+<h2 id=hardcore-predicates>Hardcore Predicates</h2>
+<p>Even if $f(x)$ hides $x$ completely, it might leak some bits. For example, if $f(x) = g^x$ in $\mathbb{Z}_p^*$, does $f(x)$ leak the least significant bit of $x$?</p>
+<p>A <strong>hardcore predicate</strong> of $f$ is a bit $b(x)$ that is computationally indistinguishable from a random bit given $f(x)$: for all PPT $A$:
+$$\Pr[A(f(x)) = b(x)] \leq \frac{1}{2} + \varepsilon(n)$$
+for negligible $\varepsilon$. Even knowing $f(x)$, no efficient algorithm can predict $b(x)$ better than a coin flip.</p>
+<p><strong>The Goldreich-Levin theorem:</strong> for any OWF $f$, the inner product $b(x, r) = \langle x, r \rangle = \bigoplus_{i=1}^n x_i r_i$ is a hardcore predicate of $g(x, r) = (f(x), r)$. This is constructive: any OWF can be augmented to have a proven hardcore predicate.</p>
+<p><strong>DLP and LSB/MSB.</strong> For $f(x) = g^x$ in $\mathbb{Z}_p^*$:</p>
+<ul>
+<li><strong>LSB:</strong> The least significant bit of $x$ can be shown to be a hardcore predicate of the DLP function - recovering LSB is as hard as solving DLP in its entirety (a reduction shows that an LSB oracle solves DLP).</li>
+<li><strong>MSB:</strong> Similarly, the most significant bit is hard to recover. The proof uses a polynomial interpolation argument: if you could recover MSB, you could solve DLP by binary search.</li>
+</ul>
+<p>These results mean that the DLP function hides individual bits completely - you cannot learn even a single bit of $x$ from $g^x$ more easily than solving the whole discrete log.</p>
+<hr>
+<h2 id=pseudorandom-generators>Pseudorandom Generators</h2>
+<p>A <strong>pseudorandom generator (PRG)</strong> is a deterministic, polynomial-time computable function $G: {0,1}^n \to {0,1}^{\ell(n)}$ with $\ell(n) > n$ (it <em>stretches</em> the input) such that:
+$${G(U_n)} \approx_c {U_{\ell(n)}}$$
+The output of $G$ on a uniform $n$-bit seed is computationally indistinguishable from a uniform $\ell(n)$-bit string. No PPT distinguisher can tell $G$&rsquo;s output apart from true randomness.</p>
+<p><strong>Why we need this.</strong> A PRG lets us expand a short secret key (the seed) into a long pseudorandom string, which can be XOR&rsquo;d with a message like a OTP - but with a short key. This gives computationally secure stream encryption.</p>
+<hr>
+<h2 id=from-owf--hcp-to-prg>From OWF + HCP to PRG</h2>
+<p><strong>Theorem (Blum-Micali, Yao).</strong> If OWFs exist, then PRGs exist.</p>
+<p>The construction uses a hardcore predicate. Let $f$ be a OWF with hardcore predicate $b$. Define:
+$$G(s) = b(s) | b(f(s)) | b(f^2(s)) | \cdots | b(f^{n-1}(s)), \quad f^i(s) = f(f(\cdots f(s)\cdots))$$
+Output one bit per application of $f$, using the hardcore predicate. Security: if any prefix of the output is distinguishable from random, we can recover the hardcore predicate of $f$ at some step - contradicting the HCP assumption.</p>
+<hr>
+<h2 id=extending-prgs>Extending PRGs</h2>
+<p><strong>From $n$ to $n+1$ bits.</strong> If $G: {0,1}^n \to {0,1}^{n+1}$ is a PRG, it is secure because any distinguisher for the $n+1$-bit output could be used to recover the seed or violate pseudorandomness.</p>
+<p><strong>From $n$ to $\ell(n)$ bits (arbitrary polynomial stretch).</strong> Apply the $n$-to-$n+1$ PRG repeatedly: use the first $n$ output bits as the new seed, output the last 1 bit. After $\ell(n)$ steps, we have $\ell(n)$ pseudorandom bits from an $n$-bit seed. Security reduces: a distinguisher for the $\ell(n)$-bit output implies a distinguisher for the $n+1$-bit output (by a hybrid argument - the distinguisher must succeed on some consecutive pair of hybrid distributions).</p>
+<p>The <strong>hybrid argument</strong> is the key technique: define $\ell(n)+1$ hybrid distributions $H_0, H_1, \ldots, H_{\ell(n)}$ where $H_i$ has $i$ truly random bits followed by $\ell(n)-i$ PRG-generated bits. $H_0$ is the PRG output; $H_{\ell(n)}$ is truly random. If a distinguisher tells $H_0$ from $H_{\ell(n)}$ with non-negligible probability, by averaging it must distinguish some adjacent $H_i$ from $H_{i+1}$ with non-negligible probability - but that adjacent pair differs only in one step of the $n$-to-$n+1$ PRG.</p>
+<hr>
+<h2 id=the-assumption-landscape>The Assumption Landscape</h2>
+<p>The hierarchy of assumptions:
+$$\text{OWF exists} \Longrightarrow \text{PRG exists} \Longrightarrow \text{stream cipher exists}$$
+$$\text{Trapdoor OWF exists} \Longrightarrow \text{public key encryption possible}$$</p>
+<p>OWFs are the minimal assumption for private-key cryptography. The existence of OWFs is equivalent to P $\neq$ NP in a certain average-case sense (though this connection is subtle - worst-case NP-hardness does not immediately give average-case hardness). State of the art: we have candidate OWFs (DLP, factoring, lattice problems) but no proof that any of them is actually one-way.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Negligible function</td>
+<td>Shrinks faster than any inverse polynomial</td>
+</tr>
+<tr>
+<td>OWF</td>
+<td>Easy to compute, hard to invert for PPT adversary</td>
+</tr>
+<tr>
+<td>Trapdoor OWF</td>
+<td>OWF invertible with secret trapdoor; enables PKC</td>
+</tr>
+<tr>
+<td>Hardcore predicate</td>
+<td>Bit hidden by the OWF output; formally: $\Pr[A(f(x))=b(x)] \leq 1/2 + \varepsilon$</td>
+</tr>
+<tr>
+<td>PRG</td>
+<td>Deterministic stretch: $n$-bit seed $\to$ $\ell(n)$ pseudorandom bits</td>
+</tr>
+<tr>
+<td>Blum-Micali</td>
+<td>OWF + HCP $\to$ PRG via iterated $f$</td>
+</tr>
+<tr>
+<td>Hybrid argument</td>
+<td>Key technique for extending PRG security to polynomial stretch</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/math/symmetric-encryption/>Symmetric Encryption</a></li>
+<li><a href=/posts/math/classical-cryptography/>Classical Cryptography</a></li>
+<li><a href=/posts/math/modular-arithmetic/>Modular Arithmetic</a></li>
+<li><a href=/posts/math/primality-testing/>Discrete Logarithm / Primality Testing</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

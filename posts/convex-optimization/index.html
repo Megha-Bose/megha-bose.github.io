@@ -1,0 +1,313 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Convex Optimization // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Convex Optimization">
+<meta name=twitter:description content="Prerequisites:
+ Convexity & Optimization Lagrange Multipliers & KKT Conditions   Here is a fact that sounds surprising at first: a large fraction of classical machine learning is convex optimization in disguise.
+Logistic regression - convex. Support vector machines - convex. Ridge regression - convex. LASSO - convex. Maximum likelihood estimation of a Gaussian mixture (with known covariances and fixed assignments) - convex. Most of probabilistic graphical model inference via variational methods - convex.">
+<meta property="og:title" content="Convex Optimization">
+<meta property="og:description" content="Prerequisites:
+ Convexity & Optimization Lagrange Multipliers & KKT Conditions   Here is a fact that sounds surprising at first: a large fraction of classical machine learning is convex optimization in disguise.
+Logistic regression - convex. Support vector machines - convex. Ridge regression - convex. LASSO - convex. Maximum likelihood estimation of a Gaussian mixture (with known covariances and fixed assignments) - convex. Most of probabilistic graphical model inference via variational methods - convex.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/convex-optimization/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Convex Optimization</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Dec 11, 2020
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+16 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/convexity-optimization/>Convexity & Optimization</a></li>
+<li><a href=/posts/lagrange-multipliers-kkt/>Lagrange Multipliers & KKT Conditions</a></li>
+</ul>
+<hr>
+<p>Here is a fact that sounds surprising at first: a large fraction of classical machine learning is convex optimization in disguise.</p>
+<p>Logistic regression - convex. Support vector machines - convex. Ridge regression - convex. LASSO - convex. Maximum likelihood estimation of a Gaussian mixture (with known covariances and fixed assignments) - convex. Most of probabilistic graphical model inference via variational methods - convex. Many of the most important algorithms in statistics and machine learning are, at their core, solving a convex optimization problem, even if this is not immediately apparent from the way they are described.</p>
+<p>Neural networks are not convex. But understanding convex optimization gives you the benchmark: you know what a reliably solvable problem looks like, you know what guarantees are available, and you know what you are giving up when you step into the non-convex world.</p>
+<hr>
+<h2 id=section-1-standard-form>Section 1: Standard Form</h2>
+<p>Every convex optimization problem can be written in a standard form that makes its structure explicit.</p>
+<p><strong>Standard form convex program:</strong></p>
+<p>$$\min_{x \in \mathbb{R}^n} f_0(x) \quad \text{subject to} \quad f_i(x) \leq 0 ; (i = 1, \ldots, m), \quad Ax = b.$$</p>
+<p>Three ingredients make this a convex program:</p>
+<ol>
+<li>The objective $f_0$ is convex.</li>
+<li>Each inequality constraint function $f_i$ is convex. (Convex functions satisfy $f_i(x) \leq 0$ on convex sets - the feasible region for each constraint is convex.)</li>
+<li>The equality constraints $Ax = b$ are affine. (Affine functions are simultaneously convex and concave.)</li>
+</ol>
+<p>The feasible set $\mathcal{F} = {x : f_i(x) \leq 0 \text{ for all } i, Ax = b}$ is the intersection of convex sets, hence convex. Combined with the convex objective: any local minimum is a global minimum.</p>
+<p>This may seem too restrictive. What problems actually fit this template? A large and important class.</p>
+<hr>
+<h2 id=section-2-a-hierarchy-of-problem-classes>Section 2: A Hierarchy of Problem Classes</h2>
+<p>Convex programs form a hierarchy from most restricted to most general. Each level has specialized algorithms that exploit the additional structure. Knowing which class a problem belongs to determines which tools to reach for.</p>
+<p><strong>Linear Programs (LP).</strong> Minimize a linear objective subject to linear inequality and equality constraints:</p>
+<p>$$\min_{x} c^T x \quad \text{subject to} \quad Ax \leq b, \quad Cx = d.$$</p>
+<p>The objective $f_0(x) = c^T x$ is linear (hence convex). The constraints $a_i^T x \leq b_i$ are linear inequality constraints. The feasible set is a <strong>polytope</strong> - the intersection of finitely many halfspaces, a convex polyhedron.</p>
+<p>The optimal solution of an LP always occurs at a vertex of the polytope (if a finite optimum exists). The Simplex method exploits this: it moves from vertex to vertex, decreasing the objective at each step, and terminates at the optimal vertex. Interior-point methods traverse the interior instead. Both run in polynomial time in theory; the simplex method is usually faster in practice.</p>
+<p>Linear programming is the backbone of operations research: resource allocation, transportation and network problems, production planning, diet problems, least-cost scheduling. The airline industry uses LP solvers constantly.</p>
+<p><strong>Quadratic Programs (QP).</strong> A quadratic (convex) objective, linear constraints:</p>
+<p>$$\min_{x} \frac{1}{2}x^T P x + q^T x + r \quad \text{subject to} \quad Gx \leq h, \quad Ax = b,$$</p>
+<p>where $P \succeq 0$ (positive semidefinite). The squared loss $|y - Xw|^2$ with linear constraints is a QP in $w$. The SVM (with the objective $\frac{1}{2}|w|^2$ and linear margin constraints) is a QP. Portfolio optimization (minimize variance $w^T \Sigma w$ subject to return $\mu^T w \geq r$ and budget $\sum w_i = 1$) is a QP.</p>
+<p>QPs are more expressive than LPs (the optimal solution is not necessarily at a vertex of the feasible polytope), and solvers are slower per problem, but still efficient.</p>
+<p><strong>Second-Order Cone Programs (SOCP).</strong> Allow constraints involving second-order (Euclidean) norms. More general than QP. Used in robust optimization (worst-case performance over an uncertainty set), antenna beam forming, and portfolio problems with transaction costs.</p>
+<p><strong>Semidefinite Programs (SDP).</strong> The most expressive standard convex class. Constraints can involve positive semidefinite matrix inequalities $X \succeq 0$. LPs, QPs, and SOCPs are all special cases of SDPs.</p>
+<p>SDPs arise in:</p>
+<ul>
+<li>Control theory (Lyapunov stability conditions)</li>
+<li>Combinatorial approximation (the Goemans-Williamson MAX-CUT relaxation achieves a 0.878 approximation ratio by relaxing an integer QP to an SDP)</li>
+<li>Sum-of-squares polynomial optimization (bounding the minimum of a polynomial)</li>
+<li>Matrix completion (nuclear norm minimization as a convex relaxation of rank minimization)</li>
+</ul>
+<p>The hierarchy matters computationally. LP is the fastest class - interior-point LP solvers handle millions of variables. SDP solvers are orders of magnitude slower - problems with more than a few thousand variables require specialized structure. Knowing your problem class is knowing your computational budget.</p>
+<hr>
+<h2 id=section-3-duality>Section 3: Duality</h2>
+<p>Every convex optimization problem has a companion - the dual problem. Understanding duality is understanding one of the deepest structural features of optimization.</p>
+<p><strong>Building the dual.</strong> Start with the primal:</p>
+<p>$$p^\ast = \min_x f_0(x) \quad \text{subject to} \quad f_i(x) \leq 0, ; Ax = b.$$</p>
+<p>Form the Lagrangian with dual variables $\lambda \geq 0$ (for inequality constraints) and $\nu$ (unconstrained, for equality constraints):</p>
+<p>$$\mathcal{L}(x, \lambda, \nu) = f_0(x) + \sum_{i=1}^m \lambda_i f_i(x) + \nu^T(Ax - b).$$</p>
+<p>The <strong>dual function</strong> minimizes the Lagrangian over $x$:</p>
+<p>$$g(\lambda, \nu) = \inf_x \mathcal{L}(x, \lambda, \nu).$$</p>
+<p><strong>Why $g(\lambda, \nu) \leq p^\ast$.</strong> For any feasible $x$ (satisfying all constraints) and any $\lambda \geq 0$:</p>
+<p>$$\mathcal{L}(x, \lambda, \nu) = f_0(x) + \underbrace{\sum_i \lambda_i f_i(x)}<em>{\leq 0 \text{ since } f_i \leq 0, \lambda_i \geq 0} + \underbrace{\nu^T(Ax-b)}</em>{= 0 \text{ since feasible}} \leq f_0(x).$$</p>
+<p>So $g(\lambda, \nu) = \inf_x \mathcal{L} \leq \mathcal{L}(x^\ast, \lambda, \nu) \leq f_0(x^\ast) = p^\ast$.</p>
+<p>The dual function provides a lower bound on the primal optimum for any choice of $\lambda \geq 0$ and $\nu$. The <strong>dual problem</strong> finds the best (tightest) lower bound:</p>
+<p>$$d^\ast = \max_{\lambda \geq 0, \nu} g(\lambda, \nu).$$</p>
+<p><strong>Weak duality</strong>: $d^\ast \leq p^\ast$. Always true.</p>
+<p><strong>Strong duality</strong>: $d^\ast = p^\ast$. Holds for convex problems under Slater&rsquo;s condition.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Weak duality always holds. Strong duality requires conditions. What conditions, and why?</p>
+<p>Slater&rsquo;s condition: there exists a strictly feasible point - a point $\hat{x}$ with $f_i(\hat{x}) &lt; 0$ for all $i$ and $A\hat{x} = b$ (strictly satisfying all inequality constraints, with slack). Strict feasibility means the feasible region is not degenerate (not just a single boundary point). When Slater&rsquo;s condition holds, the dual gap $p^\ast - d^\ast$ is zero.</p>
+<p>Why does strict feasibility close the gap? The intuition comes from separation theorems: at the optimum of the primal, if the only feasible point is a corner of the feasible region, the dual might not be able to &ldquo;see&rdquo; the optimum from below. Strict feasibility gives the feasible region enough interior that the dual function can accurately track the primal.</p>
+<p>For linear programs, Slater&rsquo;s condition reduces to primal feasibility (since all constraints are linear, any feasible point is strictly feasible after perturbation). Strong duality holds for any feasible LP with a finite optimum.</p>
+</blockquote>
+<hr>
+<h2 id=section-4-why-duality-matters>Section 4: Why Duality Matters</h2>
+<p>Duality is not just an abstract theorem. It has three concrete applications.</p>
+<p><strong>The dual is sometimes easier.</strong> Consider an LP with $n = 10^6$ variables and $m = 100$ constraints. The dual LP has $m = 100$ variables and $n = 10^6$ constraints - much smaller. Solving the dual and reading off the primal solution is often faster.</p>
+<p><strong>Duality provides certificates.</strong> Suppose you find a primal-feasible point $\bar{x}$ with $f_0(\bar{x}) = p$ and a dual-feasible point $(\bar{\lambda}, \bar{\nu})$ with $g(\bar{\lambda}, \bar{\nu}) = d$, and $p - d \leq \epsilon$. This is a <strong>duality gap certificate</strong>: the primal solution is within $\epsilon$ of optimal. No trust required. The gap $p - d$ bounds the suboptimality without knowing the true $p^\ast$.</p>
+<p>This is crucial in practice. When you run an interior-point solver, it computes both a primal and dual iterate and monitors the duality gap. When the gap falls below a threshold, the solver terminates with a provably near-optimal solution.</p>
+<p><strong>The dual encodes the shadow prices.</strong> The optimal dual variables $\lambda_i^\ast$ are the Lagrange multipliers at the primal optimum. As discussed in the previous post, $\lambda_i^\ast = -\partial p^\ast / \partial c_i$ (the derivative of the optimal value with respect to the constraint level). The dual solution tells you the marginal value of relaxing each constraint - the shadow prices. This is essential for sensitivity analysis: &ldquo;if I increase my budget by $\delta$, how much does my optimal solution improve?&rdquo;</p>
+<hr>
+<h2 id=section-5-subgradients>Section 5: Subgradients</h2>
+<p>All of the theory so far has assumed smooth objectives. But many important convex functions are not differentiable.</p>
+<ul>
+<li>The L1 norm $|x|_1$ is non-differentiable along coordinate hyperplanes.</li>
+<li>The hinge loss $\max(0, 1-t)$ has a kink at $t = 1$.</li>
+<li>The maximum of smooth functions is smooth almost everywhere but has kinks where the argmax changes.</li>
+<li>The nuclear norm $|A|_* = \sum_i \sigma_i(A)$ (sum of singular values) is non-differentiable.</li>
+</ul>
+<p>For non-smooth functions, gradients do not exist everywhere. But a weaker object does: the subgradient.</p>
+<p><strong>Definition.</strong> A vector $g \in \mathbb{R}^n$ is a <strong>subgradient</strong> of $f$ at $x$ if for all $y$:</p>
+<p>$$f(y) \geq f(x) + g \cdot (y - x).$$</p>
+<p>The subgradient condition says: $g$ gives a supporting hyperplane at $x$ that lies everywhere below the graph of $f$. This is the first-order convexity condition for smooth functions, but extended to non-differentiable points.</p>
+<p>The set of all subgradients at $x$ is the <strong>subdifferential</strong> $\partial f(x)$.</p>
+<p><strong>Example: $f(x) = |x|$.</strong> At $x > 0$: $f$ is differentiable with $f'(x) = 1$, so $\partial f(x) = {1}$.</p>
+<p>At $x &lt; 0$: $f'(x) = -1$, so $\partial f(x) = {-1}$.</p>
+<p>At $x = 0$: any $g \in [-1, 1]$ satisfies $|y| \geq 0 + g \cdot (y - 0) = gy$ for all $y$ (since $|y| \geq |g||y| \geq gy$ when $|g| \leq 1$). So $\partial f(0) = [-1, 1]$ - the entire interval.</p>
+<p><strong>The optimality condition.</strong> For a convex function, $x^\ast$ is a global minimum if and only if $0 \in \partial f(x^\ast)$. At smooth points, this is $\nabla f(x^\ast) = 0$. At non-smooth points, the zero vector must be in the subdifferential.</p>
+<p>For $f(x) = |x|$: $0 \in \partial f(0) = [-1, 1]$. Yes - so $x^\ast = 0$ is the global minimum. Correct.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The subdifferential at a non-differentiable point is an entire set, not a single vector. Which subgradient do you use in an algorithm?</p>
+<p>Any subgradient works for the optimality check: $0 \in \partial f(x^\ast)$ tests whether the zero vector is anywhere in the subdifferential. For optimization algorithms, you pick any element of the subdifferential at each step. The <strong>subgradient method</strong> is: pick any $g_t \in \partial f(x_t)$, take the step $x_{t+1} = x_t - \eta_t g_t$. Convergence is guaranteed (with decaying step sizes $\eta_t$) but the rate is $O(1/\sqrt{t})$ - slower than gradient descent&rsquo;s $O(1/t)$ for smooth objectives. Non-smoothness has a real computational cost.</p>
+</blockquote>
+<hr>
+<h2 id=section-6-proximal-methods>Section 6: Proximal Methods</h2>
+<p>For objectives of the form $h(x) = f(x) + g(x)$, where $f$ is smooth and convex but $g$ is convex and non-smooth, neither pure gradient descent (does not handle non-smoothness) nor the subgradient method (ignores the smooth structure of $f$) is ideal. Proximal gradient methods split the problem and handle each part differently.</p>
+<p>The central operation is the <strong>proximal operator</strong> of $g$:</p>
+<p>$$\text{prox}_{g}(v) = \underset{x}{\arg\min} \left{ \frac{1}{2}|x - v|^2 + g(x) \right}.$$</p>
+<p>The proximal operator finds the point minimizing a tradeoff: stay close to $v$ (the quadratic penalty) while also keeping $g$ small. It is a &ldquo;soft projection&rdquo; - like projecting $v$ onto a lower level set of $g$, but softly rather than hard.</p>
+<p>The proximal gradient step is:</p>
+<ol>
+<li>Gradient step on $f$: $v = x_t - \eta \nabla f(x_t)$.</li>
+<li>Proximal step on $g$: $x_{t+1} = \text{prox}_{\eta g}(v)$.</li>
+</ol>
+<p>The proximal step is applied with a scaled version of $g$: $\text{prox}_{\eta g}(v) = \arg\min_x { \frac{1}{2}|x-v|^2 + \eta g(x) }$.</p>
+<p>The key insight: step 2 solves a small optimization problem exactly (in closed form, for many important choices of $g$). Non-smooth objectives with structure can be handled exactly rather than approximately.</p>
+<p><strong>Convergence.</strong> For convex $f$ (smooth, $L$-smooth) and convex $g$ (possibly non-smooth), proximal gradient with step size $1/L$ converges at $O(1/t)$ - the same rate as gradient descent on smooth objectives. The non-smooth part does not slow things down, because the proximal operator resolves it exactly at each step.</p>
+<hr>
+<h2 id=section-7-soft-thresholding-and-lasso>Section 7: Soft Thresholding and LASSO</h2>
+<p>The most important proximal operator in machine learning is the proximal operator of the L1 norm: $g(x) = \lambda|x|_1$.</p>
+<p>For a scalar $v$, the proximal problem is:</p>
+<p>$$\text{prox}_{\eta\lambda|x|}(v) = \underset{x}{\arg\min} \left{ \frac{1}{2}(x - v)^2 + \eta\lambda|x| \right}.$$</p>
+<p>The objective is: pay $(x-v)^2/2$ to move away from $v$, and pay $\eta\lambda|x|$ for the size of $x$. The optimal tradeoff has a closed form.</p>
+<p>For $v > 0$: the minimum is at $x = v - \eta\lambda$ if $v > \eta\lambda$, and at $x = 0$ if $v \leq \eta\lambda$.
+For $v &lt; 0$: by symmetry, $x = v + \eta\lambda$ if $|v| > \eta\lambda$, and $x = 0$ if $|v| \leq \eta\lambda$.
+For $v = 0$: $x = 0$.</p>
+<p>In one formula:</p>
+<p>$$\text{prox}_{\eta\lambda|\cdot|}(v) = \text{sign}(v) \cdot \max(|v| - \eta\lambda, 0).$$</p>
+<p>This is <strong>soft thresholding</strong>. Values with magnitude less than $\eta\lambda$ are set to exactly zero. Values with magnitude larger than $\eta\lambda$ are moved toward zero by exactly $\eta\lambda$. For a vector $v \in \mathbb{R}^n$, soft thresholding applies coordinate-wise.</p>
+<p>The LASSO problem is:</p>
+<p>$$\min_w \frac{1}{2}|y - Xw|^2 + \lambda|w|_1.$$</p>
+<p>This is $h(w) = f(w) + g(w)$ with $f(w) = \frac{1}{2}|y-Xw|^2$ (smooth, strongly convex) and $g(w) = \lambda|w|_1$ (non-smooth). Proximal gradient gives:</p>
+<ol>
+<li>Gradient step on $f$: $v = w - \eta X^T(Xw - y)$.</li>
+<li>Soft threshold: $w_{\text{new}} = \text{sign}(v) \cdot \max(|v| - \eta\lambda, 0)$ (coordinate-wise).</li>
+</ol>
+<p>Repeat. This is the <strong>iterative shrinkage thresholding algorithm (ISTA)</strong>, the canonical algorithm for LASSO. Each iteration is $O(mn)$ for an $m \times n$ design matrix $X$, and convergence is $O(1/t)$ in objective error.</p>
+<hr>
+<h2 id=section-8-why-l1-promotes-sparsity>Section 8: Why L1 Promotes Sparsity</h2>
+<p>L1 and L2 regularization are both convex. Both shrink coefficients toward zero. But the L1 penalty produces exact zeros (sparse solutions) while L2 does not. Understanding why requires looking at the geometry.</p>
+<p><strong>The constraint form.</strong> The regularized problem $\min_w \ell(w) + \lambda R(w)$ is equivalent to $\min_w \ell(w)$ subject to $R(w) \leq t$ (for appropriate $t$ depending on $\lambda$). The regularizer acts as a constraint on the norm of $w$.</p>
+<p>For L2: the feasible set ${w : |w|^2 \leq t}$ is a ball. Level curves of a generic loss function $\ell$ are smooth ellipsoids. The point where the loss is minimized on the ball boundary is generically a smooth point on the sphere, not on any coordinate axis. The optimal $w$ has all nonzero components.</p>
+<p>For L1: the feasible set ${w : |w|_1 \leq t}$ is a diamond (in 2D) or a cross-polytope (in higher dimensions). This set has corners on the coordinate axes - points like $(t, 0, \ldots, 0)$ and permutations. When you minimize a generic smooth loss on this set, the minimum generically occurs at a corner, because the loss gradient can be &ldquo;parallel&rdquo; to the flat faces of the diamond (which forces the minimum to the adjacent corner). Corners have many coordinates equal to zero. The solution is sparse.</p>
+<p>Algebraically: the subdifferential of $|w_j|$ at $w_j = 0$ is the entire interval $[-1, 1]$. The optimality condition $0 \in \partial h$ allows the gradient of the loss with respect to $w_j$ to be any value in $[-\lambda, \lambda]$ while still giving $w_j^\ast = 0$. A whole range of loss gradients is compatible with exact zeros. For L2, the subdifferential at $0$ is just ${0}$, so only exactly zero loss gradient produces $w_j^\ast = 0$, which generically does not happen.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If L1 produces sparse solutions, should you always prefer L1 over L2?</p>
+<p>No. The right choice depends on your beliefs about the true model:</p>
+<ul>
+<li>
+<p>If you believe many features are irrelevant (the true weight vector is sparse): use L1. LASSO will zero out the irrelevant features, producing an interpretable, sparse model.</p>
+</li>
+<li>
+<p>If you believe all features contribute but no single feature dominates (the true weight vector is dense): use L2. Ridge regression shrinks all weights proportionally, giving stable predictions even with correlated features.</p>
+</li>
+<li>
+<p>If you have correlated features: L2 tends to give similar weights to correlated features; L1 tends to pick one and ignore the others (arbitrary choice). Elastic net ($\alpha$L1 + $(1-\alpha)$L2) combines both.</p>
+</li>
+</ul>
+<p>The sparsity of L1 is a feature when you want model selection (which features matter?), and a drawback when you want stable prediction with correlated features.</p>
+</blockquote>
+<hr>
+<h2 id=section-9-coordinate-descent>Section 9: Coordinate Descent</h2>
+<p>Gradient descent updates all variables simultaneously. Coordinate descent updates one variable at a time:</p>
+<p>$$x_j^{\text{new}} = \underset{x_j}{\arg\min} ; h(x_1, \ldots, x_{j-1}, x_j, x_{j+1}, \ldots, x_n),$$</p>
+<p>with all other coordinates held fixed. Cycle through $j = 1, 2, \ldots, n, 1, 2, \ldots$ and repeat.</p>
+<p>For some problems, each coordinate update has a simple closed form. The LASSO coordinate update for coordinate $j$:</p>
+<p>$$w_j^{\text{new}} = \text{sign}(r_j) \cdot \max(|r_j| - \lambda, 0),$$</p>
+<p>where $r_j = y_j^T (y - X_{-j} w_{-j}) / |x_j|^2$ is the partial residual after removing the contribution of all other coefficients ($X_{-j}$ is $X$ without column $j$, $w_{-j}$ is $w$ without $w_j$).</p>
+<p>Each coordinate update is $O(m)$ (one dot product). A full cycle through all $n$ coordinates is $O(mn)$ - the same cost as one iteration of ISTA, but coordinate descent often converges in far fewer cycles for sparse solutions (it exploits the structure of which coordinates are already at zero).</p>
+<p>For strictly convex differentiable objectives: coordinate descent converges to the global minimum.</p>
+<p>For separable non-smooth terms like L1: coordinate descent with soft thresholding at each step converges to the global minimum (the objective $|y - Xw|^2 + \lambda|w|_1$ is convex; the non-smooth part $\lambda|w|_1 = \lambda\sum_j |w_j|$ is separable).</p>
+<p>Coordinate descent is the method of choice for large-scale LASSO and Elastic Net. Popular implementations (glmnet in R, sklearn&rsquo;s Lasso in Python) use coordinate descent with warm starting and active set tracking to skip coordinates that are already at zero.</p>
+<hr>
+<h2 id=section-10-first-order-method-convergence-summary>Section 10: First-Order Method Convergence Summary</h2>
+<p>For large-scale problems where second-order methods are too expensive, first-order methods are the practical choice. Here is a summary of the main convergence rates:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Problem Class</th>
+<th>Rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gradient descent</td>
+<td>Convex, $L$-smooth</td>
+<td>$O(1/t)$</td>
+</tr>
+<tr>
+<td>Gradient descent</td>
+<td>$\mu$-strongly convex, $L$-smooth</td>
+<td>$O(\rho^t)$, $\rho = 1 - \mu/L$</td>
+</tr>
+<tr>
+<td>Nesterov accelerated</td>
+<td>Convex, $L$-smooth</td>
+<td>$O(1/t^2)$</td>
+</tr>
+<tr>
+<td>Nesterov accelerated</td>
+<td>$\mu$-strongly convex, $L$-smooth</td>
+<td>$O(\rho^t)$, $\rho = 1 - \sqrt{\mu/L}$</td>
+</tr>
+<tr>
+<td>Subgradient method</td>
+<td>Convex, non-smooth</td>
+<td>$O(1/\sqrt{t})$</td>
+</tr>
+<tr>
+<td>Proximal gradient (ISTA)</td>
+<td>Composite, $L$-smooth + non-smooth</td>
+<td>$O(1/t)$</td>
+</tr>
+<tr>
+<td>Accelerated proximal (FISTA)</td>
+<td>Composite, $L$-smooth + non-smooth</td>
+<td>$O(1/t^2)$</td>
+</tr>
+</tbody>
+</table>
+<p>The $O(1/t^2)$ rate of Nesterov acceleration is optimal among first-order methods for smooth convex objectives - no algorithm using only gradient information can do better. This is a lower bound result: Nesterov proved that any first-order method requires at least $\Omega(1/t^2)$ iterations on some smooth convex function.</p>
+<p>The comparison:</p>
+<ul>
+<li>To achieve error $\epsilon$ with gradient descent: $O(1/\epsilon)$ steps.</li>
+<li>To achieve error $\epsilon$ with Nesterov: $O(1/\sqrt{\epsilon})$ steps.</li>
+<li>For $\epsilon = 10^{-6}$: gradient descent needs $10^6$ steps, Nesterov needs $10^3$ steps.</li>
+</ul>
+<p>In practice, the difference is large. FISTA (Fast ISTA, which applies Nesterov acceleration to proximal gradient) is the standard first-order method for large-scale L1 regularization.</p>
+<hr>
+<h2 id=section-11-the-convex-optimization-workflow>Section 11: The Convex Optimization Workflow</h2>
+<p>When you face an optimization problem, here is the structured approach:</p>
+<p><strong>Step 1: Is it convex?</strong> Verify the objective and constraint functions. Use the composition rules: non-negative combination, composition with affine, pointwise max. If convex - you are in the regime with guarantees.</p>
+<p><strong>Step 2: What class is it?</strong> Identify the problem as LP, QP, SOCP, or SDP. Use a modeling framework (CVX, CVXPY, JuMP) that automatically selects the right solver.</p>
+<p><strong>Step 3: What is the scale?</strong> Small ($n &lt; 1000$): use interior-point methods. Interior-point solvers converge to machine precision in around 50 iterations using Newton steps. Large ($n > 10^6$): use first-order methods. Slower per unit accuracy but cheap per iteration.</p>
+<p><strong>Step 4: Is there special structure?</strong> Composite objective ($f + g$)? Use proximal methods. Separable structure? Use coordinate descent. Sparsity in data ($X$ is sparse)? Exploit this in gradient and proximal computations.</p>
+<p><strong>Step 5: If non-convex:</strong> Name the non-convexity. Is there a convex relaxation (replace rank constraint with nuclear norm, replace ${0,1}$ with $[0,1]$)? Is the problem &ldquo;almost convex&rdquo; (nearly tight in strong duality)? Can you initialize well enough that a local method finds a good solution?</p>
+<p>Convex optimization is both a theoretical framework and an engineering discipline. The theory tells you which problems are tractable and what guarantees are available. The engineering tells you which algorithms, implemented how, with which solver, will actually solve your problem in reasonable time. Mastery requires both.</p>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/modern-optimizer-zoo/>Modern Optimizer Zoo</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

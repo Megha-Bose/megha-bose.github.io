@@ -1,0 +1,228 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Distributed Deadlock and Termination Detection // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Distributed Deadlock and Termination Detection">
+<meta name=twitter:description content="In a distributed system, a process may wait for a message that will never arrive because the sender is waiting for a reply from a third process, which is waiting for the first. No central entity observes this cycle - each process sees only its own blocked state. Deadlock detection in distributed systems requires reconstructing a global view from local observations, and the moment you take those observations determines whether the result is accurate.">
+<meta property="og:title" content="Distributed Deadlock and Termination Detection">
+<meta property="og:description" content="In a distributed system, a process may wait for a message that will never arrive because the sender is waiting for a reply from a third process, which is waiting for the first. No central entity observes this cycle - each process sees only its own blocked state. Deadlock detection in distributed systems requires reconstructing a global view from local observations, and the moment you take those observations determines whether the result is accurate.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/distributed-deadlock-termination/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-08-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-08-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Distributed Deadlock and Termination Detection</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+8 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<hr>
+<p>In a distributed system, a process may wait for a message that will never arrive because the sender is waiting for a reply from a third process, which is waiting for the first. No central entity observes this cycle - each process sees only its own blocked state. Deadlock detection in distributed systems requires reconstructing a global view from local observations, and the moment you take those observations determines whether the result is accurate. This is harder than it sounds: the system keeps running while you observe it, and a deadlock you detect may have already resolved, or a real deadlock may be invisible if your observations are too spread out in time.</p>
+<p>The difficulty is not just algorithmic - it is epistemic. A snapshot of a distributed system is not a photograph taken at one instant; it is a collage assembled from messages that arrive at different times. Two processes can disagree about what the current state is, and both can be right from their own perspective. Any deadlock detection algorithm must decide how to handle this gap between observation and reality, and the different algorithms make very different tradeoffs.</p>
+<p>Termination detection is the same problem in a different guise. Instead of asking &ldquo;is there a cycle of waiting processes,&rdquo; we ask &ldquo;has the computation finished.&rdquo; Both require answering a global question without a global observer, and both must contend with the fact that a process that looks idle may be about to receive a message that makes it active again.</p>
+<hr>
+<h2 id=deadlock-models>Deadlock Models</h2>
+<p><strong>Resource deadlock.</strong> Processes hold some resources and wait for others. Represented by a <strong>Wait-For Graph (WFG)</strong>: directed graph where $P_i \to P_j$ means $P_i$ is waiting for $P_j$ to release a resource. Deadlock exists iff the WFG contains a cycle.</p>
+<p><strong>Communication deadlock.</strong> Process $P_i$ is blocked waiting to receive from $P_j$, which is blocked waiting to receive from $P_k$, forming a cycle. No resources are held - only messages are awaited.</p>
+<p><strong>AND-model vs OR-model:</strong></p>
+<ul>
+<li><strong>AND-model:</strong> $P_i$ is deadlocked only if it waits for all processes in its wait-set. A cycle in the WFG means deadlock.</li>
+<li><strong>OR-model:</strong> $P_i$ is deadlocked only if it waits for any one process in its wait-set, and all are blocked. Deadlock requires a <strong>knot</strong> in the WFG (a set $S$ such that every node in $S$ has all its outgoing edges pointing to nodes in $S$, with no escape).</li>
+</ul>
+<hr>
+<h2 id=phantom-deadlocks>Phantom Deadlocks</h2>
+<p>A <strong>phantom deadlock</strong> is a false positive: the deadlock detection algorithm reports a cycle, but by the time the detection message is processed, the deadlock has been resolved (a process received what it was waiting for and is no longer blocked).</p>
+<p>Phantom deadlocks arise because the WFG is observed asynchronously. The detection algorithm sees a snapshot of the WFG, but that snapshot may not correspond to any consistent global state: one process&rsquo;s state is recorded at time $T_1$ and another&rsquo;s at time $T_2 > T_1$, and between $T_1$ and $T_2$ a message was delivered that broke the cycle.</p>
+<p>Two-phase algorithms and diffusion-based algorithms reduce (but cannot eliminate under all models) phantom deadlocks by ensuring the observed state is consistent.</p>
+<hr>
+<h2 id=one-phase-vs-two-phase-detection>One-Phase vs Two-Phase Detection</h2>
+<p><strong>One-phase:</strong> The detector takes a single snapshot of the WFG and checks for cycles. Fast but prone to phantom deadlocks - the snapshot may be inconsistent.</p>
+<p><strong>Two-phase:</strong></p>
+<ul>
+<li>Phase 1: Detector takes a snapshot, finds a candidate deadlock cycle.</li>
+<li>Phase 2: Detector re-checks the same set of processes. If they are still in the same waiting configuration, the deadlock is real.</li>
+</ul>
+<p>Two-phase reduces phantoms (a transient deadlock resolves between phases), but increases detection latency and is still not always correct under all models.</p>
+<hr>
+<h2 id=centralized-deadlock-detection-chandy-misra>Centralized Deadlock Detection (Chandy-Misra)</h2>
+<p><strong>Setting.</strong> A central <strong>controller</strong> periodically (or on demand) collects local WFG information from all processes and checks for cycles globally.</p>
+<p><strong>Protocol:</strong></p>
+<ol>
+<li>Each process $P_i$ maintains its local WFG edges (who it waits for).</li>
+<li>When an edge is added or removed (a process starts or stops waiting), $P_i$ reports the change to the controller.</li>
+<li>The controller maintains a global WFG and checks for cycles on each update.</li>
+</ol>
+<p><strong>Problems:</strong></p>
+<ul>
+<li>Controller is a single point of failure and a bottleneck.</li>
+<li>The global WFG at the controller may be inconsistent: an edge removal from $P_i$ and an edge addition from $P_j$ may arrive out of order relative to actual execution.</li>
+<li>Phantom deadlocks can occur.</li>
+</ul>
+<p><strong>When to use.</strong> Acceptable for lightly loaded systems where the controller overhead is manageable and false positives can be tolerated (they trigger rollback/resolution, which is usually safe).</p>
+<hr>
+<h2 id=chandy-misra-haas-algorithm-1982---diffusion-computation>Chandy-Misra-Haas Algorithm (1982) - Diffusion Computation</h2>
+<p><strong>Setting.</strong> No central controller. Deadlock detection by <strong>diffusion computation</strong>: special probe messages propagate through the WFG, and a deadlock is confirmed if a probe returns to the initiator.</p>
+<p><strong>For AND-model (process waits for all in wait-set):</strong></p>
+<p><strong>Data structures.</strong> Each process $P_i$ has: <code>engaged[i]</code> (whether it is currently engaged in a detection initiated by some $P_k$), <code>num_replies_pending[i][k]</code> (how many replies $P_i$ is waiting for, in a detection for $P_k$).</p>
+<p><strong>Protocol initiated by $P_k$ suspecting deadlock:</strong></p>
+<ol>
+<li>$P_k$ sends <code>PROBE(k, k, k)</code> to all processes in its wait-set (format: <code>PROBE(initiator, sender, receiver)</code>).</li>
+<li>On receiving <code>PROBE(k, i, j)</code> at $P_j$:
+<ul>
+<li>If $P_j$ is actively waiting: if $P_j$ was not yet engaged in detection for $P_k$: mark <code>engaged[j][k]</code>, set <code>num_replies_pending[j][k]</code> = |wait-set of $P_j$|, send <code>PROBE(k, j, m)</code> to all $m$ in $P_j$&rsquo;s wait-set.</li>
+<li>If <code>PROBE(k, j, j)</code> arrives at $P_k$ (probe returned to initiator): $P_k$ is deadlocked.</li>
+</ul>
+</li>
+</ol>
+<p><strong>Correctness.</strong> A probe returning to $P_k$ means there is a sequence of waiting processes forming a cycle in the WFG at the time the probe traveled. All processes on the path were blocking when the probe passed through them. If the AND-model holds, the cycle is a deadlock.</p>
+<p><strong>Phantom deadlocks in CMH.</strong> A process on the probe&rsquo;s path may have been released between the time the probe passed through and the time it completes the cycle. This produces a phantom. The differential technique (below) addresses this.</p>
+<hr>
+<h2 id=singhal-kshemkalyani-differential-technique>Singhal-Kshemkalyani Differential Technique</h2>
+<p><strong>Problem with CMH.</strong> CMH sends information about all WFG edges whenever a process reports. Most of the time, only a few edges have changed. The full WFG transmission is wasteful.</p>
+<p><strong>Differential technique.</strong> Each process maintains:</p>
+<ul>
+<li><code>SV[i]</code>: the sequence vector - <code>SV[i][j]</code> is the sequence number of the last information process $P_i$ sent about process $P_j$.</li>
+<li><code>RV[i]</code>: the receive vector - <code>RV[i][j]</code> is the sequence number of the last information $P_i$ received about $P_j$.</li>
+</ul>
+<p>When $P_i$ sends information to the controller (or in a diffusion computation), it sends only the changes since last time - the edges where $SV[i][j] > RV[\text{receiver}][j]$. The receiver updates $RV$ accordingly.</p>
+<p><strong>Why this was needed for CMH.</strong> CMH in its original form sends probes through the full WFG. In large systems with many processes and many WFG edges, each probe message carries excessive data. The differential technique reduces each message to carry only the edges that have changed since the last communication between those two processes - turning a $O(n)$-per-message overhead into an $O(\delta)$-per-message overhead where $\delta$ is the number of changed edges.</p>
+<hr>
+<h2 id=mitchell-merritt-algorithm-1984---single-resource>Mitchell-Merritt Algorithm (1984) - Single Resource</h2>
+<p>For the special case where each process holds at most one resource and waits for at most one resource (single-resource model), the WFG is a collection of simple chains and at most one cycle. Detection is simpler.</p>
+<p><strong>Algorithm:</strong></p>
+<ul>
+<li>Each edge in the WFG is labeled with a <strong>tag</strong>.</li>
+<li>To detect: process $P_i$ (at the tail of a wait-for chain) propagates a <strong>query</strong> forward along the chain.</li>
+<li>Each process receiving a query forwards it, appending its own label.</li>
+<li>If the query returns to the initiator, there is a cycle.</li>
+</ul>
+<p><strong>Message complexity.</strong> $O(d)$ messages where $d$ is the length of the deadlock chain. Much cheaper than general WFG algorithms for the single-resource case.</p>
+<p><strong>Limitation.</strong> Only correct under the single-resource model. Does not generalize to AND-model with multiple resources.</p>
+<hr>
+<h2 id=termination-detection>Termination Detection</h2>
+<p><strong>Problem.</strong> A distributed computation is <strong>terminated</strong> when all processes are idle and no messages are in transit. How does an observer know when this has happened?</p>
+<p><strong>Why it&rsquo;s hard.</strong> A process that appears idle may be about to receive a message that makes it active again. The observer cannot tell idle-with-pending-message from genuinely-terminated.</p>
+<h3 id=dijkstra-scholten-algorithm-token-based>Dijkstra-Scholten Algorithm (Token-Based)</h3>
+<p><strong>Model.</strong> One initiator process; all activity derives from it. Tree structure tracks which processes were activated by which.</p>
+<p><strong>Protocol:</strong></p>
+<ul>
+<li>The initiator spawns a <strong>computation tree</strong>: processes activated by the initiator are its children; processes they activate are their children, etc.</li>
+<li>When a process becomes idle and all processes it activated are also idle (it has no children left), it sends a <strong>signal</strong> to its parent in the computation tree.</li>
+<li>When the initiator receives signals from all its children and is itself idle: the computation is terminated.</li>
+</ul>
+<p><strong>Message complexity.</strong> At most 2 signal messages per message sent in the computation (one credit sent with each message, one returned on termination). No global state collection needed.</p>
+<h3 id=permission-based-termination-detection>Permission-Based Termination Detection</h3>
+<p><strong>Safra&rsquo;s algorithm (1987).</strong> Processes are arranged in a logical ring. A token circulates. When a process passes the token: if it has been active since it last passed the token, it &ldquo;colors&rdquo; the token black (tainted). Otherwise it passes it white. The initiator detects termination only when a white token completes a full ring traversal while the initiator is itself idle and the token arrived white.</p>
+<p><strong>Invariant.</strong> A white token completing a full ring means no process became active after the token passed through it - which means all processes are idle and will remain idle (no pending messages can re-activate them).</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Model</th>
+<th>Approach</th>
+<th>Key property</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Centralized (Chandy-Misra)</td>
+<td>General</td>
+<td>Global WFG at controller</td>
+<td>Simple; bottleneck; phantom-prone</td>
+</tr>
+<tr>
+<td>CMH (diffusion)</td>
+<td>AND-model</td>
+<td>Probe propagation through WFG</td>
+<td>Decentralized; phantom possible</td>
+</tr>
+<tr>
+<td>Singhal-Kshemkalyani</td>
+<td>AND-model</td>
+<td>Differential WFG updates</td>
+<td>Reduces message overhead to changed edges only</td>
+</tr>
+<tr>
+<td>Mitchell-Merritt</td>
+<td>Single resource</td>
+<td>Tag-labeled query chains</td>
+<td>$O(d)$ messages; limited to single resource</td>
+</tr>
+<tr>
+<td>Dijkstra-Scholten</td>
+<td>Termination</td>
+<td>Computation tree signals</td>
+<td>Initiator-based; $O(1)$ overhead per message</td>
+</tr>
+<tr>
+<td>Safra (ring token)</td>
+<td>Termination</td>
+<td>Colored token on ring</td>
+<td>Permission-based; no central coordinator</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/computer-systems/distributed-mutual-exclusion/>Distributed Mutual Exclusion</a></li>
+<li><a href=/posts/computer-systems/logical-clocks-global-state/>Logical Clocks and Global State</a></li>
+<li><a href=/posts/computer-systems/fault-tolerance/>Fault Tolerance</a></li>
+<li><a href=/posts/computer-systems/consistency-cap-theorem/>Consistency and CAP Theorem</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

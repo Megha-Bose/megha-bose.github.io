@@ -1,0 +1,273 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Convexity & Optimization // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Convexity & Optimization">
+<meta name=twitter:description content="Prerequisites:
+ Gradients & Partial Derivatives Hessians & Second-Order Methods   Train a linear regression model on any dataset. Gradient descent finds the minimum of the squared loss every single time, no matter where you start. Now train a neural network. Same algorithm, same basic idea - but now it matters enormously where you start, what your learning rate is, and whether you get unlucky with initialization. Sometimes it converges to a poor solution.">
+<meta property="og:title" content="Convexity & Optimization">
+<meta property="og:description" content="Prerequisites:
+ Gradients & Partial Derivatives Hessians & Second-Order Methods   Train a linear regression model on any dataset. Gradient descent finds the minimum of the squared loss every single time, no matter where you start. Now train a neural network. Same algorithm, same basic idea - but now it matters enormously where you start, what your learning rate is, and whether you get unlucky with initialization. Sometimes it converges to a poor solution.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/convexity-optimization/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Convexity & Optimization</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Dec 11, 2020
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+20 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/gradients-partial-derivatives/>Gradients & Partial Derivatives</a></li>
+<li><a href=/posts/hessians-second-order-methods/>Hessians & Second-Order Methods</a></li>
+</ul>
+<hr>
+<p>Train a linear regression model on any dataset. Gradient descent finds the minimum of the squared loss every single time, no matter where you start. Now train a neural network. Same algorithm, same basic idea - but now it matters enormously where you start, what your learning rate is, and whether you get unlucky with initialization. Sometimes it converges to a poor solution. Sometimes it does not converge at all.</p>
+<p>Why the difference? Both problems involve minimizing a loss function over parameters. Both use gradient descent. The answer is one word: convexity. Linear regression has a convex loss. Neural networks do not. Convexity is the property that transforms a search problem - where are all the valleys, and which one is deepest? - into something you can solve reliably and certifiably.</p>
+<p>This post is about what convexity is, why it is the right condition to care about, and what guarantees it provides.</p>
+<hr>
+<h2 id=section-1-the-shape-of-a-bowl>Section 1: The Shape of a Bowl</h2>
+<p>Before any formulas, look at two functions: $f(x) = x^2$ and $g(x) = \sin(x)$.</p>
+<p>The parabola $x^2$ has one valley. It goes down, reaches the bottom at $x = 0$, and comes back up forever. If you put a ball anywhere on this curve, it rolls to the same place. There is one minimum and only one.</p>
+<p>The function $\sin(x)$ waves up and down forever. Every trough is a local minimum - a place where the function is smaller than its immediate neighbors - but none of them is the global minimum, because the sine function has no global minimum at all on $\mathbb{R}$. If you put a ball on $\sin(x)$, it rolls into whichever trough happens to be nearby. Different starting positions, different resting places.</p>
+<p>The distinction is convexity. The parabola is convex. The sine curve is not.</p>
+<p>Here is the geometric test that separates them. Pick any two points on the parabola - say $(-2, 4)$ and $(2, 4)$. Draw the straight line segment connecting them. The segment passes through $(0, 4)$. But the parabola at $x = 0$ is at height $0$. The segment lies above the curve between the two chosen points.</p>
+<p>Now try the same test with $\sin(x)$. Pick $(0, 0)$ and $(\pi, 0)$. The line segment connecting them is the horizontal line at height $0$. The sine curve between those $x$-values rises up to $1$ at $x = \pi/2$. The curve lies above the segment - the chord dips below the function. Convexity fails.</p>
+<p>This is the convexity condition in geometric form: a function is convex if every chord (line segment connecting any two points on the graph) lies above or on the graph. Convex means bowl-shaped, with no interior dips. Non-convex means there exists at least one chord that passes below the function somewhere between its endpoints.</p>
+<hr>
+<h2 id=section-2-the-formal-definition>Section 2: The Formal Definition</h2>
+<p>Now that the geometry is clear, here is the precise condition.</p>
+<p><strong>Definition.</strong> A function $f: \mathbb{R}^n \to \mathbb{R}$ is <strong>convex</strong> if for all $x, y$ in its domain and all $\lambda \in [0, 1]$:</p>
+<p>$$f(\lambda x + (1-\lambda)y) \leq \lambda f(x) + (1-\lambda)f(y).$$</p>
+<p>Read this carefully. The expression $\lambda x + (1-\lambda)y$ is a convex combination of $x$ and $y$: when $\lambda = 1$ you get $x$; when $\lambda = 0$ you get $y$; when $\lambda = 1/2$ you get the midpoint. As $\lambda$ varies over $[0, 1]$, you trace out the entire line segment from $x$ to $y$.</p>
+<p>The left side is $f$ evaluated at that intermediate point. The right side is the corresponding point on the chord: a weighted average of $f(x)$ and $f(y)$ with the same weights. The inequality says: the function value at any intermediate point is at most as large as the corresponding height on the chord. The chord lies above (or on) the function.</p>
+<p>The function is <strong>strictly convex</strong> if the inequality is strict for $x \neq y$ and $\lambda \in (0, 1)$: the chord lies strictly above the function, never touching except at the endpoints. Strict convexity rules out flat regions and ensures a unique minimum.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Convex function vs. convex set - different things, related but distinct.</p>
+<p>A convex set $C$ is a set where the line segment between any two points in $C$ stays inside $C$. A disk is convex. A crescent shape is not - you can find two points such that the segment between them passes outside the crescent. A convex set is a geometric containment property.</p>
+<p>A convex function is a function where chords lie above the graph. The two concepts connect in one precise way: a function $f$ is convex if and only if its epigraph - the set of points on or above the graph, ${(x, t) : t \geq f(x)}$ - is a convex set. But in general, a convex function and a convex set are different kinds of mathematical objects. You can have a convex function defined on a non-convex domain, and a convex set that has nothing to do with any function. Keep them separate.</p>
+</blockquote>
+<hr>
+<h2 id=section-3-three-equivalent-conditions-for-smooth-functions>Section 3: Three Equivalent Conditions for Smooth Functions</h2>
+<p>For smooth functions, two additional characterizations of convexity are often more useful than the definition.</p>
+<p><strong>The gradient inequality.</strong> Suppose $f$ is differentiable. Then $f$ is convex if and only if, for all $x$ and $y$:</p>
+<p>$$f(y) \geq f(x) + \nabla f(x) \cdot (y - x).$$</p>
+<p>In words: the function lies above all its tangent planes (or tangent lines in one dimension). If you build the linear approximation to $f$ at any point $x$ - the tangent plane - then $f$ is everywhere at or above that plane. The tangent plane supports the function from below.</p>
+<p>This characterization is powerful for optimization. If $\nabla f(x^\ast) = 0$ and $f$ is convex, then the gradient inequality gives $f(y) \geq f(x^\ast) + 0 \cdot (y - x^\ast) = f(x^\ast)$ for all $y$. A stationary point of a convex function is a global minimum. No second-derivative check needed. No additional verification. The zero gradient combined with convexity is sufficient.</p>
+<p><strong>The Hessian condition.</strong> Suppose $f$ is twice differentiable. Then $f$ is convex if and only if the Hessian matrix $H_f(x)$ is positive semidefinite at every point $x$:</p>
+<p>$$H_f(x) \succeq 0 \quad \text{for all } x.$$</p>
+<p>In one dimension, this reduces to $f''(x) \geq 0$ for all $x$. The second derivative measures how the slope is changing - positive means the slope is increasing, which means the function bends upward. Non-negative curvature everywhere is the analytical version of bowl-shapedness.</p>
+<p>For a vector-valued input, the Hessian is the matrix of all second-order partial derivatives. Positive semidefinite means every directional second derivative is non-negative: $v^T H_f(x) v \geq 0$ for all directions $v$. The function bends upward (or stays flat) in every direction.</p>
+<p><strong>Checking the examples:</strong></p>
+<p>$f(x) = x^2$: $f''(x) = 2 > 0$ everywhere. Convex.</p>
+<p>$f(x) = \sin(x)$: $f''(x) = -\sin(x)$, which equals $-1$ at $x = \pi/2$. Not convex on all of $\mathbb{R}$.</p>
+<p>$f(x) = e^x$: $f''(x) = e^x > 0$ everywhere. Convex.</p>
+<p>$f(x) = -\ln(x)$ for $x > 0$: $f''(x) = 1/x^2 > 0$. Convex.</p>
+<p>$f(x) = |x|$: not differentiable at $0$, but the chord condition holds everywhere. Convex.</p>
+<hr>
+<h2 id=section-4-why-local-equals-global---the-central-theorem>Section 4: Why Local Equals Global - the Central Theorem</h2>
+<p>This is the key theorem of convex optimization. Everything else - convergence guarantees, the value of convex formulations, the tractability of these problems - follows from this.</p>
+<p><strong>Theorem.</strong> If $f$ is convex and $x^\ast$ is a local minimum - meaning $f(x^\ast) \leq f(x)$ for all $x$ in some open neighborhood of $x^\ast$ - then $x^\ast$ is a global minimum: $f(x^\ast) \leq f(x)$ for all $x$.</p>
+<p>Before proving it, make sure you feel why this should not be obvious. A local minimum is just a place where nearby points are worse. Nothing in the definition of local minimum prevents a faraway valley from being much deeper. That is exactly what happens with $\sin(x)$ or with neural network losses - local minima exist that are not global minima. The claim is that for convex functions, this cannot happen.</p>
+<p><strong>Proof.</strong> Suppose for contradiction that $x^\ast$ is a local minimum but not a global minimum. Then there exists $y$ with $f(y) &lt; f(x^\ast)$.</p>
+<p>Consider points along the segment from $x^\ast$ to $y$: let $x_\lambda = (1-\lambda)x^\ast + \lambda y$ for $\lambda \in [0, 1]$.</p>
+<p>By the convexity inequality:</p>
+<p>$$f(x_\lambda) = f((1-\lambda)x^\ast + \lambda y) \leq (1-\lambda)f(x^\ast) + \lambda f(y).$$</p>
+<p>Since $f(y) &lt; f(x^\ast)$, we have $(1-\lambda)f(x^\ast) + \lambda f(y) &lt; (1-\lambda)f(x^\ast) + \lambda f(x^\ast) = f(x^\ast)$.</p>
+<p>So $f(x_\lambda) &lt; f(x^\ast)$ for every $\lambda \in (0, 1]$.</p>
+<p>Now, for small enough $\lambda > 0$, the point $x_\lambda = (1-\lambda)x^\ast + \lambda y$ is arbitrarily close to $x^\ast$. The line segment from $x^\ast$ toward $y$ passes through the neighborhood of $x^\ast$ that certifies the local minimum, and every point on this segment (other than $x^\ast$ itself) has smaller function value than $x^\ast$.</p>
+<p>This contradicts $x^\ast$ being a local minimum. The assumption that a better point $y$ exists is false. So $x^\ast$ is a global minimum. $\square$</p>
+<p>The proof shows exactly what convexity contributes. The chord condition forces the function to decrease along the segment from $x^\ast$ toward any supposedly better point $y$. This creates a descent path starting at $x^\ast$ - but local minima have no descent direction in any nearby direction. The only resolution: no better point $y$ exists.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why does this fail for non-convex functions?</p>
+<p>For $g(x) = x^4 - x^2$: compute $g'(x) = 4x^3 - 2x = 2x(2x^2 - 1)$. Critical points at $x = 0$ and $x = \pm 1/\sqrt{2}$. The second derivative $g''(x) = 12x^2 - 2$ gives $g''(0) = -2 &lt; 0$ (local max at $0$) and $g''(\pm 1/\sqrt{2}) = 4 > 0$ (local minima at $\pm 1/\sqrt{2}$). Both local minima give $g(\pm 1/\sqrt{2}) = 1/4 - 1/2 = -1/4$. Equal by symmetry, so neither is strictly worse.</p>
+<p>If you perturb the function slightly - say $g(x) = x^4 - x^2 + 0.1x$ - the symmetry breaks and one local minimum becomes strictly better than the other. Gradient descent starting from a positive initial point finds the right-side minimum; starting from a negative point finds the left-side minimum. The chord condition fails for this function (you can find two points where the chord dips below), which is why multiple local minima exist and the theorem does not apply.</p>
+</blockquote>
+<hr>
+<h2 id=section-5-examples-of-convex-functions>Section 5: Examples of Convex Functions</h2>
+<p>Building fluency with convexity means knowing the main examples and understanding why each one is convex.</p>
+<p><strong>$f(x) = x^2$.</strong> Convex. Second derivative is $2 > 0$ everywhere. The prototypical convex function. The squared loss in linear regression is a sum of terms of this form, which is why linear regression has a convex loss.</p>
+<p><strong>$f(x) = e^x$.</strong> Convex. $f''(x) = e^x > 0$ everywhere. The exponential curves upward at every point. Exponentials appear in softmax outputs, cross-entropy loss, and log-sum-exp, all of which inherit this convexity.</p>
+<p><strong>$f(x) = |x|$.</strong> Convex but not differentiable at $x = 0$. Piecewise linear with slopes $-1$ and $+1$. The chord condition holds: for any two points on the graph of $|x|$, the segment connecting them lies above the graph. This is the L1 norm in one dimension, and it is the key to LASSO and sparse optimization.</p>
+<p><strong>$f(x) = \max(0, x)$ (ReLU).</strong> Convex. The maximum of two convex functions ($0$ and $x$) is convex. Piecewise linear: flat for $x &lt; 0$, slope $1$ for $x > 0$. The fact that ReLU is convex does not make neural networks with ReLU activations convex - the composition with weight matrices breaks convexity.</p>
+<p><strong>$f(x) = -\ln(x)$ for $x > 0$.</strong> Strictly convex. Second derivative $1/x^2 > 0$. Appears in maximum likelihood estimation: maximizing $\log p$ is equivalent to minimizing $-\log p$, and the negative log is convex. Cross-entropy loss is a sum of terms of this form.</p>
+<p><strong>$f(\mathbf{x}) = |\mathbf{x}|^2 = \sum_i x_i^2$.</strong> Strictly convex. The Hessian is $2I$, which is positive definite. This is the L2 regularization term in ridge regression. Its strict convexity is why ridge regression always has a unique solution.</p>
+<p><strong>$f(\mathbf{x}) = |\mathbf{x}|_1 = \sum_i |x_i|$.</strong> Convex but non-differentiable along coordinate hyperplanes. The L1 norm is a sum of convex functions, hence convex. LASSO adds this to the squared loss and the sum is still convex.</p>
+<hr>
+<h2 id=section-6-examples-of-non-convex-functions>Section 6: Examples of Non-Convex Functions</h2>
+<p><strong>$f(x) = \sin(x)$ on $\mathbb{R}$.</strong> Non-convex. Second derivative $-\sin(x)$ is negative at $x = \pi/2$. Oscillates, creating infinitely many local minima.</p>
+<p><strong>$f(x) = x^4 - x^2$.</strong> Non-convex. Has two symmetric local minima near $x = \pm 1/\sqrt{2}$, with a local maximum at $x = 0$. Second derivative $12x^2 - 2$ is negative in the interval $(-1/\sqrt{6}, 1/\sqrt{6})$.</p>
+<p><strong>$f(x) = x^3$.</strong> Neither convex nor concave on all of $\mathbb{R}$. Convex for $x > 0$ (second derivative $6x > 0$) and concave for $x &lt; 0$ (second derivative $6x &lt; 0$).</p>
+<p><strong>Neural network losses.</strong> The quintessential non-convex problem in modern machine learning. Why?</p>
+<p>A neural network computes a composition of affine maps and nonlinearities:</p>
+<p>$$F(\mathbf{x}; W_1, \ldots, W_L) = W_L \sigma(\cdots \sigma(W_2 \sigma(W_1 \mathbf{x})) \cdots).$$</p>
+<p>The loss is then some function of this output compared to the labels. Even a single hidden layer creates non-convexity. Consider a two-layer network with one hidden unit: the output is $w_2 \sigma(w_1 x)$. Swapping $w_1 \to -w_1$ and $w_2 \to -w_2$ gives the same output if $\sigma$ is an odd function. This means the loss has two identical global minima with different weight configurations - violating strict convexity immediately.</p>
+<p>More generally, permuting the hidden neurons (and correspondingly adjusting the output weights) leaves the function invariant. An $n$-neuron hidden layer has $n!$ equivalent weight configurations giving the same loss value. The loss landscape has a complicated symmetry structure with exponentially many equivalent local minima and vast numbers of saddle points.</p>
+<p>Yet gradient descent works on neural networks in practice. How? In high dimensions, most local minima are approximately equally good, and saddle points are much more common than strict local minima. The optimization landscape is non-convex but not adversarial - gradient descent gets stuck at saddle points less often than feared, and the local minima it finds are usually close in value to the global minimum.</p>
+<hr>
+<h2 id=section-7-operations-that-preserve-convexity>Section 7: Operations That Preserve Convexity</h2>
+<p>You rarely need to verify convexity from scratch. Instead, you recognize convex building blocks and use operations that preserve convexity.</p>
+<p><strong>Non-negative linear combinations.</strong> If $f_1, \ldots, f_k$ are convex and $\alpha_1, \ldots, \alpha_k \geq 0$, then $\sum_i \alpha_i f_i$ is convex. The squared loss $\sum_i (y_i - \hat{y}_i)^2$ is convex because it is a sum (non-negative combination) of functions $r_i^2$, each of which is convex in $r_i$. Combined with the affine dependence on parameters, the entire squared loss is convex in the parameters.</p>
+<p><strong>Composition with an affine map.</strong> If $f$ is convex and $A\mathbf{x} + b$ is an affine function of $\mathbf{x}$, then $g(\mathbf{x}) = f(A\mathbf{x} + b)$ is convex in $\mathbf{x}$. The squared loss $|\mathbf{y} - X\mathbf{w}|^2$ is convex in $\mathbf{w}$ because it is the composition of the convex function $|\cdot|^2$ with the affine map $\mathbf{w} \mapsto \mathbf{y} - X\mathbf{w}$.</p>
+<p><strong>Pointwise maximum.</strong> If $f_1, \ldots, f_k$ are convex, then $h(\mathbf{x}) = \max(f_1(\mathbf{x}), \ldots, f_k(\mathbf{x}))$ is convex. The hinge loss $\max(0, 1 - y\hat{y})$ is the max of two linear (hence convex) functions, so it is convex in $\hat{y}$.</p>
+<p><strong>Monotone composition.</strong> If $f$ is convex and nondecreasing, and $g$ is convex, then $f(g(\mathbf{x}))$ is convex. Example: since $e^t$ is convex and nondecreasing, and $f(\mathbf{x})$ is convex, the function $e^{f(\mathbf{x})}$ is convex.</p>
+<p>Using these rules, you can read off the convexity of logistic regression&rsquo;s cross-entropy loss in seconds: it is a sum of terms $-y_i \log \sigma(\mathbf{w}^T \mathbf{x_i}) - (1-y_i)\log(1-\sigma(\mathbf{w}^T \mathbf{x_i}))$. Each term is a composition of convex functions with an affine map - convex by the composition rule. The sum of convex functions is convex. No Hessian computation needed.</p>
+<hr>
+<h2 id=section-8-convex-sets>Section 8: Convex Sets</h2>
+<p>Optimization problems rarely ask you to minimize over all of $\mathbb{R}^n$. They impose constraints: the parameters must satisfy some feasibility condition. The set of feasible points is the <strong>feasible set</strong>. For the theory of convex optimization to work cleanly, this set must be convex.</p>
+<p><strong>Definition.</strong> A set $C \subseteq \mathbb{R}^n$ is <strong>convex</strong> if for any two points $x, y \in C$ and any $\lambda \in [0, 1]$, the convex combination $\lambda x + (1-\lambda)y \in C$.</p>
+<p>Geometrically: any line segment connecting two points inside the set stays inside the set. A disk is convex. A crescent, a doughnut, or any set with a dent or hole is not.</p>
+<p><strong>Why convex feasible sets matter.</strong> If you are minimizing a convex function over a convex feasible set, the local-equals-global theorem still holds. Any point that is locally optimal (no feasible improvement nearby) is globally optimal. Gradient descent and its variants still converge to the global optimum when both the objective and the feasible set are convex.</p>
+<p>If the feasible set is non-convex - integers, for instance, or a union of disconnected regions - then even a convex objective can have local optima that are not global. Integer programming is NP-hard precisely because the feasible set (integer lattice) is not convex.</p>
+<p><strong>Examples of convex sets:</strong></p>
+<ul>
+<li>
+<p>Halfspaces: ${x : a^T x \leq b}$. The feasible region of each linear constraint in an LP is a halfspace.</p>
+</li>
+<li>
+<p>Balls: ${x : |x| \leq r}$. The constraint $|\mathbf{w}| \leq r$ used in regularized optimization.</p>
+</li>
+<li>
+<p>The positive orthant: ${x : x_i \geq 0 \text{ for all } i}$. Non-negativity constraints.</p>
+</li>
+<li>
+<p>The probability simplex: ${p \geq 0 : \sum_i p_i = 1}$. The feasible set for probability distributions.</p>
+</li>
+<li>
+<p>Intersections of convex sets. The intersection of any collection of convex sets is convex. This is why linear programming feasible regions (intersections of halfspaces) are convex.</p>
+</li>
+</ul>
+<p><strong>Examples of non-convex sets:</strong></p>
+<ul>
+<li>
+<p>The integer lattice $\mathbb{Z}^n$. No line segment between two different lattice points stays on the lattice.</p>
+</li>
+<li>
+<p>A sphere surface: ${x : |x| = r}$. Two antipodal points have a segment passing through the interior.</p>
+</li>
+<li>
+<p>The set of rank-$k$ matrices: ${A \in \mathbb{R}^{m \times n} : \text{rank}(A) \leq k}$. Non-convex, which makes low-rank matrix completion hard.</p>
+</li>
+</ul>
+<hr>
+<h2 id=section-9-strong-convexity>Section 9: Strong Convexity</h2>
+<p>Convexity guarantees that any local minimum is global. But it says nothing about how quickly gradient descent finds that minimum, or even whether the minimum is unique.</p>
+<p>Consider $f(x) = \max(0, |x| - 1)$ - a convex function that is exactly zero on the entire interval $[-1, 1]$. The minimum is achieved by infinitely many points. Gradient descent starting near $x = 0$ has no gradient signal telling it to move at all - it is already at a minimum, but so is every other point in $[-1, 1]$.</p>
+<p>More subtly: consider a convex function whose level curves form a very elongated ellipse. In the steep direction, gradient descent makes fast progress. In the flat direction, gradient descent crawls. The flatness creates slow convergence even though the function is convex.</p>
+<p>Strong convexity is the condition that rules out both problems.</p>
+<p><strong>Definition.</strong> A function $f$ is $\mu$-strongly convex (with parameter $\mu > 0$) if for all $x, y$ and $\lambda \in [0, 1]$:</p>
+<p>$$f(\lambda x + (1-\lambda)y) \leq \lambda f(x) + (1-\lambda)f(y) - \frac{\mu}{2}\lambda(1-\lambda)|x-y|^2.$$</p>
+<p>The additional term $-\frac{\mu}{2}\lambda(1-\lambda)|x-y|^2$ is always non-positive (since $\lambda, 1-\lambda \geq 0$). This is a strictly stronger condition: the chord lies above the function, but by at least a quadratic amount that grows with the distance between $x$ and $y$.</p>
+<p>Equivalently, for twice-differentiable $f$: $\mu$-strong convexity holds if and only if $H_f(x) \succeq \mu I$ for all $x$ - the Hessian is bounded below (in the positive semidefinite order) by $\mu$ times the identity. In one dimension: $f''(x) \geq \mu > 0$ everywhere.</p>
+<p><strong>Consequences of strong convexity:</strong></p>
+<ol>
+<li>
+<p>There is a unique global minimum $x^\ast$.</p>
+</li>
+<li>
+<p>The gradient inequality strengthens: $f(y) \geq f(x) + \nabla f(x) \cdot (y-x) + \frac{\mu}{2}|y-x|^2$. The function grows at least quadratically away from any point.</p>
+</li>
+<li>
+<p>Gradient descent converges geometrically fast - see the next section.</p>
+</li>
+</ol>
+<p><strong>Example.</strong> Ridge regression minimizes $|y - Xw|^2 + \lambda|w|^2$. The Hessian is $2X^T X + 2\lambda I$. Even if $X^T X$ is singular (as happens when there are more features than samples), the regularization term adds $2\lambda I$ to the Hessian, making the smallest eigenvalue at least $2\lambda > 0$. Ridge regression is $2\lambda$-strongly convex. It always has a unique solution, and gradient descent always converges geometrically fast.</p>
+<hr>
+<h2 id=section-10-gradient-descent-convergence-rates>Section 10: Gradient Descent Convergence Rates</h2>
+<p>With convexity and strong convexity defined, we can state precisely what gradient descent achieves.</p>
+<p>The setup: function $f$ is differentiable, and its gradient is $L$-Lipschitz continuous:</p>
+<p>$$|\nabla f(x) - \nabla f(y)| \leq L|x - y| \quad \text{for all } x, y.$$</p>
+<p>This condition ($L$-smoothness) means the gradient cannot change too abruptly. It implies the function cannot curve up more steeply than a parabola with parameter $L$. The gradient descent update with step size $1/L$ is guaranteed to decrease the function:</p>
+<p>$$x_{t+1} = x_t - \frac{1}{L}\nabla f(x_t).$$</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why step size exactly $1/L$?</p>
+<p>The $L$-smoothness condition gives an upper bound on $f$: $f(y) \leq f(x) + \nabla f(x) \cdot (y-x) + \frac{L}{2}|y-x|^2$. Setting $y = x - \eta \nabla f(x)$ (a gradient step) and optimizing over $\eta$, the best choice is $\eta = 1/L$. Larger steps risk overshooting; the $L$-smoothness guarantees that $1/L$ is always safe in the sense that the function decreases by at least $\frac{1}{2L}|\nabla f(x)|^2$ at each step.</p>
+</blockquote>
+<p><strong>Theorem (Convex case).</strong> If $f$ is convex and $L$-smooth, gradient descent with step size $1/L$ satisfies:</p>
+<p>$$f(x_t) - f(x^\ast) \leq \frac{L|x_0 - x^\ast|^2}{2t}.$$</p>
+<p>The error after $t$ steps is at most $C/t$ for a constant $C$ depending on the initial distance to the optimum and the smoothness. This is $O(1/t)$ convergence. To achieve error $\epsilon$, you need $O(L/\epsilon)$ iterations.</p>
+<p><strong>Theorem (Strongly convex case).</strong> If $f$ is $\mu$-strongly convex and $L$-smooth, gradient descent with step size $1/L$ satisfies:</p>
+<p>$$|x_t - x^\ast|^2 \leq \left(1 - \frac{\mu}{L}\right)^t |x_0 - x^\ast|^2.$$</p>
+<p>The error decays by a constant factor $\rho = 1 - \mu/L &lt; 1$ at each iteration. This is geometric (linear) convergence: the error halves every $O(\log(1/\rho))$ steps, regardless of how close you are to the minimum. To achieve error $\epsilon$, you need $O(\kappa \log(1/\epsilon))$ iterations, where $\kappa = L/\mu$ is the <strong>condition number</strong>.</p>
+<p>The condition number $\kappa$ is the ratio of the maximum curvature to the minimum curvature. A perfect sphere ($\kappa = 1$) converges in one step. A very elongated ellipsoid ($\kappa = 10^6$) converges in $10^6 \log(1/\epsilon)$ steps - orders of magnitude more.</p>
+<p>The practical implications:</p>
+<ul>
+<li>Set the learning rate to $1/L$ (or equivalently, estimate $L$ and use it).</li>
+<li>If convergence is slow, investigate the condition number. Ill-conditioned problems call for preconditioning (changing the geometry) or second-order methods.</li>
+<li>The gap between $O(1/t)$ convex convergence and $O(\rho^t)$ strongly convex convergence is enormous. Adding even a tiny amount of L2 regularization ($\lambda > 0$) turns a convex problem into a strongly convex one with $\mu = 2\lambda$, changing convergence from polynomial to geometric.</li>
+</ul>
+<blockquote>
+<p><strong>Discomfort check.</strong> The strongly convex convergence rate is $O(\rho^t)$ - better than $O(1/t)$ convex convergence. Does that mean strongly convex problems are always easier?</p>
+<p>In terms of convergence, yes - geometric beats polynomial. But the condition number $\kappa = L/\mu$ appears in the exponent. If $\kappa$ is large (even though $\mu > 0$), the decay factor $\rho = 1 - 1/\kappa$ is close to $1$ and convergence is slow. A function that is strongly convex with a tiny $\mu$ is technically in the geometric convergence regime but the constant makes it nearly as slow as $O(1/t)$. Strong convexity guarantees geometric convergence; the condition number determines how fast that geometric convergence actually is.</p>
+</blockquote>
+<hr>
+<h2 id=section-11-reading-the-landscape>Section 11: Reading the Landscape</h2>
+<p>With all these tools, you can now approach any optimization problem with a diagnostic mindset.</p>
+<p><strong>First question: is the problem convex?</strong> Check whether the objective is convex (is it a non-negative combination of convex building blocks, composed with affine maps?) and whether the feasible set is convex (intersections of halfspaces, balls, simplex?). If both hold - you are in the good world. Any algorithm that decreases the objective and terminates at a stationary point has found the global optimum.</p>
+<p><strong>Second question: is it strongly convex?</strong> Check whether the Hessian has a bounded positive minimum eigenvalue. If so, gradient descent converges geometrically fast. If not, you are in the weaker $O(1/t)$ convergence regime. Adding L2 regularization is a simple fix when strong convexity is needed.</p>
+<p><strong>Third question: what is the condition number?</strong> Even for strongly convex problems, a large $\kappa$ makes gradient descent slow. Second-order methods (Newton, L-BFGS) are not affected by condition number the same way and are worth considering for small-to-medium problems.</p>
+<p><strong>If the problem is non-convex:</strong> you lose the local-equals-global guarantee. You need heuristics: random restarts, momentum-based methods that help escape flat regions, learning rate schedules. The convergence guarantees degrade. But understanding what the convex world looks like is what lets you recognize when you have left it and understand what you have lost.</p>
+<p>The convex case is not a special case - it is the benchmark. Logistic regression, SVMs, linear regression, LASSO, ridge regression, and most of classical machine learning live here. Neural networks do not. The deep learning revolution required accepting that we would work outside the convex world and developing heuristics that work in practice even without theoretical guarantees.</p>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/lagrange-multipliers-kkt/>Lagrange Multipliers & KKT Conditions</a></li>
+<li><a href=/posts/convex-optimization/>Convex Optimization</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

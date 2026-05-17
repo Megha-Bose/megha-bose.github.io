@@ -1,0 +1,250 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Causal Inference // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Causal Inference">
+<meta name=twitter:description content="Prerequisites:
+ Statistics Basics Conditional Probability & Bayes   Ice cream sales and drowning deaths follow the same seasonal curve. They peak together in July; they trough together in January. The correlation is real, measurable, and statistically significant.
+Should cities ban ice cream to reduce drowning?
+Obviously not. Both rise in summer because hot weather drives people to both buy ice cream and swim. Hot weather is the common cause.">
+<meta property="og:title" content="Causal Inference">
+<meta property="og:description" content="Prerequisites:
+ Statistics Basics Conditional Probability & Bayes   Ice cream sales and drowning deaths follow the same seasonal curve. They peak together in July; they trough together in January. The correlation is real, measurable, and statistically significant.
+Should cities ban ice cream to reduce drowning?
+Obviously not. Both rise in summer because hot weather drives people to both buy ice cream and swim. Hot weather is the common cause.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/causal-inference/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Causal Inference</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/statistics-basics/>Statistics Basics</a></li>
+<li><a href=/posts/conditional-probability-bayes/>Conditional Probability & Bayes</a></li>
+</ul>
+<hr>
+<p>Ice cream sales and drowning deaths follow the same seasonal curve. They peak together in July; they trough together in January. The correlation is real, measurable, and statistically significant.</p>
+<p>Should cities ban ice cream to reduce drowning?</p>
+<p>Obviously not. Both rise in summer because hot weather drives people to both buy ice cream and swim. Hot weather is the common cause. Ice cream has nothing to do with drowning.</p>
+<p>This kind of mistake sounds easy to avoid - but variants of it are everywhere in real data analysis. Smoking and lung cancer: maybe sick people smoke to feel better (reverse causation). Education and wages: maybe smarter people both get more education and earn more (confounding). Hospitals and death: hospitals have higher death rates than staying home - does that mean hospitals are dangerous? No, obviously sick people go to hospitals.</p>
+<p><strong>Correlation is not causation.</strong> You have heard this a thousand times. But &ldquo;not causation&rdquo; leaves unanswered the harder question: then how do you establish causation? Causal inference is the science of answering that question rigorously - of going beyond patterns in data to understand what actually happens when you intervene.</p>
+<hr>
+<h2 id=the-fundamental-problem>The Fundamental Problem</h2>
+<p>Here is why causation is hard: to know whether a drug works for a patient, you would need to observe what happens when that patient takes the drug <em>and</em> what happens when the same patient, in the same state, at the same time, does not take the drug. You need both outcomes simultaneously for the same individual.</p>
+<p>You can only observe one.</p>
+<p>The patient either takes the drug or does not. The outcome you did not observe is called a <strong>counterfactual</strong>: what <em>would have</em> happened under the alternative. This is the fundamental problem of causal inference, formalized by Holland (1986): individual causal effects are inherently unobservable.</p>
+<p>This is not a problem of data collection or technology. It is a logical impossibility. No amount of additional data will let you observe a person in two states at once. Causal inference is the discipline of making rigorous inferences despite this impossibility.</p>
+<hr>
+<h2 id=the-potential-outcomes-framework>The Potential Outcomes Framework</h2>
+<p>The modern probabilistic treatment of causation, developed by Donald Rubin and others, begins with <strong>potential outcomes</strong> (also called the Rubin Causal Model).</p>
+<p>For each individual $i$ and binary treatment $T \in {0, 1}$, define:</p>
+<ul>
+<li>$Y_i(1)$: the outcome for individual $i$ if they receive treatment.</li>
+<li>$Y_i(0)$: the outcome for individual $i$ if they do not receive treatment.</li>
+</ul>
+<p>Both are defined for every individual. But you observe at most one:</p>
+<p>$$Y_i^{\text{obs}} = T_i \cdot Y_i(1) + (1 - T_i) \cdot Y_i(0).$$</p>
+<p>The <strong>individual treatment effect</strong> for person $i$ is:</p>
+<p>$$\tau_i = Y_i(1) - Y_i(0).$$</p>
+<p>This quantity is never observed for any individual. The problem of causal inference is the problem of making statements about $\tau_i$ (or summaries of it) without ever being able to observe it directly.</p>
+<p>The quantity we can hope to estimate at the population level is the <strong>Average Treatment Effect (ATE)</strong>:</p>
+<p>$$\tau = \mathbb{E}[Y(1) - Y(0)] = \mathbb{E}[Y(1)] - \mathbb{E}[Y(0)].$$</p>
+<p>This is the average, across the population, of what the treatment does. Not what it does to any individual - that&rsquo;s unknowable - but what it does on average.</p>
+<hr>
+<h2 id=randomization-the-gold-standard>Randomization: The Gold Standard</h2>
+<p>In a <strong>Randomized Controlled Trial (RCT)</strong>, treatment assignment $T$ is determined by a coin flip, independent of everything else about the individual. This is the key: independence of treatment from potential outcomes.</p>
+<p>Formally: $T \perp!!!\perp (Y(0), Y(1))$.</p>
+<p>When this holds, the observed difference in outcomes between treated and control groups equals the ATE:</p>
+<p>$$\mathbb{E}[Y^{\text{obs}} \mid T=1] - \mathbb{E}[Y^{\text{obs}} \mid T=0] = \mathbb{E}[Y(1) \mid T=1] - \mathbb{E}[Y(0) \mid T=0] = \mathbb{E}[Y(1)] - \mathbb{E}[Y(0)] = \tau.$$</p>
+<p>The second equality uses the independence $T \perp!!!\perp Y(1)$ and $T \perp!!!\perp Y(0)$: people assigned to the treated group have the same distribution of potential outcomes as the control group, and vice versa. The groups are comparable in expectation, on all observed <em>and unobserved</em> characteristics, because treatment was assigned randomly.</p>
+<p>This is why RCTs are the gold standard. Randomization &ldquo;solves&rdquo; the fundamental problem of causal inference - not by making counterfactuals observable, but by making the two groups statistically equivalent so that the observed difference estimates the causal effect.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Even a perfect RCT only tells you about the <em>average</em> treatment effect. Individual effects $\tau_i$ remain unobservable. The drug might help 80% of people and harm 20%, with the ATE still being positive. You might approve a drug based on a positive ATE and harm a fifth of the people who take it. <strong>Heterogeneous treatment effects</strong> - how effects vary across subgroups - are a separate, harder estimation problem. RCTs give population-level averages, not personalized medicine.</p>
+</blockquote>
+<hr>
+<h2 id=confounding-the-enemy-of-observational-studies>Confounding: The Enemy of Observational Studies</h2>
+<p>Most studies are not RCTs. Ethical constraints (you cannot randomize people to smoke), practical constraints (randomizing countries to different economic policies), cost, and time all push us toward <strong>observational data</strong>: we watch what people naturally choose to do, and try to learn from it.</p>
+<p>The problem: in observational data, treatment assignment is not random. People who receive a treatment may be systematically different from those who do not. These systematic differences - <strong>confounders</strong> - corrupt the simple comparison.</p>
+<p>Example: suppose you want to know whether a job training program increases earnings. You compare the earnings of people who enrolled in the program versus those who did not. But people who enroll may be more motivated, or have more social support, or be less severely unemployed. These factors affect earnings regardless of the program. The observed difference in earnings reflects both the program effect <em>and</em> these pre-existing differences.</p>
+<p>Formally, in observational data, $T \not\perp!!!\perp (Y(0), Y(1))$. The groups are not comparable. The quantity $\mathbb{E}[Y^{\text{obs}} \mid T=1] - \mathbb{E}[Y^{\text{obs}} \mid T=0]$ is not the ATE; it is contaminated by confounding.</p>
+<hr>
+<h2 id=causal-graphs-pearls-framework>Causal Graphs: Pearl&rsquo;s Framework</h2>
+<p>Judea Pearl developed a complementary framework to potential outcomes using <strong>Directed Acyclic Graphs (DAGs)</strong>. A DAG has:</p>
+<ul>
+<li><strong>Nodes</strong>: variables (treatment $T$, outcome $Y$, covariates $X$, confounders $Z$, &mldr;).</li>
+<li><strong>Directed edges</strong>: $A \to B$ means $A$ directly causes $B$.</li>
+<li><strong>No cycles</strong>: you cannot follow arrows and return to where you started.</li>
+</ul>
+<p>The DAG encodes the causal structure of the data-generating process. In the ice cream/drowning example: Hot Weather $\to$ Ice Cream Sales, Hot Weather $\to$ Drownings. There is no arrow from Ice Cream to Drownings.</p>
+<p>A <strong>confounder</strong> $Z$ is a common cause of both $T$ and $Y$: $Z \to T$ and $Z \to Y$. Confounders create spurious correlations - correlation between $T$ and $Y$ that does not reflect a causal relationship. In the DAG, confounders create <strong>backdoor paths</strong>: non-causal paths from $T$ to $Y$ that run through common causes.</p>
+<p>The <strong>backdoor criterion</strong>: if you can identify and condition on a set of variables $Z$ that blocks all backdoor paths from $T$ to $Y$ without blocking any causal paths, then you can identify the causal effect from observational data:</p>
+<p>$$\mathbb{E}[Y(1) - Y(0)] = \sum_z \big[\mathbb{E}[Y \mid T=1, Z=z] - \mathbb{E}[Y \mid T=0, Z=z]\big] \cdot P(Z=z).$$</p>
+<p>This is the <strong>adjustment formula</strong>. Stratify by $Z$, compare treated and control within each stratum, then average across strata. Within each stratum, conditional on $Z$, the treatment assignment is as good as random (you have controlled for the confounder).</p>
+<hr>
+<h2 id=when-controlling-doesnt-work>When Controlling Doesn&rsquo;t Work</h2>
+<p>The adjustment formula only works if:</p>
+<ol>
+<li>You can identify which variables to control for (the correct adjustment set).</li>
+<li>You can measure them.</li>
+<li>You have data on all the necessary confounders.</li>
+</ol>
+<p>If there are <strong>unobserved confounders</strong> - common causes of $T$ and $Y$ that you cannot measure - controlling for observed variables is not enough. The backdoor path through the unobserved confounder remains open. No amount of statistical adjustment on observed variables can close it.</p>
+<p>This is the central challenge of observational causal inference. You can always worry that there is some unmeasured variable driving both who gets treated and what outcome they experience. Sensitivity analysis quantifies how strong an unobserved confounder would need to be to overturn your conclusions. But it cannot rule out confounding entirely.</p>
+<hr>
+<h2 id=instrumental-variables>Instrumental Variables</h2>
+<p>One approach to unobserved confounding is the <strong>instrumental variable (IV)</strong> design. An instrument $Z$ satisfies:</p>
+<ol>
+<li><strong>Relevance</strong>: $Z$ affects treatment $T$. ($Z$ is correlated with $T$.)</li>
+<li><strong>Exclusion restriction</strong>: $Z$ affects outcome $Y$ only through $T$. (No direct path $Z \to Y$, no path $Z \to \text{confounder} \to Y$.)</li>
+<li><strong>Independence</strong>: $Z$ is independent of the unobserved confounder.</li>
+</ol>
+<p>If such a variable exists, you can estimate the causal effect even in the presence of unobserved confounding. The <strong>IV estimator</strong> is:</p>
+<p>$$\hat{\tau}_{IV} = \frac{\text{Cov}(Z, Y)}{\text{Cov}(Z, T)}.$$</p>
+<p>This is the reduced-form effect of $Z$ on $Y$ divided by the first-stage effect of $Z$ on $T$. Intuitively: $Z$ creates variation in $T$ that is unrelated to the confounders; you exploit only this clean variation to identify the causal effect.</p>
+<p>Classic instruments:</p>
+<ul>
+<li><strong>Distance to college</strong>: Affects whether someone attends college (relevance); affects earnings mainly through education (exclusion).</li>
+<li><strong>Vietnam draft lottery number</strong>: Randomized military service (relevance, independence); affects wages through military service (exclusion).</li>
+<li><strong>Quarter of birth</strong>: Affects educational attainment through compulsory schooling laws (relevance); affects wages through education.</li>
+</ul>
+<p>IV estimates a specific quantity: the <strong>Local Average Treatment Effect (LATE)</strong> - the causal effect for <strong>compliers</strong>, people whose treatment status is changed by the instrument. This is not the same as the ATE. If your instrument only moves a small subset of the population, the LATE may not generalize.</p>
+<hr>
+<h2 id=natural-experiments>Natural Experiments</h2>
+<p>When a true randomized experiment is impossible, researchers look for <strong>natural experiments</strong>: situations where some external event or rule creates variation in treatment that is, for practical purposes, random.</p>
+<p>Examples:</p>
+<ul>
+<li><strong>Minimum wage</strong>: Card and Krueger (1994) compared fast food employment in New Jersey (which raised its minimum wage) to neighboring Pennsylvania (which did not), exploiting the state border as a natural experiment.</li>
+<li><strong>Regression discontinuity</strong>: People just above and just below a test score cutoff for a scholarship are similar in all ways except whether they received the scholarship. Comparing these near-marginal groups identifies the effect of the scholarship.</li>
+<li><strong>Twins</strong>: Comparing outcomes between identical twins controls for genetic confounders; differences must be environmental.</li>
+<li><strong>Lotteries</strong>: School choice lotteries randomly assign access to charter schools; winners and losers are comparable before the lottery.</li>
+</ul>
+<p>Natural experiments are valuable because they often provide cleaner identification than IV methods, with more plausible independence assumptions. But they are opportunistic - you can only study questions for which a natural experiment exists.</p>
+<hr>
+<h2 id=causal-inference-and-machine-learning>Causal Inference and Machine Learning</h2>
+<p>Standard machine learning is built for prediction: given features $X$, predict outcome $Y$ as accurately as possible. It optimizes correlation - whichever features predict $Y$ well, regardless of whether they cause $Y$.</p>
+<p>This creates serious problems when predictions are used to make decisions.</p>
+<p>A recommendation system trained to maximize clicks may discover that showing emotionally provocative content increases engagement. It learns a correlation. When it acts on this by surfacing more provocative content, it may <em>cause</em> a change in user behavior and polarization - an effect that was not present in the training data. The system was not modeling causation; it was modeling a snapshot of a world it would then change.</p>
+<p>More generally: if you use a predictive model to choose an intervention (which drug to give, which ad to show, which policy to enact), you are using observational correlation to make a causal decision. This conflation is one of the main failure modes of deployed ML systems.</p>
+<p><strong>Causal ML</strong> asks not just &ldquo;what predicts $Y$?&rdquo; but &ldquo;if I change $X$, what happens to $Y$?&rdquo; Methods like <strong>Double Machine Learning</strong> (Chernozhukov et al.) and <strong>Causal Forests</strong> (Wager & Athey) combine the flexibility of machine learning with the rigor of causal identification, estimating heterogeneous treatment effects while controlling for high-dimensional confounders. These methods are increasingly central to applied economics, medicine, and tech industry experimentation.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Potential outcomes $Y_i(0), Y_i(1)$</td>
+<td>What would happen to person $i$ with and without treatment</td>
+</tr>
+<tr>
+<td>Fundamental problem</td>
+<td>Individual treatment effects are unobservable; only one outcome per person</td>
+</tr>
+<tr>
+<td>ATE</td>
+<td>$\mathbb{E}[Y(1) - Y(0)]$: population-average causal effect</td>
+</tr>
+<tr>
+<td>RCT</td>
+<td>Randomization makes $T \perp!!!\perp (Y(0), Y(1))$; observed difference = ATE</td>
+</tr>
+<tr>
+<td>Confounder</td>
+<td>Common cause of $T$ and $Y$; creates spurious correlation</td>
+</tr>
+<tr>
+<td>DAG</td>
+<td>Directed Acyclic Graph encoding causal structure</td>
+</tr>
+<tr>
+<td>Backdoor path</td>
+<td>Non-causal path creating spurious correlation; blocked by conditioning on confounders</td>
+</tr>
+<tr>
+<td>Adjustment formula</td>
+<td>Stratify by confounders, compare within strata, average across strata</td>
+</tr>
+<tr>
+<td>Instrumental variable</td>
+<td>Variable affecting $T$ but affecting $Y$ only through $T$; handles unobserved confounding</td>
+</tr>
+<tr>
+<td>LATE</td>
+<td>Effect of treatment for compliers - those whose treatment changes with the instrument</td>
+</tr>
+<tr>
+<td>Natural experiment</td>
+<td>External variation that mimics randomization</td>
+</tr>
+</tbody>
+</table>
+<p>The fundamental insight of causal inference is that causal questions cannot be answered by statistical association alone. No matter how large the dataset, correlation does not become causation with more data. You need additional assumptions - randomization, conditional ignorability, exclusion restrictions - to identify causal effects. These assumptions are not statistical; they are claims about the world. The discipline of causal inference is the discipline of making those assumptions explicit, checking them where possible, and drawing conclusions that are honest about what the data can and cannot tell you.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/experimental-design-ab-testing/>Experimental Design & A/B Testing</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

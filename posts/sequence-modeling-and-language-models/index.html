@@ -1,0 +1,219 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Sequence Modeling & Language Models // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Sequence Modeling & Language Models">
+<meta name=twitter:description content="Prerequisites:
+ Recurrent Neural Networks Probability as a Language Entropy & Information Theory   &ldquo;The cat sat on the ___.&rdquo;
+Your brain fills in &ldquo;mat&rdquo; (or &ldquo;floor&rdquo; or &ldquo;sofa&rdquo;) without thinking. You don&rsquo;t consciously enumerate possibilities and weigh them - the prediction just happens. What you&rsquo;re doing, without realizing it, is running a language model. You are estimating the probability of each possible next word given every word that came before it.">
+<meta property="og:title" content="Sequence Modeling & Language Models">
+<meta property="og:description" content="Prerequisites:
+ Recurrent Neural Networks Probability as a Language Entropy & Information Theory   &ldquo;The cat sat on the ___.&rdquo;
+Your brain fills in &ldquo;mat&rdquo; (or &ldquo;floor&rdquo; or &ldquo;sofa&rdquo;) without thinking. You don&rsquo;t consciously enumerate possibilities and weigh them - the prediction just happens. What you&rsquo;re doing, without realizing it, is running a language model. You are estimating the probability of each possible next word given every word that came before it.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/sequence-modeling-and-language-models/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Sequence Modeling & Language Models</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+10 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/recurrent-neural-networks/>Recurrent Neural Networks</a></li>
+<li><a href=/posts/probability-as-a-language/>Probability as a Language</a></li>
+<li><a href=/posts/entropy-information/>Entropy & Information Theory</a></li>
+</ul>
+<hr>
+<p>&ldquo;The cat sat on the ___.&rdquo;</p>
+<p>Your brain fills in &ldquo;mat&rdquo; (or &ldquo;floor&rdquo; or &ldquo;sofa&rdquo;) without thinking. You don&rsquo;t consciously enumerate possibilities and weigh them - the prediction just happens. What you&rsquo;re doing, without realizing it, is running a language model. You are estimating the probability of each possible next word given every word that came before it.</p>
+<p>This is the central task of language modeling: predict the next token given all previous tokens. It sounds almost too simple. It will turn out to be almost universally useful - not just for generating text, but as a pre-training objective that forces a model to develop representations of syntax, semantics, world knowledge, and reasoning.</p>
+<hr>
+<h2 id=a-probability-distribution-over-sequences>A Probability Distribution Over Sequences</h2>
+<p>A language model is, precisely, a probability distribution over sequences of words (or tokens).</p>
+<p>For a sequence $w_1, w_2, \ldots, w_n$, the model assigns a probability:</p>
+<p>$$P(w_1, w_2, \ldots, w_n).$$</p>
+<p>This joint distribution over all possible sequences captures everything about the language: which sentences are grammatical, which are plausible, which are bizarre.</p>
+<p>But estimating this joint distribution directly is hopeless. For a vocabulary of $V = 50{,}000$ words and sequences of length $n = 20$, the number of possible sequences is $50000^{20}$ - a number with 91 digits. You cannot have seen most of them.</p>
+<p>The key is the <strong>chain rule of probability</strong>. Any joint distribution factors as:</p>
+<p>$$P(w_1, \ldots, w_n) = P(w_1) \cdot P(w_2 \mid w_1) \cdot P(w_3 \mid w_1, w_2) \cdots P(w_n \mid w_1, \ldots, w_{n-1}).$$</p>
+<p>Every language model uses this factorization. The job reduces to estimating the conditional distribution $P(w_t \mid w_1, \ldots, w_{t-1})$ - the probability of the next word given all previous context. Estimate this well and you have a language model.</p>
+<hr>
+<h2 id=n-gram-models>N-gram Models</h2>
+<p>The oldest approach is to approximate $P(w_t \mid w_1, \ldots, w_{t-1})$ using only the last $n-1$ words. This is the <strong>Markov assumption</strong>: the future depends on the past only through a fixed window.</p>
+<p>$$P(w_t \mid w_1, \ldots, w_{t-1}) \approx P(w_t \mid w_{t-n+1}, \ldots, w_{t-1}).$$</p>
+<p><strong>Unigram</strong> ($n=1$): ignore context entirely.</p>
+<p>$$P(w_t) \approx \frac{C(w_t)}{N}$$</p>
+<p>where $C(w_t)$ is the count of $w_t$ in the training corpus and $N$ is the total number of tokens. A unigram model says &ldquo;dog&rdquo; is more likely than &ldquo;xylophone&rdquo; everywhere, regardless of what came before.</p>
+<p><strong>Bigram</strong> ($n=2$): condition only on the immediately preceding word.</p>
+<p>$$P(w_t \mid w_{t-1}) \approx \frac{C(w_{t-1}, w_t)}{C(w_{t-1})}.$$</p>
+<p>The fraction of times $w_t$ follows $w_{t-1}$ in training text. This already produces something recognizable as language. Given &ldquo;the&rdquo;, the model knows &ldquo;cat&rdquo; is more probable than &ldquo;quickly&rdquo;.</p>
+<p><strong>Trigram</strong> ($n=3$): condition on the two preceding words.</p>
+<p>$$P(w_t \mid w_{t-2}, w_{t-1}) \approx \frac{C(w_{t-2}, w_{t-1}, w_t)}{C(w_{t-2}, w_{t-1})}.$$</p>
+<p>Longer n-grams capture more context and produce better estimates - but they face a hard wall.</p>
+<h3 id=the-problems-with-n-grams>The Problems With N-grams</h3>
+<p><strong>Data sparsity.</strong> In a vocabulary of $V = 50{,}000$ words, there are $V^3 = 1.25 \times 10^{14}$ possible trigrams. A training corpus of a billion words has seen at most a billion of them - fewer than $0.000001%$. Most trigrams you will encounter at test time have count zero in training. The model assigns them probability zero, which is clearly wrong.</p>
+<p>Smoothing techniques (Laplace smoothing, Kneser-Ney) redistribute probability mass to unseen n-grams, but they are workarounds, not solutions.</p>
+<p><strong>Fixed and short context window.</strong> A trigram model uses the last two words - and that is all it will ever use. &ldquo;The bank by the river refused to grant a loan because it was ___.&rdquo; To fill the blank correctly (&ldquo;broke&rdquo; referring to a person, &ldquo;dry&rdquo; referring to the river, or &ldquo;too small&rdquo; referring to the bank), you need context from far earlier in the sentence. A trigram model sees only &ldquo;because it was&rdquo; and produces gibberish.</p>
+<p>N-gram models hit a ceiling. The ceiling is low.</p>
+<hr>
+<h2 id=perplexity-the-standard-evaluation-metric>Perplexity: The Standard Evaluation Metric</h2>
+<p>How do you measure whether one language model is better than another? You need a test corpus the model hasn&rsquo;t seen, and you ask: how surprised was the model by this text?</p>
+<p><strong>Perplexity</strong> quantifies this surprise:</p>
+<p>$$\text{PP}(W) = \exp!\left(-\frac{1}{N} \sum_{t=1}^{N} \log P(w_t \mid w_1, \ldots, w_{t-1})\right).$$</p>
+<p>The inner quantity $-\frac{1}{N} \sum \log P$ is the average negative log-likelihood per token - a measure of how many bits (or nats, depending on the log base) of information the model needed to represent each token. Perplexity exponentiates this to get back to the original probability scale.</p>
+<p>The intuition: a model with perplexity 100 is &ldquo;as confused as if it were choosing uniformly from 100 options at each step.&rdquo; A random model over a 50,000-word vocabulary has perplexity 50,000. A trigram model might achieve perplexity around 100–300 on standard corpora. Good modern language models achieve perplexity in the single digits on the same corpora.</p>
+<p>Lower is always better. Perplexity of 1 would mean the model predicted every word with certainty - it knows the text perfectly.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Perplexity is measured on held-out test text, so a model cannot cheat by memorizing the training corpus. But the test corpus still has to be drawn from the same distribution as training. Perplexity on a different domain (say, training on Wikipedia, testing on medical notes) will look worse - not because the model is bad, but because it&rsquo;s out of distribution. Always match the evaluation corpus to the deployment domain.</p>
+</blockquote>
+<hr>
+<h2 id=rnn-language-models>RNN Language Models</h2>
+<p>Recurrent Neural Networks offer a different approach to the problem of variable-length context. Instead of truncating history to the last $n-1$ words, an RNN maintains a hidden state $h_t$ that is supposed to summarize all of the context seen so far.</p>
+<p>At each step $t$:</p>
+<ol>
+<li>Read the current word embedding $x_t$.</li>
+<li>Update the hidden state: $h_t = \tanh(W_h h_{t-1} + W_x x_t + b)$.</li>
+<li>Predict the next word: $P(w_{t+1} \mid w_1, \ldots, w_t) = \text{softmax}(W_o h_t)$.</li>
+</ol>
+<p>The hidden state $h_t$ is a fixed-size vector (say, 512 or 1024 dimensions) that must summarize all of the previous text. Because the same parameters are reused at every step, the RNN can in principle remember information from arbitrarily far back.</p>
+<p>In practice, RNNs struggle to maintain information over long distances. The vanishing gradient problem means that gradients for events 100 steps in the past are near zero - the network effectively forgets. LSTMs and GRUs mitigate this with gating mechanisms, but the fundamental limitation remains.</p>
+<h3 id=training-with-teacher-forcing>Training With Teacher Forcing</h3>
+<p>How do you train an RNN language model? The objective is next-token prediction: at every position, the model should assign high probability to the correct next word.</p>
+<p>During training, you use <strong>teacher forcing</strong>: at each step, you feed the model the true previous word, not whatever the model would have predicted.</p>
+<p>Concretely, for the sequence &ldquo;the cat sat on the mat&rdquo;:</p>
+<ul>
+<li>Input sequence: <code>[BOS, the, cat, sat, on, the]</code></li>
+<li>Target sequence: <code>[the, cat, sat, on, the, mat]</code></li>
+</ul>
+<p>At each step, the input is the true word, not the model&rsquo;s previous output. The loss is the cross-entropy summed over all positions.</p>
+<p>Teacher forcing makes training stable and efficient. But it creates a problem called <strong>exposure bias</strong>: at inference time (when generating text), the model feeds its own predictions as inputs, not the true previous words. If the model makes an error at step $t$, that wrong word becomes the input at step $t+1$, and errors can cascade. The model was never trained to handle its own mistakes.</p>
+<hr>
+<h2 id=seq2seq-encoder-decoder-models>Seq2Seq: Encoder-Decoder Models</h2>
+<p>Language modeling is about predicting the next word in a single sequence. But many tasks require mapping one sequence to another - translation, summarization, question answering. The <strong>sequence-to-sequence (seq2seq)</strong> framework handles these.</p>
+<p>A seq2seq model has two components:</p>
+<p><strong>Encoder</strong>: reads the entire input sequence and produces a context vector. The encoder is an RNN (or later, a transformer) that processes the source tokens one by one. At the end, the final hidden state $c$ is the context vector - a compressed representation of the entire input.</p>
+<p><strong>Decoder</strong>: generates the output sequence, one token at a time, conditioned on $c$. The decoder starts with a special <code>[BOS]</code> token and the context vector $c$ as its initial hidden state, then predicts tokens autoregressively: each predicted token becomes the input for the next step.</p>
+<p>For machine translation: the encoder reads a French sentence, produces $c$, and the decoder generates the English translation.</p>
+<h3 id=the-information-bottleneck-problem>The Information Bottleneck Problem</h3>
+<p>There is a fundamental flaw in this architecture, and it becomes obvious once you think about it carefully.</p>
+<p>The entire source sequence is compressed into a single fixed-size vector $c$. A sentence with 100 words, each with complex semantic and syntactic properties, must be squeezed into a vector of dimension 512 (or 1024, or whatever you choose). Information is inevitably lost.</p>
+<p>For short sentences (fewer than 20 words), this works reasonably well. For longer sentences, translation quality degrades sharply. The encoder&rsquo;s final hidden state simply cannot hold everything relevant. The model forgets the beginning of the sentence by the time it reaches the end.</p>
+<p>This is not an accident of implementation. It is a structural limitation: you cannot losslessly compress arbitrarily long sequences into a fixed-size vector. Something must be discarded.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> &ldquo;Next-token prediction sounds too simple to produce capable models.&rdquo; Here is the counterargument. Consider the sentence: &ldquo;The bank closed at ___.&rdquo; To predict &ldquo;5pm&rdquo; correctly, you need to know: (1) that &ldquo;bank&rdquo; here means a financial institution, not a riverbank - disambiguating word sense from context; (2) that financial institutions are businesses; (3) that businesses have closing times; (4) what typical business hours are. This is world knowledge, semantic disambiguation, and pragmatic reasoning, all required just to predict two words correctly. Now scale this to trillions of tokens. Predicting the next token well, at that scale, requires deep understanding of language and the world. The simplicity of the objective belies the richness of what the model must learn to satisfy it.</p>
+</blockquote>
+<hr>
+<h2 id=whats-still-broken>What&rsquo;s Still Broken</h2>
+<p>RNN language models and seq2seq models were state of the art from roughly 2015 to 2017. They were impressive, but they had three structural problems that no amount of tuning could fix.</p>
+<p><strong>Sequential computation.</strong> An RNN must process tokens one at a time: $h_1$ must be computed before $h_2$, which must be computed before $h_3$. You cannot parallelize this. Training on a sequence of length 1000 requires 1000 sequential steps. On modern hardware with thousands of processing cores, this is catastrophically inefficient - the parallelism just sits idle.</p>
+<p><strong>Long-range dependencies.</strong> Even LSTMs struggle to maintain information across more than a few hundred tokens. The hidden state is a bottleneck: everything from the past must be routed through a vector of fixed dimension, and gradient signals for distant dependencies decay to near zero during backpropagation.</p>
+<p><strong>Fixed context window.</strong> The hidden state has a fixed size regardless of how long the input is. There is no mechanism for the model to &ldquo;look back&rdquo; at specific earlier parts of the input when generating an output. The context is smeared into $h_t$ and the smearing is lossy.</p>
+<p>These three problems all have the same solution: <strong>attention mechanisms</strong>. Instead of compressing the past into a single hidden state, let the model look directly at all past positions and decide what to attend to. Instead of sequential computation, compute attention over all positions in parallel.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Language model</td>
+<td>$P(w_1, \ldots, w_n) = \prod_t P(w_t \mid w_1, \ldots, w_{t-1})$</td>
+</tr>
+<tr>
+<td>N-gram model</td>
+<td>Approximates context with last $n-1$ words</td>
+</tr>
+<tr>
+<td>Bigram estimate</td>
+<td>$P(w_t \mid w_{t-1}) = C(w_{t-1}, w_t) / C(w_{t-1})$</td>
+</tr>
+<tr>
+<td>Perplexity</td>
+<td>$\exp(-\frac{1}{N} \sum \log P(w_t \mid \text{context}))$</td>
+</tr>
+<tr>
+<td>RNN language model</td>
+<td>Hidden state $h_t$ summarizes all past context</td>
+</tr>
+<tr>
+<td>Teacher forcing</td>
+<td>Train with true previous token; creates exposure bias</td>
+</tr>
+<tr>
+<td>Seq2seq</td>
+<td>Encoder compresses input to $c$; decoder generates from $c$</td>
+</tr>
+<tr>
+<td>Information bottleneck</td>
+<td>Fixed-size $c$ loses information for long sequences</td>
+</tr>
+</tbody>
+</table>
+<p>Language modeling starts as a probability problem - factor the joint, estimate the conditional. N-grams make it tractable but shallow. RNNs make it deep but slow and forgetful. The bottleneck problem in seq2seq is not a bug; it is the precise diagnosis that leads directly to attention.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/attention-mechanisms/>Attention Mechanisms</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

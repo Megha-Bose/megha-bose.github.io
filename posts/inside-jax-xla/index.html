@@ -1,0 +1,309 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Inside JAX & XLA // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Inside JAX & XLA">
+<meta name=twitter:description content="Prerequisite: Autodiff
+NumPy is fast. But what if you could write NumPy code and have it compile automatically to optimized CUDA kernels or TPU programs - with automatic differentiation, batch vectorization, and multi-device parallelism, all composable with each other and expressible in pure Python?
+That is what JAX offers. And it is not magic. It is a specific set of design choices, each with real consequences you need to understand before JAX stops surprising you and starts feeling inevitable.">
+<meta property="og:title" content="Inside JAX & XLA">
+<meta property="og:description" content="Prerequisite: Autodiff
+NumPy is fast. But what if you could write NumPy code and have it compile automatically to optimized CUDA kernels or TPU programs - with automatic differentiation, batch vectorization, and multi-device parallelism, all composable with each other and expressible in pure Python?
+That is what JAX offers. And it is not magic. It is a specific set of design choices, each with real consequences you need to understand before JAX stops surprising you and starts feeling inevitable.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/inside-jax-xla/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Inside JAX & XLA</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/autodiff-forward-reverse/>Autodiff</a></p>
+<p>NumPy is fast. But what if you could write NumPy code and have it compile automatically to optimized CUDA kernels or TPU programs - with automatic differentiation, batch vectorization, and multi-device parallelism, all composable with each other and expressible in pure Python?</p>
+<p>That is what JAX offers. And it is not magic. It is a specific set of design choices, each with real consequences you need to understand before JAX stops surprising you and starts feeling inevitable.</p>
+<h2 id=why-jax-exists>Why JAX Exists</h2>
+<p>The background starts at Google Brain around 2017–2018. TensorFlow 1.x required building a static computation graph before running anything - powerful for compilation but deeply painful to debug. PyTorch had just introduced dynamic (eager) execution, which made debugging natural but left performance on the table: every operation launched a separate GPU kernel, and Python overhead meant the compiler could never see the full computation.</p>
+<p>JAX, open-sourced in 2018, chose a third path. Write code in a functional NumPy-compatible style. Trace it to a computation graph automatically. Compile that graph with XLA (Accelerated Linear Algebra), a compiler originally developed for TPUs that Google also uses for GPU and CPU. The result: the ease of eager execution during development, the performance of compiled execution in production.</p>
+<p>The key that made this possible was <strong>functional purity</strong>: no in-place mutation, no global state, no side effects. This is not a philosophical preference - it is what makes the compiler sound. If a function has no side effects, the compiler can safely reorder, fuse, or replicate its operations. If arrays are immutable, there are no aliasing hazards. The constraints are load-bearing.</p>
+<h2 id=the-tracing-model-how-jit-actually-works>The Tracing Model: How jit Actually Works</h2>
+<p>When you call <code>jax.jit(f)(x)</code>, something unusual happens. JAX doesn&rsquo;t execute <code>f</code>. It <em>traces</em> <code>f</code> by running it with abstract values - tracer objects that record shape, dtype, and the operations performed on them, but carry no concrete numbers.</p>
+<p>The trace produces a computation graph expressed in XLA&rsquo;s HLO (High Level Operations) IR - a graph of matrix multiplies, elementwise operations, reductions, and control flow. XLA compiles that HLO to machine code for your hardware target and caches the compiled binary. Subsequent calls with inputs of the same shape and dtype skip Python entirely and execute the compiled binary directly.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> jax
+<span style=color:#f92672>import</span> jax.numpy <span style=color:#66d9ef>as</span> jnp
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>softmax</span>(x):
+    x_max <span style=color:#f92672>=</span> jnp<span style=color:#f92672>.</span>max(x)
+    e_x <span style=color:#f92672>=</span> jnp<span style=color:#f92672>.</span>exp(x <span style=color:#f92672>-</span> x_max)
+    <span style=color:#66d9ef>return</span> e_x <span style=color:#f92672>/</span> jnp<span style=color:#f92672>.</span>sum(e_x)
+
+softmax_jit <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>jit(softmax)
+x <span style=color:#f92672>=</span> jnp<span style=color:#f92672>.</span>array([<span style=color:#ae81ff>1.0</span>, <span style=color:#ae81ff>2.0</span>, <span style=color:#ae81ff>3.0</span>])
+
+<span style=color:#75715e># First call: traces + compiles (~100ms warmup)</span>
+out <span style=color:#f92672>=</span> softmax_jit(x)
+
+<span style=color:#75715e># Subsequent calls: compiled binary, microseconds</span>
+out <span style=color:#f92672>=</span> softmax_jit(x)
+</code></pre></div><p>This is why JIT-compiled JAX is fast: the Python interpreter disappears, and XLA can see the entire computation and optimize it globally - fusing operations, choosing layouts, eliminating temporaries.</p>
+<h2 id=the-tracing-gotcha-python-control-flow-is-frozen>The Tracing Gotcha: Python Control Flow is Frozen</h2>
+<p>Here is the discomfort you need to sit with.</p>
+<p>When JAX traces your function, it runs Python control flow with abstract values. An <code>if</code> statement that branches on a JAX array will be evaluated at trace time - with the abstract value, not the concrete one. The result is that the branch taken at trace time is baked into the compiled binary forever.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># DANGEROUS: this gets traced once and the branch is frozen</span>
+<span style=color:#a6e22e>@jax</span><span style=color:#f92672>.</span>jit
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>f</span>(x):
+    <span style=color:#66d9ef>if</span> x <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span>:     <span style=color:#75715e># x is abstract at trace time; this evaluates arbitrarily</span>
+        <span style=color:#66d9ef>return</span> x <span style=color:#f92672>*</span> <span style=color:#ae81ff>2</span>
+    <span style=color:#66d9ef>return</span> x <span style=color:#f92672>*</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>
+
+<span style=color:#75715e># CORRECT: use JAX control flow that lowers to HLO</span>
+<span style=color:#a6e22e>@jax</span><span style=color:#f92672>.</span>jit
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>f</span>(x):
+    <span style=color:#66d9ef>return</span> jax<span style=color:#f92672>.</span>lax<span style=color:#f92672>.</span>cond(x <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span>, <span style=color:#66d9ef>lambda</span> x: x <span style=color:#f92672>*</span> <span style=color:#ae81ff>2</span>, <span style=color:#66d9ef>lambda</span> x: x <span style=color:#f92672>*</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, x)
+</code></pre></div><p><code>jax.lax.cond</code>, <code>jax.lax.fori_loop</code>, <code>jax.lax.while_loop</code> - these are the JAX equivalents of Python control flow. They compile to corresponding HLO control flow operations that are evaluated at runtime, not trace time. Python <code>for</code> loops in traced functions are <em>unrolled</em> - they produce HLO for each iteration, which is fine for small loops but catastrophic for large ones.</p>
+<p>Similarly, Python-level constants are baked into the compiled binary. If you pass a flag as a Python int and it changes, JAX won&rsquo;t notice - it cached the binary for the first value. Use <code>static_argnums</code> to tell JAX to retrace when specific arguments change:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#a6e22e>@functools</span><span style=color:#f92672>.</span>partial(jax<span style=color:#f92672>.</span>jit, static_argnums<span style=color:#f92672>=</span>(<span style=color:#ae81ff>1</span>,))
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>f</span>(x, training: bool):
+    <span style=color:#66d9ef>if</span> training:  <span style=color:#75715e># now safe: JAX retraces when training changes</span>
+        <span style=color:#66d9ef>return</span> dropout(x)
+    <span style=color:#66d9ef>return</span> x
+</code></pre></div><p>Recompilation happens when input <em>shapes</em> change. Avoid dynamic shapes in hot loops. This is a real operational concern for serving systems that process variable-length inputs.</p>
+<h2 id=xla-the-compiler-that-makes-it-real>XLA: The Compiler That Makes It Real</h2>
+<p>XLA is not just a wrapper around cuBLAS. It is a full optimizing compiler for linear algebra with its own IR, its own optimization passes, and its own code generation backends (CUDA, HIP, CPU, TPU).</p>
+<p>XLA&rsquo;s most important optimization for ML workloads is <strong>operator fusion</strong>: merging multiple elementwise operations into a single GPU kernel. Without fusion, each elementwise operation (<code>relu</code>, <code>add</code>, <code>multiply</code>) launches a separate kernel. Each kernel reads its inputs from HBM (High Bandwidth Memory), does minimal work, and writes outputs back to HBM. The compute-to-memory-bandwidth ratio is terrible.</p>
+<p>XLA fuses a sequence of elementwise operations into one kernel that reads inputs once, performs all operations in registers, and writes the final result once. For a chain of 10 elementwise ops, this reduces HBM traffic by roughly 10x. This is a significant fraction of why JAX often outperforms PyTorch eager mode on element-wise-heavy computations.</p>
+<p>Beyond fusion, XLA performs:</p>
+<ul>
+<li><strong>Layout optimization</strong>: choosing row-major vs column-major for each array based on how it is used downstream, to minimize transpose cost.</li>
+<li><strong>Constant folding</strong>: evaluating expressions whose operands are all constants at compile time.</li>
+<li><strong>Common subexpression elimination</strong>: computing a shared sub-expression once rather than multiple times.</li>
+<li><strong>HBM traffic minimization</strong>: rematerialization (recomputing activations from cheaper inputs rather than storing them) for gradient checkpointing.</li>
+</ul>
+<p>The trade-off: XLA compilation is slow. A model with many distinct input shapes can trigger minutes of compilation on first run. Production systems warm up JAX models extensively before serving traffic.</p>
+<h2 id=jaxgrad-automatic-differentiation-through-function-composition>jax.grad: Automatic Differentiation Through Function Composition</h2>
+<p><code>jax.grad</code> implements reverse-mode automatic differentiation, but not by symbolic manipulation of formulas and not by finite differences. It transforms the computation graph produced by tracing into a backward pass that computes exact gradients.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>mse_loss</span>(params, x, y):
+    predictions <span style=color:#f92672>=</span> params[<span style=color:#e6db74>&#34;w&#34;</span>] <span style=color:#f92672>@</span> x <span style=color:#f92672>+</span> params[<span style=color:#e6db74>&#34;b&#34;</span>]
+    <span style=color:#66d9ef>return</span> jnp<span style=color:#f92672>.</span>mean((predictions <span style=color:#f92672>-</span> y) <span style=color:#f92672>**</span> <span style=color:#ae81ff>2</span>)
+
+<span style=color:#75715e># Differentiates w.r.t. the first argument (params) by default</span>
+grad_fn <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>grad(mse_loss)
+grads <span style=color:#f92672>=</span> grad_fn(params, x, y)
+<span style=color:#75715e># grads has the same structure as params: {&#34;w&#34;: ..., &#34;b&#34;: ...}</span>
+
+<span style=color:#75715e># More efficient: compute loss and gradients in one pass</span>
+loss, grads <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>value_and_grad(mse_loss)(params, x, y)
+</code></pre></div><p><code>jax.grad</code> composes with <code>jax.jit</code>: you can JIT-compile the gradient function, and XLA will optimize the backward pass just as aggressively as the forward pass. You can also take higher-order derivatives by nesting <code>grad</code>:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>d2f <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>grad(jax<span style=color:#f92672>.</span>grad(f))  <span style=color:#75715e># second derivative</span>
+</code></pre></div><p>This works because <code>jax.grad(f)</code> is itself a function that can be traced. The composition is mathematically sound because of functional purity - no state, no side effects.</p>
+<h2 id=jaxvmap-vectorization-as-a-transformation>jax.vmap: Vectorization as a Transformation</h2>
+<p><code>vmap</code> transforms a function written for a single example into a batched function. Crucially, this is not a Python loop - it produces a single vectorized computation that runs in one pass.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>single_loss</span>(w, x, y):
+    <span style=color:#66d9ef>return</span> jnp<span style=color:#f92672>.</span>dot(w, x) <span style=color:#f92672>-</span> y
+
+<span style=color:#75715e># Batch over axis 0 of x and y; don&#39;t batch w (it&#39;s shared)</span>
+batched_loss <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>vmap(single_loss, in_axes<span style=color:#f92672>=</span>(<span style=color:#66d9ef>None</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>0</span>))
+
+w <span style=color:#f92672>=</span> jnp<span style=color:#f92672>.</span>ones(<span style=color:#ae81ff>10</span>)
+X <span style=color:#f92672>=</span> jnp<span style=color:#f92672>.</span>ones((<span style=color:#ae81ff>32</span>, <span style=color:#ae81ff>10</span>))  <span style=color:#75715e># 32 examples</span>
+Y <span style=color:#f92672>=</span> jnp<span style=color:#f92672>.</span>ones(<span style=color:#ae81ff>32</span>)
+losses <span style=color:#f92672>=</span> batched_loss(w, X, Y)  <span style=color:#75715e># shape (32,)</span>
+</code></pre></div><p>The canonical use case in research is per-example gradients - the gradient of the loss for each individual training example, needed for privacy-preserving methods like differential privacy. In PyTorch, per-example gradients require running backprop once per example or hacky vmap-like tricks. In JAX:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>per_example_grads <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>vmap(jax<span style=color:#f92672>.</span>grad(loss_fn), in_axes<span style=color:#f92672>=</span>(<span style=color:#66d9ef>None</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>0</span>))
+</code></pre></div><p>This composes two transformations - <code>vmap</code> and <code>grad</code> - and JAX handles the algebra. The result is a function that computes all per-example gradients in a single vectorized pass with no Python loops.</p>
+<h2 id=jaxpmap-spmd-across-devices>jax.pmap: SPMD Across Devices</h2>
+<p><code>pmap</code> (parallel map) replicates a function across multiple devices (GPUs or TPUs), where each device receives a different shard of the input. It implements Single Program Multiple Data (SPMD) parallelism.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> jax <span style=color:#f92672>import</span> pmap
+<span style=color:#f92672>from</span> jax.lax <span style=color:#f92672>import</span> pmean
+
+<span style=color:#a6e22e>@pmap</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>train_step</span>(params, batch):
+    loss, grads <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>value_and_grad(loss_fn)(params, batch)
+    grads <span style=color:#f92672>=</span> pmean(grads, axis_name<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;devices&#34;</span>)  <span style=color:#75715e># AllReduce across devices</span>
+    params <span style=color:#f92672>=</span> update(params, grads)
+    <span style=color:#66d9ef>return</span> params, loss
+</code></pre></div><p><code>pmean</code> compiles to a collective AllReduce - NCCL on GPU, ICI on TPU. After AllReduce, every device holds the same averaged gradient and applies the same update, maintaining exact synchrony. This is synchronous data parallelism, equivalent to training on a batch that is the sum of all device batches.</p>
+<p>For model parallelism (sharding model parameters across devices rather than data), JAX provides <code>jax.experimental.maps</code> and, more recently, <code>jax.sharding</code> and <code>jax.lax.with_sharding_constraint</code>. These allow you to annotate which axes of an array are sharded across which devices, and XLA inserts the necessary communication automatically.</p>
+<p>This is how Google trains Gemini: JAX + <code>pmap</code>/<code>jax.distributed</code> across thousands of TPUs. The functional purity that constrains individual programs becomes a massive advantage at scale - there is no shared mutable state between devices, which makes the communication pattern explicit and analyzable.</p>
+<h2 id=pytrees-operating-on-nested-structures>Pytrees: Operating on Nested Structures</h2>
+<p>JAX transformations operate on <strong>pytrees</strong>: arbitrary nested Python containers (lists, tuples, dicts) of JAX arrays. This is what makes it natural to represent model parameters as nested dicts.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>params <span style=color:#f92672>=</span> {
+    <span style=color:#e6db74>&#34;layer1&#34;</span>: {<span style=color:#e6db74>&#34;w&#34;</span>: jnp<span style=color:#f92672>.</span>ones((<span style=color:#ae81ff>64</span>, <span style=color:#ae81ff>32</span>)), <span style=color:#e6db74>&#34;b&#34;</span>: jnp<span style=color:#f92672>.</span>zeros(<span style=color:#ae81ff>64</span>)},
+    <span style=color:#e6db74>&#34;layer2&#34;</span>: {<span style=color:#e6db74>&#34;w&#34;</span>: jnp<span style=color:#f92672>.</span>ones((<span style=color:#ae81ff>10</span>, <span style=color:#ae81ff>64</span>)), <span style=color:#e6db74>&#34;b&#34;</span>: jnp<span style=color:#f92672>.</span>zeros(<span style=color:#ae81ff>10</span>)},
+}
+
+<span style=color:#75715e># grad returns a pytree with the same structure as params</span>
+grads <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>grad(loss_fn)(params, x, y)
+<span style=color:#75715e># grads: {&#34;layer1&#34;: {&#34;w&#34;: ..., &#34;b&#34;: ...}, &#34;layer2&#34;: {...}}</span>
+
+<span style=color:#75715e># jit, vmap, pmap all understand pytrees natively</span>
+jax<span style=color:#f92672>.</span>tree_util<span style=color:#f92672>.</span>tree_map(<span style=color:#66d9ef>lambda</span> g: g <span style=color:#f92672>*</span> <span style=color:#ae81ff>0.01</span>, grads)  <span style=color:#75715e># scale all gradients</span>
+</code></pre></div><p><code>jax.tree_util.tree_map</code> applies a function to every leaf of a pytree simultaneously. Combined with <code>jax.grad</code>, this is essentially the entire parameter update loop of neural network training, expressed in a dozen lines.</p>
+<h2 id=explicit-prng-reproducibility-by-design>Explicit PRNG: Reproducibility by Design</h2>
+<p>NumPy and PyTorch use global random state - call <code>np.random.randn()</code> twice and you get different values, with the state mutated globally. This is incompatible with JAX&rsquo;s functional model and makes reproducibility across parallel programs nearly impossible.</p>
+<p>JAX requires explicit PRNG keys, split deterministically:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>key <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>random<span style=color:#f92672>.</span>PRNGKey(<span style=color:#ae81ff>42</span>)
+key, subkey <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>random<span style=color:#f92672>.</span>split(key)
+x <span style=color:#f92672>=</span> jax<span style=color:#f92672>.</span>random<span style=color:#f92672>.</span>normal(subkey, shape<span style=color:#f92672>=</span>(<span style=color:#ae81ff>100</span>,))
+</code></pre></div><p>Splitting a key produces two keys that are independent and fully deterministic given the parent. JAX code is exactly reproducible: run the same key on the same hardware and you get the same random numbers, regardless of parallelism. This is operationally important for debugging distributed training.</p>
+<h2 id=jax-vs-pytorch-20-tracing-vs-graph-capture>JAX vs PyTorch 2.0: Tracing vs Graph Capture</h2>
+<p>PyTorch 2.0 introduced <code>torch.compile</code>, which uses a different approach to similar ends. Rather than tracing through abstract values (JAX&rsquo;s method), Dynamo <em>captures</em> the Python bytecode executed during a real forward pass and converts it into a graph IR, then optimizes that IR with Inductor (a compiler targeting CUDA and CPU).</p>
+<p>The difference matters in practice:</p>
+<ul>
+<li><strong>JAX JIT</strong> is strict: you must write JAX-compatible functional code. Python control flow that depends on array values must use <code>jax.lax</code> primitives. The constraint is tight.</li>
+<li><strong>torch.compile</strong> is lenient: it tries to handle arbitrary PyTorch code, falling back to eager execution when it can&rsquo;t compile. The constraint is loose, which makes adoption easier but optimization less aggressive.</li>
+</ul>
+<p>For research code that changes daily, <code>torch.compile</code> is lower friction. For production workloads with stable computation graphs, JAX&rsquo;s aggressive compilation (especially on TPU) tends to win. Google uses JAX for Gemini training. OpenAI uses PyTorch. Both are correct choices for their respective contexts.</p>
+<h2 id=the-flaxoptax-ecosystem>The Flax/Optax Ecosystem</h2>
+<p>JAX itself has no built-in neural network library. The ecosystem provides:</p>
+<ul>
+<li><strong>Flax</strong>: neural network modules as pytree-structured parameter dictionaries. The convention: modules define <code>init</code> (returns initial parameters) and <code>apply</code> (runs the forward pass given parameters, stateless). No <code>model.train()</code> / <code>model.eval()</code> - state is explicit.</li>
+<li><strong>Optax</strong>: a library of gradient transformations. An optimizer is a pure function <code>(params, grads) → updates</code>, composable with gradient clipping, weight decay, learning rate schedules.</li>
+<li><strong>Equinox</strong>: an alternative to Flax that uses Python dataclasses for module definitions, feeling more like PyTorch.</li>
+</ul>
+<p>The composability is elegant but the learning curve is real. Newcomers expecting <code>model.forward()</code> and <code>optimizer.step()</code> will find JAX&rsquo;s explicit state management jarring. It becomes natural after a week, but that week is genuinely hard.</p>
+<h2 id=critique-what-jax-gets-wrong>Critique: What JAX Gets Wrong</h2>
+<p>JAX&rsquo;s functional purity is a double-edged sword. The constraint that makes XLA optimization safe also makes debugging painful. When your JIT-compiled function fails, you get an XLA error - sometimes a reasonable one, sometimes a cryptic HLO shape mismatch with no reference to your original Python code. The mental model of &ldquo;trace once, compile, run&rdquo; means errors manifest at trace time or at runtime, and mapping them back to source lines requires experience.</p>
+<p>Debugging strategies: remove <code>jax.jit</code> to run eagerly (errors surface in Python with normal tracebacks), use <code>jax.debug.print</code> (which works inside JIT by emitting a debug callback), and <code>jax.debug.breakpoint()</code> (experimental but useful).</p>
+<p>The ecosystem is also genuinely more fragmented than PyTorch. Flax, Haiku, Equinox, and NNX coexist without a clear winner. Optax is well-regarded but has a different API than PyTorch optimizers. Libraries like Hugging Face Transformers have JAX/Flax ports but they lag the PyTorch versions. If you want to fine-tune a Llama model in JAX today, you will find far fewer tutorials and community support than the PyTorch equivalent.</p>
+<p>Finally: JAX on GPU outside of Google infrastructure is good but not seamless. XLA&rsquo;s GPU backend targets NVIDIA well but the tooling for debugging GPU kernels (nsight, rocprof) is less integrated with XLA than with PyTorch/CUDA. AMD GPU support exists but is less mature.</p>
+<h2 id=future-differentiable-programming-and-iree>Future: Differentiable Programming and IREE</h2>
+<p>JAX&rsquo;s core contribution is not just a faster NumPy. It is a demonstration that <strong>differentiable programming</strong> - the idea that any computation can be differentiated through if it is written in a functional style - is practically useful and not prohibitively complex.</p>
+<p>The principles JAX embodies - composable transformations, functional purity, compilation through tracing - are spreading. Julia&rsquo;s Enzyme.jl brings similar ideas to Julia. Swift for TensorFlow experimented with language-level differentiation. Tinygrad and Micrograd are minimal implementations of the same idea for learning.</p>
+<p>IREE (Intermediate Representation Execution Environment) is an open-source effort to provide a portable alternative to XLA&rsquo;s compilation stack, targeting a wider range of hardware including edge devices. JAX can emit to IREE in addition to XLA, which may eventually allow JAX-style programming to reach hardware targets (mobile, embedded, FPGA) that XLA doesn&rsquo;t support well.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Transformation</th>
+<th>What It Does</th>
+<th>Composes With</th>
+<th>Key Gotcha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jax.jit</code></td>
+<td>Trace + compile through XLA</td>
+<td>All others</td>
+<td>Python control flow frozen at trace</td>
+</tr>
+<tr>
+<td><code>jax.grad</code></td>
+<td>Reverse-mode autodiff</td>
+<td><code>jit</code>, <code>vmap</code>, <code>pmap</code></td>
+<td>Must return a scalar</td>
+</tr>
+<tr>
+<td><code>jax.vmap</code></td>
+<td>Auto-batching</td>
+<td><code>jit</code>, <code>grad</code>, <code>pmap</code></td>
+<td><code>in_axes</code> must match input shapes</td>
+</tr>
+<tr>
+<td><code>jax.pmap</code></td>
+<td>SPMD multi-device</td>
+<td><code>jit</code>, <code>grad</code></td>
+<td>Requires data replicated on all devices</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>JAX</th>
+<th>PyTorch 2.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compilation approach</td>
+<td>Tracing (abstract values)</td>
+<td>Graph capture (bytecode)</td>
+</tr>
+<tr>
+<td>Control flow</td>
+<td>Must use <code>jax.lax.*</code></td>
+<td>Mostly transparent</td>
+</tr>
+<tr>
+<td>Functional purity</td>
+<td>Required</td>
+<td>Not required</td>
+</tr>
+<tr>
+<td>Ecosystem maturity</td>
+<td>Growing</td>
+<td>Dominant</td>
+</tr>
+<tr>
+<td>TPU support</td>
+<td>Native (Google)</td>
+<td>Limited</td>
+</tr>
+<tr>
+<td>Debugging experience</td>
+<td>Harder (XLA errors)</td>
+<td>Better (eager fallback)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/software-engineering-for-ml/>Software Engineering for ML</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

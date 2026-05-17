@@ -1,0 +1,316 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>The Chain Rule & Backpropagation // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="The Chain Rule & Backpropagation">
+<meta name=twitter:description content="Prerequisites:
+ Derivatives & Geometry of Change   You know how to differentiate $x^2$. The derivative is $2x$.
+You know how to differentiate $\sin(x)$. The derivative is $\cos(x)$.
+Now someone asks you to differentiate $\sin(x^2)$. You pause. The rules you know handle $\sin$ of something and $x^2$ separately. But here they are combined: the sine of the square. No rule you have seen covers this directly.
+This is not an exotic edge case.">
+<meta property="og:title" content="The Chain Rule & Backpropagation">
+<meta property="og:description" content="Prerequisites:
+ Derivatives & Geometry of Change   You know how to differentiate $x^2$. The derivative is $2x$.
+You know how to differentiate $\sin(x)$. The derivative is $\cos(x)$.
+Now someone asks you to differentiate $\sin(x^2)$. You pause. The rules you know handle $\sin$ of something and $x^2$ separately. But here they are combined: the sine of the square. No rule you have seen covers this directly.
+This is not an exotic edge case.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/the-chain-rule-backpropagation/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>The Chain Rule & Backpropagation</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Dec 11, 2020
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+19 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/derivatives-geometry-of-change/>Derivatives & Geometry of Change</a></li>
+</ul>
+<hr>
+<p>You know how to differentiate $x^2$. The derivative is $2x$.</p>
+<p>You know how to differentiate $\sin(x)$. The derivative is $\cos(x)$.</p>
+<p>Now someone asks you to differentiate $\sin(x^2)$. You pause. The rules you know handle $\sin$ of something and $x^2$ separately. But here they are combined: the sine of the square. No rule you have seen covers this directly.</p>
+<p>This is not an exotic edge case. Every interesting function in mathematics and in machine learning is a composition of simpler ones. The loss of a neural network is a composition of matrix multiplications, nonlinearities, and a final comparison to a target. The Gaussian distribution density $e^{-x^2/2}$ is a composition of squaring, negating, halving, and exponentiation. Even $\tan(x) = \sin(x)/\cos(x)$ can be viewed as a composition. If you cannot differentiate compositions, you cannot differentiate anything that matters.</p>
+<p>What you need is the chain rule. This post builds it from scratch - from the physical intuition of chained rates of change, through the formal theorem and its clean proof, into the computational graph picture, and finally into backpropagation, which turns out to be the chain rule applied systematically to the graph of a neural network. Nothing in this post is separate from what came before. It is all one idea.</p>
+<hr>
+<h2 id=section-1-sensitivity-travels-through-a-chain>Section 1: Sensitivity Travels Through a Chain</h2>
+<p>Before any formulas, let us think carefully about how change propagates through a sequence of dependencies.</p>
+<p>You are hiking. Your altitude depends on how far along the trail you have walked. And the temperature at the summit depends on the altitude. So temperature depends on walking distance - but indirectly, through altitude.</p>
+<p>Concretely: suppose that every kilometer you walk, your altitude increases by $400$ meters. And every $100$ meters of altitude, the temperature drops by $0.6°C$. How fast does temperature drop per kilometer walked?</p>
+<p>You do not need calculus to answer this. Per kilometer, altitude increases by $400$ meters. Per $100$ meters of altitude, temperature drops $0.6°C$. So per kilometer:</p>
+<p>$$\text{temperature drop} = 400 \text{ m/km} \times \frac{0.6°C}{100 \text{ m}} = 2.4°C/\text{km}.$$</p>
+<p>Notice what happened. You multiplied two rates together. The intermediate unit - meters of altitude - appeared in the numerator of one rate and the denominator of the other, and cancelled. The answer is in the right units: degrees per kilometer.</p>
+<p>This is not a trick. It is the structure of chained sensitivity. When quantity $C$ depends on $B$ which depends on $A$, the rate of change of $C$ with respect to $A$ is the product of the rate of change of $C$ with respect to $B$ and the rate of change of $B$ with respect to $A$.</p>
+<p>In Leibniz notation, with $T$ for temperature, $h$ for altitude, and $d$ for distance:</p>
+<p>$$\frac{dT}{dd} = \frac{dT}{dh} \cdot \frac{dh}{dd}.$$</p>
+<p>The $dh$ in the numerator of one factor and the denominator of the other look like they cancel - like ordinary fractions. And the answer is correct. This is the chain rule, and its Leibniz form is designed so that this cancellation works as a mnemonic.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Does $\frac{dy}{du} \cdot \frac{du}{dx}$ literally mean the $du$&rsquo;s cancel like fractions? No - and this is important. The symbols $dy$, $du$, $dx$ are not numbers. They are notation for limits of ratios. You cannot cancel them the way you cancel numbers in $\frac{3}{5} \cdot \frac{5}{7} = \frac{3}{7}$. The Leibniz notation is designed to make the chain rule look like fraction cancellation, but the justification is the theorem itself, not the notation. In differential geometry, when you introduce the formal notion of a differential as an object in its own right, the cancellation becomes rigorous. Until then: treat it as a mnemonic that always gives the right answer, but understand that its validity comes from the theorem, not from the notation.</p>
+</blockquote>
+<p>The hiking example is exact - the rates were constant, so there was no approximation. For varying functions, the rates change from point to point, and the chain rule tells us how to handle this.</p>
+<hr>
+<h2 id=section-2-the-chain-rule-stated-and-proved>Section 2: The Chain Rule, Stated and Proved</h2>
+<p>Let $u = g(x)$ and $y = f(u) = f(g(x))$. We want $\frac{dy}{dx}$ - the rate of change of $y$ with respect to $x$.</p>
+<p><strong>Theorem (Chain Rule).</strong> If $g$ is differentiable at $x$ and $f$ is differentiable at $g(x)$, then the composition $f \circ g$ is differentiable at $x$, and:</p>
+<p>$$(f \circ g)'(x) = f'(g(x)) \cdot g'(x).$$</p>
+<p>In Leibniz notation, with $u = g(x)$:</p>
+<p>$$\frac{dy}{dx} = \frac{dy}{du} \cdot \frac{du}{dx}.$$</p>
+<p><strong>The naive proof and why it fails.</strong> The natural first attempt:</p>
+<p>$$\frac{f(g(x+h)) - f(g(x))}{h} = \frac{f(g(x+h)) - f(g(x))}{g(x+h) - g(x)} \cdot \frac{g(x+h) - g(x)}{h}.$$</p>
+<p>The right factor is the difference quotient for $g$ at $x$, which converges to $g'(x)$. The left factor looks like the difference quotient for $f$ at $g(x)$, which should converge to $f'(g(x))$. So the product should converge to $f'(g(x)) \cdot g'(x)$.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> What goes wrong with the naive proof? The problem is division by $g(x+h) - g(x)$. If $g$ is constant on some sequence of points near $x$ - if $g(x+h_n) = g(x)$ for some $h_n \to 0$ - then we are dividing by zero in the middle of the argument. This can happen even for smooth non-constant functions near points where $g' \neq 0$, due to the discrete nature of the limit process. The naive argument silently assumes $g(x+h) \neq g(x)$ for all small $h$, and this assumption can fail.</p>
+</blockquote>
+<p><strong>The clean proof.</strong> Since $f$ is differentiable at $u_0 = g(x)$, we can write:</p>
+<p>$$f(u_0 + k) = f(u_0) + f'(u_0) \cdot k + \varepsilon(k) \cdot k,$$</p>
+<p>where $\varepsilon(k) \to 0$ as $k \to 0$ (and we define $\varepsilon(0) = 0$, making $\varepsilon$ continuous at $0$). This is just the definition of differentiability, written as: $f(u_0 + k) - f(u_0) = [f'(u_0) + \varepsilon(k)] \cdot k$.</p>
+<p>Now set $k = g(x+h) - g(x)$. Then:</p>
+<p>$$f(g(x+h)) - f(g(x)) = [f'(g(x)) + \varepsilon(g(x+h) - g(x))] \cdot [g(x+h) - g(x)].$$</p>
+<p>Divide by $h \neq 0$:</p>
+<p>$$\frac{f(g(x+h)) - f(g(x))}{h} = [f'(g(x)) + \varepsilon(g(x+h) - g(x))] \cdot \frac{g(x+h) - g(x)}{h}.$$</p>
+<p>As $h \to 0$: the second factor converges to $g'(x)$. The first factor converges to $f'(g(x)) + \varepsilon(0) = f'(g(x))$, because $g(x+h) - g(x) \to 0$ (differentiability of $g$ implies continuity) and $\varepsilon(0) = 0$. The product converges to $f'(g(x)) \cdot g'(x)$. Notice: no division by $g(x+h) - g(x)$ anywhere. The $\varepsilon$ formulation absorbs the potential division-by-zero issue. $\blacksquare$</p>
+<hr>
+<h2 id=section-3-reading-the-formula-carefully>Section 3: Reading the Formula Carefully</h2>
+<p>The chain rule says:</p>
+<p>$$(f \circ g)'(x) = f'(g(x)) \cdot g'(x).$$</p>
+<p>Both parts deserve attention.</p>
+<p>The first factor is $f'(g(x))$: you differentiate the outer function $f$, but you evaluate that derivative at the inner function&rsquo;s output, $g(x)$. Not at $x$. At $g(x)$.</p>
+<p>The second factor is $g'(x)$: the derivative of the inner function, evaluated at $x$.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The notation $f'(g(x)) \cdot g'(x)$ vs $(f \circ g)'(x)$ - are these the same thing? Yes. $(f \circ g)'(x)$ is the derivative of the composed function, evaluated at $x$. The chain rule says this equals $f'(g(x)) \cdot g'(x)$. These are different ways of writing the same quantity. The left side names what we want. The right side says how to compute it: differentiate the outer function (evaluate at inner output), multiply by the derivative of the inner function. Same thing, different notation.</p>
+</blockquote>
+<p>Let us verify on our opening example.</p>
+<p><strong>Differentiating $\sin(x^2)$.</strong> Here $f(u) = \sin(u)$ and $g(x) = x^2$.</p>
+<ul>
+<li>$f'(u) = \cos(u)$, so $f'(g(x)) = \cos(x^2)$.</li>
+<li>$g'(x) = 2x$.</li>
+</ul>
+<p>Chain rule: $\frac{d}{dx}\sin(x^2) = \cos(x^2) \cdot 2x$.</p>
+<p>The derivative of $\sin(x^2)$ is $2x\cos(x^2)$. You could not have gotten this from the rules for $\sin$ and $x^2$ separately without the chain rule.</p>
+<p>More examples:</p>
+<p>$$\frac{d}{dx} e^{-x^2/2} = e^{-x^2/2} \cdot (-x).$$</p>
+<p>Outer: $f(u) = e^u$, inner: $g(x) = -x^2/2$. $f'(u) = e^u$, $g'(x) = -x$. So the derivative is $e^{-x^2/2} \cdot (-x)$. This is the derivative of the Gaussian kernel - it appears constantly in probability and signal processing.</p>
+<p>$$\frac{d}{dx} \ln(\cos x) = \frac{1}{\cos x} \cdot (-\sin x) = -\tan x.$$</p>
+<p>Outer: $\ln$, inner: $\cos x$. The $1/\cos x$ comes from differentiating $\ln$ at $\cos x$.</p>
+<p>$$\frac{d}{dx} (3x^2 + 7)^{10} = 10(3x^2 + 7)^9 \cdot 6x.$$</p>
+<p>Outer: $u^{10}$, inner: $3x^2 + 7$. Power rule on the outer, chain rule for the inner.</p>
+<hr>
+<h2 id=section-4-multiple-compositions>Section 4: Multiple Compositions</h2>
+<p>The chain rule extends naturally when you have three or more nested functions.</p>
+<p>For $(f \circ g \circ h)(x)$, you differentiate from the outside in:</p>
+<p>$$\frac{d}{dx} f(g(h(x))) = f'(g(h(x))) \cdot g'(h(x)) \cdot h'(x).$$</p>
+<p>Three factors: derivative of the outermost evaluated at everything inside it, times derivative of the middle evaluated at everything inside it, times derivative of the innermost.</p>
+<p><strong>Example.</strong> Differentiate $\sin(e^{x^2})$.</p>
+<p>Here $f(u) = \sin(u)$, $g(v) = e^v$, $h(x) = x^2$.</p>
+<ul>
+<li>$f'(u) = \cos(u)$, evaluated at $g(h(x)) = e^{x^2}$: gives $\cos(e^{x^2})$.</li>
+<li>$g'(v) = e^v$, evaluated at $h(x) = x^2$: gives $e^{x^2}$.</li>
+<li>$h'(x) = 2x$.</li>
+</ul>
+<p>Result: $\cos(e^{x^2}) \cdot e^{x^2} \cdot 2x$.</p>
+<p>In Leibniz notation with $u = x^2$ and $v = e^u$:</p>
+<p>$$\frac{dy}{dx} = \frac{dy}{dv} \cdot \frac{dv}{du} \cdot \frac{du}{dx} = \cos(v) \cdot e^u \cdot 2x.$$</p>
+<p>Substitute back: $\cos(e^{x^2}) \cdot e^{x^2} \cdot 2x$. Same answer.</p>
+<p>The pattern is the same no matter how deep the composition goes. Differentiate from the outside in, evaluating each derivative at its input. Multiply all the factors together. This observation - that the chain extends naturally to arbitrary depth - is not merely a curiosity. It is the mathematical structure of every deep neural network.</p>
+<hr>
+<h2 id=section-5-computational-graphs>Section 5: Computational Graphs</h2>
+<p>Every mathematical expression you write is a directed graph. The leaves of the graph are inputs. The internal nodes are operations. The root is the output. Derivatives flow through this graph according to the chain rule.</p>
+<p>Consider the expression $y = (x + 1)^2 \cdot \sin(x)$. We can decompose it:</p>
+<p>$$a = x + 1, \quad b = a^2, \quad c = \sin(x), \quad y = b \cdot c.$$</p>
+<p>The computation proceeds from $x$ forward through these intermediate quantities to the final output $y$. This is the <strong>forward pass</strong>: you compute each node&rsquo;s value from its inputs, left to right.</p>
+<p>To find $\frac{dy}{dx}$, you need to track how $x$ influences $y$ through every path in the graph. There are two paths: $x \to a \to b \to y$ and $x \to c \to y$.</p>
+<p>For the path through $b$: the product rule says $\frac{\partial y}{\partial b} = c = \sin(x)$. Then $\frac{db}{da} = 2a = 2(x+1)$ and $\frac{da}{dx} = 1$. So this path contributes $\sin(x) \cdot 2(x+1) \cdot 1$.</p>
+<p>For the path through $c$: $\frac{\partial y}{\partial c} = b = (x+1)^2$ and $\frac{dc}{dx} = \cos(x)$. This path contributes $(x+1)^2 \cdot \cos(x)$.</p>
+<p>Total: $\frac{dy}{dx} = 2(x+1)\sin(x) + (x+1)^2 \cos(x)$.</p>
+<p>(You can verify this is the product rule applied to $b \cdot c$.)</p>
+<p>The general principle: <strong>the derivative of the output with respect to any input is the sum of products of derivatives along every path from input to output</strong>. Each path contributes the product of the edge derivatives along it. When paths merge (when multiple paths lead through a common node), their contributions add.</p>
+<p>This is the chain rule, stated as a graph theorem.</p>
+<p>For a chain - no branching, one path - there is only one path, and you get the product of derivatives along it. That is the familiar chain rule. For a tree or a general graph, you sum over all paths.</p>
+<hr>
+<h2 id=section-6-backpropagation-is-the-chain-rule>Section 6: Backpropagation Is the Chain Rule</h2>
+<p>Now let us be completely explicit about what backpropagation is.</p>
+<p>Consider a simple 3-layer neural network. The input is $x$. The network computes:</p>
+<p>$$z = wx + b, \quad a = \sigma(z), \quad L = (a - y)^2.$$</p>
+<p>Here $w$ and $b$ are weights, $\sigma$ is an activation function (say the sigmoid), $a$ is the activation, $y$ is the target, and $L$ is the squared loss. We want $\frac{\partial L}{\partial w}$ and $\frac{\partial L}{\partial b}$ to know which direction to move the weights.</p>
+<p><strong>Forward pass.</strong> Compute each node&rsquo;s value:</p>
+<p>$$z = wx + b, \quad a = \sigma(z), \quad L = (a - y)^2.$$</p>
+<p>You compute left to right, storing each intermediate value.</p>
+<p><strong>Backward pass.</strong> Apply the chain rule right to left:</p>
+<p>$$\frac{\partial L}{\partial a} = 2(a - y).$$</p>
+<p>$$\frac{\partial L}{\partial z} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} = 2(a - y) \cdot \sigma'(z).$$</p>
+<p>$$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial z} \cdot \frac{\partial z}{\partial w} = 2(a - y) \cdot \sigma'(z) \cdot x.$$</p>
+<p>$$\frac{\partial L}{\partial b} = \frac{\partial L}{\partial z} \cdot \frac{\partial z}{\partial b} = 2(a - y) \cdot \sigma'(z) \cdot 1.$$</p>
+<p>That is backpropagation. There is no mystery. At each step, you multiply the &ldquo;error signal coming from the right&rdquo; by the &ldquo;local derivative at this node.&rdquo; You build up the derivative of the loss with respect to each weight by repeatedly applying the chain rule, moving backward through the computation graph.</p>
+<p>The intermediate quantity $\frac{\partial L}{\partial z}$ is computed once and reused for both $\frac{\partial L}{\partial w}$ and $\frac{\partial L}{\partial b}$. This is the key efficiency insight: intermediate derivatives are shared.</p>
+<p>For a network with $n$ layers, the gradients are:</p>
+<p>$$\frac{\partial L}{\partial w_k} = \frac{\partial L}{\partial a_n} \cdot \frac{\partial a_n}{\partial a_{n-1}} \cdots \frac{\partial a_{k+1}}{\partial a_k} \cdot \frac{\partial a_k}{\partial w_k}.$$</p>
+<p>This is a product of $n - k + 1$ factors, each computed locally at a single node. Computing it from the right means you accumulate $\frac{\partial L}{\partial a_k}$ for decreasing $k$ - you never recompute the same chain of factors for different weights in the same layer.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why is backpropagation called &ldquo;backward&rdquo;? You might expect you could compute derivatives in the forward direction too - after all, the chain rule works from any direction. Forward mode does exist: you pick one input variable and compute how every intermediate and final variable changes with respect to it. But here is the issue. A neural network has millions of weights and one loss. In forward mode, to get the gradient with respect to all million weights, you would need to run the forward pass a million times, once for each weight. Backward mode is different: you start from the single loss and propagate gradients backward through the graph, computing the gradient with respect to every weight in one pass. For the case of many inputs and few outputs - exactly the neural network case - backward mode is the efficient choice, by a factor equal to the number of inputs. This is not just a software trick. It is a mathematical consequence of how the chain rule&rsquo;s products can be accumulated.</p>
+</blockquote>
+<hr>
+<h2 id=section-7-why-forward-mode-exists-but-is-not-used-in-practice>Section 7: Why Forward Mode Exists But Is Not Used in Practice</h2>
+<p>It is worth making this precise, because the efficiency argument is the entire reason backpropagation is standard.</p>
+<p>Both modes compute the same derivatives. They differ in the order of multiplication.</p>
+<p>In forward mode, you track a &ldquo;tangent vector&rdquo; $\dot{x}$ (the rate of change of each intermediate value with respect to one chosen input). As you pass through each node, you multiply the Jacobian by the incoming tangent. After a full forward pass, you have the gradient of every output with respect to that one input.</p>
+<p>In backward mode, you track an &ldquo;adjoint&rdquo; $\bar{y}$ (the rate of change of the single loss with respect to each intermediate value). As you pass backward through each node, you multiply the transpose Jacobian by the incoming adjoint. After a full backward pass, you have the gradient of the one loss with respect to every input.</p>
+<p>The cost of one forward-mode pass equals the cost of one backward-mode pass. But:</p>
+<ul>
+<li>Forward mode gives gradients with respect to one input. For $n$ inputs, you need $n$ passes.</li>
+<li>Backward mode gives gradients with respect to all inputs in one pass.</li>
+</ul>
+<p>For a network with $10^7$ weights and scalar loss: forward mode needs $10^7$ passes; backward mode needs $1$ pass. The backward pass costs roughly twice the forward pass (you traverse the same graph, but in reverse). This $2\times$ overhead, rather than $10^7 \times$ overhead, is why training is feasible.</p>
+<p>The general rule: use backward mode when you have many inputs and few outputs. Use forward mode when you have few inputs and many outputs. Neural networks are firmly in the many-inputs, one-output regime.</p>
+<hr>
+<h2 id=section-8-the-geometry-of-the-chain-rule>Section 8: The Geometry of the Chain Rule</h2>
+<p>There is a geometric way to see the chain rule that does not involve limits at all.</p>
+<p>The derivative $f'(a)$ is the slope of the tangent line to $f$ at $a$. Locally, near $a$, the function $f$ behaves like the linear map $x \mapsto f(a) + f'(a)(x - a)$.</p>
+<p>Composing two linear maps is easy: if $f(x) \approx f'(a) \cdot x$ and $g(u) \approx g'(b) \cdot u$ near their respective points, then $g(f(x)) \approx g'(f(a)) \cdot f'(a) \cdot x$. The slopes multiply.</p>
+<p>The chain rule says: even for nonlinear functions, the derivative of a composition equals the product of the derivatives. This is because derivatives measure linear approximations, and the linear approximation to a composition is the composition of the linear approximations - which means the slopes multiply.</p>
+<p>This perspective generalizes cleanly to higher dimensions. If $f: \mathbb{R}^n \to \mathbb{R}^m$ and $g: \mathbb{R}^m \to \mathbb{R}^p$, the derivative of $f$ at a point is its Jacobian matrix $J_f$ (an $m \times n$ matrix). The chain rule for the composition $g \circ f$ is:</p>
+<p>$$J_{g \circ f}(x) = J_g(f(x)) \cdot J_f(x).$$</p>
+<p>The Jacobians multiply - as matrices. This is exactly matrix multiplication. When the inputs and outputs are one-dimensional, Jacobians are just scalars and matrix multiplication is ordinary multiplication. The multivariate chain rule is the same theorem, in higher dimensions.</p>
+<p>This is the version that operates inside neural networks. Each layer is a function from $\mathbb{R}^n$ to $\mathbb{R}^m$ (input dimension to output dimension). The chain rule for the composition of all layers is the product of all the Jacobian matrices. Backpropagation efficiently computes this product by accumulating it from right to left.</p>
+<hr>
+<h2 id=section-9-key-derivatives-via-the-chain-rule>Section 9: Key Derivatives via the Chain Rule</h2>
+<p>Several standard derivatives you use constantly are chain rule applications.</p>
+<p><strong>The derivative of $a^x$ for any base $a > 0$.</strong> Write $a^x = e^{x \ln a}$. The outer function is $e^u$, the inner is $u = x \ln a$.</p>
+<p>$$\frac{d}{dx} a^x = e^{x \ln a} \cdot \ln a = a^x \ln a.$$</p>
+<p><strong>Logarithmic differentiation.</strong> For complicated products and powers, take $\ln$ of both sides first.</p>
+<p>For $y = x^x$: $\ln y = x \ln x$. Differentiate both sides with respect to $x$ (chain rule on the left: $\frac{1}{y} \frac{dy}{dx}$):</p>
+<p>$$\frac{1}{y}\frac{dy}{dx} = \ln x + 1, \quad \text{so} \quad \frac{dy}{dx} = x^x(\ln x + 1).$$</p>
+<p><strong>The sigmoid&rsquo;s elegant derivative.</strong> For $\sigma(x) = \frac{1}{1 + e^{-x}}$, write this as $f(g(x))$ where $g(x) = 1 + e^{-x}$ and $f(u) = 1/u = u^{-1}$. Then:</p>
+<p>$$\sigma'(x) = -\frac{1}{(1+e^{-x})^2} \cdot (-e^{-x}) = \frac{e^{-x}}{(1+e^{-x})^2}.$$</p>
+<p>Note that $\frac{e^{-x}}{(1+e^{-x})^2} = \frac{1}{1+e^{-x}} \cdot \frac{e^{-x}}{1+e^{-x}} = \sigma(x)(1 - \sigma(x))$.</p>
+<p>So $\sigma'(x) = \sigma(x)(1 - \sigma(x))$. This elegant self-referential formula means that once you have computed $\sigma(x)$ in the forward pass, the derivative costs just one multiplication and one subtraction - no recomputation of the exponential.</p>
+<p><strong>Inverse trigonometric functions.</strong> To find $(\arcsin x)'$, let $y = \arcsin x$, so $\sin y = x$. Differentiate both sides:</p>
+<p>$$\cos y \cdot \frac{dy}{dx} = 1, \quad \text{so} \quad \frac{dy}{dx} = \frac{1}{\cos y} = \frac{1}{\sqrt{1 - \sin^2 y}} = \frac{1}{\sqrt{1 - x^2}}.$$</p>
+<p>This is the inverse function theorem expressed via the chain rule: if $g$ and $f$ are inverses, then $1 = (f \circ g)' = f'(g(x)) \cdot g'(x)$, so $g'(x) = \frac{1}{f'(g(x))}$.</p>
+<hr>
+<h2 id=section-10-vanishing-and-exploding-gradients>Section 10: Vanishing and Exploding Gradients</h2>
+<p>The chain rule&rsquo;s multiplicative structure creates a problem in deep networks that is worth understanding precisely.</p>
+<p>In a network with $n$ layers, the gradient of the loss with respect to the first layer&rsquo;s weights involves a product of $n$ terms:</p>
+<p>$$\frac{\partial L}{\partial w_1} = \frac{\partial L}{\partial a_n} \cdot \prod_{k=1}^{n-1} \frac{\partial a_{k+1}}{\partial a_k} \cdot \frac{\partial a_1}{\partial w_1}.$$</p>
+<p>Each factor $\frac{\partial a_{k+1}}{\partial a_k}$ is the derivative of the activation function times a weight matrix. If this factor is consistently less than $1$ in magnitude, the product of $n$ such factors shrinks exponentially. With $n = 50$ and each factor around $0.25$ (the maximum of the sigmoid derivative), the gradient is around $0.25^{50} \approx 10^{-30}$. Numerically zero. The gradient has <strong>vanished</strong> - it carries no useful signal back to the early layers.</p>
+<p>If the factors are consistently greater than $1$, the product grows exponentially. Gradients <strong>explode</strong> - they become so large that the weight updates are meaningless or cause numerical overflow.</p>
+<p>The chain rule is not doing anything wrong. It is computing exactly the right derivative. The problem is that deep compositions of functions whose local derivatives are not close to $1$ will have extremely small or extremely large global derivatives.</p>
+<p>Solutions in modern deep learning:</p>
+<p><strong>ReLU activations.</strong> The derivative of $\max(0, x)$ is $1$ when $x > 0$. Gradients pass through active ReLU neurons unchanged (factor of $1$), so the vanishing gradient is avoided on those paths.</p>
+<p><strong>Skip connections (ResNets).</strong> By adding $x$ directly to the output of a block, the gradient can flow through the shortcut path without passing through the multiplicative chain. The gradient of a sum is the sum of the gradients, so the loss gradient always has a direct path back through the identity connection.</p>
+<p><strong>Batch normalization.</strong> Normalizing activations keeps them in a range where the derivatives of the activation functions are not close to zero.</p>
+<p>Each of these is a different solution to the same mathematical problem: preventing the chain of multiplications in the chain rule from driving the product to zero or infinity.</p>
+<hr>
+<h2 id=section-11-putting-it-all-together>Section 11: Putting It All Together</h2>
+<p>Here is the complete picture.</p>
+<p>Any expression you can write down - a function, a formula, a neural network - is a computational graph. Nodes are operations. Edges connect inputs to the operations that use them.</p>
+<p>The derivative of any output with respect to any input is computed by the chain rule applied to that graph. The rule is simple: the derivative along a single directed path is the product of derivatives at each node along the path. When multiple paths connect input to output, their contributions add.</p>
+<p>Backpropagation is an efficient implementation of this computation. By traversing the graph backward from output to inputs, and accumulating the &ldquo;error signal&rdquo; (the partial derivative of the loss with respect to each intermediate value), you compute the gradient with respect to all inputs in a single pass. The cost is proportional to the number of edges in the graph - the same as a single forward pass.</p>
+<p>This is why automatic differentiation (autodiff) systems like PyTorch and JAX can differentiate arbitrary programs. They build the computational graph during the forward pass, then traverse it backward during the backward pass. They do not manipulate symbolic formulas. They apply the chain rule numerically, at each node, using the stored intermediate values.</p>
+<p>The chain rule is not a calculus technique that you apply to textbook problems. It is the algorithm that makes deep learning work.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Statement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chain rule</td>
+<td>$(f \circ g)'(x) = f'(g(x)) \cdot g'(x)$</td>
+</tr>
+<tr>
+<td>Leibniz form</td>
+<td>$\frac{dy}{dx} = \frac{dy}{du} \cdot \frac{du}{dx}$</td>
+</tr>
+<tr>
+<td>Multiple compositions</td>
+<td>$\frac{d}{dx}f(g(h(x))) = f'(g(h(x))) \cdot g'(h(x)) \cdot h'(x)$</td>
+</tr>
+<tr>
+<td>Computational graph</td>
+<td>Derivative along a path = product of edge derivatives</td>
+</tr>
+<tr>
+<td>Multiple paths</td>
+<td>Total derivative = sum over all paths</td>
+</tr>
+<tr>
+<td>Backpropagation</td>
+<td>Chain rule on a computational graph, accumulated right to left</td>
+</tr>
+<tr>
+<td>Forward vs backward mode</td>
+<td>Backward mode computes all input gradients in one pass; forward mode computes one input gradient per pass</td>
+</tr>
+<tr>
+<td>Vanishing gradients</td>
+<td>Products of factors $&lt; 1$ in deep networks; solved by ReLU, skip connections, normalization</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/vector-calculus-for-ml/>Vector Calculus for ML</a></li>
+<li><a href=/posts/backpropagation-as-jacobian-comp/>Backpropagation as Jacobian Computation</a> - the reverse process: from rates back to totals</li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

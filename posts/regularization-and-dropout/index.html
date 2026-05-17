@@ -1,0 +1,244 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Regularization and Dropout // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Regularization and Dropout">
+<meta name=twitter:description content="Every model faces the same fundamental problem: it is trained on a finite sample, but judged on the full distribution. The loss you minimize is the empirical risk - an average over the training examples you happened to collect. The loss you actually care about is the expected risk - an average over the true data-generating distribution. These two quantities agree in expectation, but in any given training run, the empirical risk is lower than the expected risk because the model can exploit idiosyncrasies in the training set that do not reflect genuine structure.">
+<meta property="og:title" content="Regularization and Dropout">
+<meta property="og:description" content="Every model faces the same fundamental problem: it is trained on a finite sample, but judged on the full distribution. The loss you minimize is the empirical risk - an average over the training examples you happened to collect. The loss you actually care about is the expected risk - an average over the true data-generating distribution. These two quantities agree in expectation, but in any given training run, the empirical risk is lower than the expected risk because the model can exploit idiosyncrasies in the training set that do not reflect genuine structure.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/regularization-and-dropout/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-07-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-07-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Regularization and Dropout</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jul 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+17 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<hr>
+<p>Every model faces the same fundamental problem: it is trained on a finite sample, but judged on the full distribution. The loss you minimize is the <em>empirical risk</em> - an average over the training examples you happened to collect. The loss you actually care about is the <em>expected risk</em> - an average over the true data-generating distribution. These two quantities agree in expectation, but in any given training run, the empirical risk is lower than the expected risk because the model can exploit idiosyncrasies in the training set that do not reflect genuine structure. This gap between empirical and expected risk is the generalization gap, and closing it is the central challenge of machine learning.</p>
+<p>Regularization is the collection of techniques that do exactly this. Not by improving the model&rsquo;s fit to the training data - the optimizer already handles that - but by constraining the hypothesis class, penalizing complexity, or introducing noise, so that the model is forced to learn structure that generalizes rather than structure that only holds for the specific examples it saw. The techniques range from adding a penalty term to the loss, to stopping optimization early, to randomly destroying half the network on every forward pass. They look different on the surface but are unified by a single goal: reduce the gap between training performance and test performance.</p>
+<p>This post covers the main regularization methods used in modern deep learning: L2 and L1 weight penalties, early stopping, data augmentation, and dropout. For dropout in particular, we will go beyond the standard &ldquo;prevents co-adaptation&rdquo; story and examine the precise connection to ensemble methods - why dropout training approximates training exponentially many models simultaneously, why test-time averaging approximates ensemble averaging, and how Monte Carlo Dropout turns this into a practical tool for uncertainty quantification.</p>
+<hr>
+<h2 id=the-overfitting-problem>The Overfitting Problem</h2>
+<p>Let $\mathcal{D} = {(x_i, y_i)}_{i=1}^n$ be a training set drawn i.i.d. from some distribution $p(x, y)$. The quantity we care about is the <strong>expected risk</strong>:</p>
+<p>$$R(f) = \mathbb{E}_{(x,y) \sim p}\left[\ell(f(x), y)\right]$$</p>
+<p>where $\ell$ is the loss function. Since we cannot compute this expectation directly (we do not have access to $p$), we minimize the <strong>empirical risk</strong>:</p>
+<p>$$\hat{R}(f) = \frac{1}{n}\sum_{i=1}^n \ell(f(x_i), y_i)$$</p>
+<p>The empirical risk is an unbiased estimator of the expected risk, meaning $\mathbb{E}_\mathcal{D}[\hat{R}(f)] = R(f)$ for any fixed $f$. The problem is that we do not evaluate at a fixed $f$ - we choose $f$ by minimizing $\hat{R}$, which introduces selection bias. The selected model is the one that best exploits the training data, which is systematically better on the training set than on the full distribution.</p>
+<p>The generalization gap is $R(f) - \hat{R}(f)$. Statistical learning theory gives bounds on this gap in terms of the complexity of the hypothesis class. For a class of VC dimension $d$ and $n$ training examples, the gap is bounded by roughly $\mathcal{O}(\sqrt{d/n})$ with high probability. This immediately tells you the two levers: reduce model complexity, or increase data. Regularization is about controlling the first lever - and sometimes approximating the second.</p>
+<p>A deep neural network with millions of parameters has astronomically high capacity. Its VC dimension is enormous. Without any constraint, it will find a parameter setting that achieves near-zero training loss by memorizing the training data - fitting even random label noise perfectly. The expected risk can remain high while the empirical risk collapses. This is overfitting in its purest form: low $\hat{R}(f)$, high $R(f)$, large generalization gap.</p>
+<hr>
+<h2 id=l2-regularization-weight-decay>L2 Regularization (Weight Decay)</h2>
+<p>The most straightforward fix is to add a penalty for parameter magnitude directly to the loss. <strong>L2 regularization</strong> augments the training objective with the squared Euclidean norm of the weight vector:</p>
+<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda |w|^2 = \mathcal{L}(w) + \lambda \sum_j w_j^2$$</p>
+<p>where $\lambda > 0$ is the regularization strength. The gradient becomes:</p>
+<p>$$\nabla_w \mathcal{L}_{\text{reg}} = \nabla_w \mathcal{L} + 2\lambda w$$</p>
+<p>A gradient descent update with step size $\eta$ then takes the form:</p>
+<p>$$w \leftarrow w - \eta(\nabla_w \mathcal{L} + 2\lambda w) = (1 - 2\eta\lambda)w - \eta\nabla_w \mathcal{L}$$</p>
+<p>The factor $(1 - 2\eta\lambda)$ multiplies the current weight before the gradient step. This is the &ldquo;weight decay&rdquo; interpretation: each update shrinks the weights by a factor slightly less than one, pulling them toward zero, before adding the gradient correction. Large weights are penalized more than small ones. The optimizer is forced to justify large weights by a proportionally large reduction in the data loss.</p>
+<h3 id=bayesian-interpretation>Bayesian Interpretation</h3>
+<p>The L2 penalty has a clean probabilistic justification. In Bayesian inference, we compute the posterior over weights given data: $p(w | \mathcal{D}) \propto p(\mathcal{D} | w) \cdot p(w)$. Maximum a posteriori (MAP) estimation maximizes this posterior, or equivalently minimizes the negative log-posterior:</p>
+<p>$$-\log p(w | \mathcal{D}) = -\log p(\mathcal{D} | w) - \log p(w) + \text{const}$$</p>
+<p>If the likelihood $p(\mathcal{D} | w)$ corresponds to a standard loss $\mathcal{L}(w)$ (as with Gaussian noise for squared loss, or Bernoulli for cross-entropy), and the prior on weights is an isotropic Gaussian:</p>
+<p>$$p(w) = \mathcal{N}(0, \sigma_w^2 I) \propto \exp\left(-\frac{|w|^2}{2\sigma_w^2}\right)$$</p>
+<p>then the MAP objective is:</p>
+<p>$$-\log p(w | \mathcal{D}) = \mathcal{L}(w) + \frac{1}{2\sigma_w^2}|w|^2 + \text{const}$$</p>
+<p>This is exactly L2 regularization with $\lambda = \frac{1}{2\sigma_w^2}$. A small $\sigma_w^2$ (tight prior, strong belief that weights should be small) corresponds to large $\lambda$ (heavy regularization). A large $\sigma_w^2$ (diffuse prior) corresponds to small $\lambda$. L2 regularization is not an ad-hoc trick - it is MAP estimation under a Gaussian prior.</p>
+<h3 id=connection-to-ridge-regression>Connection to Ridge Regression</h3>
+<p>In the special case of linear regression with squared loss, L2 regularization has an exact closed-form solution. The objective is:</p>
+<p>$$\mathcal{L}_{\text{reg}}(w) = |Xw - y|^2 + \lambda|w|^2$$</p>
+<p>Setting the gradient to zero:</p>
+<p>$$2X^T(Xw - y) + 2\lambda w = 0 \implies (X^TX + \lambda I)w = X^Ty$$</p>
+<p>$$w^* = (X^TX + \lambda I)^{-1}X^Ty$$</p>
+<p>This is <strong>ridge regression</strong>. The matrix $X^TX + \lambda I$ is always invertible (since $\lambda I$ is positive definite), so ridge regression does not suffer from the singularity problems of ordinary least squares when $X^TX$ is ill-conditioned. The regularization shrinks all singular values of $X^TX$ by the same amount $\lambda$, preferentially shrinking the directions corresponding to small singular values - the directions with little data support.</p>
+<hr>
+<h2 id=l1-regularization-and-sparsity>L1 Regularization and Sparsity</h2>
+<p><strong>L1 regularization</strong> replaces the squared norm penalty with the sum of absolute values:</p>
+<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda|w|_1 = \mathcal{L}(w) + \lambda \sum_j |w_j|$$</p>
+<p>The key behavioral difference from L2 is that L1 regularization produces <strong>sparse solutions</strong>: many weights become exactly zero at the optimum, rather than being merely small. This is not a numerical coincidence - it is a geometric consequence of the structure of the L1 ball.</p>
+<h3 id=subgradient-and-non-differentiability>Subgradient and Non-differentiability</h3>
+<p>At $w_j = 0$, the term $\lambda|w_j|$ is not differentiable - the left and right derivatives are $-\lambda$ and $+\lambda$ respectively. We use the <strong>subgradient</strong> in place of the gradient. The subdifferential of $|w_j|$ at $w_j = 0$ is the interval $[-1, 1]$. An update rule using the subgradient applies:</p>
+<p>$$\frac{\partial \mathcal{L}_{\text{reg}}}{\partial w_j} = \frac{\partial \mathcal{L}}{\partial w_j} + \lambda \cdot \text{sign}(w_j)$$</p>
+<p>with the convention that $\text{sign}(0) \in [-1, 1]$ is chosen to minimize the subgradient. In practice this is implemented via the soft-thresholding operator: after a gradient step, each weight is shrunk toward zero by $\lambda\eta$, and any weight that would cross zero is set to exactly zero:</p>
+<p>$$w_j \leftarrow \text{sign}(w_j - \eta \nabla_{w_j}\mathcal{L}) \cdot \max(|w_j - \eta \nabla_{w_j}\mathcal{L}| - \lambda\eta, 0)$$</p>
+<p>This is the proximal gradient step for L1 regularization. The hard zero is how sparsity emerges.</p>
+<h3 id=the-geometry-of-sparsity>The Geometry of Sparsity</h3>
+<p>The geometric reason L1 promotes sparsity while L2 does not: consider minimizing a convex loss $\mathcal{L}(w)$ subject to a norm constraint. For L2 the constraint set is a sphere $|w|_2 \leq c$, which is smooth and round. For L1 the constraint set is a diamond (in 2D) or hyperoctahedron (in higher dimensions) $|w|_1 \leq c$, which has sharp corners at the coordinate axes. The unconstrained loss minimum is usually not inside the constraint set. The constrained solution sits at the boundary where the level set of $\mathcal{L}(w)$ first touches the constraint set. For the smooth L2 ball, this touching point is generic and rarely lands exactly on an axis. For the L1 diamond, the corners (coordinate axes) are the most likely touching points because they are the &ldquo;pointiest&rdquo; parts of the boundary - level sets of smooth functions tend to hit corners rather than flat faces. A corner on a coordinate axis means some $w_j = 0$ exactly.</p>
+<p>In high dimensions with $p$ features, L1 regularization (also called <strong>Lasso</strong> in the regression context) finds solutions with at most $n$ nonzero coefficients when $n &lt; p$. This makes it valuable for feature selection: the nonzero weights identify which inputs actually matter.</p>
+<h3 id=elastic-net>Elastic Net</h3>
+<p><strong>Elastic Net</strong> combines L1 and L2 penalties:</p>
+<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda_1|w|_1 + \lambda_2|w|^2$$</p>
+<p>The L2 term stabilizes the optimization when features are correlated (Lasso tends to pick one arbitrarily from a correlated group; Elastic Net can select all of them with shared weight). The L1 term maintains sparsity. In practice, Elastic Net often outperforms either penalty alone when $p \gg n$ and features are correlated.</p>
+<hr>
+<h2 id=early-stopping>Early Stopping</h2>
+<p><strong>Early stopping</strong> is a regularization technique that requires no modification to the loss function. The idea: validation loss typically decreases initially as training progresses, then starts to increase as the model begins overfitting to the training data. Stop training when the validation loss stops improving.</p>
+<p>The practical procedure: keep a copy of the best model weights seen so far (according to validation loss). After each epoch (or every $k$ steps), evaluate on the validation set. If validation loss improves, update the saved weights. If validation loss has not improved for $T$ consecutive evaluations (the &ldquo;patience&rdquo; parameter), stop and return the saved weights.</p>
+<p>Why does this work as regularization? Gradient descent from a random initialization traces a trajectory through parameter space. Early in training, the trajectory moves toward the &ldquo;center&rdquo; of the parameter space - the region where loss is low for many possible training sets, not just this one. Later in training, it starts exploiting the specific training data, moving into regions that have low training loss but high test loss. Early stopping limits how far along this trajectory you travel. It is a form of <strong>implicit regularization</strong> - the optimization trajectory itself is being constrained, not the loss function.</p>
+<p>There is a formal connection to L2 regularization for quadratic losses. For a quadratic loss near the minimum, early stopping with gradient descent is approximately equivalent to L2 regularization, with the regularization strength determined by the stopping time: shorter training time $\approx$ stronger regularization. This gives an intuition for why both methods have similar effects, even though their mechanisms look different.</p>
+<hr>
+<h2 id=data-augmentation>Data Augmentation</h2>
+<p>If overfitting occurs because the model exploits finite-sample artifacts, the most direct fix is to increase the effective size of the training set. <strong>Data augmentation</strong> creates additional training examples by applying label-preserving transformations to existing examples.</p>
+<p>For images, common augmentations include: random crops and resizes, horizontal flips, rotations, color jitter (brightness, contrast, saturation shifts), cutout (masking random rectangular regions), and mixup (interpolating two images and their labels: $\tilde{x} = \alpha x_i + (1-\alpha)x_j$, $\tilde{y} = \alpha y_i + (1-\alpha)y_j$). For text: synonym replacement, back-translation (translate to another language and back), random deletion of words, word order perturbations. For audio: time stretching, pitch shifting, noise injection, SpecAugment (masking blocks of time-frequency bins).</p>
+<p>The regularization effect is genuine, not just effective sample size increase. Augmentation injects inductive biases: using random flips tells the model that horizontal orientation should not affect the prediction. Using random crops tells the model that the object can appear anywhere. The model must be invariant to these transformations to minimize the augmented training loss, which is exactly what we want for generalization.</p>
+<p>Noise injection as augmentation has a direct connection to regularization: adding Gaussian noise $\epsilon \sim \mathcal{N}(0, \sigma^2 I)$ to inputs during training is equivalent to adding a term $\frac{\sigma^2}{2}\mathbb{E}\left[|\nabla_x \mathcal{L}|^2\right]$ to the loss, which penalizes large input gradients and promotes smooth decision boundaries. This is a form of Tikhonov regularization in input space.</p>
+<hr>
+<h2 id=dropout>Dropout</h2>
+<p><strong>Dropout</strong> is a regularization technique specific to neural networks, introduced by Srivastava et al. in 2014. During each forward pass in training, every neuron&rsquo;s activation is independently set to zero with probability $p$ (the dropout probability, or &ldquo;drop rate&rdquo;). Neurons that are kept have their activations scaled by $\frac{1}{1-p}$. At test time, all neurons are used and no scaling is applied.</p>
+<p>More precisely, if $h$ is the vector of pre-scaling activations at some layer, the dropout mask is $m \sim \text{Bernoulli}(1-p)^d$ (i.i.d. for each unit), and the masked activation is:</p>
+<p>$$\tilde{h} = \frac{m \odot h}{1-p}$$</p>
+<p>The scaling by $\frac{1}{1-p}$ ensures that $\mathbb{E}[\tilde{h}] = h$, so the expected activation is unchanged. This is <strong>inverted dropout</strong> - the scaling happens during training, so test time requires no modification to the network. The alternative (scale at test time by $1-p$) produces identical expected outputs but requires remembering to apply the scaling at inference, which is error-prone.</p>
+<p>The dropout probability $p$ is a hyperparameter. Common choices are $p = 0.5$ for fully connected layers and $p = 0.1$ to $0.2$ for convolutional layers (which are already regularized by weight sharing). Dropout is typically not applied to batch normalization layers or the output layer.</p>
+<hr>
+<h2 id=dropout-as-approximate-bagging>Dropout as Approximate Bagging</h2>
+<p>The most illuminating way to understand why dropout works is the <strong>ensemble / bagging interpretation</strong>, due to Hinton et al. and formalized by Goodfellow et al.</p>
+<p><strong>Bagging</strong> (bootstrap aggregating) is a general ensemble method: train $K$ separate models on $K$ bootstrap samples of the training data, then average their predictions. It reduces variance without increasing bias, because averaging reduces the variance of a sum of identically distributed random variables by a factor of $K$.</p>
+<p>Dropout implements a form of bagging that is computationally much cheaper. Here is the precise connection.</p>
+<p>A network with $n$ neurons subject to dropout implicitly defines $2^n$ different network architectures - one for each possible dropout mask $m \in {0,1}^n$. Each distinct mask $m$ defines a &ldquo;thinned&rdquo; sub-network. During training, each mini-batch uses a freshly sampled mask, so effectively trains a different sub-network. The weights are <strong>shared</strong> across all sub-networks: the same weight $w_{ij}$ appears in every sub-network that includes both neuron $i$ and neuron $j$. This weight sharing means that each sub-network is not trained from scratch - it benefits from the training done by all the other sub-networks that share its weights.</p>
+<p>The training procedure is equivalent to: sample a sub-network $m$ from the uniform distribution over masks, train it for one step using the current mini-batch, then do the same for the next mini-batch with a new sample. Over the course of training, each possible sub-network is updated roughly proportionally to how often it is sampled. With $2^n$ possible masks and $T$ training steps, most masks are sampled at most once or twice - this is genuine diversity across sub-networks, analogous to training separate models in a bagging ensemble.</p>
+<p>At <strong>test time</strong>, we want to compute the ensemble prediction:</p>
+<p>$$\hat{y} = \frac{1}{2^n}\sum_{m \in {0,1}^n} f(x; w \odot m)$$</p>
+<p>Summing over all $2^n$ masks is intractable for any realistic network. The key insight: the <strong>geometric mean</strong> of the ensemble predictions is approximately computed by the single full network with weights scaled by $1-p$. Dropout at test time is replaced by the &ldquo;weight scaling inference rule&rdquo; - use all weights, scaled by $(1-p)$ (or equivalently, use all activations scaled by $(1-p)$). This is exact for a single sigmoid output unit (because the geometric mean of Bernoulli mixtures satisfies a product form), and is a good approximation for deeper networks.</p>
+<p>The approximation is justified because: (1) the arithmetic mean of predictions is well-approximated by the geometric mean for sharply peaked predictive distributions; (2) empirically, the weight scaling rule matches Monte Carlo approximations of the true ensemble average closely; and (3) the scaling rule is exact for linear networks, and deep networks with smooth activations are locally approximately linear in many directions.</p>
+<h3 id=why-approximate-bagging-helps>Why Approximate Bagging Helps</h3>
+<p>The variance reduction from bagging is $\text{Var}\left(\frac{1}{K}\sum_k f_k\right) = \frac{1}{K}\text{Var}(f) + \frac{K-1}{K}\text{Cov}(f_i, f_j)$. With $K = 2^n$ sub-networks, the $\frac{1}{K}$ factor is negligible, but the covariance term matters. Sub-networks trained with shared weights are more correlated than independently trained models (the standard bagging setting). So dropout provides variance reduction, but less than ideal bagging. This is the &ldquo;approximate&rdquo; in approximate bagging - it is a practical compromise between the full variance reduction of true bagging and the computational cost of training a single network.</p>
+<h3 id=connection-to-bayesian-model-averaging>Connection to Bayesian Model Averaging</h3>
+<p>The bagging interpretation connects dropout to <strong>Bayesian model averaging</strong> (BMA). In BMA, the predictive distribution is:</p>
+<p>$$p(y | x, \mathcal{D}) = \int p(y | x, w) p(w | \mathcal{D}), dw$$</p>
+<p>This integral averages predictions over all weight settings, weighted by their posterior probability. The ensemble of sub-networks in dropout approximates this integral, with the mask distribution playing the role of the posterior over model architectures. Each mask selects a different model, and averaging over masks approximates averaging over models. The connection is not exact - masks are sampled uniformly, not from a posterior - but it motivates the Bayesian interpretation of dropout and connects to principled uncertainty quantification, which we examine next.</p>
+<hr>
+<h2 id=monte-carlo-dropout>Monte Carlo Dropout</h2>
+<p>The ensemble interpretation of dropout suggests a natural extension: instead of using the deterministic weight-scaling inference rule at test time, keep dropout active and run multiple stochastic forward passes. This is <strong>Monte Carlo Dropout</strong>, proposed by Gal and Ghahramani (2016).</p>
+<p>The procedure: given a test input $x$, run $T$ stochastic forward passes through the network with dropout active. Each pass uses a freshly sampled mask $m^{(t)}$, producing a prediction $\hat{y}^{(t)} = f(x; w \odot m^{(t)})$. The predictive mean and variance are estimated as:</p>
+<p>$$\bar{y} = \frac{1}{T}\sum_{t=1}^T \hat{y}^{(t)}$$</p>
+<p>$$\text{Var}(y | x) \approx \frac{1}{T}\sum_{t=1}^T \hat{y}^{(t)2} - \bar{y}^2 + \frac{1}{T}\sum_{t=1}^T \hat{\sigma}^{(t)2}$$</p>
+<p>where the last term accounts for aleatoric uncertainty if the model also outputs a predicted noise variance $\hat{\sigma}^2$. The first two terms capture <strong>epistemic uncertainty</strong> - uncertainty due to limited data, which should decrease as more training data is collected. The last term captures <strong>aleatoric uncertainty</strong> - irreducible noise in the labels.</p>
+<h3 id=formal-justification>Formal Justification</h3>
+<p>Gal and Ghahramani showed that a dropout neural network with Gaussian priors on the weights is mathematically equivalent to a <strong>deep Gaussian process</strong> approximated by variational inference. The dropout masks correspond to variational parameters in a Bernoulli approximating distribution, and training the network minimizes a variational lower bound on the marginal likelihood. Test-time dropout with Monte Carlo averaging is then exactly the variational inference procedure for the posterior predictive distribution.</p>
+<p>More concretely: the variational distribution over weights $q(w)$ is a product of Bernoulli distributions (one per weight), parameterized by the trained weights and the dropout rate. Monte Carlo Dropout samples from this variational distribution and averages predictions, which is the standard MC approximation to the posterior predictive:</p>
+<p>$$p(y | x, \mathcal{D}) \approx \frac{1}{T}\sum_{t=1}^T p(y | x, w^{(t)}), \quad w^{(t)} \sim q(w)$$</p>
+<h3 id=practical-use-in-uncertainty-quantification>Practical Use in Uncertainty Quantification</h3>
+<p>MC Dropout gives you uncertainty estimates from a model you have already trained with standard dropout - no modification to the architecture or training procedure is required. This is its main practical advantage over other Bayesian deep learning approaches (Laplace approximations, deep ensembles, variational Bayes), which require either retraining or more complex model changes.</p>
+<p>In practice, $T = 30$ to $100$ forward passes is typically sufficient. The variance across passes gives a reliable signal for uncertainty: inputs where the network is uncertain (out-of-distribution, ambiguous) tend to produce high variance across passes, while in-distribution inputs produce low variance. This has been applied to active learning (query the examples with highest uncertainty), anomaly detection (flag high-uncertainty inputs), and safety-critical systems (abstain from prediction when uncertainty is high).</p>
+<p>One limitation: the uncertainty estimates are only as good as the variational approximation. Bernoulli variational distributions are not expressive enough to capture complex posterior shapes over weights, and the approximation can underestimate uncertainty in some settings. Deep ensembles (training multiple independent networks from different random initializations) often provide better-calibrated uncertainty at the cost of higher computational budget.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Technique</th>
+<th>Mechanism</th>
+<th>Inductive Bias</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L2 (weight decay)</td>
+<td>Add $\lambda|w|^2$ to loss; weight decay update $(1-2\eta\lambda)w - \eta\nabla\mathcal{L}$</td>
+<td>Gaussian prior on weights; small weights preferred</td>
+<td>Almost always; default choice for neural networks</td>
+</tr>
+<tr>
+<td>L1 (Lasso)</td>
+<td>Add $\lambda|w|_1$ to loss; soft-thresholding updates</td>
+<td>Laplace prior; sparse solutions</td>
+<td>Feature selection; high-dimensional, low-signal settings</td>
+</tr>
+<tr>
+<td>Elastic Net</td>
+<td>L1 + L2 combined</td>
+<td>Sparsity + stability for correlated features</td>
+<td>Correlated features, high-dimensional regression</td>
+</tr>
+<tr>
+<td>Early stopping</td>
+<td>Stop when validation loss increases; return best checkpoint</td>
+<td>Limits trajectory length in parameter space</td>
+<td>Always; easy to implement alongside any training run</td>
+</tr>
+<tr>
+<td>Data augmentation</td>
+<td>Label-preserving input transformations</td>
+<td>Invariances encoded by the transform family</td>
+<td>Images, audio, text; transformations must preserve labels</td>
+</tr>
+<tr>
+<td>Dropout</td>
+<td>Random mask $m \sim \text{Bernoulli}(1-p)^n$ per forward pass; scale by $1/(1-p)$</td>
+<td>Approximate ensemble of $2^n$ sub-networks</td>
+<td>Fully connected layers; less useful with batch norm</td>
+</tr>
+<tr>
+<td>MC Dropout</td>
+<td>Keep dropout at test time; $T$ forward passes for mean/variance</td>
+<td>Variational Bayes over weights</td>
+<td>Uncertainty quantification; no extra training cost</td>
+</tr>
+</tbody>
+</table>
+<p>All regularization techniques address the same root problem - the generalization gap between empirical and expected risk - but from different angles. L2 and L1 constrain the hypothesis class directly through the loss. Early stopping constrains the optimization trajectory. Data augmentation expands the effective training distribution. Dropout trains an implicit ensemble with shared weights and provides an approximation to Bayesian model averaging. In practice, the best results come from combining multiple techniques: weight decay plus dropout plus data augmentation is the standard recipe for image classification, and it works because the variance reductions from different methods compound.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/bias-variance-overfitting/>Bias, Variance & Overfitting</a></li>
+<li><a href=/posts/gradient-descent/>Gradient Descent</a></li>
+<li><a href=/posts/neural-networks-perceptrons/>Neural Networks & Perceptrons</a></li>
+<li><a href=/posts/batchnorm-layernorm/>BatchNorm & LayerNorm</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

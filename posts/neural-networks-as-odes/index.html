@@ -1,0 +1,419 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Neural Networks as ODEs // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Neural Networks as ODEs">
+<meta name=twitter:description content="Prerequisites:
+ Ordinary Differential Equations The Chain Rule & Backpropagation Gradients & Partial Derivatives   Look at this update rule for a deep residual network (ResNet):
+$$\mathbf{x_{k+1}} = \mathbf{x_k} + f(\mathbf{x_k}, \theta_k)$$
+The hidden state $\mathbf{x_k} \in \mathbb{R}^d$ at layer $k$ is updated by adding a residual block $f(\mathbf{x_k}, \theta_k)$ parameterized by $\theta_k$. This is the defining feature of ResNets - the architecture that first made very deep networks trainable.">
+<meta property="og:title" content="Neural Networks as ODEs">
+<meta property="og:description" content="Prerequisites:
+ Ordinary Differential Equations The Chain Rule & Backpropagation Gradients & Partial Derivatives   Look at this update rule for a deep residual network (ResNet):
+$$\mathbf{x_{k+1}} = \mathbf{x_k} + f(\mathbf{x_k}, \theta_k)$$
+The hidden state $\mathbf{x_k} \in \mathbb{R}^d$ at layer $k$ is updated by adding a residual block $f(\mathbf{x_k}, \theta_k)$ parameterized by $\theta_k$. This is the defining feature of ResNets - the architecture that first made very deep networks trainable.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/neural-networks-as-odes/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Neural Networks as ODEs</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Dec 11, 2020
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+31 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/ordinary-differential-equations/>Ordinary Differential Equations</a></li>
+<li><a href=/posts/the-chain-rule-backpropagation/>The Chain Rule & Backpropagation</a></li>
+<li><a href=/posts/gradients-partial-derivatives/>Gradients & Partial Derivatives</a></li>
+</ul>
+<hr>
+<p>Look at this update rule for a deep residual network (ResNet):</p>
+<p>$$\mathbf{x_{k+1}} = \mathbf{x_k} + f(\mathbf{x_k}, \theta_k)$$</p>
+<p>The hidden state $\mathbf{x_k} \in \mathbb{R}^d$ at layer $k$ is updated by adding a residual block $f(\mathbf{x_k}, \theta_k)$ parameterized by $\theta_k$. This is the defining feature of ResNets - the architecture that first made very deep networks trainable.</p>
+<p>Now look at Euler&rsquo;s method for solving the ODE $\frac{d\mathbf{x}}{dt} = F(\mathbf{x}, t)$ with step size $h$:</p>
+<p>$$\mathbf{x_{n+1}} = \mathbf{x_n} + h \cdot F(\mathbf{x_n}, t_n)$$</p>
+<p>With step size $h = 1$ and $F(\mathbf{x}, t_k)$ identified with $f(\mathbf{x}, \theta_k)$, these two equations are identical.</p>
+<p>A ResNet with $L$ layers computes exactly $L$ steps of Euler&rsquo;s method on the vector field $F(\mathbf{x}, t)$, where the vector field is parameterized by the network weights. Layer depth corresponds to time. The number of layers corresponds to the number of Euler steps.</p>
+<p>Once you see this, a natural question follows: what happens if you make the residual blocks thinner and take the number of layers to infinity? The discrete Euler steps become a continuous ODE. The discrete residual network becomes a <strong>Neural ODE</strong>.</p>
+<hr>
+<h2 id=section-1-the-euler-resnet-correspondence>Section 1: The Euler-ResNet Correspondence</h2>
+<p>Let us make the correspondence precise and examine what it implies.</p>
+<p><strong>Euler&rsquo;s method</strong> for $\frac{d\mathbf{x}}{dt} = F(\mathbf{x}, t)$ with step size $h = 1$:</p>
+<p>$$\mathbf{x}(t + 1) \approx \mathbf{x}(t) + F(\mathbf{x}(t), t)$$</p>
+<p>Unrolling from $t = 0$ to $t = L$ through integer steps:</p>
+<p>$$\mathbf{x}(k+1) = \mathbf{x}(k) + F(\mathbf{x}(k), k), \quad k = 0, 1, \ldots, L-1$$</p>
+<p><strong>The ResNet update</strong> at each layer $k$:</p>
+<p>$$\mathbf{x_{k+1}} = \mathbf{x_k} + f(\mathbf{x_k}, \theta_k)$$</p>
+<p>These are the same equation. Identify $F(\mathbf{x}, k) = f(\mathbf{x}, \theta_k)$: the vector field at time $k$ is the $k$-th residual block.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why does Euler&rsquo;s method give exactly the ResNet update rule?</p>
+<p>The key is the <strong>residual</strong> structure. A plain feedforward layer computes $\mathbf{x_{k+1}} = g(\mathbf{x_k}, \theta_k)$ - the output is an entirely new representation. A residual block computes $\mathbf{x_{k+1}} = \mathbf{x_k} + f(\mathbf{x_k}, \theta_k)$ - the output is the old representation plus a small correction. This correction $f(\mathbf{x_k}, \theta_k)$ plays the role of $h \cdot F(\mathbf{x_k})$ in Euler&rsquo;s method: a step in the direction the vector field is pointing. When $f$ is small (thin, lightly-parameterized blocks), the correction is small - exactly the regime where the Euler approximation is accurate and the continuous ODE picture is valid.</p>
+</blockquote>
+<p><strong>The depth-time correspondence.</strong> In Euler&rsquo;s method, $L$ steps with step size $h$ integrate from $t = 0$ to $t = Lh$. A ResNet with $L$ layers integrates from layer $0$ to layer $L$, with time horizon $T = L$. Making the network deeper is equivalent to integrating for longer. Adding more layers in a specific range corresponds to using smaller step sizes there - higher resolution integration.</p>
+<p><strong>What a ResNet is learning.</strong> Under this correspondence, a trained ResNet is learning a vector field $F(\mathbf{x}, t)$ such that the Euler integration of that field transforms the input representation $\mathbf{x_0}$ into the output representation $\mathbf{x_L}$ in a way that makes the classification loss small. The network is not learning arbitrary layer-to-layer mappings; it is learning a vector field that drives the representation toward the right region of space.</p>
+<p>This explains an empirical observation: deep ResNets with many layers often have many layers where $f$ is nearly zero - &ldquo;identity&rdquo; layers that do almost nothing. In the ODE view, these are time intervals where the vector field is small and the representation is already near the right region.</p>
+<hr>
+<h2 id=section-1b-what-a-resnet-is-really-learning>Section 1b: What a ResNet Is Really Learning</h2>
+<p>Let us push the Euler-ResNet correspondence further. In Euler&rsquo;s method, you choose a step size $h$ and a fixed number of steps $N$. The total integration time is $T = Nh$. You can get the same $T$ with many small steps or fewer large steps.</p>
+<p>In a ResNet, the &ldquo;step size&rdquo; is implicitly determined by how strongly the residual block changes the representation. A very small, lightly-regularized residual block corresponds to small $h$. A large, expressive residual block corresponds to large $h$.</p>
+<p>Standard ResNets use $h = 1$ (one step per layer). But nothing says $h$ must be $1$. You could multiply the residual by a small constant: $\mathbf{x_{k+1}} = \mathbf{x_k} + \epsilon f(\mathbf{x_k}, \theta_k)$ for small $\epsilon$. This corresponds to Euler&rsquo;s method with step size $h = \epsilon$. With $L$ such layers, you integrate to time $T = \epsilon L$.</p>
+<p><strong>The limit $\epsilon \to 0$, $L \to \infty$ with $\epsilon L = T$ fixed.</strong> This is exactly the limit that converts a discrete Euler scheme into a continuous ODE. The discrete residual network becomes a continuous-time dynamical system. The weight matrices $\theta_k$ at each layer become a single weight function $\theta(t)$ - or, in the simplest Neural ODE, a single fixed weight $\theta$ with $t$ passed as an extra input.</p>
+<p><strong>Weight sharing versus independent weights.</strong> A key question: as we take more and more layers, do we use the same weights (weight sharing) or independent weights at each layer? With independent weights, each layer has its own $\theta_k$, and the limit is an infinite sequence of independent functions. With shared weights, the limit is a single function $f(\mathbf{x}, t, \theta)$ evaluated at different $t$ values - a Neural ODE.</p>
+<p>The weight-sharing limit is the Neural ODE. It has far fewer parameters than the independent-weight limit. This parameter efficiency is both a strength (less overfitting) and a weakness (less capacity to represent arbitrary transformations).</p>
+<hr>
+<h2 id=section-2-neural-odes>Section 2: Neural ODEs</h2>
+<p>The ODE view of ResNets motivates a natural continuous limit.</p>
+<p><strong>The Neural ODE</strong> (Chen et al., 2018):</p>
+<p>$$\frac{d\mathbf{x}(t)}{dt} = f(\mathbf{x}(t), t, \theta)$$</p>
+<p>where $f(\cdot, \cdot, \theta)$ is a neural network with parameters $\theta$ (shared across all $t$). The hidden state $\mathbf{x}(t)$ starts at $\mathbf{x}(0)$ (the input, after an initial embedding) and evolves continuously.</p>
+<p>The <strong>output</strong> is $\mathbf{x}(T)$ for some terminal time $T$, computed by solving the ODE numerically from $t = 0$ to $t = T$:</p>
+<p>$$\mathbf{x}(T) = \mathbf{x}(0) + \int_0^T f(\mathbf{x}(t), t, \theta) dt$$</p>
+<p>The <strong>forward pass</strong> is an ODE solve. You provide the vector field $f$ and initial condition $\mathbf{x}(0)$, and a numerical solver computes $\mathbf{x}(T)$.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Is &ldquo;continuous depth&rdquo; just an infinitely deep network?</p>
+<p>Not quite - and the difference matters. An infinitely deep network would have infinitely many independent parameter sets $\theta_0, \theta_1, \theta_2, \ldots$, one per layer. A Neural ODE has a <strong>single</strong> shared parameter $\theta$ that defines the vector field $f(\mathbf{x}, t, \theta)$ at all times $t$. The same network $f$ is evaluated at different $(t, \mathbf{x}(t))$ values as the state evolves. This is weight sharing across depth - the same function is applied repeatedly, with $t$ as an additional input encoding &ldquo;where in the depth we are.&rdquo; This is closer to a recurrent architecture (shared weights across time steps) than to a feedforward network (independent weights per layer).</p>
+</blockquote>
+<p><strong>Two perspectives on the same architecture.</strong> A Neural ODE can be seen as:</p>
+<ol>
+<li>A continuous-depth residual network, where the &ldquo;depth&rdquo; is the integration time $T$.</li>
+<li>A continuous-time recurrent network, where the &ldquo;time&rdquo; is the integration variable $t$ and the hidden state $\mathbf{x}(t)$ is the recurrent state.</li>
+</ol>
+<p>Both perspectives are useful. The residual network perspective makes the connection to ResNets clear. The recurrent network perspective makes the connection to sequence models and time series clear.</p>
+<hr>
+<h2 id=section-3-why-neural-odes-are-interesting>Section 3: Why Neural ODEs Are Interesting</h2>
+<p><strong>Reason 1: Adaptive computation.</strong> In a standard ResNet, the number of layers $L$ is fixed at design time. A Neural ODE&rsquo;s computation can be adaptive: modern ODE solvers with error control automatically take more steps where the vector field changes rapidly, and fewer steps where it is smooth. Harder inputs can automatically receive more computation (more solver steps) than easier inputs. This is adaptive inference - something standard neural networks cannot do without explicit mechanisms.</p>
+<p>Concretely: an adaptive solver like DOPRI5 estimates the local integration error at each step and adjusts $h$ to keep the error below a specified tolerance. For a complex input where $f(\mathbf{x}(t), t, \theta)$ varies rapidly in $t$, the solver takes many small steps. For a simple input where $f$ is nearly constant, it takes few large steps. The number of function evaluations - the computational cost - is therefore input-dependent.</p>
+<p><strong>Reason 2: Memory efficiency via the adjoint method.</strong> Standard backpropagation through a ResNet with $L$ layers requires storing all $L$ intermediate activation states - $O(L \cdot d)$ memory. For very deep networks, this is a bottleneck.</p>
+<p>For a Neural ODE, the adjoint method (Section 4) computes gradients using only $O(d)$ memory, regardless of the number of solver steps. This makes Neural ODEs particularly attractive for memory-constrained settings or when very high accuracy (many solver steps) is needed.</p>
+<p><strong>Reason 3: Mathematical elegance and connections.</strong> Neural ODEs connect deep learning to the rich theory of dynamical systems, control theory, and variational calculus. This enables analysis and design tools that do not exist for discrete networks: stability theory, Lyapunov functions, Hamiltonian structure, controllability.</p>
+<hr>
+<h2 id=section-4-the-adjoint-method>Section 4: The Adjoint Method</h2>
+<p>Training a Neural ODE requires $\frac{\partial \mathcal{L}}{\partial \theta}$, the gradient of the loss with respect to parameters. The loss $\mathcal{L}$ depends on $\mathbf{x}(T)$, which depends on $\theta$ through the ODE.</p>
+<p><strong>Why the standard approach is expensive.</strong> In a ResNet with $L$ layers, backpropagation stores the activations at all $L$ layers during the forward pass, then uses them during the backward pass. Memory is $O(L \cdot d)$. For a Neural ODE solved with $N$ steps, the naive analog - backpropagating through all $N$ solver steps - has the same $O(N \cdot d)$ cost. If the solver uses 500 steps and the state dimension is $d = 512$, this requires storing 256,000 floating-point values per example per forward pass.</p>
+<p><strong>Gradient checkpointing</strong> (used in large language models to manage memory) solves the same problem for discrete networks: instead of storing all activations, recompute them during the backward pass at the cost of extra forward passes. The adjoint method is exactly gradient checkpointing taken to the continuous-time limit.</p>
+<p><strong>The naive approach.</strong> Backpropagate through all solver steps. If the solver takes $N$ steps, store all $N$ intermediate states $\mathbf{x}(t_0), \mathbf{x}(t_1), \ldots, \mathbf{x}(t_N) = \mathbf{x}(T)$, then compute gradients backward through each step. Memory: $O(N \cdot d)$. For $N = 500$ steps and $d = 256$, this is 128,000 stored values - manageable but costly.</p>
+<p><strong>The adjoint method.</strong> Compute the same gradients with $O(d)$ memory.</p>
+<p>Define the <strong>adjoint state</strong> $\mathbf{a}(t) = \frac{\partial \mathcal{L}}{\partial \mathbf{x}(t)}$. This is the gradient of the loss with respect to the hidden state at time $t$. At the final time, we know $\mathbf{a}(T) = \frac{\partial \mathcal{L}}{\partial \mathbf{x}(T)}$ from the loss function.</p>
+<p><strong>The adjoint ODE.</strong> By differentiating the ODE constraint and applying the chain rule (the details require calculus of variations), the adjoint satisfies:</p>
+<p>$$\frac{d\mathbf{a}(t)}{dt} = -\mathbf{a}(t)^T \frac{\partial f}{\partial \mathbf{x}}(\mathbf{x}(t), t, \theta)$$</p>
+<p>Starting from $\mathbf{a}(T)$ and integrating backward from $T$ to $0$ gives $\mathbf{a}(0)$.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why does the adjoint ODE run backward in time?</p>
+<p>Because gradient information flows backward. In standard backpropagation through a discrete network, you compute the gradient at the output layer, then use the chain rule to propagate it backward through each preceding layer. The adjoint ODE is the continuous-time analog: $\mathbf{a}(t) = \frac{\partial \mathcal{L}}{\partial \mathbf{x}(t)}$ at a given time $t$ depends on $\mathbf{a}$ at a later time $t + dt$ (closer to the output), so the ODE must be integrated backward in time - from $T$ back to $0$. The minus sign and the backward integration direction are two sides of the same coin. The term $-\mathbf{a}^T (\partial f / \partial \mathbf{x})$ is the continuous-time chain rule: how does the gradient at time $t$ come from the gradient at time $t + dt$, mediated by the Jacobian of the vector field?</p>
+</blockquote>
+<p><strong>Gradient with respect to parameters.</strong> Simultaneously with the adjoint ODE, accumulate:</p>
+<p>$$\frac{\partial \mathcal{L}}{\partial \theta} = -\int_T^0 \mathbf{a}(t)^T \frac{\partial f}{\partial \theta}(\mathbf{x}(t), t, \theta) dt$$</p>
+<p>This integral runs backward from $T$ to $0$ and can be accumulated step by step during the backward solve.</p>
+<p><strong>The backward pass in practice.</strong> Three ODEs solved simultaneously in a single backward integration:</p>
+<ol>
+<li>Re-compute $\mathbf{x}(t)$ by integrating the forward ODE backward (to recover the trajectory without storing it).</li>
+<li>Integrate the adjoint ODE for $\mathbf{a}(t)$.</li>
+<li>Accumulate the $\frac{\partial \mathcal{L}}{\partial \theta}$ integral.</li>
+</ol>
+<p>All three share the same time grid. Memory usage at any moment: three state vectors of size $d$ each - $O(d)$ total.</p>
+<p>The cost: running the forward ODE twice (forward pass and backward re-integration) plus the adjoint. The memory saving (from $O(N \cdot d)$ to $O(d)$) comes at the price of this extra computation.</p>
+<p><strong>Connection to optimal control.</strong> The adjoint method is identical to Pontryagin&rsquo;s minimum principle in optimal control theory. The adjoint state $\mathbf{a}(t)$ is the &ldquo;costate&rdquo; or &ldquo;costrate&rdquo; variable. The gradient of the loss with respect to parameters is the gradient of the Hamiltonian with respect to the control (parameters). This connection - that neural network training via the adjoint method is a form of optimal control - is one of the beautiful mathematical structures revealed by the Neural ODE framework.</p>
+<hr>
+<h2 id=section-4b-deriving-the-adjoint-ode>Section 4b: Deriving the Adjoint ODE</h2>
+<p>Where does $\frac{d\mathbf{a}}{dt} = -\mathbf{a}^T \frac{\partial f}{\partial \mathbf{x}}$ come from? The derivation uses the chain rule applied to the constraint that $\mathbf{x}(t)$ satisfies the ODE.</p>
+<p>Consider the loss $\mathcal{L}[\mathbf{x}(T)]$. Perturb the solution by a small function $\delta\mathbf{x}(t)$ satisfying $\delta\mathbf{x}(0) = 0$ (we are not changing the initial condition). The perturbation propagates through the ODE:</p>
+<p>$$\frac{d(\delta\mathbf{x})}{dt} = \frac{\partial f}{\partial \mathbf{x}} \delta\mathbf{x}$$</p>
+<p>The resulting change in the loss is:</p>
+<p>$$\delta\mathcal{L} = \mathbf{a}(T)^T \delta\mathbf{x}(T)$$</p>
+<p>where $\mathbf{a}(T) = \frac{\partial \mathcal{L}}{\partial \mathbf{x}(T)}$. Using the Duhamel formula (or Gronwall&rsquo;s inequality), $\delta\mathbf{x}(T) = \int_0^T \Phi(T, t) \delta\mathbf{x}(t) dt$ where $\Phi$ is the state transition matrix satisfying $\frac{d\Phi}{dt} = \frac{\partial f}{\partial \mathbf{x}} \Phi$. After integrating by parts and requiring that $\delta\mathcal{L}$ matches the gradient formula for all perturbations $\delta\mathbf{x}$, one obtains the adjoint equation. The adjoint state $\mathbf{a}(t)$ satisfies $\frac{d\mathbf{a}}{dt} = -\mathbf{a}^T \frac{\partial f}{\partial \mathbf{x}}$ with terminal condition $\mathbf{a}(T) = \frac{\partial \mathcal{L}}{\partial \mathbf{x}(T)}$.</p>
+<p>This derivation is the continuous-time analog of the discrete backpropagation derivation. Where discrete backprop applies the chain rule through a sequence of matrix multiplications, the adjoint ODE applies it through a matrix-valued differential equation.</p>
+<hr>
+<h2 id=section-5-continuous-normalizing-flows>Section 5: Continuous Normalizing Flows</h2>
+<p>Neural ODEs have a particularly elegant application in generative modeling.</p>
+<p><strong>The setup.</strong> A normalizing flow transforms a simple base distribution $p_0(\mathbf{z})$ (a Gaussian, say) into a complex target distribution $p(\mathbf{x})$ via an invertible mapping $\mathbf{x} = g(\mathbf{z})$. The change-of-variables formula gives the log-likelihood:</p>
+<p>$$\log p(\mathbf{x}) = \log p_0(\mathbf{z}) - \log \left|\det \frac{\partial g}{\partial \mathbf{z}}\right|$$</p>
+<p>The Jacobian determinant costs $O(d^3)$ to compute directly. Discrete normalizing flows avoid this by using specially structured $g$ (e.g., coupling layers with triangular Jacobians), but this restricts the expressiveness of the model.</p>
+<p><strong>The continuous approach.</strong> If $\mathbf{x}(t)$ evolves as a Neural ODE $\frac{d\mathbf{x}}{dt} = f(\mathbf{x}(t), t, \theta)$, the probability density $p(\mathbf{x}, t)$ evolves according to the <strong>continuity equation</strong>:</p>
+<p>$$\frac{\partial p}{\partial t} + \nabla \cdot (f \cdot p) = 0$$</p>
+<p>This is just conservation of probability: the total probability in any region changes only because probability flows in or out through the boundary. The same equation governs fluid density in fluid mechanics.</p>
+<p>Taking $\log$ and working along the trajectory:</p>
+<p>$$\frac{\partial \log p(\mathbf{x}(t), t)}{\partial t} = -\text{tr}!\left(\frac{\partial f}{\partial \mathbf{x}}(\mathbf{x}(t), t, \theta)\right)$$</p>
+<p>The log-density changes at a rate equal to the negative <strong>trace</strong> of the Jacobian - not the log-determinant, just the trace. The trace costs $O(d)$ per computation instead of $O(d^3)$ for the determinant.</p>
+<p><strong>Stochastic trace estimation.</strong> Even computing the full Jacobian to extract its trace is $O(d^2)$. Hutchinson&rsquo;s estimator reduces this to $O(d)$: for $\epsilon$ with $\mathbb{E}[\epsilon\epsilon^T] = I$,</p>
+<p>$$\text{tr}(J) = \mathbb{E}_\epsilon[\epsilon^T J \epsilon]$$</p>
+<p>and $J\epsilon$ (a Jacobian-vector product) can be computed in $O(d)$ time via automatic differentiation (a single backward pass). Sample $\epsilon$ from a standard normal or Rademacher distribution, compute $\epsilon^T J \epsilon$, and average over a few samples.</p>
+<p><strong>FFJORD.</strong> Putting this together: to compute the log-likelihood of a sample $\mathbf{x}$, integrate the Neural ODE backward from $t = T$ to $t = 0$ to find $\mathbf{z} = \mathbf{x}(0)$, simultaneously accumulating $\int_T^0 \text{tr}(\partial f / \partial \mathbf{x}) dt$ via Hutchinson&rsquo;s estimator. The log-likelihood is:</p>
+<p>$$\log p(\mathbf{x}) = \log p_0(\mathbf{z}) + \int_T^0 \text{tr}!\left(\frac{\partial f}{\partial \mathbf{x}}\right) dt$$</p>
+<p>This is <strong>FFJORD</strong> (Free-Form Jacobian of Reversible Dynamics, Grathwohl et al., 2018). The key advantage over discrete normalizing flows: no architectural constraints on $f$. The vector field can be any neural network.</p>
+<hr>
+<h2 id=section-6-hamiltonian-neural-networks>Section 6: Hamiltonian Neural Networks</h2>
+<p>Neural ODEs are flexible but unconstrained. For physical systems with known conservation laws, we can embed that structure directly.</p>
+<p><strong>Hamiltonian mechanics.</strong> Many physical systems conserve energy $H(\mathbf{q}, \mathbf{p})$ (the Hamiltonian), where $\mathbf{q}$ is the position vector and $\mathbf{p}$ is the momentum vector. Hamilton&rsquo;s equations describe the dynamics:</p>
+<p>$$\dot{q}_i = \frac{\partial H}{\partial p_i}, \quad \dot{p}_i = -\frac{\partial H}{\partial q_i}$$</p>
+<p>Key properties of Hamiltonian systems: $H$ is conserved ($\frac{dH}{dt} = 0$), phase space volume is preserved (Liouville&rsquo;s theorem), and the vector field is divergence-free ($\nabla \cdot F = 0$).</p>
+<p>A generic Neural ODE $\frac{d\mathbf{x}}{dt} = f(\mathbf{x}, t, \theta)$ has none of these properties by default. It can learn to conserve something approximately, but not exactly.</p>
+<p><strong>Hamiltonian Neural Networks</strong> (Greydanus et al., 2019) learn $H_\theta(\mathbf{q}, \mathbf{p})$ from trajectory data and define the dynamics via Hamilton&rsquo;s equations. By construction, this system conserves $H_\theta$ exactly. The learned system is Hamiltonian. Not approximately Hamiltonian - exactly Hamiltonian.</p>
+<p>The result: Hamiltonian Neural Networks generalize dramatically better to long-time prediction. A standard Neural ODE, trained on short trajectories, accumulates energy errors over time - it is not constrained to stay on any energy surface. A Hamiltonian Neural Network cannot accumulate energy errors because conservation is built into the architecture, not learned from data.</p>
+<p>The training works like this: given position-velocity trajectory data ${(\mathbf{q}(t), \mathbf{p}(t))}$, compute the observed $\dot{\mathbf{q}}$ and $\dot{\mathbf{p}}$ from the data, and train $H_\theta$ so that $\partial H_\theta / \partial \mathbf{p} \approx \dot{\mathbf{q}}$ and $-\partial H_\theta / \partial \mathbf{q} \approx \dot{\mathbf{p}}$. The loss is on these partial derivatives, not on $H_\theta$ itself (which is unobservable from dynamics alone).</p>
+<p><strong>Lagrangian Neural Networks</strong> (Cranmer et al., 2020) take a complementary approach: learn $\mathcal{L}(\mathbf{q}, \dot{\mathbf{q}})$ and derive dynamics from the Euler-Lagrange equations $\frac{d}{dt}\frac{\partial \mathcal{L}}{\partial \dot{q}_i} - \frac{\partial \mathcal{L}}{\partial q_i} = 0$. Both approaches enforce the same physical structure through different mathematical routes.</p>
+<hr>
+<h2 id=section-6b-why-the-trace-instead-of-the-determinant>Section 6b: Why the Trace Instead of the Determinant?</h2>
+<p>The continuity equation gives $\partial \log p / \partial t = -\text{tr}(\partial f / \partial \mathbf{x})$ - the trace, not the log-determinant. Why?</p>
+<p>For an infinitesimal time step, the flow map $g_{\Delta t}: \mathbf{x}(t) \mapsto \mathbf{x}(t + \Delta t) = \mathbf{x}(t) + \Delta t \cdot f(\mathbf{x}(t), t, \theta)$ has Jacobian:</p>
+<p>$$\frac{\partial g_{\Delta t}}{\partial \mathbf{x}} = I + \Delta t \frac{\partial f}{\partial \mathbf{x}} + O(\Delta t^2)$$</p>
+<p>The determinant of this Jacobian:</p>
+<p>$$\det!\left(I + \Delta t \frac{\partial f}{\partial \mathbf{x}}\right) = 1 + \Delta t \cdot \text{tr}!\left(\frac{\partial f}{\partial \mathbf{x}}\right) + O(\Delta t^2)$$</p>
+<p>(using the identity $\det(I + \epsilon A) = 1 + \epsilon \text{tr}(A) + O(\epsilon^2)$, which follows from the characteristic polynomial expansion). Taking the log:</p>
+<p>$$\log \det!\left(I + \Delta t \frac{\partial f}{\partial \mathbf{x}}\right) \approx \Delta t \cdot \text{tr}!\left(\frac{\partial f}{\partial \mathbf{x}}\right)$$</p>
+<p>Dividing by $\Delta t$ and taking $\Delta t \to 0$ gives the instantaneous rate $\text{tr}(\partial f / \partial \mathbf{x})$. The trace is the infinitesimal version of the log-determinant. For finite flows (finite integration time), the log-determinant accumulates as $\int_0^T \text{tr}(\partial f / \partial \mathbf{x}) dt$, which is what FFJORD computes via ODE integration.</p>
+<p>This explains why continuous normalizing flows can use unrestricted architectures: the trace, unlike the determinant, is cheap to compute via automatic differentiation and stochastic estimation.</p>
+<hr>
+<h2 id=section-7-stability-and-stiffness>Section 7: Stability and Stiffness</h2>
+<p>Not all Neural ODEs are well-behaved in practice. The dynamical properties of the learned vector field $f$ determine whether training is easy or nearly impossible.</p>
+<p><strong>Why stability matters.</strong> For a Neural ODE to be trainable and useful, the forward ODE must be stable: solutions should not explode during integration. If the Jacobian $\partial f / \partial \mathbf{x}$ at typical trajectory points has eigenvalues with large positive real parts, perturbations to the state grow exponentially. Concretely: if $\lambda_{\max}$ is the largest real part of the Jacobian&rsquo;s eigenvalues, perturbations grow like $e^{\lambda_{\max} t}$. For stable representations, we need $\lambda_{\max} \leq 0$, or at least small and positive.</p>
+<p><strong>Antisymmetric RNN</strong> (Chang et al., 2019) enforces stability by design: use weight matrix $W - W^T$ (antisymmetric, so all eigenvalues are purely imaginary) for the hidden state update. This guarantees neutral stability - no explosion, no decay. A related idea for Neural ODEs: if $\partial f / \partial \mathbf{x}$ is antisymmetric, the ODE is Hamiltonian and trajectories lie on energy surfaces.</p>
+<p><strong>Stiffness.</strong> An ODE is <strong>stiff</strong> when the Jacobian $\partial f / \partial \mathbf{x}$ has eigenvalues with very different magnitudes - say, one eigenvalue with real part $-1$ and another with real part $-1000$. Explicit solvers like Euler and RK4 require step sizes $h &lt; 2/1000$ for stability, forcing tiny steps even when the interesting dynamics evolve on timescale $1$.</p>
+<p>For Neural ODEs, stiffness translates to a large number of function evaluations per forward pass. Instead of 50-100 evaluations (typical for a well-conditioned ODE), a stiff Neural ODE might require 1000-10000 evaluations. Since each evaluation runs the neural network $f$, this is expensive.</p>
+<p><strong>The stiffness-expressivity trade-off.</strong> More expressive vector fields (larger weight matrices, more layers in $f$) tend to produce stiffer dynamics. The network has more capacity to create rapid variations in $\mathbf{x}(t)$, which the solver must resolve with small steps. Designing $f$ to produce well-conditioned, non-stiff dynamics while retaining expressivity is an open research problem.</p>
+<p><strong>Implicit solvers for stiff Neural ODEs.</strong> Implicit methods (backward Euler, implicit Runge-Kutta) can handle stiff dynamics with much larger step sizes. Each implicit step requires solving a nonlinear system
+$$\mathbf{y}<em>{n+1} = \mathbf{y}<em>n + hf(t</em>{n+1}, \mathbf{y}</em>{n+1})$$
+for $\mathbf{y}_{n+1}$, typically via Newton&rsquo;s method. The cost per step is higher, but far fewer steps are needed. Libraries like <code>diffrax</code> provide implicit solvers (Kvaerno3, implicit Euler) for stiff Neural ODEs.</p>
+<hr>
+<h2 id=section-7b-numerical-solver-comparison>Section 7b: Numerical Solver Comparison</h2>
+<p>Understanding the differences between solvers is essential for using Neural ODEs effectively.</p>
+<p><strong>Fixed-step explicit methods.</strong></p>
+<p>Euler&rsquo;s method: $\mathbf{y_{n+1}} = \mathbf{y_n} + h f(t_n, \mathbf{y_n})$. One function evaluation per step. Global error $O(h)$. Stability region: $h\lambda$ must lie in the unit disk centered at $-1$ in the complex plane (for the test equation $y' = \lambda y$). For purely imaginary eigenvalues (oscillatory systems), Euler is unstable for any finite $h$ - the solution spirals outward instead of on a closed orbit.</p>
+<p>Runge-Kutta 4 (RK4): four function evaluations per step, global error $O(h^4)$. Stability region is much larger than Euler&rsquo;s but still bounded. For neural network vector fields with large Jacobian eigenvalues, even RK4 may require very small $h$.</p>
+<p>Explicit midpoint (RK2): $k_1 = f(t_n, \mathbf{y_n})$, $k_2 = f(t_n + h/2, \mathbf{y_n} + (h/2)k_1)$, $\mathbf{y_{n+1}} = \mathbf{y_n} + hk_2$. Two evaluations, $O(h^2)$ error. Larger stability region than Euler, cheaper than RK4.</p>
+<p><strong>Adaptive explicit methods.</strong></p>
+<p>DOPRI5 (Dormand-Prince): the standard adaptive solver for non-stiff Neural ODEs. Uses a 5th-order Runge-Kutta method with an embedded 4th-order method for error estimation. Takes 6 function evaluations per accepted step. The error estimate drives the step size adaptation: if the estimated error exceeds the tolerance, reject the step and halve $h$; if it is well below tolerance, accept the step and increase $h$.</p>
+<p>DOPRI5 is implemented as the default in both <code>torchdiffeq</code> and <code>diffrax</code>. The adaptive strategy means the number of function evaluations (NFE) varies with the input. Measuring NFE during inference gives a proxy for &ldquo;input difficulty&rdquo; in the ODE sense.</p>
+<p><strong>Implicit methods for stiff problems.</strong></p>
+<p>Backward Euler: $\mathbf{y_{n+1}} = \mathbf{y_n} + h f(t_{n+1}, \mathbf{y_{n+1}})$. Stable for all $h$ (A-stable). Requires solving a nonlinear equation at each step - typically via Newton&rsquo;s method, which itself requires the Jacobian $\partial f / \partial \mathbf{x}$. In the neural network context, computing the Jacobian is expensive: $O(d^2)$ memory and $O(d^2)$ computation via automatic differentiation.</p>
+<p>Kvaerno3: a third-order implicit Runge-Kutta method with good stability properties. Available in <code>diffrax</code>. Used for stiff Neural ODEs where explicit methods would require thousands of steps for stability.</p>
+<p><strong>The stiffness detector.</strong> Some libraries automatically detect stiffness during the forward pass (by monitoring whether the solver is repeatedly rejecting steps and shrinking $h$) and switch from an explicit to an implicit solver. This automatic switching is not yet standard in neural network ODE libraries but is available in scientific computing packages.</p>
+<hr>
+<h2 id=section-8-practical-implementation>Section 8: Practical Implementation</h2>
+<p><strong>The ODE solver interface.</strong> In <code>torchdiffeq</code> (PyTorch):</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> torchdiffeq <span style=color:#f92672>import</span> odeint_adjoint <span style=color:#66d9ef>as</span> odeint
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>f</span>(t, x):          <span style=color:#75715e># x: (batch, d), t: scalar</span>
+    <span style=color:#66d9ef>return</span> net(t, x)  <span style=color:#75715e># any nn.Module</span>
+
+x_T <span style=color:#f92672>=</span> odeint(f, x_0, t_span, method<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;dopri5&#39;</span>)
+</code></pre></div><p>The solver handles adaptive step sizing, error control, and gradient computation via the adjoint. The user provides the vector field $f$ (as a neural network) and the time span to integrate over.</p>
+<p>In <code>diffrax</code> (JAX):</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> diffrax <span style=color:#f92672>import</span> diffeqsolve, ODETerm, Dopri5
+
+term <span style=color:#f92672>=</span> ODETerm(<span style=color:#66d9ef>lambda</span> t, x, args: net(t, x))
+sol  <span style=color:#f92672>=</span> diffeqsolve(term, Dopri5(), t0<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>, t1<span style=color:#f92672>=</span>T, dt0<span style=color:#f92672>=</span><span style=color:#ae81ff>0.1</span>, y0<span style=color:#f92672>=</span>x_0)
+x_T  <span style=color:#f92672>=</span> sol<span style=color:#f92672>.</span>ys[<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>]
+</code></pre></div><p>Both provide JIT compilation and automatic differentiation through the solver.</p>
+<p><strong>Solver selection:</strong></p>
+<ul>
+<li>Non-stiff, smooth dynamics: <code>dopri5</code> (adaptive Runge-Kutta 4/5). Default for most Neural ODEs.</li>
+<li>Stiff dynamics: <code>kvaerno3</code> or <code>radau</code> (implicit Runge-Kutta). Necessary when the Jacobian has large eigenvalues.</li>
+<li>Fixed-step for speed: <code>euler</code> or <code>rk4</code> when the integration interval is short and accuracy requirements are modest.</li>
+<li>FFJORD (normalizing flows): <code>dopri5</code> with Hutchinson trace estimation.</li>
+</ul>
+<p><strong>Memory vs. speed.</strong> The adjoint method reduces memory from $O(N \cdot d)$ to $O(d)$, where $N$ is the number of solver steps. For a solver taking 500 steps with $d = 512$ dimensional states, this is a 500x reduction in peak memory. The cost is extra computation: the forward ODE is re-integrated during the backward pass.</p>
+<p>For batch training with many examples, the memory saving is the dominant consideration - storing full trajectories for thousands of examples simultaneously is often infeasible. For inference or fine-tuning with a few examples, standard backpropagation through the solver may be faster.</p>
+<hr>
+<h2 id=section-8b-latent-neural-odes-for-irregular-time-series>Section 8b: Latent Neural ODEs for Irregular Time Series</h2>
+<p>The most compelling practical application of Neural ODEs is irregular time series modeling. Many real-world time series are observed at non-uniform intervals: medical measurements taken at different times for different patients, financial data with trading halts, sensor data with intermittent failures.</p>
+<p><strong>The problem with standard recurrent networks.</strong> An RNN processes inputs at fixed time steps. To handle irregular intervals, you either bin observations into fixed time windows (losing precision), interpolate to fill in missing values (introducing error), or use a special-purpose architecture (complex engineering). None of these is natural.</p>
+<p><strong>The Latent Neural ODE approach.</strong> Encode the observed sequence into a latent initial state $\mathbf{z}(t_0)$ using a recognition network (e.g., another RNN run backward over the observations). Then evolve $\mathbf{z}(t)$ via a Neural ODE:</p>
+<p>$$\frac{d\mathbf{z}(t)}{dt} = f(\mathbf{z}(t), \theta)$$</p>
+<p>Decode $\mathbf{z}(t_i)$ at any desired time $t_i$ to produce a prediction. The ODE solver can evaluate $\mathbf{z}$ at arbitrary times without any special handling of gaps - it simply integrates from the last observed time to the next desired time.</p>
+<p>This makes the Latent Neural ODE a natural generative model for irregular time series: the latent dynamics are continuous, predictions can be made at any time, and the uncertainty is naturally encoded in the latent state.</p>
+<p><strong>Latent Neural ODE in the variational framework.</strong> In practice (Rubanova et al., 2019), the model is trained as a variational autoencoder (VAE):</p>
+<ol>
+<li>
+<p><strong>Encoder:</strong> A bidirectional RNN encodes the observed sequence ${(t_i, \mathbf{x}(t_i))}$ into the approximate posterior over the initial latent state $q(\mathbf{z}(t_0) | {(t_i, \mathbf{x}(t_i))})$.</p>
+</li>
+<li>
+<p><strong>Dynamics:</strong> Sample $\mathbf{z}(t_0)$ from the posterior, then solve the Neural ODE forward in time.</p>
+</li>
+<li>
+<p><strong>Decoder:</strong> At each desired output time $t_j$, decode $\mathbf{z}(t_j)$ to a prediction $\hat{\mathbf{x}}(t_j)$.</p>
+</li>
+<li>
+<p><strong>Loss:</strong> ELBO = reconstruction loss + KL divergence from prior.</p>
+</li>
+</ol>
+<p>The result is a continuous-time latent dynamical model that handles irregular observations, missing data, and variable-length sequences naturally. On medical time series with highly irregular observation times, Latent Neural ODEs outperform discrete-time baselines by handling the time irregularity correctly rather than approximately.</p>
+<hr>
+<h2 id=section-9-when-neural-odes-work-and-when-they-do-not>Section 9: When Neural ODEs Work and When They Do Not</h2>
+<p><strong>Where Neural ODEs shine.</strong></p>
+<p><em>Irregularly sampled time series.</em> Standard recurrent networks assume uniform time steps. A Neural ODE can handle data observed at irregular times $t_1, t_2, \ldots$ by integrating from each $t_i$ to $t_{i+1}$ - the integration interval adapts to the observation spacing. This is natural and elegant; it requires no ad hoc handling of missing observations.</p>
+<p><em>Continuous normalizing flows.</em> For generative modeling where exact log-likelihood computation is needed and architectural flexibility is valued, FFJORD offers a clean alternative to architecturally constrained discrete flows.</p>
+<p><em>Physics-informed learning.</em> When the dynamics come from a physical system with known structure (Hamiltonian, Lagrangian, dissipative), the Neural ODE framework integrates smoothly with that structure. Physics-informed Neural Networks (PINNs) use similar ideas.</p>
+<p><em>Memory-constrained settings.</em> When the depth is large (many Euler steps) and the state dimension is large, the adjoint method&rsquo;s $O(d)$ memory makes Neural ODEs feasible where backprop through the solver would run out of memory.</p>
+<p><strong>Where they do not.</strong></p>
+<p><em>Large-scale vision and language.</em> Tasks where standard ResNets, transformers, and convolutional networks excel do not benefit from Neural ODEs. The ODE solver overhead - typically 5-10x more compute than the equivalent ResNet - makes them impractical. Batch processing becomes unpredictable when different examples take different numbers of solver steps.</p>
+<p><em>Stiff problems.</em> As discussed, stiff dynamics force tiny steps and make the forward pass expensive. For general-purpose architectures without physical priors, stiffness is difficult to avoid.</p>
+<p><em>When interpretability is not needed.</em> The ODE framework provides mathematical tools for analysis (stability, Lyapunov functions, conservation). If you do not need those tools, the framework provides no benefit over a plain ResNet.</p>
+<hr>
+<h2 id=section-9b-augmented-neural-odes>Section 9b: Augmented Neural ODEs</h2>
+<p>A significant limitation of Neural ODEs: the solution of an ODE forms a flow - a diffeomorphism. This means trajectories starting from different initial conditions cannot intersect. If two distinct inputs map to two distinct outputs, the ODE must route them along non-intersecting paths.</p>
+<p>For some tasks - particularly those requiring trajectories to &ldquo;cross&rdquo; in the state space - this constraint is too restrictive. The standard Neural ODE in $\mathbb{R}^d$ cannot, for example, learn the mapping that takes a 1D input $x$ to $\sin(x)$ if the training data has multiple inputs mapping to the same output range through different routes.</p>
+<p><strong>Augmented Neural ODEs</strong> (Dupont et al., 2019) resolve this by augmenting the state space. Instead of evolving $\mathbf{x}(t) \in \mathbb{R}^d$, augment to $[\mathbf{x}(t), \mathbf{a}(t)] \in \mathbb{R}^{d + p}$ where $\mathbf{a}(0) = \mathbf{0}$ is an auxiliary state initialized to zero. The ODE evolves in the higher-dimensional space:</p>
+<p>$$\frac{d}{dt}\begin{pmatrix} \mathbf{x}(t) \\ \mathbf{a}(t) \end{pmatrix} = f!\left(\begin{pmatrix} \mathbf{x}(t) \\ \mathbf{a}(t) \end{pmatrix}, t, \theta\right)$$</p>
+<p>The output is still $\mathbf{x}(T)$ (ignoring the auxiliary dimensions). But now the trajectories have extra room to maneuver in the augmented space, bypassing the crossing constraint. Two trajectories that would cross in $\mathbb{R}^d$ can separate in $\mathbb{R}^{d+p}$ without crossing.</p>
+<p>The tradeoff: more parameters, higher-dimensional ODE (more expensive to solve), and less interpretability. But augmentation often dramatically reduces the number of function evaluations needed (fewer NFE), making the overall computation faster despite the larger state.</p>
+<hr>
+<h2 id=section-9c-node-versus-rnn---a-precise-comparison>Section 9c: NODE versus RNN - A Precise Comparison</h2>
+<p>It is worth being precise about what Neural ODEs offer compared to recurrent networks, since both process sequential data using shared weights.</p>
+<p><strong>RNN update:</strong> $\mathbf{h_t} = \sigma(W\mathbf{h_{t-1}} + U\mathbf{x_t} + b)$. The hidden state $\mathbf{h_t}$ is a nonlinear function of the previous hidden state and the current input $\mathbf{x_t}$. Time steps are assumed equally spaced (or the model is oblivious to the time gaps). All weights $(W, U, b)$ are shared across all time steps.</p>
+<p><strong>Neural ODE:</strong> $\frac{d\mathbf{h}}{dt} = f(\mathbf{h}(t), t, \theta)$. The hidden state evolves continuously. The vector field $f$ is shared across all time values. There is no notion of a discrete &ldquo;input&rdquo; at each time step - inputs are either encoded into the initial condition or provided as time-varying parameters.</p>
+<p><strong>Key differences:</strong></p>
+<p>Time representation: RNNs process sequences at discrete steps. Neural ODEs treat time as a continuous variable - they can output predictions at any $t$, not just at the training time steps.</p>
+<p>Input handling: In a standard Neural ODE, there are no inputs during the integration (the dynamics are autonomous or time-parameterized). To handle input sequences, you need to either encode the input into the initial condition (latent ODE approach) or modify the dynamics at each input time (controlled ODE approach, using $d\mathbf{h}/dt = f(\mathbf{h}, t, \theta) + g(\mathbf{x}(t), \phi)$).</p>
+<p>Memory: RNNs backpropagate through all time steps, storing all hidden states - $O(T \cdot d)$ memory. Neural ODEs with the adjoint method use $O(d)$ memory, at the cost of re-running the forward ODE during the backward pass.</p>
+<p>Gradient flow: RNNs suffer from vanishing/exploding gradients when the eigenvalues of the recurrence Jacobian are far from $1$ in magnitude. Neural ODEs manage gradient flow differently - through the adjoint ODE, which also can be unstable if the forward ODE has unstable dynamics. The problems are analogous but the mechanisms differ.</p>
+<p><strong>Controlled Neural ODEs.</strong> To handle inputs at arbitrary times, model the dynamics as:</p>
+<p>$$\frac{d\mathbf{h}}{dt} = f(\mathbf{h}(t), \theta) \cdot \frac{d\mathbf{x}}{dt}(t)$$</p>
+<p>where $\mathbf{x}(t)$ is the input signal (e.g., linearly interpolated between observed values). This is a <strong>controlled ODE</strong>, driven by the derivative of the input. When integrated, this gives an output that depends on the entire path of the input, not just its value at specific times. Kidger et al. (2020) showed this approach - the <strong>Neural Controlled Differential Equation</strong> - outperforms standard RNNs and Neural ODEs on irregular time series.</p>
+<hr>
+<h2 id=section-10-connections-to-other-ideas>Section 10: Connections to Other Ideas</h2>
+<p><strong>Gradient flow and optimization.</strong> The continuous-time limit of gradient descent is the ODE $\frac{d\theta}{dt} = -\nabla_\theta L(\theta)$. Gradient descent with step size $h$ is Euler&rsquo;s method on this ODE. Analysis of gradient descent - convergence rates, sensitivity to learning rate, behavior near saddles - is analysis of this dynamical system. Neural ODEs close the loop: the training dynamics of gradient descent are themselves an ODE, and the forward dynamics of the Neural ODE are also an ODE. Two ODEs, nested.</p>
+<p><strong>Score-based diffusion.</strong> Modern diffusion models (DDPM, score-matching) define a stochastic process that gradually adds noise to data: $d\mathbf{x} = f(\mathbf{x}, t) dt + g(t) d\mathbf{W}$ (a stochastic differential equation). The denoising score function $\nabla \log p(\mathbf{x}, t)$ learned by the network plays the role of the drift term. The <strong>probability flow ODE</strong> - the deterministic ODE that has the same marginal densities as the SDE - is a Neural ODE:</p>
+<p>$$\frac{d\mathbf{x}}{dt} = f(\mathbf{x}, t) - \frac{1}{2}g(t)^2 \nabla \log p(\mathbf{x}, t)$$</p>
+<p>Solving this ODE backward from noise to data generates samples. Neural ODEs and diffusion models are deeply connected through this probability flow formulation.</p>
+<p><strong>The NTK and infinite width.</strong> As neural network width goes to infinity, the network dynamics during training become governed by the <strong>Neural Tangent Kernel</strong> (NTK). The evolution of the network&rsquo;s predictions is a linear ODE in function space: $\frac{d\hat{f}}{dt} = -\eta K (\hat{f} - f^<em>)$ where $K$ is the NTK and $f^</em>$ is the target. This linearization - and its implications for training dynamics and generalization - is another place where ODE theory illuminates deep learning.</p>
+<p><strong>Second-order ODEs and acceleration.</strong> Gradient descent is the Euler method on the gradient flow ODE $\frac{d\theta}{dt} = -\nabla L$. Momentum-based methods like Nesterov acceleration correspond to a second-order ODE:</p>
+<p>$$\ddot{\theta} + \frac{r}{t}\dot{\theta} = -\nabla L(\theta)$$</p>
+<p>for some $r > 0$ (the continuous limit of Nesterov&rsquo;s algorithm, due to Su, Boyd, and Candes 2016). The oscillatory behavior familiar from momentum methods - the loss decreases faster than gradient descent but occasionally &ldquo;overshoots&rdquo; - is exactly the underdamped behavior of the second-order ODE with a particular damping coefficient. The ODE framework lets you analyze convergence rates, optimal damping, and the connection between different optimization algorithms through their continuous-time limits.</p>
+<p><strong>Deep equilibrium models.</strong> A <strong>deep equilibrium model</strong> (DEQ) finds the fixed point $\mathbf{x}^* = f(\mathbf{x}^<em>, \theta)$ directly, without running many forward passes. This is related to Neural ODEs via the connection $\mathbf{x}^</em> = \lim_{t \to \infty} \mathbf{x}(t)$ when the ODE is stable and has a unique equilibrium. DEQs trade the ODE solver for a root-finding algorithm (Newton&rsquo;s method or Broyden&rsquo;s method), which can be more efficient when only the fixed point is needed. The memory cost is also $O(d)$ via the implicit function theorem (not the adjoint). Both Neural ODEs and DEQs are members of the family of <strong>implicit depth models</strong> - networks whose effective depth is determined at inference time rather than fixed at design time.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key idea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ResNet-Euler correspondence</td>
+<td>$\mathbf{x_{k+1}} = \mathbf{x_k} + f(\mathbf{x_k}, \theta_k)$ is Euler&rsquo;s method with $h = 1$ on $d\mathbf{x}/dt = F(\mathbf{x}, t)$</td>
+</tr>
+<tr>
+<td>Neural ODE</td>
+<td>Replace discrete layers with continuous ODE $d\mathbf{x}/dt = f(\mathbf{x}(t), t, \theta)$; output is $\mathbf{x}(T)$</td>
+</tr>
+<tr>
+<td>Weight sharing</td>
+<td>Same $\theta$ at all $t$; closer to RNN than deep feedforward network</td>
+</tr>
+<tr>
+<td>Adaptive computation</td>
+<td>Adaptive solvers take more steps for harder inputs; variable inference cost</td>
+</tr>
+<tr>
+<td>Adjoint method</td>
+<td>Backward ODE computes $\partial \mathcal{L}/\partial \theta$ with $O(d)$ memory instead of $O(N \cdot d)$</td>
+</tr>
+<tr>
+<td>Adjoint ODE</td>
+<td>$d\mathbf{a}/dt = -\mathbf{a}^T \partial f/\partial \mathbf{x}$; runs backward from $t = T$ to $t = 0$</td>
+</tr>
+<tr>
+<td>Continuity equation</td>
+<td>$\partial \log p / \partial t = -\text{tr}(\partial f / \partial \mathbf{x})$; enables FFJORD</td>
+</tr>
+<tr>
+<td>Trace vs. determinant</td>
+<td>Trace is $O(d)$ via Hutchinson estimator; log-det is $O(d^3)$; trace is the infinitesimal log-det</td>
+</tr>
+<tr>
+<td>Stiffness</td>
+<td>Large Jacobian eigenvalues force tiny steps; main practical barrier</td>
+</tr>
+<tr>
+<td>Augmented NODEs</td>
+<td>Add auxiliary dimensions to allow trajectory crossings in state space</td>
+</tr>
+<tr>
+<td>Latent NODE</td>
+<td>Encode sequence to initial condition; evolve with ODE; decode at arbitrary times</td>
+</tr>
+<tr>
+<td>Controlled NODE</td>
+<td>$d\mathbf{h}/dt = f(\mathbf{h}) \cdot d\mathbf{x}/dt$; handles irregular time series inputs</td>
+</tr>
+<tr>
+<td>Hamiltonian NNs</td>
+<td>Learn $H_\theta$; dynamics via Hamilton&rsquo;s equations; exact energy conservation</td>
+</tr>
+<tr>
+<td>Probability flow ODE</td>
+<td>Diffusion model sampler is a Neural ODE with score function as vector field</td>
+</tr>
+<tr>
+<td>Deep equilibrium</td>
+<td>Find $\mathbf{x}^* = f(\mathbf{x}^*, \theta)$ directly; related to Neural ODE fixed point</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id=a-closing-note-on-why-this-matters>A Closing Note on Why This Matters</h2>
+<p>The Neural ODE framework is not primarily useful because it produces better accuracy on benchmarks. In most settings, well-tuned ResNets or transformers outperform Neural ODEs on standard tasks.</p>
+<p>What the framework offers is a different way of thinking about deep networks. By making the connection to continuous-time dynamical systems explicit, it opens up a toolkit: Lyapunov stability analysis, Hamiltonian mechanics, variational calculus, control theory, the theory of flows on manifolds. These tools were developed over centuries for physical systems, and they now apply directly to neural network architectures.</p>
+<p>The deeper insight is that the discrete architecture choices in standard deep learning - number of layers, layer widths, skip connections, attention patterns - often correspond to continuous mathematical structures that are better studied in their natural, continuous form. Just as the physics of a string vibrating is better studied as a wave equation than as a limit of springs and masses, some neural network phenomena may be better understood through their continuous-time limits.</p>
+<p>Whether this insight leads to practical advances, or remains primarily a mathematical elegance, will depend on how well the community can bridge the gap between the beautiful theory and the messy realities of large-scale training.</p>
+<hr>
+<p><strong>Read Next:</strong></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Time in Distributed Systems: Physical and Logical Clocks // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Time in Distributed Systems: Physical and Logical Clocks">
+<meta name=twitter:description content="In a single-computer program, time is unambiguous: the operating system&rsquo;s clock tells you when things happened, and instructions execute in a well-defined order. In a distributed system, neither of these holds. Clocks on different machines drift apart - even atomic clocks disagree after enough time - and there is no shared memory through which processes can observe each other&rsquo;s state. A message sent at time $t$ on machine A might arrive before or after an event that happened at time $t$ on machine B, with no principled way to compare the two.">
+<meta property="og:title" content="Time in Distributed Systems: Physical and Logical Clocks">
+<meta property="og:description" content="In a single-computer program, time is unambiguous: the operating system&rsquo;s clock tells you when things happened, and instructions execute in a well-defined order. In a distributed system, neither of these holds. Clocks on different machines drift apart - even atomic clocks disagree after enough time - and there is no shared memory through which processes can observe each other&rsquo;s state. A message sent at time $t$ on machine A might arrive before or after an event that happened at time $t$ on machine B, with no principled way to compare the two.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/distributed-time-clocks/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-08-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-08-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Time in Distributed Systems: Physical and Logical Clocks</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+7 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<hr>
+<p>In a single-computer program, time is unambiguous: the operating system&rsquo;s clock tells you when things happened, and instructions execute in a well-defined order. In a distributed system, neither of these holds. Clocks on different machines drift apart - even atomic clocks disagree after enough time - and there is no shared memory through which processes can observe each other&rsquo;s state. A message sent at time $t$ on machine A might arrive before or after an event that happened at time $t$ on machine B, with no principled way to compare the two. Getting time right in distributed systems is not an engineering detail: it determines whether you can reason about the order of events, recover from failures, or even detect whether a failure occurred.</p>
+<p>The difficulty is not merely practical. It is fundamental. Einstein&rsquo;s special relativity tells us there is no universal notion of simultaneity - two events that appear simultaneous in one reference frame may not be in another. Distributed systems face an earthbound version of this problem: without a shared clock, &ldquo;before&rdquo; and &ldquo;after&rdquo; are not globally defined. The field has responded with two distinct strategies. Physical clock synchronization attempts to make all clocks agree on the same wall-clock time within some bounded error. Logical clocks abandon wall time entirely and instead track only the causal relationships that actually matter for correctness.</p>
+<p>This post covers the physical side: how clocks drift, what it means to synchronize them, and the algorithms - Cristian&rsquo;s, Berkeley, decentralized averaging, and NTP - that actually do it at scale. Understanding each algorithm requires understanding why the previous one was insufficient. Each one addresses a specific limitation - single point of failure, unavailability of a reference clock, internet-scale deployment - and the progression reveals what it actually costs to agree on time.</p>
+<hr>
+<h2 id=why-physical-time-is-hard>Why Physical Time Is Hard</h2>
+<p>A clock is a hardware oscillator counting cycles. No oscillator runs at exactly the right frequency. <strong>Clock drift</strong> is the rate at which a clock deviates from perfect time; typical computer clocks drift by 10-100 ppm (parts per million), meaning up to 8.6 seconds per day. <strong>Clock skew</strong> is the instantaneous difference between two clocks at a given real time.</p>
+<p>For distributed applications, skew matters more than absolute accuracy. If process A sends a message with timestamp $t_A$ and process B receives it with timestamp $t_B &lt; t_A$, the message appears to arrive before it was sent - a causality violation. File systems, databases, and distributed locks all break if timestamps cannot be trusted.</p>
+<p>The goal of <strong>clock synchronization</strong> is to bound skew across all machines: ensure that for any two machines $i, j$ at real time $t$, $|C_i(t) - C_j(t)| &lt; \delta$ for some acceptable $\delta$.</p>
+<hr>
+<h2 id=cristians-algorithm>Cristian&rsquo;s Algorithm</h2>
+<p><strong>Setting.</strong> A client wants to synchronize its clock to a time server $S$ that has access to an accurate time source (GPS, atomic clock). The round-trip delay to $S$ introduces uncertainty.</p>
+<p><strong>Protocol (1989):</strong></p>
+<ol>
+<li>At client time $T_0$, client sends a request to $S$.</li>
+<li>Server receives, reads its time, responds with the current time $T_s$.</li>
+<li>Client receives at client time $T_1$.</li>
+</ol>
+<p>The round-trip time is $RTT = T_1 - T_0$. Assuming symmetric delays, the server&rsquo;s time when the response arrives is approximately $T_s + RTT/2$. The client sets:
+$$C \leftarrow T_s + \frac{T_1 - T_0}{2}$$</p>
+<p><strong>Accuracy.</strong> If the minimum one-way delay is $d_{\min}$ (the time for network processing alone, excluding queuing), the true server time at the moment the client sets its clock lies in the interval:
+$$\left[T_s + d_{\min},\ T_s + (RTT - d_{\min})\right]$$
+The error is at most $RTT/2 - d_{\min}$. For accuracy, $RTT$ should be small and $d_{\min}$ should be close to $RTT/2$ (symmetric delay).</p>
+<p><strong>Limitations:</strong> Single point of failure (the server). The server&rsquo;s measurement of its own time has non-zero latency. Multiple samples can be averaged to improve accuracy.</p>
+<hr>
+<h2 id=berkeley-algorithm>Berkeley Algorithm</h2>
+<p><strong>Setting.</strong> No machine has a reliable reference clock. We want all machines to agree on a common time, even if that time drifts from true UTC.</p>
+<p><strong>Protocol (Gusella-Zatti, 1989):</strong></p>
+<ol>
+<li>A designated <strong>master</strong> (or coordinator) polls all <strong>slaves</strong> for their current clock values.</li>
+<li>Each slave responds with its local time.</li>
+<li>The master computes the offset of each slave from its own clock, discards outliers (clocks that differ too much - likely faulty), and computes the <strong>average offset</strong> of the remaining clocks relative to its own.</li>
+<li>The master sends each slave a correction: the amount by which it should adjust its clock (a signed delta, not an absolute time - this avoids revealing the master&rsquo;s time to adversaries and allows each slave to apply the adjustment gradually).</li>
+<li>The master also adjusts its own clock by the average offset.</li>
+</ol>
+<p><strong>Why averaging.</strong> No single machine is trusted to have the correct time. The average of many clocks cancels out individual drifts in expectation - the group converges on a common time. This is appropriate for closed systems (local networks) where external reference is unavailable or unnecessary.</p>
+<p><strong>Limitation.</strong> A single master is a failure point. If the master fails, a new one must be elected (requires a separate election protocol).</p>
+<hr>
+<h2 id=decentralized-averaging>Decentralized Averaging</h2>
+<p><strong>Setting.</strong> No designated master. All peers want to converge to the same average time without any node playing a coordinator role.</p>
+<p><strong>Protocol:</strong> Each node periodically selects a random neighbor, exchanges clock values, and both nodes adjust to the average:
+$$C_i \leftarrow \frac{C_i + C_j}{2}, \quad C_j \leftarrow \frac{C_i^{\text{old}} + C_j}{2}$$</p>
+<p>Repeated over many rounds, all nodes converge to the average of the initial clocks (the average is a conserved quantity). Gossip-based averaging protocols converge in $O(\log n)$ rounds with high probability.</p>
+<p><strong>Tradeoff.</strong> Fully decentralized and fault-tolerant (no single point of failure). Slower convergence than master-based schemes. Cannot synchronize to an external reference.</p>
+<hr>
+<h2 id=ntp-network-time-protocol>NTP: Network Time Protocol</h2>
+<p>NTP is the internet-scale solution. It provides clock synchronization to UTC within milliseconds over the public internet, and within tens of microseconds over a local network.</p>
+<p><strong>Stratum hierarchy.</strong> Time servers are organized in layers:</p>
+<ul>
+<li><strong>Stratum 0:</strong> reference clocks (GPS receivers, atomic clocks). Not directly on the network.</li>
+<li><strong>Stratum 1:</strong> servers directly connected to stratum 0 sources.</li>
+<li><strong>Stratum 2:</strong> servers synchronized to stratum 1. And so on up to stratum 15 (stratum 16 = unsynchronized).</li>
+</ul>
+<p>Clients synchronize to multiple servers and use statistical filtering to select the best sources and reject outliers (the <strong>intersection algorithm</strong> finds the set of servers whose offset estimates are mutually consistent).</p>
+<p><strong>NTP timestamp exchange.</strong> Same basic idea as Cristian&rsquo;s: measure round-trip time, estimate one-way delay. But NTP uses four timestamps per exchange:</p>
+<ul>
+<li>$T_1$: client sends request (client clock)</li>
+<li>$T_2$: server receives request (server clock)</li>
+<li>$T_3$: server sends response (server clock)</li>
+<li>$T_4$: client receives response (client clock)</li>
+</ul>
+<p>The clock offset estimate is:
+$$\theta = \frac{(T_2 - T_1) + (T_3 - T_4)}{2}$$
+The round-trip delay is $\delta = (T_4 - T_1) - (T_3 - T_2)$.</p>
+<p><strong>Clock discipline.</strong> NTP never steps the clock backward (which would break applications). Instead, it slews the clock: speeds it up or slows it down by at most 500 ppm until the offset is corrected. This prevents time from ever going backward.</p>
+<p><strong>Accuracy.</strong> NTP over the internet: $\pm 10$ milliseconds typical. Over local LAN: $&lt; 1$ millisecond. With GPS + PPS (pulse-per-second signal): $&lt; 1$ microsecond.</p>
+<p><strong>Limitation of physical clocks.</strong> Even with perfect physical clock synchronization, the fundamental problem remains: message delays are variable, so you cannot determine the order of events at different machines purely from timestamps. If two events happen within the synchronization error window, their physical timestamps are unreliable for ordering. This motivates logical time.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Setting</th>
+<th>Who has reference</th>
+<th>Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cristian&rsquo;s</td>
+<td>Client-server</td>
+<td>Server (GPS/atomic)</td>
+<td>$RTT/2 - d_{\min}$</td>
+</tr>
+<tr>
+<td>Berkeley</td>
+<td>LAN, no reference</td>
+<td>Master averages peers</td>
+<td>Relative consistency</td>
+</tr>
+<tr>
+<td>Decentralized averaging</td>
+<td>Fully peer-to-peer</td>
+<td>None</td>
+<td>Average convergence</td>
+</tr>
+<tr>
+<td>NTP</td>
+<td>Internet-scale</td>
+<td>Stratum 0 (GPS)</td>
+<td>$\pm 10$ ms internet, $&lt; 1$ ms LAN</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/computer-systems/logical-clocks-global-state/>Logical Clocks and Global State</a></li>
+<li><a href=/posts/computer-systems/consistency-cap-theorem/>Consistency and CAP Theorem</a></li>
+<li><a href=/posts/computer-systems/fault-tolerance/>Fault Tolerance</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

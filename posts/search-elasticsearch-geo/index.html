@@ -1,0 +1,201 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Search: ElasticSearch & Geo // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Search: ElasticSearch & Geo">
+<meta name=twitter:description content="Prerequisite: Databases & Indexes
+ You type &ldquo;nearby pizza&rdquo; into Yelp. In under 100 milliseconds, you get twenty results - ranked by relevance, sorted partly by distance, filtered by whether they&rsquo;re open right now. Yelp has indexed over 8 million businesses. The query touched none of them directly; it touched a data structure specifically designed so that it never has to.
+This is the inverted index, and it is the reason search engines exist as a separate category of infrastructure from relational databases.">
+<meta property="og:title" content="Search: ElasticSearch & Geo">
+<meta property="og:description" content="Prerequisite: Databases & Indexes
+ You type &ldquo;nearby pizza&rdquo; into Yelp. In under 100 milliseconds, you get twenty results - ranked by relevance, sorted partly by distance, filtered by whether they&rsquo;re open right now. Yelp has indexed over 8 million businesses. The query touched none of them directly; it touched a data structure specifically designed so that it never has to.
+This is the inverted index, and it is the reason search engines exist as a separate category of infrastructure from relational databases.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/search-elasticsearch-geo/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Search: ElasticSearch & Geo</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/databases-indexes/>Databases & Indexes</a></p>
+<hr>
+<p>You type &ldquo;nearby pizza&rdquo; into Yelp. In under 100 milliseconds, you get twenty results - ranked by relevance, sorted partly by distance, filtered by whether they&rsquo;re open right now. Yelp has indexed over 8 million businesses. The query touched none of them directly; it touched a data structure specifically designed so that it never has to.</p>
+<p>This is the inverted index, and it is the reason search engines exist as a separate category of infrastructure from relational databases.</p>
+<h2 id=why-not-just-use-a-database>Why Not Just Use a Database?</h2>
+<p>A SQL <code>LIKE '%pizza%'</code> query does a full table scan. With 8 million rows, each containing text fields of variable length, that is not a query that returns in 100ms without extraordinary hardware. And &ldquo;nearby&rdquo; makes it worse: finding the nearest N businesses requires computing distances to a large number of candidates.</p>
+<p>Relational databases optimize for structured queries over normalized data with well-defined relationships. Search is a different problem: it&rsquo;s matching user intent (often fuzzy, often misspelled, often in natural language) against a corpus of documents, returning results ranked by relevance rather than by a deterministic predicate. The data structures required are fundamentally different.</p>
+<h2 id=the-inverted-index>The Inverted Index</h2>
+<p>The inverted index flips the data model. Instead of storing documents and scanning them at query time, the index maps each term to the list of documents containing it.</p>
+<p>When a document is indexed, it goes through an analyzer: the text is tokenized (split into words), lowercased, stop words are removed (&ldquo;the&rdquo;, &ldquo;a&rdquo;, &ldquo;through&rdquo;), and often stemmed (&ldquo;running&rdquo; → &ldquo;run&rdquo;). The result is a list of tokens. For each token, the document&rsquo;s ID is added to that token&rsquo;s posting list.</p>
+<p>A query for &ldquo;pizza&rdquo; returns the posting list for &ldquo;pizza&rdquo; - potentially millions of document IDs - instantly, as a hash lookup. A query for &ldquo;pizza restaurant&rdquo; intersects the posting list for &ldquo;pizza&rdquo; with the posting list for &ldquo;restaurant.&rdquo; Intersection of sorted posting lists is O(N) in the length of the shorter list.</p>
+<p>This is why Elasticsearch returns results in under 100ms across millions of documents when a SQL LIKE query on the same dataset would take minutes. The work happened at index time, not at query time.</p>
+<h2 id=relevance-tf-idf-and-bm25>Relevance: TF-IDF and BM25</h2>
+<p>Not all matches are equal. A restaurant review that mentions &ldquo;pizza&rdquo; twenty times is more relevant to a pizza query than a blog post that mentions pizza once in passing. Term Frequency captures this: the more times a term appears in a document, the more relevant the document is for that term.</p>
+<p>But a word that appears in every document is not useful for distinguishing relevance. &ldquo;The&rdquo; appears in every English document and tells you nothing. Inverse Document Frequency captures this: a term is more discriminating when it appears in fewer documents. High IDF means the term is rare and therefore more informative when it matches.</p>
+<p>TF-IDF combines these two signals. Elasticsearch&rsquo;s default scorer is BM25, a probabilistic improvement. BM25 adds two tunable parameters: $k_1$ controls how term frequency saturates (in TF-IDF, relevance grows linearly with term count; BM25 adds diminishing returns - the tenth mention of &ldquo;pizza&rdquo; adds less than the first), and $b$ controls field-length normalization (a document that mentions pizza once in a 50-word review is more pizza-focused than one that mentions it once in a 5,000-word essay). BM25 consistently outperforms raw TF-IDF in search quality benchmarks.</p>
+<h2 id=elasticsearch-architecture>Elasticsearch Architecture</h2>
+<p>Elasticsearch distributes the inverted index across a cluster. Documents are organized into indices (conceptually similar to tables). Each index is split into shards - the unit of parallelism and distribution. Shards are spread across nodes so that a query can execute in parallel across multiple machines, each returning partial results that are merged on the coordinating node.</p>
+<p>Each shard also has one or more replicas. Replicas serve read requests (increasing read throughput) and provide fault tolerance (if a primary shard&rsquo;s node goes down, a replica promotes itself). With 3 nodes and a replication factor of 1, you can lose any one node without losing data.</p>
+<p>The write path: a document write goes to the primary shard first. The primary indexes it locally, then propagates to replicas. There is a replication lag, which creates a brief window where the document exists on the primary but not on replicas. If a read hits a replica during this window, it may not see the document.</p>
+<h3 id=near-real-time-indexing-the-1-second-gap>Near-Real-Time Indexing: The 1-Second Gap</h3>
+<p>Elasticsearch is &ldquo;eventually consistent&rdquo; in a specific way that surprises new users. A freshly indexed document is not immediately searchable. Lucene writes new documents to an in-memory buffer; every second (by default), this buffer is &ldquo;refreshed&rdquo; - flushed to a new segment, making it searchable. The refresh interval is configurable, but below 1 second you start to pay significant performance costs.</p>
+<p>This 1-second gap matters for use cases like search-as-you-type for content you just created. If a user posts a listing on Craigslist and then immediately searches for it, they may not find it. Systems that need read-your-writes consistency after a write must either wait for the refresh, force a refresh (expensive at scale), or use the primary store (the database) for immediate reads and Elasticsearch only for search queries.</p>
+<h2 id=geospatial-search-finding-nearby>Geospatial Search: Finding &ldquo;Nearby&rdquo;</h2>
+<h3 id=geohashing>Geohashing</h3>
+<p>A geohash encodes a latitude/longitude pair as a string where shared prefix means proximity. The longer the shared prefix, the closer the two locations. The string <code>u4pruydq</code> represents a small area in Paris; <code>u4pruy</code> is a larger area around it; <code>u4p</code> is a broad region. Searching within a geohash prefix finds all points in the corresponding geographic cell.</p>
+<p>Geohashing is how Uber, Lyft, and DoorDash match drivers to riders in real time. Every driver&rsquo;s location is indexed by their current geohash. A rider request computes the geohash of the pickup location and queries for drivers in neighboring geohash cells - which are found by shared prefix. The query is a string prefix scan, not a distance computation over every driver in the database.</p>
+<h3 id=elasticsearch-geo-queries>Elasticsearch Geo Queries</h3>
+<p>Elasticsearch supports several geo query types over <code>geo_point</code> fields:</p>
+<ul>
+<li><strong>geo_distance:</strong> find all documents within a given radius of a point. The typical &ldquo;nearby pizza&rdquo; query - center on the user&rsquo;s location, set a radius of 2km, filter to open restaurants, sort by combination of relevance score and distance.</li>
+<li><strong>geo_bounding_box:</strong> find documents within a rectangular region defined by top-left and bottom-right coordinates. Used in map-based search where the user sees a map viewport and wants results within it.</li>
+<li><strong>geo_polygon:</strong> find documents within an arbitrary polygon - useful for neighborhood-level queries (&ldquo;restaurants in SoHo&rdquo;).</li>
+</ul>
+<p>Geo filters in Elasticsearch run in filter context: they don&rsquo;t affect relevance scores and are heavily cached, making them much cheaper than scoring queries. A compound query might use a full-text <code>match</code> query in the <code>must</code> clause (affecting score) and a <code>geo_distance</code> filter in the <code>filter</code> clause (not affecting score, cached), combining relevance ranking with geographic filtering efficiently.</p>
+<h2 id=how-airbnb-uses-elasticsearch>How Airbnb Uses Elasticsearch</h2>
+<p>Airbnb&rsquo;s search problem is a canonical hard case: users search for accommodation with structured filters (dates, guest count, amenities) and unstructured text (&ldquo;oceanview cabin with fireplace&rdquo;), ranked by relevance plus a proprietary score that factors in host quality, booking history, and price competitiveness.</p>
+<p>Elasticsearch handles the text search and geospatial filtering. Airbnb&rsquo;s ranking layer adds a learned ranking model on top: Elasticsearch returns the top N candidates (by combined text and geo score), and a separate ML service re-ranks them by the fuller feature set. The Elasticsearch query does the heavy lifting of eliminating irrelevant candidates from millions of listings; the ML model does the fine-grained ranking over a smaller set.</p>
+<p>This pattern - Elasticsearch for candidate retrieval, ML for re-ranking - is common across search-intensive products. Elasticsearch is good at &ldquo;find everything relevant&rdquo;; ML ranking is good at &ldquo;from the relevant set, order by expected utility.&rdquo;</p>
+<h2 id=aws-opensearch-vs-elasticsearch-vs-algolia>AWS OpenSearch vs Elasticsearch vs Algolia</h2>
+<p><strong>AWS OpenSearch</strong> is Amazon&rsquo;s fork of Elasticsearch (forked after Elastic changed the license from Apache 2.0). For AWS-native deployments, OpenSearch integrates natively with IAM, VPC, CloudWatch, and other AWS services. If you&rsquo;re already running on AWS and don&rsquo;t need Elasticsearch-specific features, OpenSearch is the pragmatic choice.</p>
+<p><strong>Elasticsearch</strong> (self-managed or via Elastic Cloud) gives you the full Elastic Stack - Kibana for visualization, Logstash for ingestion pipelines, APM. If you need the complete observability ecosystem or are not AWS-bound, Elastic Cloud is competitive.</p>
+<p><strong>Algolia</strong> is not open source and is not self-hosted, but it is the simplest operational path. Algolia provides a managed search API with excellent developer experience, sub-10ms response times, and built-in relevance tuning. The tradeoff: it&rsquo;s expensive at scale and you have less control over the ranking model. For many product teams, the operational burden of running Elasticsearch clusters (shard sizing, heap tuning, cluster upgrades) makes Algolia&rsquo;s cost worth it.</p>
+<p><strong>Typesense</strong> is an open-source, self-hostable Algolia alternative. Simpler to operate than Elasticsearch, optimized for e-commerce and instant-search use cases, with built-in typo tolerance.</p>
+<h2 id=the-operational-complexity-problem>The Operational Complexity Problem</h2>
+<p>Elasticsearch is operationally intensive. The common failure modes:</p>
+<p><strong>Shard sizing:</strong> each shard is a Lucene index. Shards that are too large (over ~50GB) cause slow queries and difficult recovery from node failures. Too many small shards cause overhead on the master node, which must track all shard metadata. The right shard count depends on your document volume and expected query patterns - and it&rsquo;s hard to change after the fact.</p>
+<p><strong>Heap tuning:</strong> Elasticsearch runs on the JVM. The JVM heap must be tuned carefully: too small and garbage collection pauses degrade query latency; too large and the JVM spends time in GC. The rule of thumb is no more than 32GB heap (to stay under the JVM&rsquo;s compressed oops threshold), with at least as much RAM reserved for the filesystem cache (which Lucene relies on heavily).</p>
+<p><strong>Mapping explosions:</strong> Elasticsearch&rsquo;s dynamic mapping automatically creates new fields when new JSON keys are indexed. In a logs-over-time use case where log structures are inconsistent, this can create thousands of fields per index - a &ldquo;mapping explosion&rdquo; that causes master node instability. The fix is explicit mappings that define the schema in advance and set <code>dynamic: false</code> for unknown fields.</p>
+<p><strong>Split-brain:</strong> in older Elasticsearch versions, network partitions could cause two halves of a cluster to each elect a master node, resulting in split-brain - each half accepts writes, data diverges. Elasticsearch&rsquo;s minimum master nodes configuration (set to quorum) prevents this, and newer versions use a Raft-based consensus protocol that handles partitions more gracefully.</p>
+<h2 id=vector-search-the-next-layer>Vector Search: The Next Layer</h2>
+<p>Search is moving beyond keyword matching. A search for &ldquo;comfortable shoes for standing all day&rdquo; may not return the most relevant results from a keyword index - &ldquo;comfortable&rdquo; and &ldquo;standing all day&rdquo; may not appear verbatim in product descriptions. Semantic search uses dense vector embeddings: encode both the query and the documents into high-dimensional vectors using a language model; find the documents whose vectors are most similar to the query vector.</p>
+<p>Elasticsearch added approximate nearest neighbor (ANN) search via the HNSW algorithm and <code>dense_vector</code> fields. Dedicated vector databases - Pinecone, Weaviate, Qdrant - are purpose-built for this workload with better performance characteristics than Elasticsearch for pure vector search.</p>
+<p>The current state of the art is hybrid search: combine sparse retrieval (BM25 on the inverted index) with dense retrieval (ANN on vector embeddings), and merge the results. Sparse retrieval is precise when keywords match; dense retrieval handles semantic similarity and synonyms. Together, they outperform either approach alone - this is Reciprocal Rank Fusion (RRF) in practice.</p>
+<p>Retrieval-Augmented Generation (RAG) systems - LLMs that retrieve relevant context from a corpus before generating answers - are the dominant driver of vector search adoption. Elasticsearch and OpenSearch both support hybrid sparse+dense search for RAG use cases.</p>
+<h2 id=what-not-to-use-elasticsearch-for>What Not to Use Elasticsearch For</h2>
+<p>Elasticsearch is a read-optimized search index. It is not a database. Common mistakes:</p>
+<p><strong>Using Elasticsearch as the primary store:</strong> Elasticsearch does not have ACID transactions. A document write that fails partway through leaves the document in an undefined state. Use a database as the source of truth; synchronize to Elasticsearch asynchronously.</p>
+<p><strong>Relying on Elasticsearch for strong consistency:</strong> the 1-second refresh gap and eventual replication mean Elasticsearch is not appropriate for workloads that require reading your own writes immediately.</p>
+<p><strong>Running complex aggregations on large datasets:</strong> Elasticsearch aggregations (group by, sum, count) work, but they hold intermediate results in heap memory. Very large aggregations can cause JVM heap pressure and cluster instability. For analytics over large datasets, a proper OLAP system (BigQuery, Redshift, ClickHouse) is the right tool.</p>
+<h2 id=multi-region-search>Multi-Region Search</h2>
+<p>Running a globally distributed search cluster introduces consistency and latency tradeoffs. Elasticsearch&rsquo;s cross-cluster replication (CCR) replicates indices from a primary cluster to follower clusters in other regions. Reads in each region hit the local follower cluster (low latency); writes go to the primary cluster and are replicated asynchronously. This means follower clusters may lag the primary by seconds - acceptable for search, where the 1-second refresh gap already exists.</p>
+<p>For data sovereignty requirements - GDPR requires that EU user data stay in EU regions - the index architecture must be segmented by region. EU users' data lives in an EU cluster; US users' data lives in a US cluster. Queries that cross regions must either federate across clusters or be prohibited.</p>
+<h2 id=future-outlook>Future Outlook</h2>
+<p>The trend is toward hybrid sparse+dense search as the default, with hardware acceleration (GPU inference for embedding generation) making vector search fast enough for sub-100ms latency at scale. Multimodal search - searching across text, images, and video together - is the next frontier for platforms like Pinterest and YouTube.</p>
+<p>For many product teams, managed vector databases (Pinecone, Weaviate Cloud) will replace self-managed Elasticsearch for pure semantic search use cases. Elasticsearch&rsquo;s strength - the combination of full-text, structured, and geo search with deep observability integration - keeps it relevant for the complex, multi-faceted search problems that most product search involves.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Elasticsearch</th>
+<th>Algolia</th>
+<th>Typesense</th>
+<th>Pinecone/pgvector</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full-text search</td>
+<td>Excellent</td>
+<td>Excellent</td>
+<td>Good</td>
+<td>Poor</td>
+</tr>
+<tr>
+<td>Geospatial</td>
+<td>Excellent</td>
+<td>Good</td>
+<td>Basic</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Vector/semantic</td>
+<td>Good (HNSW)</td>
+<td>None</td>
+<td>Basic</td>
+<td>Excellent</td>
+</tr>
+<tr>
+<td>Operational complexity</td>
+<td>High</td>
+<td>None (managed)</td>
+<td>Low</td>
+<td>None (managed)</td>
+</tr>
+<tr>
+<td>Cost at scale</td>
+<td>Medium</td>
+<td>High</td>
+<td>Low</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>Use case</td>
+<td>Complex search, logs, APM</td>
+<td>Product search, SaaS</td>
+<td>Self-hosted Algolia alternative</td>
+<td>RAG, semantic search</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/identity-otp-services/>Identity & OTP Services</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

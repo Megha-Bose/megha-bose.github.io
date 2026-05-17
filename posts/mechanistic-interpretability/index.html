@@ -1,0 +1,201 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Mechanistic Interpretability // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Mechanistic Interpretability">
+<meta name=twitter:description content="Prerequisites:
+ Transformers from First Principles Linear Transformations   You trained a neural network to play chess. It wins against grandmasters. But you have no idea how. Is it doing pattern matching? Calculating variations many moves ahead? Forming abstract concepts like &ldquo;king safety&rdquo; or &ldquo;pawn structure&rdquo;? You can&rsquo;t look inside. The weights are 50 million floating-point numbers with no labels. You know the input (board position), the output (move), and the fact that training worked.">
+<meta property="og:title" content="Mechanistic Interpretability">
+<meta property="og:description" content="Prerequisites:
+ Transformers from First Principles Linear Transformations   You trained a neural network to play chess. It wins against grandmasters. But you have no idea how. Is it doing pattern matching? Calculating variations many moves ahead? Forming abstract concepts like &ldquo;king safety&rdquo; or &ldquo;pawn structure&rdquo;? You can&rsquo;t look inside. The weights are 50 million floating-point numbers with no labels. You know the input (board position), the output (move), and the fact that training worked.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/mechanistic-interpretability/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Mechanistic Interpretability</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/transformers-from-first-principles/>Transformers from First Principles</a></li>
+<li><a href=/posts/linear-transformations/>Linear Transformations</a></li>
+</ul>
+<hr>
+<p>You trained a neural network to play chess. It wins against grandmasters. But you have no idea how. Is it doing pattern matching? Calculating variations many moves ahead? Forming abstract concepts like &ldquo;king safety&rdquo; or &ldquo;pawn structure&rdquo;? You can&rsquo;t look inside. The weights are 50 million floating-point numbers with no labels. You know the input (board position), the output (move), and the fact that training worked. You don&rsquo;t know what it computed to get from one to the other.</p>
+<p>Now multiply this uncertainty by a thousand and you have GPT-4. Mechanistic interpretability is the research program that asks: can we reverse-engineer what neural networks actually compute, at the level of specific algorithms implemented by specific components?</p>
+<p>This is not interpretability in the usual sense - where you ask &ldquo;what features matter for this prediction?&rdquo; Mechanistic interpretability asks a harder question: what is the precise computational procedure the network executes?</p>
+<hr>
+<h2 id=the-problem-weights-are-not-algorithms>The Problem: Weights Are Not Algorithms</h2>
+<p>When you learn arithmetic, you can describe your algorithm. &ldquo;To multiply 47 by 8: multiply 40 by 8 (320), multiply 7 by 8 (56), add (376).&rdquo; The algorithm is inspectable. You can explain it, verify it, modify it.</p>
+<p>A neural network weights matrix encodes an algorithm, but not in any human-readable form. You have a 2048×2048 matrix of floating-point numbers. Somewhere in those 4 million entries is the information that allows the model to add two numbers. But which entries? How are they organized? What computation do they implement?</p>
+<p>The naive approach - &ldquo;look at the weights&rdquo; - fails because individual weights have no meaning in isolation. A weight of 0.73 in one context and -0.31 in another are both meaningless without understanding the entire matrix they participate in. The meaning is distributed.</p>
+<p>Mechanistic interpretability tries to find the distributed structures - the circuits, representations, and algorithms - that emerge from training.</p>
+<hr>
+<h2 id=the-linear-representation-hypothesis>The Linear Representation Hypothesis</h2>
+<p>The starting hypothesis: neural networks represent concepts as directions in high-dimensional activation space.</p>
+<p>What does this mean concretely? Consider the residual stream of a transformer - the $d$-dimensional vector that accumulates information as it passes through layers. The linear representation hypothesis says: meaningful properties of the current token (or context) correspond to linear directions in this space. &ldquo;This token is a verb&rdquo; is a direction. &ldquo;The subject of the current sentence is male&rdquo; is a direction. &ldquo;We&rsquo;re currently inside a Python function definition&rdquo; is a direction.</p>
+<p>Operations on concepts correspond to vector operations on directions. Adding vectors adds features. Subtracting vectors removes features. Linear classifiers can detect features.</p>
+<p>The canonical early evidence: <strong>Word2Vec</strong> (Mikolov et al., 2013). Train word embeddings on a text corpus. Then:</p>
+<p>$$\text{king} - \text{man} + \text{woman} \approx \text{queen}$$</p>
+<p>The gender direction (man → woman) can be added to the king direction to produce the queen direction. Analogy relationships - capital cities, verb tenses, comparatives - all appear as linear offsets in embedding space. This was widely replicated and extended.</p>
+<p><strong>Probing classifiers</strong> provide a more systematic test. Take the activations of a model at some layer, and train a linear classifier to predict a linguistic property (part of speech, syntactic role, named entity type). If the linear classifier succeeds - which it does, consistently, for many properties - then those properties are linearly encoded in the activations. Nonlinear probes don&rsquo;t typically do better, suggesting the representations are genuinely linear.</p>
+<p><strong>Logit lens</strong> (nostalgebraist, 2020): at each intermediate layer of a language model, project the residual stream directly onto the vocabulary using the final unembedding matrix. This gives you a &ldquo;prediction&rdquo; at each layer - the model&rsquo;s best guess at the next token if it had to stop there. You can watch the prediction evolve: early layers often predict words in the same syntactic category, middle layers narrow to semantically similar words, late layers converge to the specific correct word. This visualization makes the incremental refinement process legible.</p>
+<hr>
+<h2 id=circuits-algorithms-inside-networks>Circuits: Algorithms Inside Networks</h2>
+<p>The circuits program (Olah et al., 2020, and subsequent work from Anthropic and others) takes a more surgical approach: identify specific subgraphs of neurons and attention heads that implement specific algorithms.</p>
+<p><strong>Induction heads</strong> are the cleanest and most important example (Olsson et al., 2022).</p>
+<p>An induction head implements the following operation: given a sequence that contains a repeated pattern <code>[A][B]...[A]</code>, predict <code>[B]</code> at the second occurrence of <code>[A]</code>. In English: if the text has said &ldquo;John went to the store. John went to the&mldr;&rdquo; then the induction head detects that <code>went</code> followed <code>John</code> before, and it boosts the probability of <code>went</code> now.</p>
+<p>This is in-context learning in its most basic form: the model is using information from earlier in the context to make predictions. The remarkable finding from Olsson et al.: induction heads are present in every transformer examined (across scales, across architectures, across training setups). They appear early in training - often within the first 10% of training steps - in a sudden transition associated with a phase change in training loss. And they are causally responsible for much of the in-context learning that language models exhibit.</p>
+<p>The circuit implementing induction behavior requires two attention heads working together across two layers:</p>
+<ul>
+<li><strong>Previous token head</strong> (layer $\ell$): for token at position $i$, attends to the token at position $i-1$. This writes information about &ldquo;what came before this token&rdquo; into the residual stream.</li>
+<li><strong>Induction head</strong> (layer $\ell+1$): uses the information from the previous token head to attend back to wherever that &ldquo;preceding token&rdquo; appeared before. Then it copies the token that followed that earlier occurrence into the current prediction.</li>
+</ul>
+<p>This is a two-hop lookup: &ldquo;who came before me&rdquo; → &ldquo;find where that token appeared before&rdquo; → &ldquo;what came after it.&rdquo; It&rsquo;s implemented by two attention heads with a specific communication pattern between them.</p>
+<p><strong>Indirect object identification</strong> (Wang et al., 2022): In a sentence like &ldquo;Mary and John went to the store; Mary gave ___&rdquo;, the model must identify &ldquo;John&rdquo; (the indirect object) as the correct completion. The researchers found a circuit spanning multiple layers and attention heads, with identifiable roles: subject-finding heads that locate &ldquo;Mary&rdquo;, backup name heads, S-inhibition heads that suppress the subject from being predicted as the indirect object, and name mover heads that copy the remaining name.</p>
+<p>The circuit was identified by ablating attention heads (setting their output to zero or to mean activations) and measuring the effect on model accuracy. Heads whose ablation caused the largest accuracy drop were assigned to the circuit.</p>
+<hr>
+<h2 id=the-superposition-hypothesis>The Superposition Hypothesis</h2>
+<p>If every concept were encoded in its own dedicated neuron, interpretability would be easy: find the &ldquo;Paris neuron,&rdquo; the &ldquo;plural noun neuron,&rdquo; the &ldquo;code neuron.&rdquo; But this is not what happens.</p>
+<p>The superposition hypothesis (Elhage et al., 2022) proposes something more nuanced: a neural network with $d$ dimensions can represent more than $d$ features, by encoding multiple features in an overlapping (superimposed) way, at the cost of interference.</p>
+<p>Here&rsquo;s the key idea. Suppose features are sparse - most features are &ldquo;off&rdquo; (zero) at any given time. For example, in a typical sentence, the &ldquo;referring to Paris&rdquo; feature is off for 99% of tokens. If features are sparse, then packing multiple features into the same subspace causes only occasional interference (when multiple features happen to be active simultaneously).</p>
+<p>The geometry: a set of $n > d$ vectors in $\mathbb{R}^d$ can have low average pairwise inner product if they&rsquo;re approximately orthogonal, but you can pack more near-orthogonal vectors into $\mathbb{R}^d$ than you might expect. Specifically, in high dimensions you can fit exponentially many near-orthogonal vectors. This is the Johnson-Lindenstrauss phenomenon. A network exploits this to pack many features into a small number of dimensions.</p>
+<p>Implication: <strong>individual neurons are not the right unit of analysis.</strong> A neuron that &ldquo;activates for Paris&rdquo; might also activate (slightly) for &ldquo;museum,&rdquo; &ldquo;tower,&rdquo; and &ldquo;French city&rdquo; - because all of these concepts are stored as nearby directions. When you probe individual neurons, you find polysemantic behavior: the same neuron responding to apparently unrelated inputs.</p>
+<p>This makes interpretability much harder. You can&rsquo;t just look at the neuron with the highest activation and say what it represents. You need to find the actual directions (features) in the high-dimensional space.</p>
+<hr>
+<h2 id=sparse-autoencoders-extracting-features>Sparse Autoencoders: Extracting Features</h2>
+<p>If features are superimposed as directions in activation space, how do you find them?</p>
+<p>A <strong>sparse autoencoder (SAE)</strong> is a technique for doing this. Train an autoencoder with a large hidden layer to reconstruct activations, subject to a sparsity constraint on the hidden layer. The constraint forces the network to represent each activation as a sparse combination of &ldquo;dictionary features.&rdquo;</p>
+<p>$$\text{hidden} = \text{ReLU}(W_{\text{enc}}(x - b_{\text{dec}}) + b_{\text{enc}})$$</p>
+<p>$$\hat{x} = W_{\text{dec}} \cdot \text{hidden} + b_{\text{dec}}$$</p>
+<p>with a loss:</p>
+<p>$$\mathcal{L} = |x - \hat{x}|^2 + \lambda |\text{hidden}|_1$$</p>
+<p>The $L_1$ penalty encourages sparsity: most hidden units are zero for any given activation $x$. The dictionary vectors (columns of $W_{\text{dec}}$) become the &ldquo;features.&rdquo;</p>
+<p>If the superposition hypothesis is correct, the SAE should decompose each activation into a small number of active, interpretable features. Anthropic&rsquo;s recent work (Templeton et al., 2024) applied SAEs to a large language model and found millions of interpretable features: the feature for &ldquo;the Eiffel Tower,&rdquo; the feature for &ldquo;DNA base pairs,&rdquo; the feature for &ldquo;code inside a Python function,&rdquo; the feature for &ldquo;a specific Supreme Court justice.&rdquo; These features had clear semantic interpretations when probed by finding the text examples that maximally activated them.</p>
+<p>This is striking: the network has rich, inspectable internal representations, but they were hidden in superposition. The SAE is the lens that makes them visible.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The mechanistic interpretability results we have are mostly from small, well-controlled models: GPT-2 (1.5B parameters), simple two-layer transformers, or specific components of larger models. Whether the same circuits exist in GPT-4 or Claude 3 - and whether the circuits are the same type of computation or something more complex - is not established. The circuits found so far are existence proofs: they show that transformers <em>can</em> implement clean algorithms. They don&rsquo;t show that every capability in a large model is implemented this way. We don&rsquo;t have a complete mechanistic explanation of any non-trivial computation in any capable model. The field is young, the tools are primitive, and the models being studied are tiny relative to frontier models.</p>
+</blockquote>
+<hr>
+<h2 id=activation-patching-and-causal-tracing>Activation Patching and Causal Tracing</h2>
+<p>To move from correlation (&ldquo;this component activates for this input&rdquo;) to causation (&ldquo;this component is responsible for this output&rdquo;), mechanistic interpretability uses <strong>activation patching</strong> (also called causal tracing, Meng et al., 2022).</p>
+<p>The protocol:</p>
+<ol>
+<li>Run the model on a clean input (e.g., &ldquo;The Eiffel Tower is in Paris&rdquo;) and record all intermediate activations.</li>
+<li>Run the model on a corrupted input (e.g., &ldquo;The Colosseum is in Paris&rdquo;) that changes the answer.</li>
+<li>For each component (attention head, MLP layer, residual stream position), &ldquo;patch&rdquo; the corrupted run by replacing its activation with the clean-run value.</li>
+<li>Measure how much this single patch restores the correct output (&ldquo;Paris&rdquo;).</li>
+</ol>
+<p>The component whose patching most restores the output is causally responsible for storing or computing that information.</p>
+<p>Meng et al. applied this to GPT models to find where factual associations are stored. For a prompt like &ldquo;The Eiffel Tower is located in the city of ___&rdquo;, they found that the answer &ldquo;Paris&rdquo; is primarily stored in the MLP layers of the middle layers (roughly 60% through the depth), in the residual stream at the position of the subject token (&ldquo;Eiffel Tower&rdquo;). This is consistent across many different factual associations.</p>
+<p>They used this to build <strong>ROME</strong> (Rank-One Model Editing): a method to surgically edit a model&rsquo;s factual knowledge by modifying a small number of weight entries in those MLP layers, without retraining. You can change &ldquo;the Eiffel Tower is in Paris&rdquo; to &ldquo;the Eiffel Tower is in Rome&rdquo; in the model&rsquo;s outputs, while leaving other knowledge intact.</p>
+<hr>
+<h2 id=connection-to-safety>Connection to Safety</h2>
+<p>Mechanistic interpretability is not purely an academic exercise. It&rsquo;s a central part of AI safety research, particularly at Anthropic.</p>
+<p>If you understand what a model computes, you can in principle:</p>
+<p><strong>Detect deception.</strong> If a model is behaving differently than its outputs suggest - giving misleading answers while &ldquo;knowing&rdquo; they&rsquo;re wrong - interpretability tools might detect the discrepancy between the model&rsquo;s internal representations and its outputs. A model that claims &ldquo;I don&rsquo;t know&rdquo; but whose residual stream contains the answer could in principle be caught this way.</p>
+<p><strong>Identify harmful capabilities.</strong> Rather than probing model outputs for dangerous knowledge, you could inspect the internal representations directly. If &ldquo;how to synthesize a pathogen&rdquo; is a direction in activation space, you might be able to detect this without generating the output.</p>
+<p><strong>Targeted editing.</strong> Rather than retraining to remove a capability, surgical weight editing (like ROME) might remove specific knowledge or behaviors without affecting others. This is far from reliable today, but the research direction is active.</p>
+<p><strong>Understand generalization.</strong> The circuits framework provides a mechanistic account of why transformers generalize (they learn general algorithms like induction, not specific lookup tables). Understanding generalization mechanisms helps predict failure modes.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>What it claims</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linear representations</td>
+<td>Concepts are directions in activation space</td>
+<td>Word2Vec analogies, probing classifiers, logit lens</td>
+</tr>
+<tr>
+<td>Induction heads</td>
+<td>Attention heads implement in-context copy</td>
+<td>Found in all transformers; appear in phase transition during training</td>
+</tr>
+<tr>
+<td>Superposition</td>
+<td>$n > d$ features packed in $d$ dimensions via sparsity</td>
+<td>Polysemantic neurons; SAE decompositions</td>
+</tr>
+<tr>
+<td>Sparse autoencoders</td>
+<td>SAE decoder columns are interpretable features</td>
+<td>Millions of interpretable features found in Claude</td>
+</tr>
+<tr>
+<td>Activation patching</td>
+<td>Identifies causal components for specific outputs</td>
+<td>ROME: facts stored in middle-layer MLP at subject position</td>
+</tr>
+</tbody>
+</table>
+<p>Mechanistic interpretability is the attempt to do for neural networks what circuit diagrams do for hardware: describe what computation is happening and how. The work so far is encouraging - clean algorithms (induction, indirect object identification) have been found in small models. The work ahead is harder: scaling these tools to models with hundreds of billions of parameters, where the circuits may be more complex, more distributed, and less legible. But the central claim - that neural networks implement algorithms that can be reverse-engineered - has enough evidence that the research program seems viable.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/transfer-learning/>Transfer Learning</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

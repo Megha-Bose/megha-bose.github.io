@@ -1,0 +1,273 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Gradient Descent // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Gradient Descent">
+<meta name=twitter:description content="Prerequisites:
+ Neural Networks & Perceptrons Gradients & Partial Derivatives Convexity & Optimization   You are blindfolded on a hilly landscape. You want to reach the lowest point. You can feel the slope under your feet.
+Your strategy: take a small step in the direction of steepest descent. Then do it again. And again. Each step makes you a little lower than the last. Eventually - if the landscape is well-behaved and your steps aren&rsquo;t too large - you reach the bottom.">
+<meta property="og:title" content="Gradient Descent">
+<meta property="og:description" content="Prerequisites:
+ Neural Networks & Perceptrons Gradients & Partial Derivatives Convexity & Optimization   You are blindfolded on a hilly landscape. You want to reach the lowest point. You can feel the slope under your feet.
+Your strategy: take a small step in the direction of steepest descent. Then do it again. And again. Each step makes you a little lower than the last. Eventually - if the landscape is well-behaved and your steps aren&rsquo;t too large - you reach the bottom.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/gradient-descent/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Gradient Descent</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/neural-networks-perceptrons/>Neural Networks & Perceptrons</a></li>
+<li><a href=/posts/gradients-partial-derivatives/>Gradients & Partial Derivatives</a></li>
+<li><a href=/posts/convexity-optimization/>Convexity & Optimization</a></li>
+</ul>
+<hr>
+<p>You are blindfolded on a hilly landscape. You want to reach the lowest point. You can feel the slope under your feet.</p>
+<p>Your strategy: take a small step in the direction of steepest descent. Then do it again. And again. Each step makes you a little lower than the last. Eventually - if the landscape is well-behaved and your steps aren&rsquo;t too large - you reach the bottom.</p>
+<p>This is gradient descent. It is the algorithm that trains every neural network ever built. The &ldquo;landscape&rdquo; is the loss surface: a function from weights to loss value. The &ldquo;lowest point&rdquo; is the weights that minimize the loss. The &ldquo;slope under your feet&rdquo; is the gradient.</p>
+<p>Understanding gradient descent means understanding not just the algorithm but its subtleties: when does it work, why it often works when theory says it shouldn&rsquo;t, and what modern optimizers do to make it work better.</p>
+<hr>
+<h2 id=the-core-update-rule>The Core Update Rule</h2>
+<p>To minimize a function $L(w)$ (the loss as a function of weights $w$), gradient descent performs the update:</p>
+<p>$$w \leftarrow w - \eta \cdot \nabla L(w)$$</p>
+<p>Three quantities:</p>
+<ul>
+<li>$w$: the current weights (a vector in parameter space).</li>
+<li>$\nabla L(w)$: the gradient of the loss at $w$. This is a vector pointing in the direction of steepest increase of $L$.</li>
+<li>$\eta > 0$: the learning rate, also called step size. Controls how far we move.</li>
+</ul>
+<p>We subtract the gradient because we want to decrease $L$, not increase it. The gradient points uphill; moving opposite to it moves downhill.</p>
+<p><strong>Why does subtracting the gradient decrease the loss?</strong> By the first-order Taylor expansion:</p>
+<p>$$L(w - \eta \nabla L(w)) \approx L(w) - \eta |\nabla L(w)|^2$$</p>
+<p>For small enough $\eta$ and nonzero gradient, the right side is strictly less than $L(w)$. Every gradient descent step decreases the loss - at least locally and for sufficiently small step size.</p>
+<p>The approximation becomes exact as $\eta \to 0$, which is why very small learning rates are guaranteed to decrease the loss at every step. Very small steps, however, means very slow convergence.</p>
+<hr>
+<h2 id=why-the-gradient-points-uphill>Why the Gradient Points Uphill</h2>
+<p>The gradient $\nabla L(w)$ at a point $w$ is the vector of partial derivatives:</p>
+<p>$$\nabla L(w) = \left(\frac{\partial L}{\partial w_1}, \frac{\partial L}{\partial w_2}, \ldots, \frac{\partial L}{\partial w_d}\right)$$</p>
+<p>Its key geometric property: among all unit vectors $v$, the directional derivative $\nabla L(w) \cdot v$ is maximized when $v = \nabla L(w) / |\nabla L(w)|$. The gradient points in the direction of maximum increase of $L$.</p>
+<p>Proof: by Cauchy-Schwarz, $\nabla L(w) \cdot v \leq |\nabla L(w)| |v| = |\nabla L(w)|$ with equality when $v \propto \nabla L(w)$.</p>
+<p>Conversely, $-\nabla L(w)$ is the direction of maximum decrease. Moving in this direction gives the largest reduction in $L$ per unit distance, at first order. That&rsquo;s why gradient descent moves opposite the gradient - it&rsquo;s the locally optimal direction to walk.</p>
+<hr>
+<h2 id=the-learning-rate-the-goldilocks-problem>The Learning Rate: The Goldilocks Problem</h2>
+<p>The learning rate $\eta$ is the most important hyperparameter in gradient descent. Getting it wrong can mean slow convergence or no convergence at all.</p>
+<p><strong>Too small:</strong> Each step reduces the loss by a tiny amount. Convergence happens but takes an impractical number of iterations. With $\eta = 10^{-6}$, a problem that should train in hours might take years.</p>
+<p><strong>Too large:</strong> The step overshoots the minimum. Imagine standing in a bowl-shaped valley: if you step too far downhill, you end up on the other side of the bowl, possibly higher than where you started. The loss can oscillate, diverge, or zigzag without converging.</p>
+<p><strong>Just right:</strong> Fast convergence to the minimum (or a good local minimum, for non-convex problems).</p>
+<p>Theoretically, for a function with an $L$-Lipschitz gradient (meaning $|\nabla L(w_1) - \nabla L(w_2)| \leq L |w_1 - w_2|$), the optimal constant step size is $\eta = 1/L$. The Lipschitz constant $L$ is related to the largest eigenvalue of the Hessian - how sharply curved the loss surface is. Steeper curvature requires a smaller step.</p>
+<p>In practice, $L$ is unknown and varies across the loss surface. Common approaches:</p>
+<p><strong>Constant learning rate:</strong> Pick one value and hope. Works for simple problems.</p>
+<p><strong>Step decay:</strong> Reduce $\eta$ by a factor (say 10) every fixed number of iterations.</p>
+<p><strong>Cosine annealing:</strong> $\eta_t = \frac{\eta_0}{2}(1 + \cos(\pi t / T))$. The learning rate follows a cosine curve from $\eta_0$ down to 0. Widely used in modern training runs.</p>
+<p><strong>Warm-up:</strong> Start with a very small learning rate, ramp up to the target over the first few thousand iterations, then decay. This avoids instability early in training when the weights are random and the loss landscape is steep. Essential for large transformers.</p>
+<hr>
+<h2 id=convergence-for-convex-functions>Convergence for Convex Functions</h2>
+<p>For convex functions, gradient descent has clean theoretical guarantees.</p>
+<p><strong>Definition.</strong> A function $L$ is convex if for any two points $w_1, w_2$ and $\lambda \in [0,1]$:</p>
+<p>$$L(\lambda w_1 + (1-\lambda)w_2) \leq \lambda L(w_1) + (1-\lambda)L(w_2)$$</p>
+<p>The function curves upward. Any local minimum is also a global minimum. Gradient descent cannot get stuck.</p>
+<p>For a $\mu$-strongly convex function with $L$-Lipschitz gradient (both the linear regression MSE loss and the logistic regression cross-entropy loss satisfy this), gradient descent with learning rate $\eta = 1/L$ converges at rate:</p>
+<p>$$L(w_t) - L(w^<em>) \leq \left(1 - \frac{\mu}{L}\right)^t \left(L(w_0) - L(w^</em>)\right)$$</p>
+<p>This is <strong>geometric (linear) convergence</strong>: each step reduces the error by a constant factor $(1 - \mu/L) &lt; 1$. After $t$ steps, the error is exponentially small in $t$. The number of steps to reach error $\varepsilon$ is $O((L/\mu) \log(1/\varepsilon))$.</p>
+<p>The ratio $\kappa = L/\mu$ is the <strong>condition number</strong>. Poorly conditioned functions (large $\kappa$) converge slowly. This is why feature normalization matters: it reduces the condition number of the Hessian (makes eigenvalues more uniform), which speeds up convergence.</p>
+<hr>
+<h2 id=non-convex-functions-the-real-world>Non-Convex Functions: The Real World</h2>
+<p>Neural network loss surfaces are not convex. At all. They have:</p>
+<p><strong>Local minima:</strong> Points where the gradient is zero and all directions go uphill, but not the global minimum. Gradient descent might converge here rather than to the best possible solution.</p>
+<p><strong>Saddle points:</strong> Points where the gradient is zero, some directions go uphill, some go downhill. In high dimensions, most critical points are saddle points, not local minima. A saddle point in 2D looks like a mountain pass: you&rsquo;re at a local minimum along one direction, but a local maximum along another.</p>
+<p><strong>Flat regions:</strong> Large regions where the gradient is nearly zero. Progress is very slow.</p>
+<p><strong>Cliffs and spikes:</strong> Regions of very sharp curvature where large gradients can cause huge, destabilizing updates. A problem especially with recurrent networks.</p>
+<p>So why does gradient descent work in practice for training neural networks?</p>
+<p>The honest answer: we don&rsquo;t fully know. The theory is incomplete. But here are the leading explanations:</p>
+<p><strong>Many good local minima.</strong> In very high-dimensional spaces, local minima that aren&rsquo;t global minima are rare and tend to have similar loss values to the global minimum. Empirically, different runs of gradient descent on the same network often converge to different weight configurations but similar loss values. For practical purposes, many local minima are equally good.</p>
+<p><strong>Saddle points are not the problem.</strong> In high dimensions, the probability of a critical point being a local minimum (all positive curvature directions) decreases exponentially with dimension. Most critical points are saddle points. And gradient descent with noise (from mini-batches) naturally escapes saddle points - because noise perturbs the trajectory in random directions, and at least one of those directions is downhill.</p>
+<p><strong>Overparameterization helps.</strong> Modern neural networks have far more parameters than training examples. In this regime, the loss surface has large flat regions where many different weight configurations achieve near-zero training loss. Gradient descent, even with noise, can find these regions relatively easily.</p>
+<p><strong>Implicit regularization.</strong> The specific path that gradient descent takes (not just the endpoint) shapes the solution. SGD implicitly prefers flatter minima with better generalization properties. This is an active research area.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If the theory doesn&rsquo;t fully explain gradient descent&rsquo;s success on non-convex neural network loss surfaces, should you trust it? Yes - empirically, it works remarkably well across an enormous range of architectures and tasks. The lack of complete theory means we can&rsquo;t predict exactly how many steps it will take or guarantee finding the global minimum, but the practical track record is overwhelming. Physics used the theory of quantum electrodynamics for decades before anyone proved it was mathematically well-defined. Sometimes what matters is that it works.</p>
+</blockquote>
+<hr>
+<h2 id=stochastic-gradient-descent>Stochastic Gradient Descent</h2>
+<p><strong>Batch gradient descent</strong> computes the gradient over the entire training set at each step:</p>
+<p>$$\nabla L(w) = \frac{1}{m} \sum_{i=1}^m \nabla L_i(w)$$</p>
+<p>For a training set of $m = 10^6$ examples, one gradient computation requires $10^6$ forward and backward passes. If you need 10,000 steps to converge, that&rsquo;s $10^{10}$ example-passes. Too slow.</p>
+<p><strong>Stochastic gradient descent (SGD)</strong> estimates the gradient using a single randomly chosen example:</p>
+<p>$$\nabla L(w) \approx \nabla L_i(w) \quad \text{for a random } i$$</p>
+<p>Each step is $m$ times cheaper. The estimate is unbiased (its expectation equals the true gradient), but very noisy. The noise has a useful property: it helps escape shallow local minima and saddle points that batch gradient descent might get stuck in.</p>
+<p>SGD converges, but noisily. The loss doesn&rsquo;t decrease monotonically - it bounces around as different examples give different gradient estimates. But in expectation, over many steps, the weights move toward the minimum.</p>
+<p><strong>Mini-batch SGD</strong> is the practical compromise: compute the gradient over a random batch of $B$ examples.</p>
+<p>$$\nabla L(w) \approx \frac{1}{B} \sum_{i \in \text{batch}} \nabla L_i(w)$$</p>
+<p>Typical batch sizes: $B = 32, 64, 128, 256$, up to $4096$ or more for large models on many GPUs. Larger batches give more accurate gradient estimates but require more compute per step. Smaller batches add noise but allow more steps per unit of compute.</p>
+<p>The batch size also determines hardware utilization. GPUs are most efficient when doing large matrix multiplications in parallel - a large batch processes many examples simultaneously, maximizing GPU throughput. This is why batch size is also partly a hardware engineering choice.</p>
+<hr>
+<h2 id=momentum>Momentum</h2>
+<p>A classic problem with gradient descent on ill-conditioned problems: the loss surface has a long, narrow valley. Gradient descent zigzags across the valley rather than running along it. Each step goes in the direction perpendicular to the valley (where the gradient is large) rather than down the valley (where progress is needed).</p>
+<p><strong>Momentum</strong> fixes this by accumulating velocity in consistent gradient directions:</p>
+<p>$$v_t = \beta v_{t-1} + \nabla L(w_t)$$
+$$w_{t+1} = w_t - \eta v_t$$</p>
+<p>The velocity $v_t$ is a running average of past gradients. With $\beta = 0.9$ (typical), $v_t$ is a weighted average of the last $\sim 10$ gradient estimates. Consistent gradient directions accumulate; inconsistent directions cancel. The result: the optimizer builds up speed along the valley and dampens zigzag oscillations.</p>
+<p>Another view: momentum is like rolling a ball down a hill. The ball doesn&rsquo;t stop at each step - it accumulates velocity. This makes it traverse flat regions faster and overshoot hills, which can help escape shallow local minima.</p>
+<hr>
+<h2 id=adam-the-default-optimizer>Adam: The Default Optimizer</h2>
+<p>The Adam (Adaptive Moment Estimation) optimizer, introduced by Kingma and Ba in 2014, combines momentum with per-parameter learning rates.</p>
+<p>It maintains two moving averages:</p>
+<p>$$m_t = \beta_1 m_{t-1} + (1-\beta_1) \nabla L(w_t) \quad \text{(first moment: mean of gradients)}$$
+$$v_t = \beta_2 v_{t-1} + (1-\beta_2) (\nabla L(w_t))^2 \quad \text{(second moment: mean of squared gradients)}$$</p>
+<p>After bias correction ($\hat{m}_t = m_t/(1-\beta_1^t)$ and $\hat{v}_t = v_t/(1-\beta_2^t)$ to account for initialization at 0), the update is:</p>
+<p>$$w_{t+1} = w_t - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \varepsilon}$$</p>
+<p>The update for each weight is the gradient estimate ($\hat{m}_t$) divided by the root-mean-square of recent gradients ($\sqrt{\hat{v}_t}$). Parameters with consistently large gradients get a small effective step size; parameters with small, noisy gradients get a larger effective step size.</p>
+<p>This adaptive learning rate means Adam is much less sensitive to the choice of $\eta$ than vanilla SGD. Typical defaults ($\eta = 10^{-3}$, $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\varepsilon = 10^{-8}$) work well across a very wide range of architectures and tasks.</p>
+<p>Adam is the practical choice for most deep learning work. You start with Adam and $\eta = 10^{-3}$, and that is often already close to optimal.</p>
+<hr>
+<h2 id=learning-rate-schedules-in-practice>Learning Rate Schedules in Practice</h2>
+<p>Even with Adam, the learning rate schedule matters significantly.</p>
+<p><strong>Warm-up:</strong> The first few thousand steps use a small learning rate that linearly ramps up to the target $\eta$. Why? Early in training, the weights are random and gradients are unreliable. A large initial step can push the model into a bad region of parameter space that&rsquo;s hard to escape. Warm-up provides stability.</p>
+<p><strong>Decay:</strong> After warm-up, the learning rate decreases. Common schedules:</p>
+<p>Cosine decay: $\eta_t = \frac{\eta_{\max}}{2}\left(1 + \cos\left(\frac{\pi t}{T}\right)\right)$ from $t = t_{\text{warm-up}}$ to $T$. The learning rate smoothly decreases from $\eta_{\max}$ to 0. Widely used for language model training.</p>
+<p>Step decay: reduce $\eta$ by a fixed factor (e.g., multiply by 0.1) at fixed milestones.</p>
+<p>Cyclic learning rates: periodically increase and decrease $\eta$. Can help escape local minima.</p>
+<p>The warm-up + cosine decay schedule is standard in large-scale training of transformers (BERT, GPT, and their descendants all use variations of this).</p>
+<hr>
+<h2 id=gradient-clipping>Gradient Clipping</h2>
+<p>In recurrent networks (and sometimes transformers), gradients can become very large - not because the function has high curvature everywhere, but because the loss is extremely sensitive to certain weights in certain rare configurations. An update of $w \leftarrow w - \eta \nabla L$ can take a catastrophically large step.</p>
+<p><strong>Gradient clipping</strong> limits the maximum step size. Before each update, if $|\nabla L| > C$ for some threshold $C$, scale the gradient down: $\nabla L \leftarrow C \cdot \nabla L / |\nabla L|$.</p>
+<p>This caps the magnitude of the update while preserving its direction. It&rsquo;s a simple fix for the &ldquo;exploding gradient&rdquo; problem that doesn&rsquo;t require changing the model architecture or loss function.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Update Rule</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Batch GD</td>
+<td>$w \leftarrow w - \eta \nabla L(w)$</td>
+<td>Small datasets; convex problems</td>
+</tr>
+<tr>
+<td>SGD</td>
+<td>$w \leftarrow w - \eta \nabla L_i(w)$</td>
+<td>Online learning; very large datasets</td>
+</tr>
+<tr>
+<td>Mini-batch SGD</td>
+<td>Average gradient over batch $B$</td>
+<td>Default for most practical work</td>
+</tr>
+<tr>
+<td>Momentum</td>
+<td>Add velocity term $\beta v_{t-1}$</td>
+<td>Ill-conditioned problems; helps escape saddle points</td>
+</tr>
+<tr>
+<td>Adam</td>
+<td>Adaptive per-parameter $\eta$</td>
+<td>Default for deep learning; rarely needs tuning</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key fact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Why $-\nabla L$?</td>
+<td>Gradient points uphill; subtract to go downhill</td>
+</tr>
+<tr>
+<td>Learning rate</td>
+<td>Too small = slow; too large = diverges; schedule matters</td>
+</tr>
+<tr>
+<td>Convex convergence</td>
+<td>Geometric rate $(1 - \mu/L)^t$</td>
+</tr>
+<tr>
+<td>Non-convex reality</td>
+<td>Theory incomplete; SGD works empirically</td>
+</tr>
+<tr>
+<td>Batch size $B$</td>
+<td>Variance-compute trade-off; hardware-dependent</td>
+</tr>
+<tr>
+<td>Gradient clipping</td>
+<td>Cap $|\nabla L|$ to prevent explosive updates</td>
+</tr>
+</tbody>
+</table>
+<p>Gradient descent is the engine of deep learning. Its mathematics is simple: move opposite the gradient, scaled by a step size. Its practice is more nuanced: choosing the right optimizer, learning rate schedule, and batch size makes the difference between a model that trains in hours and one that never converges.</p>
+<p>The next question is: how do we compute the gradient efficiently? For a network with billions of parameters, computing $\nabla L$ by hand is impossible. That&rsquo;s where automatic differentiation comes in.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/autodiff-forwardreverse/>Autodiff: Forward & Reverse Mode</a> - the algorithm that computes gradients exactly and efficiently for any computation graph</li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Fault Tolerance // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Fault Tolerance">
+<meta name=twitter:description content="Prerequisite: Consistency & CAP Theorem
+Google estimates that 0.5% of servers in a large datacenter fail every day. At 100,000 servers - a modest number for hyperscale infrastructure - that is 500 individual hardware failures every single day. Hard drives spin down. Memory modules flip bits. Network cards lose their link. Power supplies give out. And that&rsquo;s just the hardware. Software crashes, network partitions, and the inevitable human configuration error add to the count.">
+<meta property="og:title" content="Fault Tolerance">
+<meta property="og:description" content="Prerequisite: Consistency & CAP Theorem
+Google estimates that 0.5% of servers in a large datacenter fail every day. At 100,000 servers - a modest number for hyperscale infrastructure - that is 500 individual hardware failures every single day. Hard drives spin down. Memory modules flip bits. Network cards lose their link. Power supplies give out. And that&rsquo;s just the hardware. Software crashes, network partitions, and the inevitable human configuration error add to the count.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/fault-tolerance/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Fault Tolerance</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+10 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/consistency-cap-theorem/>Consistency & CAP Theorem</a></p>
+<p>Google estimates that 0.5% of servers in a large datacenter fail every day. At 100,000 servers - a modest number for hyperscale infrastructure - that is 500 individual hardware failures every single day. Hard drives spin down. Memory modules flip bits. Network cards lose their link. Power supplies give out. And that&rsquo;s just the hardware. Software crashes, network partitions, and the inevitable human configuration error add to the count.</p>
+<p>The question is not &ldquo;how do we prevent failures?&rdquo; - you can&rsquo;t, at this scale. The question is: how do you build systems that genuinely don&rsquo;t care?</p>
+<h2 id=failure-is-a-spectrum-not-an-event>Failure Is a Spectrum, Not an Event</h2>
+<p>Understanding <em>how</em> things fail is prerequisite to designing around them. Failures are not uniform.</p>
+<p><strong>Crash failures</strong> are the cleanest type: a process stops and returns no responses. Other nodes detect the silence, route around it, and continue. Crash-stop is the easiest failure model to reason about and the one most distributed systems literature assumes.</p>
+<p><strong>Omission failures</strong> are subtler: a node is running but messages are silently dropped. The network swallows packets; a process&rsquo;s socket buffer overflows; a thread pool is exhausted and new requests are discarded. The node isn&rsquo;t dead - it&rsquo;s just not communicating. Worse, from the outside, it looks identical to a crash.</p>
+<p><strong>Timing failures</strong> occur when responses arrive too late. A node is functioning but slow - overloaded, paused for garbage collection, waiting on a saturated disk. From the caller&rsquo;s perspective, a timeout and a crash are indistinguishable. This is why &ldquo;detect the failure&rdquo; is harder than it sounds.</p>
+<p><strong>Byzantine failures</strong> are the nightmare case: a node sends actively wrong or contradictory information. Memory corruption produces valid-looking but incorrect data. A compromised node lies. Byzantine fault tolerance requires specialized algorithms (PBFT, used in some blockchain consensus protocols) and is practically never applied in conventional distributed systems. Most real systems assume crash failures only - and then add monitoring to catch the cases where that assumption is wrong.</p>
+<h2 id=the-flp-impossibility-and-why-we-use-timeouts-anyway>The FLP Impossibility and Why We Use Timeouts Anyway</h2>
+<p>The FLP impossibility result (Fischer, Lynch, Paterson, 1985) proved that in a fully asynchronous distributed system, no algorithm can guarantee consensus in the presence of even a single crash failure. You cannot reliably distinguish a crashed node from a slow one in an asynchronous network.</p>
+<p>In practice, systems work around FLP by using timeouts: wait long enough, declare the node dead, move on. This works because we&rsquo;re willing to occasionally treat a slow node as dead (a false positive), reelect a leader, and then deal with the recovered slow node rejoining. The cost of false positives is manageable. The cost of waiting forever is not.</p>
+<p>Cassandra uses the <strong>Phi Accrual Failure Detector</strong>: instead of a fixed timeout, it computes a continuous suspicion value $\phi$ based on the statistical distribution of recent heartbeat inter-arrival times. High $\phi$ means high suspicion of failure. This adapts to variable network conditions - a cluster with naturally high latency variance gets a higher effective threshold, reducing false positives. The same mechanism is used in Akka&rsquo;s cluster monitoring.</p>
+<h2 id=redundancy-active-active-vs-active-passive>Redundancy: Active-Active vs Active-Passive</h2>
+<p>The first principle of fault tolerance is to have more than one of everything.</p>
+<p><strong>Active-active redundancy</strong> runs multiple instances simultaneously, all serving live traffic. If one fails, the others absorb its load - failover is instantaneous because there&rsquo;s no promotion required. Load balancers automatically stop routing to the failed instance. The cost: you must provision enough capacity in the surviving instances to absorb the failed instance&rsquo;s share, which means steady-state over-provisioning.</p>
+<p><strong>Active-passive redundancy</strong> runs a primary that serves traffic and one or more standbys that replicate data but sit idle. When the primary fails, a standby is promoted. Promotion takes time: leader election, health check propagation, DNS update. This means a brief outage - seconds to minutes depending on the system. The advantage: lower steady-state cost because standbys don&rsquo;t need full serving capacity.</p>
+<p><strong>AWS Multi-AZ</strong> is the canonical active-passive pattern for databases. An RDS instance in us-east-1 has a synchronous standby in a different availability zone. AWS handles promotion automatically on failure; the failover typically completes in 60–120 seconds. This is table stakes for any production database - a single-AZ RDS instance is one hardware failure away from downtime.</p>
+<p><strong>AWS Multi-Region</strong> is the next level: separate deployments in geographically distinct regions (us-east-1 and eu-west-1). Replication is asynchronous (synchronous cross-region replication is physically expensive - 100ms round-trip latency per write). Route 53 health checks and failover routing records implement the DNS-level switch. Recovery Time Objective (RTO) in this configuration is typically minutes, not seconds, because DNS TTLs and health check evaluation add delay.</p>
+<h2 id=the-circuit-breaker-pattern>The Circuit Breaker Pattern</h2>
+<p>A slow or failing downstream service is contagious. When service A calls service B, and B starts returning errors or timing out, A&rsquo;s threads pile up waiting for B. A&rsquo;s thread pool exhausts. A&rsquo;s own response times spike. Services C and D, which call A, start to fail. The failure has propagated sideways through the service graph - a cascade.</p>
+<p>The circuit breaker prevents this. Named after the electrical component that interrupts current flow when the circuit is overloaded, a software circuit breaker has three states:</p>
+<p><strong>Closed (normal operation):</strong> Requests flow through. The breaker counts recent failures. When the failure rate exceeds a threshold (say, 50% of requests in the last 10 seconds), the breaker trips.</p>
+<p><strong>Open (failing):</strong> Requests fail immediately with a local error - no network call is made. This gives the downstream service time to recover without accumulating backpressure from the upstream. From the caller&rsquo;s perspective, the failure is fast rather than slow - a fast fail at 1ms is far less damaging than a slow fail at 30 seconds, because threads aren&rsquo;t tied up waiting.</p>
+<p><strong>Half-open (probing):</strong> After a configurable timeout, the breaker allows a limited number of test requests through. If they succeed, the circuit closes and normal operation resumes. If they fail, the circuit opens again and the timeout resets.</p>
+<p>Resilience4j (Java) and Polly (.NET) implement this pattern. The critical parameters to tune: failure rate threshold, minimum number of calls before evaluation (prevents tripping on the first failure), and the wait duration before half-open. Getting these wrong creates either a hair-trigger breaker that opens unnecessarily or an unresponsive one that fails to protect.</p>
+<h2 id=the-thundering-herd-problem>The Thundering Herd Problem</h2>
+<p>Here is the failure mode that circuit breakers create if mishandled: when the circuit closes (the downstream recovers), every caller whose circuit was open simultaneously starts sending real requests again. If there were 10,000 clients with open circuits, all 10,000 send requests at the same moment. The recovering service is immediately overwhelmed and fails again. The circuit re-opens. Wait. Try again. Same result.</p>
+<p>This is the thundering herd - the circuit breaker&rsquo;s paradox. The solution is retry jitter and staggered half-open probing. Instead of allowing all clients to probe simultaneously when the circuit half-opens, allow only a fraction (say, 5%) to send test requests. If those succeed, allow more. This gradual ramp prevents the re-overwhelm scenario.</p>
+<p>The same pattern appears in retry logic: immediate retries on failure from thousands of clients simultaneously replicate the original load spike on the recovering service. <strong>Exponential backoff with jitter</strong> - wait $\min(\text{cap}, \text{base} \times 2^{\text{attempt}}) \times \text{random}(0.5, 1.0)$ - spreads retries across a time window, giving the recovering service a gradual ramp rather than another spike.</p>
+<p>AWS SDKs implement this by default. If you&rsquo;re rolling your own retry logic and not adding jitter, you&rsquo;re building a thundering herd generator.</p>
+<h2 id=timeout-budgets>Timeout Budgets</h2>
+<p>The most commonly omitted fault-tolerance primitive. Without timeouts, a call to a slow service blocks a thread indefinitely - and eventually, all threads are blocked, the thread pool is exhausted, and the service stops accepting new requests.</p>
+<p>Every network call must have a timeout. Every single one.</p>
+<p>The right timeout is not arbitrary: it should be set relative to the caller&rsquo;s own deadline. If an API request has a 1-second user-facing SLA, and it makes three serial downstream calls, each timeout should be a fraction of that second - with margin for processing time. A 30-second timeout on a downstream call inside a 1-second SLA request is nonsensical: the downstream&rsquo;s timeout would never be hit; the upstream would time out to the user long before.</p>
+<p>This is the concept of <strong>timeout budgets</strong>: each layer of a service call chain allocates part of the budget to the downstream call and keeps the rest for local processing. gRPC&rsquo;s deadline propagation does this automatically - a deadline set on the outer RPC is propagated to all nested RPCs, and inner calls that would exceed the deadline fail fast.</p>
+<h2 id=chaos-engineering-deliberately-breaking-production>Chaos Engineering: Deliberately Breaking Production</h2>
+<p>Netflix moved to AWS in 2011 and faced a problem: how do you know if your fault-tolerance mechanisms actually work? The answer was counterintuitive. You break things on purpose, during business hours, while engineers are watching.</p>
+<p><strong>Chaos Monkey</strong> randomly terminates production EC2 instances. The premise: if instances are going to fail anyway (and they are, at 0.5%/day), it&rsquo;s better to discover weaknesses during working hours when engineers can respond than at 3am when the on-call is alone. The result of years of Chaos Monkey was an architecture that survived the 2011 AWS US-East outage far better than competitors who made the same cloud assumptions but hadn&rsquo;t stress-tested their recovery paths.</p>
+<p>Modern chaos engineering goes further. <strong>Netflix&rsquo;s FIT (Failure Injection Testing)</strong> injects failures at the service-call level - simulating a downstream service returning errors - to test whether circuit breakers, fallbacks, and degraded modes work as designed. <strong>AWS Fault Injection Simulator (FIS)</strong> is a managed service that injects EC2 terminations, network latency, disk errors, and more according to a structured experiment template. GCP has an equivalent through their reliability tooling.</p>
+<p>The discipline is: define steady-state metrics before the experiment (P99 latency, error rate, throughput), hypothesize that the system will maintain those metrics under a given failure, inject the failure, measure, and fix any deviations. Chaos engineering is not &ldquo;break things randomly.&rdquo; It&rsquo;s controlled hypothesis testing about your system&rsquo;s failure behavior.</p>
+<h2 id=graceful-degradation>Graceful Degradation</h2>
+<p>When a dependency fails, returning a degraded but useful response is almost always better than returning an error. A product page that shows cached inventory levels (&ldquo;in stock as of 5 minutes ago&rdquo;) is more valuable to the user than a 503. A search page that returns results without personalization is better than no search at all.</p>
+<p>Graceful degradation requires identifying which dependencies are on the critical path (the response is useless without them) and which are enhancement-only (the response is degraded but usable without them). Circuit breakers should be paired with fallback behaviors: return a cached value, return a default, or omit the dependent feature.</p>
+<p>The fallacy of distributed computing that most teams learn the hard way: &ldquo;the network is reliable.&rdquo; It&rsquo;s not. The network will partition, drop packets, reorder messages, and add latency. Systems that assume network reliability degrade catastrophically when reality intrudes. Systems that assume network unreliability degrade gracefully.</p>
+<h2 id=ebpf-and-the-future-of-failure-observation>eBPF and the Future of Failure Observation</h2>
+<p>eBPF (extended Berkeley Packet Filter) is a kernel-level technology that allows user-defined programs to run inside the Linux kernel - observing system calls, network traffic, and process behavior - without modifying kernel source code or running privileged programs.</p>
+<p>For fault tolerance, eBPF enables a category of observability that was previously impossible: detecting failure modes at the kernel level rather than the application level. A service that crashes silently, a TCP connection that gets stuck without the application noticing, network retransmissions that indicate upstream congestion - all observable via eBPF tools (Falco, Cilium, Pixie) without application instrumentation.</p>
+<p>SRE error budgets formalize fault tolerance as an organizational practice: if you have a 99.9% SLA, you have 8.7 hours of acceptable downtime per year. When you exceed that budget, you stop shipping features and fix reliability. When you&rsquo;re well within budget, you can take more risk with deployments. Error budgets make the fault-tolerance conversation explicit and quantified, rather than a perpetual tension between &ldquo;ship more&rdquo; and &ldquo;break less.&rdquo;</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key Insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Failure taxonomy</td>
+<td>Crash → omission → timing → Byzantine; most systems only handle crash</td>
+</tr>
+<tr>
+<td>FLP impossibility</td>
+<td>Can&rsquo;t distinguish slow from crashed; timeouts are the practical workaround</td>
+</tr>
+<tr>
+<td>Active-active vs active-passive</td>
+<td>Active-active: instant failover, higher cost. Active-passive: cheaper, recovery takes time</td>
+</tr>
+<tr>
+<td>AWS Multi-AZ vs Multi-Region</td>
+<td>Multi-AZ: 60–120s failover. Multi-Region: minutes; asynchronous replication</td>
+</tr>
+<tr>
+<td>Circuit breaker</td>
+<td>Three states: closed → open (fast fail) → half-open (probe); pair with fallback</td>
+</tr>
+<tr>
+<td>Thundering herd</td>
+<td>Circuit close + simultaneous retry = re-overwhelm; jitter prevents it</td>
+</tr>
+<tr>
+<td>Timeout budgets</td>
+<td>Set timeouts relative to the caller&rsquo;s deadline, not arbitrarily</td>
+</tr>
+<tr>
+<td>Chaos engineering</td>
+<td>Controlled failure injection during business hours; test recovery paths</td>
+</tr>
+<tr>
+<td>Graceful degradation</td>
+<td>Cached/partial response > error; identify critical vs enhancement dependencies</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/message-queues-event-driven/>Message Queues & Event-Driven Architecture</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

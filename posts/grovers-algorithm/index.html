@@ -1,0 +1,191 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Grover's Algorithm // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Grover's Algorithm">
+<meta name=twitter:description content="Prerequisites:
+ Complexity Classes Randomized Algorithms   Searching a sorted list of $n$ items takes $O(\log n)$ - binary search is one of the first algorithms you learn. Searching an unsorted list takes $O(n)$ - you have to look at each item in turn. No classical algorithm can do better; the lower bound is tight.
+In 1996, Lov Grover proved that a quantum computer can search an unsorted list of $n$ items in $O(\sqrt{n})$ time.">
+<meta property="og:title" content="Grover's Algorithm">
+<meta property="og:description" content="Prerequisites:
+ Complexity Classes Randomized Algorithms   Searching a sorted list of $n$ items takes $O(\log n)$ - binary search is one of the first algorithms you learn. Searching an unsorted list takes $O(n)$ - you have to look at each item in turn. No classical algorithm can do better; the lower bound is tight.
+In 1996, Lov Grover proved that a quantum computer can search an unsorted list of $n$ items in $O(\sqrt{n})$ time.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/grovers-algorithm/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00">
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Grover's Algorithm</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 3, 2021
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+5 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/complexity-classes/>Complexity Classes</a></li>
+<li><a href=/posts/randomized-algorithms/>Randomized Algorithms</a></li>
+</ul>
+<hr>
+<p>Searching a sorted list of $n$ items takes $O(\log n)$ - binary search is one of the first algorithms you learn. Searching an <em>unsorted</em> list takes $O(n)$ - you have to look at each item in turn. No classical algorithm can do better; the lower bound is tight.</p>
+<p>In 1996, Lov Grover proved that a quantum computer can search an unsorted list of $n$ items in $O(\sqrt{n})$ time. This is a provably quadratic speedup - the first quantum algorithm shown to be faster than the best <em>possible</em> classical algorithm. It won&rsquo;t break public-key encryption the way Shor&rsquo;s algorithm will, but it does halve the effective security of symmetric ciphers. That&rsquo;s why AES-256, not AES-128, is the post-quantum recommendation.</p>
+<hr>
+<h2 id=the-quantum-setting>The Quantum Setting</h2>
+<p>A quantum computer works with <strong>qubits</strong> - bits that can exist in a superposition of 0 and 1. An $n$-qubit register can be in a superposition of all $N = 2^n$ possible bit strings simultaneously. The state is a vector in a $2^n$-dimensional space, where each component is a complex amplitude.</p>
+<p>The catch: when you <strong>measure</strong> the register, the superposition collapses to a single state. You get one answer, sampled according to the squared magnitudes of the amplitudes. So you can&rsquo;t just &ldquo;look at all $N$ values at once&rdquo; - you&rsquo;d get one random one. The art of quantum algorithm design is arranging the amplitudes so that measurement almost certainly gives you the answer you want.</p>
+<p>Grover&rsquo;s algorithm does exactly this. It starts with equal amplitudes on all $N$ states and gradually amplifies the amplitude of the target state until measurement almost certainly returns it.</p>
+<hr>
+<h2 id=the-oracle>The Oracle</h2>
+<p>We&rsquo;re searching for an unknown $x^<em>$ satisfying some predicate $f(x^</em>) = 1$, where $f$ is a black box we can query. The quantum version of this black box is a <strong>phase oracle</strong>: a unitary operation $\mathcal{O}$ that flips the sign of the target state and leaves everything else alone.</p>
+<p>$$\mathcal{O}|x\rangle = \begin{cases} -|x\rangle & \text{if } f(x) = 1 \ |x\rangle & \text{otherwise} \end{cases}$$</p>
+<p>A sign flip might seem too subtle to be useful. But in a superposition, sign flips change how states interfere with each other - and interference is the mechanism Grover&rsquo;s algorithm exploits.</p>
+<hr>
+<h2 id=amplitude-amplification-the-geometric-picture>Amplitude Amplification: The Geometric Picture</h2>
+<p>Start by preparing the uniform superposition of all $N = 2^n$ states by applying the Hadamard transform to $n$ qubits starting from $|0\rangle$:</p>
+<p>$$|s\rangle = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} |x\rangle$$</p>
+<p>Every state has amplitude $1/\sqrt{N}$. The target state $|x^*\rangle$ has amplitude $1/\sqrt{N}$ - no more likely than any other.</p>
+<p>Now think geometrically. The state lives in a 2D plane spanned by two vectors:</p>
+<ul>
+<li>$|t\rangle = |x^*\rangle$ - the target</li>
+<li>$|\bar{t}\rangle$ - the uniform superposition over all non-target states</li>
+</ul>
+<p>The initial state $|s\rangle$ makes a small angle $\theta$ with $|\bar{t}\rangle$, where $\sin\theta = 1/\sqrt{N}$. For large $N$, this angle is tiny - $\theta \approx 1/\sqrt{N}$ radians.</p>
+<p>The goal: rotate $|s\rangle$ toward $|t\rangle$ until the angle with $|t\rangle$ is nearly zero. Then measuring gives the target with probability close to 1.</p>
+<p>The <strong>Grover iterate</strong> $G$ is two reflections in sequence:</p>
+<ol>
+<li><strong>Phase oracle $\mathcal{O}$</strong>: reflect the state about $|\bar{t}\rangle$. This flips the component along $|t\rangle$.</li>
+<li><strong>Diffusion operator</strong> $D = 2|s\rangle\langle s| - I$: reflect about $|s\rangle$.</li>
+</ol>
+<p>The composition of two reflections in a plane is a rotation. Each application of $G$ rotates the state vector by angle $2\theta$ toward $|t\rangle$:</p>
+<p>$$G^k|s\rangle = \cos!\big((2k+1)\theta\big)|\bar{t}\rangle + \sin!\big((2k+1)\theta\big)|t\rangle$$</p>
+<p>The amplitude of $|t\rangle$ grows with each iteration. After $k$ steps, the probability of measuring the target is $\sin^2((2k+1)\theta)$.</p>
+<hr>
+<h2 id=how-many-iterations>How Many Iterations?</h2>
+<p>We want $(2k+1)\theta \approx \pi/2$, so $k \approx \pi/(4\theta)$. Substituting $\theta \approx 1/\sqrt{N}$:</p>
+<p>$$k^* = \left\lfloor \frac{\pi}{4}\sqrt{N} \right\rfloor$$</p>
+<p>After $k^*$ iterations, the probability of measuring the target is $\geq 1 - 1/N$. The algorithm succeeds with near-certainty using $O(\sqrt{N})$ oracle queries.</p>
+<p>The diffusion operator $D$ can be implemented as:</p>
+<p>$$D = H^{\otimes n}(2|0\rangle\langle 0| - I)H^{\otimes n}$$</p>
+<p>The inner operation flips the phase of every state except $|0\rangle$; conjugating by Hadamards converts this to a reflection about $|s\rangle$. One Grover iteration uses $O(n)$ gates plus the oracle.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why can&rsquo;t you just do more iterations to get even closer to probability 1?</p>
+<p>Because the state keeps rotating. After the optimal number of iterations, you&rsquo;ve rotated $\approx \pi/2$ toward the target. More iterations rotate <em>past</em> the target - the probability starts decreasing. After $2k^*$ total iterations you&rsquo;ve overshot and are back near where you started. The algorithm is exactly tuned to stop at the right angle. This is fundamentally different from classical search, where more work always helps.</p>
+</blockquote>
+<hr>
+<h2 id=why-osqrtn-is-optimal>Why $O(\sqrt{N})$ Is Optimal</h2>
+<p>Grover&rsquo;s algorithm isn&rsquo;t just fast - it&rsquo;s optimal. The <strong>polynomial method</strong> proves that any quantum algorithm for unstructured search requires $\Omega(\sqrt{N})$ oracle queries. No quantum algorithm can do better than Grover&rsquo;s.</p>
+<p>The argument: any $T$-query quantum algorithm computes, for each output bit, a polynomial of degree at most $2T$ in the input bits. The OR function on $N$ bits (which solves search) requires degree $\Omega(\sqrt{N})$ to approximate over ${0,1}^N$. Therefore $T = \Omega(\sqrt{N})$.</p>
+<p>This lower bound is as important as the algorithm itself. It tells you: if you need to search, Grover&rsquo;s is the best quantum algorithm possible.</p>
+<hr>
+<h2 id=the-post-quantum-implication>The Post-Quantum Implication</h2>
+<p>Grover&rsquo;s algorithm directly attacks exhaustive key search for symmetric ciphers. AES-128 has a key space of $2^{128}$. Classically, brute-force search takes $2^{128}$ operations. With Grover&rsquo;s, it takes $\sqrt{2^{128}} = 2^{64}$ quantum operations.</p>
+<p>$2^{64}$ operations is within the range of a powerful attacker with quantum hardware. This isn&rsquo;t breaking AES-128 like Shor&rsquo;s breaks RSA - there&rsquo;s no algebraic shortcut - but it halves the effective security level.</p>
+<p>The fix is simple: use AES-256. Grover&rsquo;s reduces $2^{256}$ to $2^{128}$, which remains out of reach even for a quantum adversary. NIST&rsquo;s post-quantum guidance recommends 256-bit symmetric keys for exactly this reason.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Classical search</th>
+<th>Grover&rsquo;s algorithm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Query complexity</td>
+<td>$\Theta(N)$</td>
+<td>$\Theta(\sqrt{N})$</td>
+</tr>
+<tr>
+<td>Optimal?</td>
+<td>Yes</td>
+<td>Yes (quantum lower bound)</td>
+</tr>
+<tr>
+<td>Speedup type</td>
+<td>-</td>
+<td>Quadratic</td>
+</tr>
+<tr>
+<td>Works on</td>
+<td>Any list</td>
+<td>Any list (quantum oracle)</td>
+</tr>
+<tr>
+<td>Post-quantum impact</td>
+<td>-</td>
+<td>Halves symmetric key strength</td>
+</tr>
+<tr>
+<td>AES-128 security</td>
+<td>$2^{128}$ operations</td>
+<td>$2^{64}$ quantum operations</td>
+</tr>
+<tr>
+<td>AES-256 security</td>
+<td>$2^{256}$ operations</td>
+<td>$2^{128}$ quantum operations</td>
+</tr>
+</tbody>
+</table>
+<p>Grover&rsquo;s algorithm is the quantum analogue of the observation that randomized search can be amplified. But instead of running multiple trials and taking the best result, it uses quantum interference to rotate probability amplitude toward the target. The geometry is elegant: a rotation in a 2D plane, iterated $\sqrt{N}$ times, lands you at the answer.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/shors-algorithm/>Shor&rsquo;s Algorithm</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

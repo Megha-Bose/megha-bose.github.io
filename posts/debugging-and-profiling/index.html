@@ -1,0 +1,333 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Debugging and Profiling // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Debugging and Profiling">
+<meta name=twitter:description content="Prerequisite: Writing Clean, Testable Code
+ On September 9, 1947, Grace Hopper&rsquo;s team at Harvard found that a moth had flown into relay 70 of the Mark II computer and jammed it. They taped the moth into their logbook alongside the note &ldquo;First actual case of bug being found.&rdquo; The word &ldquo;bug&rdquo; to describe a defect had been in use since at least Thomas Edison, but the moth made it stick.">
+<meta property="og:title" content="Debugging and Profiling">
+<meta property="og:description" content="Prerequisite: Writing Clean, Testable Code
+ On September 9, 1947, Grace Hopper&rsquo;s team at Harvard found that a moth had flown into relay 70 of the Mark II computer and jammed it. They taped the moth into their logbook alongside the note &ldquo;First actual case of bug being found.&rdquo; The word &ldquo;bug&rdquo; to describe a defect had been in use since at least Thomas Edison, but the moth made it stick.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/debugging-and-profiling/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Debugging and Profiling</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+13 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/writing-clean-testable-code/>Writing Clean, Testable Code</a></p>
+<hr>
+<p>On September 9, 1947, Grace Hopper&rsquo;s team at Harvard found that a moth had flown into relay 70 of the Mark II computer and jammed it. They taped the moth into their logbook alongside the note &ldquo;First actual case of bug being found.&rdquo; The word &ldquo;bug&rdquo; to describe a defect had been in use since at least Thomas Edison, but the moth made it stick.</p>
+<p>What is striking about the story is not the moth. It is the logbook. Hopper&rsquo;s team had a systematic record - they documented the failure, the investigation, the cause, and the resolution. That methodical approach is what separates debugging as a craft from debugging as flailing. The moth was found because they were looking for it in the right way, with the right records.</p>
+<p>Seventy-five years later, the gap between mental model and machine reality is still the source of almost every bug. You believe the code does one thing. The code does something else. Debugging is the process of discovering the discrepancy and collapsing it.</p>
+<h2 id=the-history-of-looking-at-running-programs>The History of Looking at Running Programs</h2>
+<p>For most of computing&rsquo;s early history, debugging meant staring at printouts. Programs ran in batch mode - you submitted your punch cards, the machine ran, and you got output. If it was wrong, you read the printout and thought.</p>
+<p><strong>Printf debugging</strong> is the oldest interactive debugging technique: insert print statements, run the program, read the output, repeat. It works. Grace Hopper&rsquo;s generation used it. Programmers in 2024 still use it because sometimes it is the fastest path to the answer.</p>
+<p><strong>Interactive debuggers</strong> arrived in the 1960s. DDT (Dynamic Debugging Technique) for the DEC PDP systems let programmers pause execution, inspect registers, and step through instructions. By the 1980s, gdb had become the standard for C programming - attach to a running process, set breakpoints, inspect memory. The concept has not changed in forty years; the interface has become significantly more comfortable.</p>
+<p><strong>IDE debuggers</strong> in the 1990s and 2000s put a graphical face on the same operations. Click a line number to set a breakpoint. Hover over a variable to see its value. Step through code with arrow keys. VS Code and PyCharm do this today; under the hood, they are driving the same mechanisms as gdb.</p>
+<p><strong>Time-travel debugging</strong> is newer and remarkable. Tools like Mozilla&rsquo;s <code>rr</code> and Visual Studio&rsquo;s IntelliTrace record a complete execution history and allow you to run the program <em>backwards</em> - step backwards through code, inspect the state at any past moment. This is transformative for bugs that are hard to reproduce, or bugs where you know what the final wrong state is but need to find where it came from. <code>rr</code> is currently Linux-only; it works by recording all non-determinism (thread interleaving, system calls) and replaying it deterministically.</p>
+<h2 id=the-debugging-mindset-the-scientific-method-in-code>The Debugging Mindset: The Scientific Method in Code</h2>
+<p>Good debugging is not intuition, it is methodology. The structure that works:</p>
+<p><strong>1. Reproduce it.</strong> A bug you cannot reproduce consistently is a bug you cannot fix reliably. Before anything else, find the minimal input that triggers the problem every time. Flaky bugs that only sometimes appear are usually caused by race conditions, external state, or timing - which is important information.</p>
+<p><strong>2. Observe precisely.</strong> What exactly happens versus what do you expect to happen? &ldquo;It&rsquo;s broken&rdquo; is not useful. &ldquo;The function returns -1 when given an empty list, but I expected it to return 0&rdquo; is a precise, actionable observation.</p>
+<p><strong>3. Hypothesize.</strong> Form a specific, testable hypothesis about the cause. Not &ldquo;something is wrong with the database&rdquo; but &ldquo;the database query returns null when the user has no orders, and the code does not handle that case.&rdquo;</p>
+<p><strong>4. Test the hypothesis.</strong> Design the smallest possible intervention that would confirm or refute it. Add a print statement, run a specific test case, check a variable&rsquo;s value at a specific point. Do not make multiple changes at once - you will not know which one fixed it.</p>
+<p><strong>5. Update and repeat.</strong> If your hypothesis was wrong, you have learned something. The search space has narrowed. Form a new hypothesis. This is not failure - this is science.</p>
+<p>The most common debugging mistake is jumping to step 4 (trying a fix) before completing step 3 (understanding the cause). A guess that happens to work leaves you not knowing why, which means the same bug, or a cousin of it, comes back. A fix that follows from understanding is durable.</p>
+<h2 id=reading-tracebacks-bottom-up-not-top-down>Reading Tracebacks: Bottom Up, Not Top Down</h2>
+<p>Python&rsquo;s tracebacks feel overwhelming at first glance. The instinct is to read from the top. Wrong - read from the bottom.</p>
+<p>The last line tells you what happened: the exception type and its message. The lines above show the call chain that led there. The frame immediately above the bottom is almost always where your code did something wrong.</p>
+<pre tabindex=0><code>Traceback (most recent call last):
+  File &quot;main.py&quot;, line 10, in &lt;module&gt;
+    result = process(data)
+  File &quot;main.py&quot;, line 5, in process
+    return data[&quot;key&quot;] * 2
+KeyError: 'key'
+</code></pre><p>Bottom up: <code>KeyError: 'key'</code> - a key access failed. The line above: <code>data["key"]</code> in the function <code>process</code>. That is your culprit. The question is then: why doesn&rsquo;t <code>data</code> have <code>"key"</code>? Is <code>data</code> the wrong object? Did someone forget to set it? Was it deleted? The traceback tells you where; understanding the data flow tells you why.</p>
+<p>Common Python exceptions and what they actually mean:</p>
+<ul>
+<li><strong><code>KeyError</code></strong>: dict access with a missing key. Usually means the data arriving at that point doesn&rsquo;t have the shape you expected.</li>
+<li><strong><code>AttributeError: 'NoneType' object has no attribute 'X'</code></strong>: you called <code>.X</code> on <code>None</code>. A function somewhere returned <code>None</code> when you expected an object. Hunt the function that should have returned something.</li>
+<li><strong><code>TypeError: unsupported operand type(s)</code></strong>: you applied an operation to the wrong type. Often <code>str</code> where <code>int</code> was expected, or <code>None</code> where a number was expected.</li>
+<li><strong><code>IndexError</code></strong>: list access out of bounds. An off-by-one error, or processing a shorter list than assumed.</li>
+<li><strong><code>RecursionError</code></strong>: your recursive function has no base case, or the input is large enough to exhaust the call stack.</li>
+</ul>
+<h2 id=the-python-debugger-pdb>The Python Debugger: pdb</h2>
+<p><code>print()</code> debugging is fine. But when you are doing multiple rounds of print-run-read-repeat, a proper debugger is dramatically faster. Python ships with <code>pdb</code>.</p>
+<p>The entry point since Python 3.7:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>process</span>(items):
+    total <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>
+    <span style=color:#66d9ef>for</span> item <span style=color:#f92672>in</span> items:
+        breakpoint()    <span style=color:#75715e># execution pauses here; drops you into pdb</span>
+        total <span style=color:#f92672>+=</span> item
+    <span style=color:#66d9ef>return</span> total
+</code></pre></div><p>When execution hits <code>breakpoint()</code>, you get an interactive prompt. Key commands:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>n</code></td>
+<td>Next line (steps over function calls)</td>
+</tr>
+<tr>
+<td><code>s</code></td>
+<td>Step into a function call</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td>Continue to the next breakpoint</td>
+</tr>
+<tr>
+<td><code>p expr</code></td>
+<td>Print the value of an expression</td>
+</tr>
+<tr>
+<td><code>pp expr</code></td>
+<td>Pretty-print (useful for dicts and lists)</td>
+</tr>
+<tr>
+<td><code>l</code></td>
+<td>List source code around current line</td>
+</tr>
+<tr>
+<td><code>w</code></td>
+<td>Where am I - show the call stack</td>
+</tr>
+<tr>
+<td><code>b 42</code></td>
+<td>Set a breakpoint at line 42</td>
+</tr>
+<tr>
+<td><code>q</code></td>
+<td>Quit the debugger</td>
+</tr>
+</tbody>
+</table>
+<p>The power of the debugger over print statements is interactivity: you can inspect arbitrary expressions, navigate up and down the call stack, set breakpoints conditionally, and modify variables at runtime to test hypotheses without restarting the program.</p>
+<p>VS Code and PyCharm wrap <code>pdb</code> in a graphical interface. The underlying mechanism is identical - they are calling the same Python debug API. If you understand <code>pdb</code>, you understand what the GUI is doing.</p>
+<p><strong>When to use print debugging vs a proper debugger:</strong> print debugging is faster for simple &ldquo;what value does X have here&rdquo; questions. The debugger shines for complex control flow - loops with many iterations, code paths that branch in non-obvious ways, or bugs that involve the interaction of several functions. If you have added more than three print statements and still have not found the bug, open the debugger.</p>
+<h2 id=binary-search-on-hypotheses>Binary Search on Hypotheses</h2>
+<p>When you have no idea where a bug is, the fastest approach is binary elimination. Does the bug occur at point A? Does it occur at point B (halfway through the code)? If yes, it is in the second half; now bisect that half. If no, it is in the first half.</p>
+<p>This is literally the <code>git bisect</code> command for commit-level bugs: you tell git &ldquo;this commit is good, this commit is bad,&rdquo; and it binary-searches through the commit history to find the exact commit that introduced the regression. For any codebase with a test that reliably detects the bug, <code>git bisect run pytest test_specific.py</code> will find the culprit commit automatically.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>git bisect start
+git bisect bad HEAD           <span style=color:#75715e># current commit is broken</span>
+git bisect good v1.2.0        <span style=color:#75715e># this release was fine</span>
+git bisect run pytest tests/test_regression.py   <span style=color:#75715e># automated search</span>
+</code></pre></div><p>The same bisection instinct applies within a single function: add an assertion in the middle. If it fails, the bug is before that point. If it passes, the bug is after. Bisect until you have isolated a single expression.</p>
+<h2 id=rubber-duck-debugging-why-it-actually-works>Rubber Duck Debugging: Why It Actually Works</h2>
+<p>There is a technique - often laughed at, consistently effective - called rubber duck debugging. You explain your code, line by line, to a rubber duck (or a colleague, or a houseplant). The explanation process itself frequently reveals the bug.</p>
+<p>This is not magic, and the duck is not helping. What happens is that explaining code forces you to externalize your mental model and compare it, step by step, to what the code actually does. Most bugs exist because your mental model drifts from reality. When you read your own code silently, your brain fills in gaps with what you believe should be there. When you narrate it explicitly - &ldquo;and then I take the index and add one, because&mldr;&rdquo; - you are forced to confront whether that &ldquo;because&rdquo; is actually true.</p>
+<p>Practically: if you have been staring at a bug for more than 30 minutes, stop and explain the relevant code to someone else (or a rubber duck, or write it out in a comment). The act of narrating often short-circuits the mental model that is hiding the bug.</p>
+<h2 id=common-bug-patterns>Common Bug Patterns</h2>
+<p><strong>Off-by-one errors.</strong> The most frequent bug in code that handles sequences. Usually involves <code>&lt;</code> vs <code>&lt;=</code>, zero-indexing confusion, or loop bounds. When something works for n elements but fails for n+1, or works in general but fails on the first or last element, look for an off-by-one.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Bug: should be range(len(arr) - 1)</span>
+<span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(len(arr)):
+    <span style=color:#66d9ef>if</span> arr[i] <span style=color:#f92672>&gt;</span> arr[i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>]:   <span style=color:#75715e># IndexError on last iteration</span>
+        arr[i], arr[i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>] <span style=color:#f92672>=</span> arr[i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>], arr[i]
+</code></pre></div><p><strong>Mutable default arguments.</strong> Python evaluates default arguments once, at function definition time, not each call.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Bug: all calls share the same list</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>append_to</span>(item, result<span style=color:#f92672>=</span>[]):
+    result<span style=color:#f92672>.</span>append(item)
+    <span style=color:#66d9ef>return</span> result
+
+append_to(<span style=color:#ae81ff>1</span>)    <span style=color:#75715e># [1]</span>
+append_to(<span style=color:#ae81ff>2</span>)    <span style=color:#75715e># [1, 2] - the list persisted!</span>
+
+<span style=color:#75715e># Fix: use None as sentinel</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>append_to</span>(item, result<span style=color:#f92672>=</span><span style=color:#66d9ef>None</span>):
+    <span style=color:#66d9ef>if</span> result <span style=color:#f92672>is</span> <span style=color:#66d9ef>None</span>:
+        result <span style=color:#f92672>=</span> []
+    result<span style=color:#f92672>.</span>append(item)
+    <span style=color:#66d9ef>return</span> result
+</code></pre></div><p><strong>Reference vs copy.</strong> Assigning a list does not copy it.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>a <span style=color:#f92672>=</span> [<span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>2</span>, <span style=color:#ae81ff>3</span>]
+b <span style=color:#f92672>=</span> a          <span style=color:#75715e># b is a reference to the same list</span>
+b<span style=color:#f92672>.</span>append(<span style=color:#ae81ff>4</span>)
+print(a)       <span style=color:#75715e># [1, 2, 3, 4] - a was modified!</span>
+
+b <span style=color:#f92672>=</span> a[:]       <span style=color:#75715e># shallow copy</span>
+b <span style=color:#f92672>=</span> a<span style=color:#f92672>.</span>copy()   <span style=color:#75715e># also shallow copy</span>
+<span style=color:#f92672>import</span> copy; b <span style=color:#f92672>=</span> copy<span style=color:#f92672>.</span>deepcopy(a)   <span style=color:#75715e># deep copy (nested structures)</span>
+</code></pre></div><p><strong>Mutation during iteration.</strong> Modifying a list while iterating over it produces undefined behavior - skipped elements, exceptions, or infinite loops.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Bug: modifying the list you&#39;re iterating</span>
+items <span style=color:#f92672>=</span> [<span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>2</span>, <span style=color:#ae81ff>3</span>, <span style=color:#ae81ff>4</span>, <span style=color:#ae81ff>5</span>]
+<span style=color:#66d9ef>for</span> item <span style=color:#f92672>in</span> items:
+    <span style=color:#66d9ef>if</span> item <span style=color:#f92672>%</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>:
+        items<span style=color:#f92672>.</span>remove(item)   <span style=color:#75715e># skips elements!</span>
+
+<span style=color:#75715e># Fix: iterate over a copy</span>
+<span style=color:#66d9ef>for</span> item <span style=color:#f92672>in</span> items[:]:
+    <span style=color:#66d9ef>if</span> item <span style=color:#f92672>%</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>:
+        items<span style=color:#f92672>.</span>remove(item)
+
+<span style=color:#75715e># Or, more Pythonically:</span>
+items <span style=color:#f92672>=</span> [item <span style=color:#66d9ef>for</span> item <span style=color:#f92672>in</span> items <span style=color:#66d9ef>if</span> item <span style=color:#f92672>%</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>]
+</code></pre></div><h2 id=profiling-measure-before-you-optimize>Profiling: Measure Before You Optimize</h2>
+<p>&ldquo;Premature optimization is the root of all evil.&rdquo; Knuth wrote that in 1974, and programmers still need to hear it. The reason is not that optimization is bad - it is that optimization applied to the wrong part of the code is wasted effort at best and a source of new bugs at worst.</p>
+<p>The 80/20 rule applies to performance: 80% of execution time is typically spent in 20% of the code. Your job is to find that 20% and optimize only there. Without measurement, you are guessing, and programmers are reliably bad at guessing where their code spends time.</p>
+<p><strong>cProfile</strong> is Python&rsquo;s built-in profiler. It instruments every function call and reports cumulative time, per-call time, and call counts:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> cProfile
+<span style=color:#f92672>import</span> pstats
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>slow_function</span>(n):
+    <span style=color:#66d9ef>return</span> sum(i <span style=color:#f92672>*</span> i <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(n))
+
+<span style=color:#66d9ef>with</span> cProfile<span style=color:#f92672>.</span>Profile() <span style=color:#66d9ef>as</span> pr:
+    slow_function(<span style=color:#ae81ff>1_000_000</span>)
+
+stats <span style=color:#f92672>=</span> pstats<span style=color:#f92672>.</span>Stats(pr)
+stats<span style=color:#f92672>.</span>sort_stats(<span style=color:#e6db74>&#34;cumulative&#34;</span>)
+stats<span style=color:#f92672>.</span>print_stats(<span style=color:#ae81ff>10</span>)   <span style=color:#75715e># top 10 by cumulative time</span>
+</code></pre></div><p>Or without modifying your code:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>python -m cProfile -s cumtime my_script.py
+</code></pre></div><p>The output tells you which function consumed the most total time. Start there.</p>
+<p><strong>line_profiler</strong> goes one level deeper: it shows time per individual line within a function. Install with <code>pip install line-profiler</code>. Decorate the function you care about with <code>@profile</code> and run <code>kernprof -l -v script.py</code>.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#a6e22e>@profile</span>   <span style=color:#75715e># only needed when running with kernprof</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>process_data</span>(items):
+    result <span style=color:#f92672>=</span> []
+    <span style=color:#66d9ef>for</span> item <span style=color:#f92672>in</span> items:
+        result<span style=color:#f92672>.</span>append(item <span style=color:#f92672>*</span> <span style=color:#ae81ff>2</span>)   <span style=color:#75715e># this line: X% of time</span>
+    <span style=color:#66d9ef>return</span> result
+</code></pre></div><p><strong>memory_profiler</strong> tracks memory usage per line - useful when you have a memory leak or unexpectedly high memory consumption. <code>pip install memory-profiler</code>, same <code>@profile</code> decorator, run with <code>python -m memory_profiler script.py</code>.</p>
+<p><strong>The workflow:</strong> profile first with <code>cProfile</code> to find the slow function. Profile that function with <code>line_profiler</code> to find the slow line. Optimize only that line. Re-profile to confirm improvement.</p>
+<h2 id=observability-in-production>Observability in Production</h2>
+<p>The techniques above work in development where you can run the code interactively. Production systems are different: you cannot attach a debugger to a live server serving real traffic. Instead, you need the system to tell you what is happening through logs, metrics, and traces.</p>
+<p><strong>Structured logging</strong> is print-debugging at scale. Instead of free-form strings, log machine-readable JSON with consistent fields. This makes logs searchable and aggregatable across millions of requests.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> logging
+<span style=color:#f92672>import</span> json
+
+logging<span style=color:#f92672>.</span>basicConfig(level<span style=color:#f92672>=</span>logging<span style=color:#f92672>.</span>INFO)
+logger <span style=color:#f92672>=</span> logging<span style=color:#f92672>.</span>getLogger(__name__)
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>process_order</span>(order_id: str, user_id: str):
+    logger<span style=color:#f92672>.</span>info(json<span style=color:#f92672>.</span>dumps({
+        <span style=color:#e6db74>&#34;event&#34;</span>: <span style=color:#e6db74>&#34;order_processing_started&#34;</span>,
+        <span style=color:#e6db74>&#34;order_id&#34;</span>: order_id,
+        <span style=color:#e6db74>&#34;user_id&#34;</span>: user_id,
+    }))
+    <span style=color:#75715e># ... processing ...</span>
+    logger<span style=color:#f92672>.</span>info(json<span style=color:#f92672>.</span>dumps({
+        <span style=color:#e6db74>&#34;event&#34;</span>: <span style=color:#e6db74>&#34;order_processing_complete&#34;</span>,
+        <span style=color:#e6db74>&#34;order_id&#34;</span>: order_id,
+        <span style=color:#e6db74>&#34;duration_ms&#34;</span>: <span style=color:#ae81ff>42</span>,
+    }))
+</code></pre></div><p><strong>Distributed tracing</strong> (OpenTelemetry, Jaeger, Zipkin) extends this to systems composed of many microservices. A single user request might touch ten services; distributed tracing assigns a trace ID to the request and propagates it, so you can reconstruct the full path a request took and see where time was spent or where errors occurred. This is the production equivalent of a call stack trace.</p>
+<p><strong>The critique of over-relying on the debugger:</strong> pausing a debugger is a manual, one-request-at-a-time operation. A production bug that only occurs 0.1% of the time cannot be caught with a debugger - it requires instrumentation built into the system. Systems that are observable by design (with good logging, metrics, and tracing) are easier to debug in production than systems that are only debuggable in development with an attached debugger. The best debugging happens before deployment, through tests; the second best is observability; the debugger is the last resort.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Technique</th>
+<th>Best For</th>
+<th>Limitations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>print()</code> debugging</td>
+<td>Quick, simple &ldquo;what value is here?&rdquo;</td>
+<td>No persistence, hard to disable, verbose at scale</td>
+</tr>
+<tr>
+<td><code>pdb</code> / breakpoint</td>
+<td>Complex control flow, interactive exploration</td>
+<td>Requires running locally, one request at a time</td>
+</tr>
+<tr>
+<td><code>cProfile</code></td>
+<td>Finding the slow function</td>
+<td>Function granularity only</td>
+</tr>
+<tr>
+<td><code>line_profiler</code></td>
+<td>Finding the slow line within a function</td>
+<td>Requires installing extra package</td>
+</tr>
+<tr>
+<td>Structured logging</td>
+<td>Production debugging, audit trails</td>
+<td>Must be designed in advance</td>
+</tr>
+<tr>
+<td>Distributed tracing</td>
+<td>Debugging across multiple services</td>
+<td>Operational overhead to set up</td>
+</tr>
+<tr>
+<td><code>git bisect</code></td>
+<td>Finding which commit introduced a regression</td>
+<td>Requires a reliable reproducing test</td>
+</tr>
+<tr>
+<td>Time-travel debugging (<code>rr</code>)</td>
+<td>Bugs that are hard to reproduce</td>
+<td>Linux only, high recording overhead</td>
+</tr>
+</tbody>
+</table>
+<p>Debugging is a skill that sharpens through practice. The tools are learnable in an afternoon. The discipline - form hypotheses, test them precisely, measure before optimizing, build systems that are observable by design - takes longer and pays dividends throughout a career.</p>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/writing-clean-testable-code/>Writing Clean, Testable Code</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

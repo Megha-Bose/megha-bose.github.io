@@ -1,0 +1,284 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>KV Caching & LLM Inference // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="KV Caching & LLM Inference">
+<meta name=twitter:description content="Prerequisites:
+ Transformers from First Principles Efficient Transformers   Generating 1000 tokens with a 7B parameter transformer naively requires 1000 separate forward passes, each processing the full sequence of up to 1000 tokens. That&rsquo;s up to 500 million token-computations - processing each of the 1000 tokens up to 1000 times - to produce 1000 output tokens.
+KV caching reduces this to roughly 7 million token-computations. A 70× speedup.
+For anyone deploying language models at scale, understanding where this gain comes from - and where it goes away - is not optional.">
+<meta property="og:title" content="KV Caching & LLM Inference">
+<meta property="og:description" content="Prerequisites:
+ Transformers from First Principles Efficient Transformers   Generating 1000 tokens with a 7B parameter transformer naively requires 1000 separate forward passes, each processing the full sequence of up to 1000 tokens. That&rsquo;s up to 500 million token-computations - processing each of the 1000 tokens up to 1000 times - to produce 1000 output tokens.
+KV caching reduces this to roughly 7 million token-computations. A 70× speedup.
+For anyone deploying language models at scale, understanding where this gain comes from - and where it goes away - is not optional.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/kv-caching-llm-inference/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>KV Caching & LLM Inference</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/transformers-from-first-principles/>Transformers from First Principles</a></li>
+<li><a href=/posts/efficient-transformers/>Efficient Transformers</a></li>
+</ul>
+<hr>
+<p>Generating 1000 tokens with a 7B parameter transformer naively requires 1000 separate forward passes, each processing the full sequence of up to 1000 tokens. That&rsquo;s up to 500 million token-computations - processing each of the 1000 tokens up to 1000 times - to produce 1000 output tokens.</p>
+<p>KV caching reduces this to roughly 7 million token-computations. A 70× speedup.</p>
+<p>For anyone deploying language models at scale, understanding where this gain comes from - and where it goes away - is not optional. It determines latency, throughput, and cost.</p>
+<hr>
+<h2 id=autoregressive-generation>Autoregressive Generation</h2>
+<p>Transformers generate text one token at a time. To produce token $t$, the model takes the full sequence of previous tokens as input and outputs a probability distribution over the vocabulary. You sample from this distribution, append the token, and repeat.</p>
+<p>Formally: let $x_1, x_2, \ldots, x_T$ be the generated sequence. At step $t$, the model computes:</p>
+<p>$$P(x_t \mid x_1, \ldots, x_{t-1})$$</p>
+<p>and samples $x_t$ from it. Then at step $t+1$, it recomputes using $x_1, \ldots, x_t$.</p>
+<p><strong>The naive approach:</strong> feed the entire sequence seen so far through the transformer at every step. At step $t$, you run a forward pass on a sequence of length $t-1$. The cost of a transformer forward pass on sequence length $n$ is $O(n^2)$ (due to attention). Summing over $T$ steps:</p>
+<p>$$\text{Total cost} \approx \sum_{t=1}^{T} O(t^2) = O(T^3).$$</p>
+<p>For $T = 1000$ tokens, that&rsquo;s a billion operations. For $T = 100{,}000$ tokens (long context), it&rsquo;s a quintillion. Completely impractical.</p>
+<hr>
+<h2 id=the-redundancy-in-attention>The Redundancy in Attention</h2>
+<p>Let&rsquo;s look more carefully at what the transformer computes during attention.</p>
+<p>At each attention layer, for a sequence of length $n$, the model computes:</p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}!\left(\frac{QK^T}{\sqrt{d_k}}\right)V.$$</p>
+<p>Here $Q, K, V \in \mathbb{R}^{n \times d}$ are the query, key, and value matrices - linear projections of the token embeddings.</p>
+<p>Now suppose we&rsquo;ve already processed tokens $1, \ldots, t-1$ and we&rsquo;re adding token $t$. We need the new attention output for position $t$ only (we&rsquo;re doing causal/autoregressive generation, so position $t$ can only attend to positions $1, \ldots, t$).</p>
+<p>The query at position $t$ is $q_t \in \mathbb{R}^d$. The attention output at position $t$ is:</p>
+<p>$$o_t = \sum_{i=1}^{t} \alpha_{ti},v_i, \quad \text{where } \alpha_{ti} = \text{softmax}!\left(\frac{q_t \cdot k_i}{\sqrt{d_k}}\right).$$</p>
+<p>To compute this, we need:</p>
+<ul>
+<li>$q_t$: the query for the new token. Fresh computation.</li>
+<li>$k_i$ for $i = 1, \ldots, t$: the keys for all previous tokens plus the new one.</li>
+<li>$v_i$ for $i = 1, \ldots, t$: the values for all previous tokens plus the new one.</li>
+</ul>
+<p>Here&rsquo;s the critical observation: the keys and values for positions $1, \ldots, t-1$ were already computed at step $t-1$. They haven&rsquo;t changed. The attention mask is causal, so earlier tokens don&rsquo;t depend on later ones - the keys and values for position $i$ depend only on $x_1, \ldots, x_i$. Adding $x_t$ doesn&rsquo;t change any of them.</p>
+<p>We can cache them.</p>
+<hr>
+<h2 id=the-kv-cache>The KV Cache</h2>
+<p>The <strong>KV cache</strong> stores the key and value matrices for all previously processed tokens. At each new step, we:</p>
+<ol>
+<li>Compute only $Q$, $K$, $V$ for the new token (a single row, not the full matrix).</li>
+<li>Append the new $k_t$ and $v_t$ to the cache.</li>
+<li>Compute attention for the new token using the full cached key and value sequences.</li>
+</ol>
+<p>Instead of an $O(t^2)$ forward pass at each step, we do an $O(t)$ computation (attending over $t$ cached keys/values). Total cost over $T$ steps:</p>
+<p>$$\sum_{t=1}^{T} O(t) = O(T^2).$$</p>
+<p>Still quadratic in $T$, but now the constant is much smaller - and the practical speedup is enormous. For $T = 1000$ tokens, naive is $O(T^3) = 10^9$; with KV cache it&rsquo;s $O(T^2) = 10^6$. A 1000× improvement.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> &ldquo;With KV caching, inference is $O(n)$ not $O(n^2)$, right?&rdquo; Not exactly. The computation per new token is $O(n)$ (you attend over $n$ cached key-value pairs). But generating $T$ tokens with a prompt of length $P$ is $O((P + T) \cdot T)$ total - still quadratic in $T$. The gain is the constant: without caching, you&rsquo;d recompute all $P$ keys and values at each of the $T$ decode steps, costing $O(P \cdot T + T^2)$ just for the re-computation, on top of the inherent $O(T^2)$ cost. KV caching eliminates the re-computation.</p>
+</blockquote>
+<hr>
+<h2 id=memory-cost-of-the-kv-cache>Memory Cost of the KV Cache</h2>
+<p>The cache doesn&rsquo;t come free. You&rsquo;re trading compute for memory.</p>
+<p>For a model with $L$ transformer layers, $H$ attention heads, and head dimension $d_{\text{head}}$, the KV cache for $n$ tokens stores:</p>
+<p>$$\text{Memory} = 2 \times L \times H \times d_{\text{head}} \times n \times \text{bytes per element}.$$</p>
+<p>The factor of 2 is for both keys and values.</p>
+<p><strong>Concrete example: LLaMA-7B</strong> (32 layers, 32 heads, $d_{\text{head}} = 128$, FP16):</p>
+<p>$$\text{Memory per token} = 2 \times 32 \times 32 \times 128 \times 2 \text{ bytes} = 524{,}288 \text{ bytes} \approx 0.5 \text{ MB/token}.$$</p>
+<p>At different context lengths:</p>
+<table>
+<thead>
+<tr>
+<th>Context Length</th>
+<th>KV Cache Memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>512 tokens</td>
+<td>256 MB</td>
+</tr>
+<tr>
+<td>4096 tokens</td>
+<td>2 GB</td>
+</tr>
+<tr>
+<td>32768 tokens</td>
+<td>16 GB</td>
+</tr>
+<tr>
+<td>128000 tokens</td>
+<td>64 GB</td>
+</tr>
+</tbody>
+</table>
+<p>For a model with 128K context (like Llama 3.1), the KV cache alone can use 64 GB - nearly the entire capacity of an A100-80GB.</p>
+<p>Larger models are worse. LLaMA-70B (80 layers, 64 heads, $d_{\text{head}} = 128$, FP16) uses roughly $2 \times 80 \times 64 \times 128 \times 2 \approx 4.2$ MB per token. At 4096 tokens: 17 GB just for the cache.</p>
+<p>This is why KV cache memory management is a first-class concern in LLM inference infrastructure.</p>
+<hr>
+<h2 id=two-phases-of-llm-inference>Two Phases of LLM Inference</h2>
+<p>Running a language model in production involves two qualitatively different phases:</p>
+<p><strong>Prefill phase:</strong> process the input prompt. The full prompt (say, 500 tokens) is passed through the transformer in one parallel forward pass. All 500 KV pairs are computed and cached simultaneously. This is compute-bound: the GPU is doing lots of matrix multiplications in parallel.</p>
+<p><strong>Decode phase:</strong> generate new tokens one at a time, using the cached KVs. At each step, only one token&rsquo;s computation runs - but it needs to access the full cache. This is memory-bandwidth-bound: the dominant cost is reading the model weights and KV cache from GPU memory, not the computation itself.</p>
+<p>This distinction matters for hardware utilization:</p>
+<ul>
+<li>During prefill, GPU compute is fully utilized. A100: 312 TFLOPS. Fast.</li>
+<li>During decode, GPU compute is mostly idle. The bottleneck is the 2 TB/s memory bandwidth limit. You&rsquo;re reading ~14 GB of model weights (7B params × 2 bytes) and the growing KV cache per token generated.</li>
+</ul>
+<p>For a 7B model: reading 14 GB at 2 TB/s takes 7 ms. That&rsquo;s a ceiling of about 143 generated tokens per second - and that&rsquo;s before accounting for the KV cache reads, which add another few GB.</p>
+<hr>
+<h2 id=continuous-batching>Continuous Batching</h2>
+<p>The simplest way to serve multiple users is to form batches: group several requests together and process them in parallel. Batching lets the GPU amortize the weight reads across multiple sequences simultaneously, improving throughput.</p>
+<p>But requests have different lengths. A batch of 8 sequences might have 3 sequences that finish at step 50 and 5 that continue to step 200. With naive batching, you wait for the longest sequence before releasing any GPU slots - the 3 fast sequences sit idle for 150 steps.</p>
+<p><strong>Continuous batching</strong> (Orca, Yu et al., 2022): on every decode step, check if any sequence has finished generating. If so, immediately inject the next waiting request into the batch, filling the empty slot. The batch size stays constant; its membership changes dynamically.</p>
+<p>Result: GPU utilization improves dramatically. Sequences aren&rsquo;t waiting in a queue behind slower requests. Throughput improvements of 5–10× over naive batching are typical.</p>
+<hr>
+<h2 id=pagedattention-managing-kv-cache-memory>PagedAttention: Managing KV Cache Memory</h2>
+<p>Even with continuous batching, KV cache memory management is tricky.</p>
+<p>Each request needs a KV cache proportional to its maximum sequence length. But you don&rsquo;t know in advance how long a response will be. If you over-allocate (reserve memory for the maximum context length), you waste memory. If you under-allocate, the request may fail mid-generation.</p>
+<p>The standard solution before vLLM: pre-allocate a large contiguous block per request. This causes severe <strong>fragmentation</strong> - gaps of unused memory between allocations, similar to heap fragmentation in C programs. GPU memory utilization of 20–40% was common.</p>
+<p><strong>PagedAttention</strong> (vLLM, Kwon et al., 2023): inspired by OS virtual memory paging.</p>
+<p>Instead of one contiguous KV cache block per sequence, allocate KV cache in fixed-size <strong>pages</strong> (blocks), each holding the key-value pairs for $B$ tokens. Maintain a page table per sequence mapping logical positions to physical pages. Pages can be non-contiguous in GPU memory.</p>
+<p>When a sequence needs more KV cache space, allocate a new page - which can go anywhere in memory. When a sequence finishes, its pages are returned to a free pool.</p>
+<p>Benefits:</p>
+<ul>
+<li><strong>Near-zero fragmentation</strong>: the only wasted memory is at most one page per sequence (the last, partially filled page).</li>
+<li><strong>Memory utilization near 100%</strong>: across a batch of sequences, almost all KV memory is actively used.</li>
+<li><strong>Sharing</strong>: if multiple sequences share a prefix (common in instruction-tuned models where the system prompt is repeated), the shared prefix pages are stored once and referenced by all sequences. Copy-on-write semantics for the diverging parts.</li>
+</ul>
+<p>In practice, vLLM&rsquo;s PagedAttention enables 2–4× more concurrent requests for the same GPU memory budget, compared to prior approaches.</p>
+<hr>
+<h2 id=speculative-decoding>Speculative Decoding</h2>
+<p>The decode phase bottleneck - sequential token generation - seems fundamental to autoregressive models. But there&rsquo;s a clever trick.</p>
+<p><strong>Speculative decoding</strong> (Leviathan et al., 2023; Chen et al., 2023): use a small &ldquo;draft&rdquo; model to propose $k$ tokens speculatively, then verify all $k$ with the large target model in parallel.</p>
+<p>The procedure:</p>
+<ol>
+<li>The small draft model (e.g., 7B) auto-regressively generates $k$ token proposals $\hat{x}_1, \ldots, \hat{x}_k$ (cheap, fast).</li>
+<li>The large target model (e.g., 70B) processes all $k$ proposed tokens in a single forward pass (parallel, like prefill). It computes the probability of each proposed token.</li>
+<li>Accept or reject each proposal using a rejection sampling criterion that guarantees the accepted tokens follow the target model&rsquo;s distribution exactly (not an approximation).</li>
+<li>If all $k$ are accepted, you&rsquo;ve generated $k$ tokens with roughly one large model forward pass. If some are rejected, you&rsquo;ve still generated the accepted prefix.</li>
+</ol>
+<p>Expected tokens per large model forward pass: $k \cdot \alpha + 1$, where $\alpha$ is the acceptance rate. For draft/target model pairs with similar distributions, $\alpha \approx 0.7$–$0.9$, giving 4–8 tokens per large model call instead of 1.</p>
+<p>Speedup: 2–3× for typical use cases, with no change to output quality (the output distribution is mathematically identical to the target model&rsquo;s).</p>
+<hr>
+<h2 id=kv-cache-quantization>KV Cache Quantization</h2>
+<p>Recall the LLaMA-7B cache: 0.5 MB per token. At 4096 tokens, that&rsquo;s 2 GB in FP16. If you quantize the cached KV values to INT8 (1 byte instead of 2), the cache halves to 1 GB. INT4 cuts it to 0.5 GB.</p>
+<p><strong>KV cache quantization</strong> compresses the cached keys and values to lower precision. The quality impact is typically small - the attention mechanism is robust to quantization noise in the keys and values, especially compared to quantizing model weights. INT8 KV cache is nearly lossless on most benchmarks; INT4 shows slight degradation on demanding reasoning tasks.</p>
+<p>Combining KV cache quantization with PagedAttention: you can serve sequences 2–4× longer for the same GPU memory, or run 2–4× more concurrent sequences.</p>
+<hr>
+<h2 id=grouped-query-attention>Grouped-Query Attention</h2>
+<p>Standard multi-head attention (MHA) uses $H$ query heads, $H$ key heads, and $H$ value heads. The KV cache stores $H$ heads of keys and values per token.</p>
+<p><strong>Multi-Query Attention (MQA)</strong> (Shazeer, 2019): use one key head and one value head shared across all $H$ query heads. KV cache memory: $H$× smaller. Modest quality loss.</p>
+<p><strong>Grouped-Query Attention (GQA)</strong> (Ainslie et al., 2023): use $G$ key/value heads ($1 &lt; G &lt; H$) shared across groups of $H/G$ query heads. A middle ground between MHA and MQA.</p>
+<p>LLaMA-3, Mistral, and most recent models use GQA with $G = 8$ or $G = H/4$. This reduces KV cache by $4\times$ compared to MHA with minimal quality loss - a major reason modern models can handle longer contexts.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naive autoregressive</td>
+<td>Recompute full forward pass every step. Cost: $O(T^3)$</td>
+</tr>
+<tr>
+<td>KV cache</td>
+<td>Store K and V for all previous tokens. Cost: $O(T^2)$</td>
+</tr>
+<tr>
+<td>Cache memory</td>
+<td>$2 \times L \times H \times d_{\text{head}} \times n \times$ bytes</td>
+</tr>
+<tr>
+<td>LLaMA-7B cache</td>
+<td>$\approx 0.5$ MB per token in FP16</td>
+</tr>
+<tr>
+<td>Prefill phase</td>
+<td>Process full prompt in parallel; compute-bound</td>
+</tr>
+<tr>
+<td>Decode phase</td>
+<td>Generate one token at a time; memory-bandwidth-bound</td>
+</tr>
+<tr>
+<td>Continuous batching</td>
+<td>Dynamically swap finished sequences out; 5–10× throughput gain</td>
+</tr>
+<tr>
+<td>PagedAttention</td>
+<td>Page-table memory management for KV cache; near-100% memory utilization</td>
+</tr>
+<tr>
+<td>Speculative decoding</td>
+<td>Draft model proposes $k$ tokens; target verifies in parallel; 2–3× speedup</td>
+</tr>
+<tr>
+<td>KV quantization</td>
+<td>Compress cached KV to INT8/INT4; 2–4× memory reduction</td>
+</tr>
+<tr>
+<td>GQA</td>
+<td>Share KV heads across query head groups; 4× cache reduction, minimal quality loss</td>
+</tr>
+</tbody>
+</table>
+<p>Efficient LLM inference is a systems problem as much as a modeling problem. The KV cache is the central data structure - everything else (PagedAttention, continuous batching, quantization, GQA) is infrastructure for managing it at scale.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/building-sharded-transformers/>Building Sharded Transformers</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

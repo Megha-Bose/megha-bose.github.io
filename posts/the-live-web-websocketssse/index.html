@@ -1,0 +1,304 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>The Live Web: WebSockets & SSE // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="The Live Web: WebSockets & SSE">
+<meta name=twitter:description content="A live sports scoreboard ticks from 2-1 to 2-2 while you&rsquo;re watching. A ChatGPT response streams word by word as it&rsquo;s generated. A Figma canvas shows your teammate&rsquo;s cursor moving in real time. None of these involved you hitting refresh. The server decided to send you data, and your browser received it. How?
+The answer depends on which decade you&rsquo;re in. Each era of the live web invented a progressively less embarrassing hack, until we got the two clean solutions we use today.">
+<meta property="og:title" content="The Live Web: WebSockets & SSE">
+<meta property="og:description" content="A live sports scoreboard ticks from 2-1 to 2-2 while you&rsquo;re watching. A ChatGPT response streams word by word as it&rsquo;s generated. A Figma canvas shows your teammate&rsquo;s cursor moving in real time. None of these involved you hitting refresh. The server decided to send you data, and your browser received it. How?
+The answer depends on which decade you&rsquo;re in. Each era of the live web invented a progressively less embarrassing hack, until we got the two clean solutions we use today.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/the-live-web-websocketssse/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>The Live Web: WebSockets & SSE</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p>A live sports scoreboard ticks from 2-1 to 2-2 while you&rsquo;re watching. A ChatGPT response streams word by word as it&rsquo;s generated. A Figma canvas shows your teammate&rsquo;s cursor moving in real time. None of these involved you hitting refresh. The server decided to send you data, and your browser received it. How?</p>
+<p>The answer depends on which decade you&rsquo;re in. Each era of the live web invented a progressively less embarrassing hack, until we got the two clean solutions we use today.</p>
+<h2 id=the-problem-with-https-mental-model>The Problem with HTTP&rsquo;s Mental Model</h2>
+<p>HTTP was designed for documents. The model is request-response: you ask, the server answers, the connection closes. This works magnificently for loading a webpage. It fails immediately when you need the server to tell <em>you</em> something - when the server is the one with new information.</p>
+<p>The core constraint: in HTTP, the client must initiate every exchange. The server has no mechanism to reach out unprompted. Every real-time feature built on HTTP before 2011 was an attempt to fake server-initiated communication using client-initiated requests.</p>
+<h2 id=the-polling-era-necessary-and-terrible>The Polling Era: Necessary and Terrible</h2>
+<p><strong>Simple polling</strong>: every N seconds, the client sends a fresh HTTP request. &ldquo;Anything new?&rdquo; The server responds immediately: usually &ldquo;no,&rdquo; occasionally &ldquo;yes, here&rsquo;s the update.&rdquo; At one request per second across 50,000 concurrent users, that&rsquo;s 50,000 HTTP requests per second, the vast majority returning nothing useful. The application server burns CPU and connections processing empty responses. This is how early email clients worked - and why they felt slow.</p>
+<p><strong>Long-polling</strong> was the first genuine improvement. The client sends an HTTP request, but instead of responding immediately, the server <em>holds the connection open</em> until it has data to send. When something happens, the server responds. The client immediately opens a new long-poll request. This cuts down on empty responses but keeps server threads or file descriptors occupied for the duration of each hold. Under load, this becomes a resource exhaustion problem.</p>
+<p>COMET (coined around 2006) was the umbrella term for these techniques - streaming HTML, persistent XHR, multi-part responses. Browser vendors hadn&rsquo;t standardized anything, so implementations were fragile and browser-specific. It worked, but it was an infrastructure tax everyone paid to get a feature that felt like it should be native.</p>
+<h2 id=server-sent-events-the-underrated-solution>Server-Sent Events: The Underrated Solution</h2>
+<p>SSE (Server-Sent Events), standardized in the HTML5 spec in 2011, is the simplest possible server push mechanism. The client makes one normal HTTP request. The server responds with <code>Content-Type: text/event-stream</code>. The response never ends. The server writes newline-delimited text events down the open connection whenever it has something to say.</p>
+<p>The wire format is deliberately minimal:</p>
+<pre tabindex=0><code>id: 1
+event: score-update
+data: {&quot;home&quot;: 3, &quot;away&quot;: 2, &quot;minute&quot;: 67}
+
+id: 2
+event: score-update
+data: {&quot;home&quot;: 3, &quot;away&quot;: 3, &quot;minute&quot;: 89}
+
+</code></pre><p>Each event ends with a blank line. Fields: <code>data</code> (required), <code>event</code> (optional event type), <code>id</code> (for resumption), <code>retry</code> (reconnect delay in milliseconds). The browser&rsquo;s <code>EventSource</code> API handles all the plumbing:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-javascript data-lang=javascript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>source</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>EventSource</span>(<span style=color:#e6db74>&#39;/api/match/87654/live&#39;</span>);
+
+<span style=color:#a6e22e>source</span>.<span style=color:#a6e22e>addEventListener</span>(<span style=color:#e6db74>&#39;score-update&#39;</span>, (<span style=color:#a6e22e>event</span>) =&gt; {
+  <span style=color:#66d9ef>const</span> <span style=color:#a6e22e>payload</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>JSON</span>.<span style=color:#a6e22e>parse</span>(<span style=color:#a6e22e>event</span>.<span style=color:#a6e22e>data</span>);
+  <span style=color:#a6e22e>updateScoreboard</span>(<span style=color:#a6e22e>payload</span>);
+});
+
+<span style=color:#a6e22e>source</span>.<span style=color:#a6e22e>addEventListener</span>(<span style=color:#e6db74>&#39;match-end&#39;</span>, () =&gt; {
+  <span style=color:#a6e22e>source</span>.<span style=color:#a6e22e>close</span>();
+});
+
+<span style=color:#a6e22e>source</span>.<span style=color:#a6e22e>onerror</span> <span style=color:#f92672>=</span> (<span style=color:#a6e22e>err</span>) =&gt; {
+  <span style=color:#75715e>// EventSource reconnects automatically, sending Last-Event-ID
+</span><span style=color:#75715e></span>  <span style=color:#75715e>// so the server can replay missed events
+</span><span style=color:#75715e></span>};
+</code></pre></div><p>The automatic reconnection is one of SSE&rsquo;s best features - you get it for free without any client-side retry logic. When the connection drops, <code>EventSource</code> reconnects and sends a <code>Last-Event-ID</code> header with the last event ID it received. Your server can use this to replay events from that point, giving you guaranteed delivery without any extra infrastructure.</p>
+<p>SSE is unidirectional: server to client only. That&rsquo;s a constraint worth thinking about before dismissing it. A huge proportion of &ldquo;real-time&rdquo; features only need data to flow one way: live feeds, notifications, progress indicators, dashboards, streaming AI responses. ChatGPT&rsquo;s streaming output is SSE. GitHub Copilot&rsquo;s inline suggestions are SSE. Vercel&rsquo;s build log streaming is SSE.</p>
+<p>SSE is HTTP. It works through every proxy, CDN, and load balancer without special configuration. It uses HTTP/2&rsquo;s multiplexing naturally - multiple SSE streams on one connection. It&rsquo;s cacheable, compressible, and observable with standard HTTP tooling. These are enormous operational advantages that WebSockets doesn&rsquo;t share.</p>
+<h2 id=websockets-full-duplex-over-a-persistent-connection>WebSockets: Full-Duplex Over a Persistent Connection</h2>
+<p>WebSockets (RFC 6455, 2011) provide genuine bidirectional communication - both client and server can send frames at any time without waiting for the other. The connection begins as HTTP and then upgrades:</p>
+<pre tabindex=0><code>GET /chat HTTP/1.1
+Host: chat.example.com
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+</code></pre><p>The server responds with <code>101 Switching Protocols</code>. From this point, the connection speaks the WebSocket framing protocol rather than HTTP. Data travels in <strong>frames</strong>: small binary units carrying text, binary data, ping/pong heartbeats, or close signals.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-javascript data-lang=javascript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>ws</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>WebSocket</span>(<span style=color:#e6db74>&#39;wss://chat.example.com/rooms/general&#39;</span>);
+
+<span style=color:#a6e22e>ws</span>.<span style=color:#a6e22e>onopen</span> <span style=color:#f92672>=</span> () =&gt; {
+  <span style=color:#a6e22e>ws</span>.<span style=color:#a6e22e>send</span>(<span style=color:#a6e22e>JSON</span>.<span style=color:#a6e22e>stringify</span>({ <span style=color:#a6e22e>type</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#39;join&#39;</span>, <span style=color:#a6e22e>user</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#39;megha&#39;</span> }));
+};
+
+<span style=color:#a6e22e>ws</span>.<span style=color:#a6e22e>onmessage</span> <span style=color:#f92672>=</span> (<span style=color:#a6e22e>event</span>) =&gt; {
+  <span style=color:#66d9ef>const</span> <span style=color:#a6e22e>message</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>JSON</span>.<span style=color:#a6e22e>parse</span>(<span style=color:#a6e22e>event</span>.<span style=color:#a6e22e>data</span>);
+  <span style=color:#a6e22e>appendMessage</span>(<span style=color:#a6e22e>message</span>);
+};
+
+<span style=color:#a6e22e>ws</span>.<span style=color:#a6e22e>onclose</span> <span style=color:#f92672>=</span> (<span style=color:#a6e22e>event</span>) =&gt; {
+  <span style=color:#75715e>// event.code and event.reason explain why
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>if</span> (<span style=color:#a6e22e>event</span>.<span style=color:#a6e22e>code</span> <span style=color:#f92672>!==</span> <span style=color:#ae81ff>1000</span>) {  <span style=color:#75715e>// 1000 = normal closure
+</span><span style=color:#75715e></span>    <span style=color:#a6e22e>scheduleReconnect</span>();
+  }
+};
+</code></pre></div><p><code>ws://</code> is unencrypted. <code>wss://</code> is TLS-wrapped - always use <code>wss://</code> in production. Unlike SSE, WebSockets have no automatic reconnection. Your code must detect closure and re-establish the connection, implement exponential backoff, and handle the case where the server is temporarily unavailable.</p>
+<p>Binary frames are a meaningful advantage for certain workloads. Sending game state, audio/video data, or compressed payloads over WebSockets is more efficient than base64-encoding binary data into JSON for SSE.</p>
+<h2 id=the-connection-lifecycle-and-heartbeats>The Connection Lifecycle and Heartbeats</h2>
+<p>WebSocket connections are persistent by design, but networks are not. Firewalls and NAT devices drop idle connections after timeouts (typically 60–300 seconds). A WebSocket that sends no data for 2 minutes may find its connection silently dropped, with neither side knowing.</p>
+<p>The fix is application-level heartbeats. The WebSocket spec defines ping/pong frames for this purpose. The server sends a ping frame; the client must respond with a pong. If no pong is received within a timeout, the server closes the connection. This also surfaces dead clients - a user who closed their laptop mid-session - so the server can clean up the associated state.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># FastAPI WebSocket with heartbeat</span>
+<span style=color:#f92672>import</span> asyncio
+<span style=color:#f92672>from</span> fastapi <span style=color:#f92672>import</span> WebSocket
+
+<span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>heartbeat</span>(websocket: WebSocket):
+    <span style=color:#66d9ef>while</span> <span style=color:#66d9ef>True</span>:
+        <span style=color:#66d9ef>await</span> asyncio<span style=color:#f92672>.</span>sleep(<span style=color:#ae81ff>30</span>)
+        <span style=color:#66d9ef>try</span>:
+            <span style=color:#66d9ef>await</span> websocket<span style=color:#f92672>.</span>send_text(<span style=color:#e6db74>&#34;ping&#34;</span>)
+        <span style=color:#66d9ef>except</span> <span style=color:#a6e22e>Exception</span>:
+            <span style=color:#66d9ef>break</span>
+
+<span style=color:#a6e22e>@app</span><span style=color:#f92672>.</span>websocket(<span style=color:#e6db74>&#34;/ws&#34;</span>)
+<span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>websocket_endpoint</span>(websocket: WebSocket):
+    <span style=color:#66d9ef>await</span> websocket<span style=color:#f92672>.</span>accept()
+    heartbeat_task <span style=color:#f92672>=</span> asyncio<span style=color:#f92672>.</span>create_task(heartbeat(websocket))
+    <span style=color:#66d9ef>try</span>:
+        <span style=color:#66d9ef>while</span> <span style=color:#66d9ef>True</span>:
+            data <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> websocket<span style=color:#f92672>.</span>receive_text()
+            <span style=color:#66d9ef>await</span> handle_message(data, websocket)
+    <span style=color:#66d9ef>except</span> <span style=color:#a6e22e>Exception</span>:
+        <span style=color:#66d9ef>pass</span>
+    <span style=color:#66d9ef>finally</span>:
+        heartbeat_task<span style=color:#f92672>.</span>cancel()
+</code></pre></div><h2 id=the-stateful-problem-load-balancers-and-websockets>The Stateful Problem: Load Balancers and WebSockets</h2>
+<p>This is the most important architectural challenge with WebSockets, and the reason many teams reach for pub/sub infrastructure even before they need it.</p>
+<p>An HTTP request is stateless. Any server in a fleet can handle any request - round-robin load balancing works perfectly. A WebSocket connection is <em>stateful</em>. The connection persists on a specific server process, and state accumulates there: room membership, message history, user presence. When user A on server-1 sends a message that user B on server-2 needs to receive, server-1 has no way to reach B&rsquo;s connection directly.</p>
+<p><strong>Sticky sessions</strong> are the naive fix: configure the load balancer to route a given user to the same server every time (using a session cookie or IP hash). This works until a server dies - all its connections are dropped and clients must reconnect, potentially to different servers. It also causes uneven load distribution: if a particular server got unlucky and has more active connections, it stays overloaded.</p>
+<p><strong>Pub/Sub backend</strong> is the proper solution. Each server process subscribes to a shared message bus (Redis Pub/Sub, Kafka). When server-1 needs to deliver a message to all users in a chat room, it publishes the message to the room&rsquo;s channel. Every server subscribed to that channel delivers it to their locally connected clients in that room.</p>
+<pre tabindex=0><code>User A (server-1) → sends message
+Server-1 → PUBLISH room:general &quot;{message}&quot;
+Redis → fans out to all subscribers
+Server-1 → delivers to A's other connections in room
+Server-2 → delivers to B
+Server-3 → delivers to C, D
+</code></pre><p>This is how Slack and Discord operate at scale. The individual WebSocket servers are stateless with respect to message routing - they just need to know which local connections are in which rooms.</p>
+<h2 id=real-systems-slack-discord-chatgpt>Real Systems: Slack, Discord, ChatGPT</h2>
+<p><strong>Slack</strong> uses WebSockets for real-time message delivery. The desktop client maintains a persistent WebSocket connection to a Slack gateway server. When you send a message, it goes over the WebSocket. When someone else sends a message to a channel you&rsquo;re in, Slack&rsquo;s backend publishes to a topic for your user and the gateway server delivers it over your WebSocket. Slack has detailed about using Kafka as the pub/sub backbone for this fan-out.</p>
+<p><strong>Discord</strong> serves millions of concurrent users and has published their WebSocket architecture: each gateway server can maintain hundreds of thousands of connections. Users connect to a shard (a specific gateway server) determined by their user ID, which ensures consistent routing. Discord also moved from Erlang to Rust for their gateway to improve memory efficiency per connection.</p>
+<p><strong>ChatGPT</strong> uses SSE for streaming responses, not WebSockets. When you submit a prompt, the page makes an HTTP POST to the API. The response is <code>Content-Type: text/event-stream</code>. As the model generates tokens, they&rsquo;re streamed as SSE events. This is a one-way server push scenario - exactly what SSE is designed for. There&rsquo;s no need for a persistent bidirectional connection. The simplicity is a feature.</p>
+<h2 id=choosing-between-websocket-and-sse>Choosing Between WebSocket and SSE</h2>
+<p>The decision framework is simpler than most articles make it:</p>
+<p>Does the client need to send data to the server over the real-time channel? If yes, WebSocket. If no, seriously consider SSE first.</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Live feed / notifications / news ticker</td>
+<td>SSE</td>
+</tr>
+<tr>
+<td>Streaming AI responses</td>
+<td>SSE</td>
+</tr>
+<tr>
+<td>Progress indicators for background jobs</td>
+<td>SSE</td>
+</tr>
+<tr>
+<td>Live dashboards and monitoring</td>
+<td>SSE</td>
+</tr>
+<tr>
+<td>Chat (messages flow both ways)</td>
+<td>WebSocket</td>
+</tr>
+<tr>
+<td>Collaborative editing (Figma, Google Docs)</td>
+<td>WebSocket</td>
+</tr>
+<tr>
+<td>Multiplayer games</td>
+<td>WebSocket (or WebRTC)</td>
+</tr>
+<tr>
+<td>Financial trading terminals</td>
+<td>WebSocket</td>
+</tr>
+</tbody>
+</table>
+<p>SSE&rsquo;s advantages are often undersold. It works through all HTTP proxies without configuration. Nginx, Cloudflare, AWS ALB - they all handle SSE transparently. WebSocket&rsquo;s <code>Upgrade</code> header requires explicit proxy support, and some corporate firewalls block non-HTTP connections. SSE reconnects automatically; WebSocket doesn&rsquo;t. SSE is simpler to debug (it&rsquo;s just text over HTTP).</p>
+<p>The main advantage of WebSocket is bidirectionality and binary frame support. If you need the client to send data in real-time - and most truly interactive applications do - WebSocket is the right choice.</p>
+<h2 id=scaling-beyond-one-server>Scaling Beyond One Server</h2>
+<p>Both SSE and WebSocket connections are long-lived, which creates two scaling challenges: connection count per server, and message fan-out.</p>
+<p><strong>Connection count</strong>: A modern server with non-blocking I/O (Node.js, Python asyncio, Go, Rust) can handle tens of thousands of concurrent connections per instance. The bottleneck is memory per connection, not CPU. Each WebSocket connection needs state - authentication info, subscriptions, send buffer. At 100KB per connection, 100,000 connections needs 10GB of RAM. Horizontal scaling of gateway servers distributes this.</p>
+<p><strong>Fan-out with Kafka</strong>: For high-throughput scenarios (broadcast to millions, or high-frequency updates), Redis Pub/Sub can become a bottleneck. Kafka is more appropriate: it&rsquo;s persistent (messages are durable, not lost if a consumer is slow), partitioned (parallel consumption), and handles millions of messages per second. The tradeoff is operational complexity - Kafka is not a simple Redis <code>PUBLISH</code>.</p>
+<p>AWS API Gateway&rsquo;s WebSocket API provides a managed WebSocket service. The connection state and routing are handled by AWS; you implement Lambda functions that handle <code>$connect</code>, <code>$disconnect</code>, and message routes. AWS handles the connection scaling; you pay per message and per connection-minute. This removes the operational burden of managing WebSocket servers but introduces cold start latency for Lambda and per-invocation costs that can become significant at scale.</p>
+<h2 id=the-critique-websockets-and-the-stateful-tax>The Critique: WebSockets and the Stateful Tax</h2>
+<p>WebSockets impose a stateful tax on your architecture that doesn&rsquo;t disappear - it just moves around. If you don&rsquo;t use sticky sessions, you need pub/sub. If you use Redis Pub/Sub, you&rsquo;ve added a dependency whose failure brings down real-time features for all users. If you use Kafka, you&rsquo;ve added a system that requires a team to operate.</p>
+<p>SSE is genuinely underused. The industry has a bias toward WebSockets because bidirectionality feels more &ldquo;real-time,&rdquo; even in applications where clients only need to receive data. Choosing WebSocket when SSE suffices adds connection management complexity (reconnection logic), requires more elaborate server infrastructure, and provides no user-visible benefit.</p>
+<p>The other critique: WebSocket messages are not automatically persisted or replayed. If a client disconnects and reconnects, it misses events during the gap unless you implement event replay in your backend. SSE has the <code>id</code> and <code>Last-Event-ID</code> mechanism for this, but WebSocket has no equivalent - you implement it yourself or lose messages.</p>
+<h2 id=future-outlook>Future Outlook</h2>
+<p>WebTransport is a new protocol spec built on HTTP/3/QUIC that provides unreliable (datagram) and reliable (stream) bidirectional communication in the browser. It combines WebSocket&rsquo;s bidirectionality with HTTP/3&rsquo;s connection properties - no head-of-line blocking, 0-RTT reconnection, no upgrade handshake. The spec is finalized and Chrome ships it; cross-browser support is maturing. For game-like applications and real-time collaboration at low latency, WebTransport may eventually replace WebSockets.</p>
+<p>At the infrastructure layer, managed real-time services (Ably, Pusher, Liveblocks) abstract away WebSocket server management. You publish events to an API; they handle connection management, fan-out, and reliability. The tradeoff is cost and lock-in, but for teams that don&rsquo;t want to operate real-time infrastructure, the operational savings are substantial.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key Point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP polling</td>
+<td>Simple; wasteful; client always initiates</td>
+</tr>
+<tr>
+<td>Long-polling</td>
+<td>Holds connection until data available; resource-intensive at scale</td>
+</tr>
+<tr>
+<td>SSE</td>
+<td>HTTP persistent stream; server-to-client only; auto-reconnect with Last-Event-ID</td>
+</tr>
+<tr>
+<td>WebSocket</td>
+<td>Full-duplex; client and server both send; no auto-reconnect</td>
+</tr>
+<tr>
+<td>SSE use cases</td>
+<td>Live feeds, streaming AI, dashboards, notifications</td>
+</tr>
+<tr>
+<td>WebSocket use cases</td>
+<td>Chat, collaborative editing, gaming, trading</td>
+</tr>
+<tr>
+<td>Heartbeats</td>
+<td>Detect dead connections; required for WebSockets in production</td>
+</tr>
+<tr>
+<td>Sticky sessions</td>
+<td>Routes user to same server; breaks on failure; naive solution</td>
+</tr>
+<tr>
+<td>Pub/Sub backend</td>
+<td>Redis or Kafka fan-out; servers are stateless; correct production pattern</td>
+</tr>
+<tr>
+<td>ChatGPT streaming</td>
+<td>Uses SSE, not WebSocket - one-way push</td>
+</tr>
+<tr>
+<td>WebTransport</td>
+<td>QUIC-based; unreliable + reliable streams; future of low-latency browser comms</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/message-queues-event-driven/>Message Queues & Event-Driven Architecture</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>String Algorithms & Pattern Matching // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="String Algorithms & Pattern Matching">
+<meta name=twitter:description content="Prerequisites:
+ Data Structures Dynamic Programming   Ctrl+F. Every time you search a document, your computer scans millions of characters looking for a pattern. The naive algorithm is $O(nm)$ - for a 1 MB document and a 10-character query, that&rsquo;s 10 million comparisons. The KMP algorithm does it in $O(n + m)$. The whole improvement comes down to one insight: when a match fails, don&rsquo;t restart from scratch.
+ The Naive Algorithm and Why It&rsquo;s Bad Slide the pattern $P$ of length $m$ over every position in text $T$ of length $n$.">
+<meta property="og:title" content="String Algorithms & Pattern Matching">
+<meta property="og:description" content="Prerequisites:
+ Data Structures Dynamic Programming   Ctrl+F. Every time you search a document, your computer scans millions of characters looking for a pattern. The naive algorithm is $O(nm)$ - for a 1 MB document and a 10-character query, that&rsquo;s 10 million comparisons. The KMP algorithm does it in $O(n + m)$. The whole improvement comes down to one insight: when a match fails, don&rsquo;t restart from scratch.
+ The Naive Algorithm and Why It&rsquo;s Bad Slide the pattern $P$ of length $m$ over every position in text $T$ of length $n$.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/string-algorithms-pattern-matching/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00">
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>String Algorithms & Pattern Matching</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 3, 2021
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+5 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/data-structures/>Data Structures</a></li>
+<li><a href=/posts/dynamic-programming/>Dynamic Programming</a></li>
+</ul>
+<hr>
+<p>Ctrl+F. Every time you search a document, your computer scans millions of characters looking for a pattern. The naive algorithm is $O(nm)$ - for a 1 MB document and a 10-character query, that&rsquo;s 10 million comparisons. The KMP algorithm does it in $O(n + m)$. The whole improvement comes down to one insight: when a match fails, don&rsquo;t restart from scratch.</p>
+<hr>
+<h2 id=the-naive-algorithm-and-why-its-bad>The Naive Algorithm and Why It&rsquo;s Bad</h2>
+<p>Slide the pattern $P$ of length $m$ over every position in text $T$ of length $n$. At each position, compare character by character:</p>
+<pre tabindex=0><code>NaiveSearch(T, P):
+    for i = 0 to n - m:
+        if T[i..i+m-1] == P:
+            report match at i
+</code></pre><p>In the worst case this is $O(nm)$. Consider searching for pattern <code>aaab</code> in text <code>aaaaaaaaaa</code>. At every position you match 3 characters before failing on the 4th, then shift by just 1. You do nearly $nm$ comparisons and find nothing. For adversarial inputs - like scanning source code for a pattern with repeated characters - this is genuinely slow.</p>
+<hr>
+<h2 id=kmp-dont-throw-away-what-you-already-know>KMP: Don&rsquo;t Throw Away What You Already Know</h2>
+<p>When you match $j$ characters of $P$ against $T$ and then fail, you know exactly what those $j$ characters were - they equal $P[0..j-1]$. That knowledge tells you where you can safely restart without rechecking characters.</p>
+<p>The failure function $\pi[i]$ captures this. It&rsquo;s the length of the longest proper prefix of $P[0..i]$ that is also a suffix of $P[0..i]$.</p>
+<p>Example: for pattern <code>abcab</code>, the failure function is:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Char</th>
+<th>$\pi$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>a</td>
+<td>0</td>
+</tr>
+<tr>
+<td>1</td>
+<td>b</td>
+<td>0</td>
+</tr>
+<tr>
+<td>2</td>
+<td>c</td>
+<td>0</td>
+</tr>
+<tr>
+<td>3</td>
+<td>a</td>
+<td>1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>b</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p>So $\pi[4] = 2$ means the last 2 characters of <code>abcab</code> (which are <code>ab</code>) also appear as the first 2 characters. If you matched 5 characters and then failed, you know the next potential match can start as if you&rsquo;d already matched 2 characters.</p>
+<p><strong>Building the failure function in $O(m)$:</strong></p>
+<pre tabindex=0><code>BuildFailure(P):
+    pi[0] = 0
+    k = 0
+    for i = 1 to m - 1:
+        while k &gt; 0 and P[k] != P[i]:
+            k = pi[k - 1]
+        if P[k] == P[i]: k++
+        pi[i] = k
+    return pi
+</code></pre><p><strong>Searching in $O(n)$:</strong></p>
+<pre tabindex=0><code>KMPSearch(T, P):
+    pi = BuildFailure(P)
+    q = 0
+    for i = 0 to n - 1:
+        while q &gt; 0 and P[q] != T[i]:
+            q = pi[q - 1]
+        if P[q] == T[i]: q++
+        if q == m:
+            report match at i - m + 1
+            q = pi[q - 1]
+</code></pre><p>Why is this $O(n)$? The variable <code>q</code> can only increase by 1 per character of $T$, so it increases at most $n$ times total. Each time through the <code>while</code> loop, <code>q</code> strictly decreases. So the total number of <code>while</code> iterations across the entire search is at most $n$. Combined with the outer loop: $O(n)$ total.</p>
+<hr>
+<h2 id=rabin-karp-rolling-hash>Rabin-Karp: Rolling Hash</h2>
+<p>A completely different approach: instead of comparing characters, compare hash values.</p>
+<p>Hash the pattern once: $h(P) = \sum_{k=0}^{m-1} P[k] \cdot b^{m-1-k} \bmod p$ for some base $b$ and prime $p$.</p>
+<p>Now slide a window of length $m$ over $T$. If the hash of the current window matches $h(P)$, verify with a full comparison. The key: updating the window hash takes $O(1)$ via the rolling hash trick:</p>
+<p>$$h_\text{new} = (h_\text{old} - T[i] \cdot b^{m-1}) \cdot b + T[i+m] \pmod{p}$$</p>
+<p>You subtract out the leftmost character and add in the new rightmost character. Each slide costs $O(1)$ instead of $O(m)$.</p>
+<p>Expected time: $O(n + m)$. Worst case: $O(nm)$ if every window produces a hash collision. In practice this is rare, and using two independent hash functions (double hashing) reduces the collision probability to near zero.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Rabin-Karp can have $O(nm)$ worst case due to hash collisions. But we still use it - why?</p>
+<p>Because it generalizes beautifully to problems that KMP doesn&rsquo;t handle cleanly. Multi-pattern search: hash all $k$ patterns into a hash set, slide one window, check membership. Time $O(n + m_\text{total})$ expected. Two-dimensional pattern matching: compute rolling hashes on rows, then column-hash the row-hashes. KMP doesn&rsquo;t extend to 2D at all. Rabin-Karp is the right tool when the pattern structure is rich or when you&rsquo;re searching for many patterns at once.</p>
+</blockquote>
+<hr>
+<h2 id=suffix-arrays-preprocess-the-text-once>Suffix Arrays: Preprocess the Text Once</h2>
+<p>The previous algorithms answer &ldquo;does $P$ appear in $T$?&rdquo; freshly each time. If you&rsquo;ll run many queries on the same text $T$, preprocess it.</p>
+<p>A suffix array $SA$ lists all $n$ suffixes of $T$ in sorted lexicographic order (by storing their starting indices). Combined with the LCP array (longest common prefix between adjacent entries in $SA$), you can answer any substring query in $O(m + \log n)$ time via binary search.</p>
+<p>Construction costs $O(n \log n)$ with the prefix-doubling algorithm, or $O(n)$ with more sophisticated constructions. The payoff: a genomics database built once on the human reference genome can answer thousands of short-read alignment queries per second, each in $O(m \log n)$ time.</p>
+<hr>
+<h2 id=aho-corasick-many-patterns-at-once>Aho-Corasick: Many Patterns at Once</h2>
+<p>KMP handles one pattern. What if you have $k$ patterns $P_1, \ldots, P_k$ and want to find all occurrences of any of them in $T$?</p>
+<p>The naive approach runs KMP separately for each pattern: $O(n \cdot k + m_\text{total})$. Aho-Corasick does better: preprocess all patterns into a trie with failure links (exactly like KMP&rsquo;s failure function, but over the trie), then scan $T$ once. Total time: $O(m_\text{total} \cdot |\Sigma|)$ preprocessing, $O(n + \text{matches})$ search.</p>
+<p>The construction mirrors KMP. Each node in the trie has a failure link pointing to the longest proper suffix of its string that also appears in the trie. During search, these links let you shift efficiently when a mismatch occurs - without reprocessing $T$.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Preprocessing</th>
+<th>Search</th>
+<th>Space</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naive</td>
+<td>-</td>
+<td>$O(nm)$</td>
+<td>$O(1)$</td>
+<td>Short text, simple needs</td>
+</tr>
+<tr>
+<td>KMP</td>
+<td>$O(m)$</td>
+<td>$O(n)$</td>
+<td>$O(m)$</td>
+<td>Single pattern, streaming</td>
+</tr>
+<tr>
+<td>Rabin-Karp</td>
+<td>$O(m)$</td>
+<td>$O(n)$ expected</td>
+<td>$O(1)$</td>
+<td>Multi-pattern, 2D search</td>
+</tr>
+<tr>
+<td>Suffix array</td>
+<td>$O(n \log n)$</td>
+<td>$O(m \log n)$</td>
+<td>$O(n)$</td>
+<td>Many queries, same text</td>
+</tr>
+<tr>
+<td>Aho-Corasick</td>
+<td>$O(m_\text{total} \cdot</td>
+<td>\Sigma</td>
+<td>)$</td>
+<td>$O(n + \text{hits})$</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/boyer-moore/>Boyer-Moore</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

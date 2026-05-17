@@ -1,0 +1,206 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>BFGS & Second-Order Optimization // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="BFGS & Second-Order Optimization">
+<meta name=twitter:description content="Prerequisites:
+ Gradient Descent Convex Optimization   Gradient descent is like descending a mountain with your eyes closed - you feel the slope beneath your feet and step in the steepest downhill direction. Newton&rsquo;s method opens your eyes: it sees not just the slope but the curvature - whether the valley ahead narrows sharply or widens gradually - and adjusts its step accordingly. In a quadratic bowl, Newton&rsquo;s method reaches the bottom in exactly one step.">
+<meta property="og:title" content="BFGS & Second-Order Optimization">
+<meta property="og:description" content="Prerequisites:
+ Gradient Descent Convex Optimization   Gradient descent is like descending a mountain with your eyes closed - you feel the slope beneath your feet and step in the steepest downhill direction. Newton&rsquo;s method opens your eyes: it sees not just the slope but the curvature - whether the valley ahead narrows sharply or widens gradually - and adjusts its step accordingly. In a quadratic bowl, Newton&rsquo;s method reaches the bottom in exactly one step.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/bfgs-second-order-opt/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00">
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>BFGS & Second-Order Optimization</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 3, 2021
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+7 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/gradient-descent/>Gradient Descent</a></li>
+<li><a href=/posts/convex-optimization/>Convex Optimization</a></li>
+</ul>
+<hr>
+<p>Gradient descent is like descending a mountain with your eyes closed - you feel the slope beneath your feet and step in the steepest downhill direction. Newton&rsquo;s method opens your eyes: it sees not just the slope but the curvature - whether the valley ahead narrows sharply or widens gradually - and adjusts its step accordingly. In a quadratic bowl, Newton&rsquo;s method reaches the bottom in exactly one step.</p>
+<p>BFGS is gradient descent for people who want Newton&rsquo;s intelligence but can&rsquo;t afford to compute the Hessian. It approximates Newton&rsquo;s method using only gradient information, building up a picture of the curvature incrementally over many steps. It is the workhorse optimizer behind almost all serious non-linear optimization in scientific computing - and L-BFGS, its memory-efficient variant, is what <code>scipy.optimize</code>, PyTorch&rsquo;s LBFGS, and most large-scale numerical solvers use in practice.</p>
+<hr>
+<h2 id=newtons-method-for-optimization>Newton&rsquo;s Method for Optimization</h2>
+<p>Newton&rsquo;s method approximates $f$ near the current point $x_k$ with a quadratic:</p>
+<p>$$f(x) \approx f(x_k) + \nabla f(x_k)^T (x - x_k) + \frac{1}{2}(x - x_k)^T \nabla^2 f(x_k),(x - x_k).$$</p>
+<p>Minimizing this quadratic gives the Newton step:</p>
+<p>$$x_{k+1} = x_k - \left[\nabla^2 f(x_k)\right]^{-1} \nabla f(x_k).$$</p>
+<p>The step direction $d_k = -H^{-1} \nabla f(x_k)$ (where $H = \nabla^2 f$) rescales the gradient by the inverse Hessian, accounting for the curvature. In a long narrow valley - where gradient descent zigzags inefficiently - Newton&rsquo;s method steps across the narrow direction, not along it.</p>
+<p><strong>Convergence.</strong> Newton&rsquo;s method has <strong>quadratic convergence</strong> near the optimum: if $|x_k - x^<em>| \leq \varepsilon$, then $|x_{k+1} - x^</em>| \leq C \varepsilon^2$ for some constant $C$. The number of correct digits doubles at each iteration. A handful of Newton steps near the solution beats thousands of gradient descent steps.</p>
+<p><strong>The problem.</strong> Computing the Hessian requires $O(n^2)$ storage and $O(n^2)$ gradient evaluations. Inverting it (or solving the linear system $H d = -\nabla f$) costs $O(n^3)$. For $n = 10^4$ parameters, that&rsquo;s already borderline. For $n = 10^6$, it&rsquo;s completely infeasible.</p>
+<hr>
+<h2 id=quasi-newton-and-the-secant-condition>Quasi-Newton and the Secant Condition</h2>
+<p>Quasi-Newton methods replace the exact Hessian with an approximation $B_k$ (or its inverse $H_k = B_k^{-1}$), updated cheaply at each step from gradient information alone.</p>
+<p>Define the <strong>curvature pair</strong> at step $k$:</p>
+<p>$$s_k = x_{k+1} - x_k, \qquad y_k = \nabla f(x_{k+1}) - \nabla f(x_k).$$</p>
+<p>By the mean value theorem, $y_k \approx \nabla^2 f \cdot s_k$ - the gradient difference approximates the Hessian applied to the step direction. A good Hessian approximation should satisfy the <strong>secant condition</strong>:</p>
+<p>$$B_{k+1}, s_k = y_k.$$</p>
+<p>This says: the new approximation should reproduce the observed gradient change exactly. There are many matrices satisfying this condition - BFGS picks the one that satisfies additional desirable properties.</p>
+<hr>
+<h2 id=the-bfgs-update>The BFGS Update</h2>
+<p>BFGS finds the update $H_{k+1}$ (inverse Hessian approximation) that:</p>
+<ul>
+<li>Satisfies the inverse secant condition: $H_{k+1}, y_k = s_k$</li>
+<li>Remains symmetric positive definite</li>
+<li>Is closest to $H_k$ in a weighted Frobenius norm</li>
+</ul>
+<p>The solution is the rank-2 update:</p>
+<p>$$H_{k+1} = \left(I - \rho_k s_k y_k^T\right) H_k \left(I - \rho_k y_k s_k^T\right) + \rho_k s_k s_k^T,$$</p>
+<p>where $\rho_k = \frac{1}{y_k^T s_k}$. This is a rank-2 update: the new matrix differs from the old by a rank-2 correction, computable in $O(n^2)$ time.</p>
+<p>The search direction at step $k$ is $d_k = -H_k \nabla f(x_k)$, and we choose the step size $\alpha_k$ via a line search satisfying the <strong>Wolfe conditions</strong> (sufficient decrease and curvature condition). The Wolfe conditions ensure $y_k^T s_k > 0$, which guarantees $H_{k+1}$ remains positive definite.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The BFGS update maintains positive definiteness via the Wolfe line search. But isn&rsquo;t an approximation to $H^{-1}$ from rank-2 updates necessarily crude?</p>
+</blockquote>
+<p>Surprisingly, no. BFGS accumulates curvature information across many steps. Each update incorporates information about the Hessian in the direction $s_k$ and $y_k$. After $n$ steps in an $n$-dimensional space, the approximation has absorbed information from $n$ independent directions and can represent the full Hessian accurately. For quadratic functions, BFGS converges in exactly $n$ steps (like conjugate gradient). For smooth nonlinear functions, BFGS achieves <strong>superlinear convergence</strong> near the optimum - faster than linear, slower than quadratic Newton.</p>
+<hr>
+<h2 id=l-bfgs-the-practical-algorithm>L-BFGS: The Practical Algorithm</h2>
+<p>Full BFGS stores the $n \times n$ matrix $H_k$. For $n = 10^6$ parameters, this requires $4 \times 10^{12}$ bytes - completely infeasible. <strong>L-BFGS</strong> (Limited-memory BFGS) avoids storing $H_k$ explicitly.</p>
+<p>Instead, L-BFGS stores only the last $m$ curvature pairs ${(s_i, y_i)}_{i=k-m}^{k-1}$, using $O(mn)$ memory with $m$ typically 5–20. It never forms $H_k$ explicitly - instead, it computes the product $H_k \nabla f(x_k)$ implicitly using a <strong>two-loop recursion</strong>:</p>
+<pre tabindex=0><code>q ← ∇f(x_k)
+for i = k-1, ..., k-m:
+    α_i ← ρ_i · (s_i^T q)
+    q   ← q - α_i y_i
+r ← H_0 q       (initial Hessian scaling: H_0 = (s^T y / y^T y) I)
+for i = k-m, ..., k-1:
+    β  ← ρ_i · (y_i^T r)
+    r  ← r + (α_i - β) s_i
+return r        (this is H_k ∇f(x_k))
+</code></pre><p>Two passes through $m$ stored vectors, $O(mn)$ per iteration. This is what <code>scipy.optimize.minimize</code> with <code>method='L-BFGS-B'</code> runs, what PyTorch&rsquo;s <code>torch.optim.LBFGS</code> runs, and what most large-scale scientific optimization uses.</p>
+<p>The <code>B</code> in L-BFGS-B stands for bound-constrained: simple box constraints $\ell \leq x \leq u$ are handled via projected gradient steps. This covers a huge range of practical problems.</p>
+<hr>
+<blockquote>
+<p><strong>Discomfort check.</strong> Gradient descent works fine in deep learning. Why don&rsquo;t people use L-BFGS more for neural networks?</p>
+</blockquote>
+<p>Deep learning uses <strong>mini-batches</strong>: at each step, you compute the gradient on a random subset of the data, not the full dataset. The gradient you see is a noisy estimate of the true gradient. L-BFGS requires accurate, consistent gradient information to build a reliable Hessian approximation - the curvature pair $(s_k, y_k)$ should reflect the true function&rsquo;s curvature, not the noise-corrupted mini-batch estimate. With stochastic gradients, the secant condition $B_{k+1} s_k = y_k$ incorporates noise, and the approximation degrades quickly.</p>
+<p>L-BFGS shines for <strong>full-batch</strong> problems where you can compute the gradient exactly: fitting logistic regression or CRFs, physics simulation, image reconstruction, quantum chemistry, fine-tuning small models on fixed datasets. In these settings, L-BFGS typically converges in 20–100 iterations on problems that take gradient descent thousands of iterations to solve.</p>
+<hr>
+<h2 id=convergence-summary>Convergence Summary</h2>
+<p>Near a strongly convex minimum with Lipschitz-continuous Hessian:</p>
+<ul>
+<li><strong>Gradient descent</strong>: linear convergence, rate $(1 - 1/\kappa)$ per step, where $\kappa = \lambda_{\max}/\lambda_{\min}$ is the condition number. Slow on ill-conditioned problems.</li>
+<li><strong>BFGS/L-BFGS</strong>: superlinear convergence (faster than any geometric rate). Effectively condition-number-independent near the optimum.</li>
+<li><strong>Newton</strong>: quadratic convergence. Error in digits doubles each iteration.</li>
+</ul>
+<p>Farther from the optimum:</p>
+<ul>
+<li>Newton can diverge if the Hessian is indefinite (non-convex regions).</li>
+<li>BFGS with Wolfe line search is globally convergent for smooth functions.</li>
+<li>Gradient descent is the most robust - converges from anywhere with appropriate step size.</li>
+</ul>
+<hr>
+<h2 id=applications>Applications</h2>
+<p><strong>Scientific computing.</strong> L-BFGS is the default optimizer in SciPy, MATLAB&rsquo;s <code>fminunc</code>, and most physics simulation packages. Problems like fitting the parameters of a physical model to experimental data are typically smooth, convex or mildly non-convex, and small enough for full-batch gradients - exactly where L-BFGS excels.</p>
+<p><strong>Quantum chemistry.</strong> Geometry optimization of molecular structures (finding the arrangement of atoms minimizing total energy) is a standard L-BFGS application. The energy function is smooth and the gradients (atomic forces) can be computed exactly.</p>
+<p><strong>Image reconstruction.</strong> Denoising, super-resolution, and tomographic reconstruction often involve minimizing a smooth regularized loss over pixel values - a large but well-structured problem for L-BFGS-B.</p>
+<p><strong>Statistical model fitting.</strong> Logistic regression, CRFs, Gaussian process hyperparameter optimization - any smooth log-likelihood maximization problem with exact gradient computation. <code>sklearn</code>&rsquo;s <code>LogisticRegression(solver='lbfgs')</code> uses L-BFGS as the default.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Per-step cost</th>
+<th>Memory</th>
+<th>Convergence rate</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gradient descent</td>
+<td>$O(n)$</td>
+<td>$O(n)$</td>
+<td>Linear ($1 - 1/\kappa$ per step)</td>
+<td>Stochastic, very large $n$, non-smooth</td>
+</tr>
+<tr>
+<td>L-BFGS</td>
+<td>$O(mn)$</td>
+<td>$O(mn)$</td>
+<td>Superlinear (near optimum)</td>
+<td>Full-batch, smooth, $n \leq 10^7$</td>
+</tr>
+<tr>
+<td>BFGS</td>
+<td>$O(n^2)$</td>
+<td>$O(n^2)$</td>
+<td>Superlinear</td>
+<td>Full-batch, smooth, $n \leq 10^4$</td>
+</tr>
+<tr>
+<td>Newton</td>
+<td>$O(n^3)$</td>
+<td>$O(n^2)$</td>
+<td>Quadratic</td>
+<td>Exact Hessian available, $n \leq 10^3$</td>
+</tr>
+</tbody>
+</table>
+<p>BFGS is Newton&rsquo;s method for the real world: you don&rsquo;t have the Hessian, but you can build a good approximation from the gradients you&rsquo;ve already computed, at a cost of $O(n^2)$ per step. L-BFGS extends this to large-scale problems by dropping the full matrix and keeping only the last $m$ curvature pairs. The result is an optimizer that converges dramatically faster than gradient descent on smooth problems, with only a modest overhead per step, and is robust enough to be the default in most scientific computing stacks.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/automata-theory-fsms/>Automata Theory & FSMs</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

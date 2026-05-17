@@ -1,0 +1,237 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Attention Mechanisms // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Attention Mechanisms">
+<meta name=twitter:description content="Prerequisites:
+ Sequence Modeling & Language Models Linear Transformations   Read this sentence: &ldquo;The trophy doesn&rsquo;t fit in the suitcase because it is too big.&rdquo;
+You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is what&rsquo;s too big to fit. You didn&rsquo;t run through every possible referent and weigh them consciously. Your eye slid back to &ldquo;trophy&rdquo; and the meaning snapped into place. You attended selectively to the relevant earlier word.">
+<meta property="og:title" content="Attention Mechanisms">
+<meta property="og:description" content="Prerequisites:
+ Sequence Modeling & Language Models Linear Transformations   Read this sentence: &ldquo;The trophy doesn&rsquo;t fit in the suitcase because it is too big.&rdquo;
+You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is what&rsquo;s too big to fit. You didn&rsquo;t run through every possible referent and weigh them consciously. Your eye slid back to &ldquo;trophy&rdquo; and the meaning snapped into place. You attended selectively to the relevant earlier word.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/attention-mechanisms/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Attention Mechanisms</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/sequence-modeling-and-language-models/>Sequence Modeling & Language Models</a></li>
+<li><a href=/posts/linear-transformations/>Linear Transformations</a></li>
+</ul>
+<hr>
+<p>Read this sentence: &ldquo;The trophy doesn&rsquo;t fit in the suitcase because it is too big.&rdquo;</p>
+<p>You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is what&rsquo;s too big to fit. You didn&rsquo;t run through every possible referent and weigh them consciously. Your eye slid back to &ldquo;trophy&rdquo; and the meaning snapped into place. You attended selectively to the relevant earlier word.</p>
+<p>For two decades, neural networks had no analog of this ability. They processed sequences left to right, compressing everything into a fixed-size hidden state. By the time the model generated an output, the beginning of the input had been smeared into a bottleneck vector and partially lost. Attention mechanisms change this - they give neural networks a structured, differentiable way to look back at any earlier part of the input and decide what to focus on.</p>
+<hr>
+<h2 id=the-original-attention-bahdanau-et-al-2015>The Original Attention: Bahdanau et al. 2015</h2>
+<p>The first widely adopted attention mechanism appeared in the context of neural machine translation. The problem was exactly the information bottleneck we identified in seq2seq models: the encoder&rsquo;s final hidden state cannot hold everything relevant about a long source sentence.</p>
+<p>Bahdanau, Cho, and Bengio&rsquo;s insight was simple: instead of using only the encoder&rsquo;s final state, let the decoder look at all encoder hidden states $h_1, h_2, \ldots, h_T$ - one per source token - and take a weighted average.</p>
+<p>More precisely, when generating the $j$-th output token, the decoder has a hidden state $s_{j-1}$ from the previous output step. The mechanism:</p>
+<p><strong>Step 1 - alignment score.</strong> Compute a score $e_{ij}$ measuring how relevant encoder state $h_i$ is when the decoder is at step $j$:</p>
+<p>$$e_{ij} = a(s_{j-1}, h_i).$$</p>
+<p>The function $a$ is a small feedforward network (or a dot product - various choices work). It asks: given what the decoder knows at step $j-1$, how much should it care about position $i$ in the source?</p>
+<p><strong>Step 2 - attention weights.</strong> Normalize the scores into a probability distribution using softmax:</p>
+<p>$$\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_k \exp(e_{kj})}.$$</p>
+<p>The weights $\alpha_{ij}$ sum to 1 over the source positions $i$. They form an <strong>attention distribution</strong> over the source sentence.</p>
+<p><strong>Step 3 - context vector.</strong> Compute a weighted average of encoder states:</p>
+<p>$$c_j = \sum_i \alpha_{ij} h_i.$$</p>
+<p>This context vector $c_j$ is a soft, differentiable summary of the source: it focuses on the positions that are most relevant to generating output token $j$.</p>
+<p>The decoder then uses $c_j$ along with $s_{j-1}$ to produce the $j$-th output.</p>
+<h3 id=what-the-model-actually-learns>What the Model Actually Learns</h3>
+<p>The remarkable thing about this mechanism is what emerges from training it. For a French-to-English translation model, you can visualize the attention matrix $\alpha_{ij}$ - which source positions the decoder attended to when generating each output word.</p>
+<p>The result is an alignment table, learned automatically without any alignment labels. When generating &ldquo;cat&rdquo; in English, the model attends strongly to &ldquo;chat&rdquo; in French. When generating &ldquo;not&rdquo;, it attends to &ldquo;ne&rdquo; and &ldquo;pas&rdquo;. The model has discovered correspondence between source and target tokens purely from observing parallel text.</p>
+<hr>
+<h2 id=scaled-dot-product-attention>Scaled Dot-Product Attention</h2>
+<p>Bahdanau&rsquo;s attention used a learned neural network for the alignment score. A cleaner formulation - the one used in transformers - replaces this with a simple dot product. This version, introduced by Vaswani et al. in 2017, also introduces the now-standard <strong>Query, Key, Value</strong> framework.</p>
+<p>You have three matrices:</p>
+<ul>
+<li>$Q \in \mathbb{R}^{n \times d}$: <strong>Queries</strong> - $n$ row vectors, each asking &ldquo;what do I need?&rdquo;</li>
+<li>$K \in \mathbb{R}^{m \times d}$: <strong>Keys</strong> - $m$ row vectors, each advertising &ldquo;here is what I contain.&rdquo;</li>
+<li>$V \in \mathbb{R}^{m \times d_v}$: <strong>Values</strong> - $m$ row vectors, each holding the actual content.</li>
+</ul>
+<p>The attention computation:</p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}!\left(\frac{QK^\top}{\sqrt{d}}\right) V.$$</p>
+<p>Step by step:</p>
+<p><strong>$QK^\top$</strong>: a matrix of dot products. Entry $(i, j)$ is the inner product of query $i$ with key $j$ - a scalar score measuring compatibility. The result is $n \times m$.</p>
+<p><strong>Divide by $\sqrt{d}$</strong>: scale down the scores. Without this, the dot products grow with $d$ - each query-key pair is a sum of $d$ terms, and with random initialization the variance is $d$, so the standard deviation is $\sqrt{d}$. Large values push the softmax into saturation, where gradients vanish. Dividing by $\sqrt{d}$ restores variance to 1 and keeps training stable.</p>
+<p><strong>$\text{softmax}(\cdot)$</strong>: applied row-wise. Each row of $QK^\top/\sqrt{d}$ becomes a probability distribution over the $m$ key positions. This is the $n \times m$ <strong>attention matrix</strong>.</p>
+<p><strong>Multiply by $V$</strong>: the output at position $i$ is a weighted average of all value rows, where the weights come from row $i$ of the attention matrix. The result is $n \times d_v$.</p>
+<p>Each output position gets a customized mixture of all value vectors, shaped by how strongly its query matched each key.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The scaling by $\sqrt{d}$ sounds arbitrary. Here is the calculation behind it. Suppose the entries of $Q$ and $K$ are independently sampled from $\mathcal{N}(0, 1)$. Then a single dot product $q \cdot k = \sum_{i=1}^d q_i k_i$ has mean 0 and variance $d$ (each of the $d$ terms $q_i k_i$ has variance 1, and they are independent). So the standard deviation is $\sqrt{d}$. When $d = 512$, a typical dot product has magnitude around 22 - not 1. Softmax of values this large is nearly one-hot: all probability mass goes to the maximum. Dividing by $\sqrt{d}$ brings the typical magnitude back to 1, and softmax stays spread out and informative.</p>
+</blockquote>
+<hr>
+<h2 id=attention-as-a-differentiable-database>Attention as a Differentiable Database</h2>
+<p>There is a useful analogy that clarifies the Q, K, V design.</p>
+<p>Imagine a key-value database. You have entries ${(k_1, v_1), (k_2, v_2), \ldots, (k_m, v_m)}$. You query the database with $q$. In a hard lookup, you return $v_j$ where $k_j = q$ exactly. In a soft lookup, you compute similarity scores between $q$ and all keys, normalize them, and return a weighted average of values.</p>
+<p>Attention is a soft, differentiable database lookup:</p>
+<ul>
+<li>The <strong>keys</strong> determine what each entry &ldquo;is.&rdquo;</li>
+<li>The <strong>values</strong> determine what each entry &ldquo;returns.&rdquo;</li>
+<li>The <strong>query</strong> specifies what you&rsquo;re looking for.</li>
+</ul>
+<p>The difference from a real database: every operation is differentiable with respect to $Q$, $K$, and $V$. You can backpropagate through the lookup. This means $Q$, $K$, $V$ are not fixed - they are linear projections of learned representations, trained end-to-end to make the lookup useful.</p>
+<hr>
+<h2 id=self-attention>Self-Attention</h2>
+<p>In the attention we have described so far, queries come from the decoder and keys/values come from the encoder. But there is another flavor, equally important: <strong>self-attention</strong>, where $Q$, $K$, and $V$ all come from the same sequence.</p>
+<p>Given a sequence of token representations $X \in \mathbb{R}^{n \times d}$:</p>
+<p>$$Q = X W_Q, \quad K = X W_K, \quad V = X W_V.$$</p>
+<p>The matrices $W_Q, W_K, W_V \in \mathbb{R}^{d \times d}$ are learned projections. Self-attention then computes:</p>
+<p>$$\text{Attention}(X W_Q, X W_K, X W_V) = \text{softmax}!\left(\frac{X W_Q W_K^\top X^\top}{\sqrt{d}}\right) X W_V.$$</p>
+<p>Every token attends to every other token in the same sequence - including itself.</p>
+<p>This directly solves the coreference problem from our opening example. In &ldquo;The trophy doesn&rsquo;t fit in the suitcase because it is too big&rdquo;, the token &ldquo;it&rdquo; can attend strongly to &ldquo;trophy&rdquo; (and weakly to &ldquo;suitcase&rdquo;). The attention weight $\alpha_{\text{it}, \text{trophy}}$ will be large; $\alpha_{\text{it}, \text{suitcase}}$ will be small. The model learns this from data, without being given coreference labels.</p>
+<hr>
+<h2 id=multi-head-attention>Multi-Head Attention</h2>
+<p>A single attention head produces one weighted average of values per position. But a sentence has many simultaneous structure types: syntactic dependencies, semantic relationships, coreference chains, named entities. A single head may not capture all of them at once.</p>
+<p><strong>Multi-head attention</strong> runs $h$ attention heads in parallel, each with its own learned projections:</p>
+<p>$$\text{head}<em>i = \text{Attention}(Q W</em>{Q}^i, K W_{K}^i, V W_{V}^i)$$</p>
+<p>where $W_Q^i, W_K^i \in \mathbb{R}^{d \times d_k}$ and $W_V^i \in \mathbb{R}^{d \times d_v}$ are head-specific projection matrices. The outputs are concatenated and projected:</p>
+<p>$$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h) , W_O.$$</p>
+<p>In the original transformer, $h = 8$ heads, $d = 512$, $d_k = d_v = d/h = 64$. Total computation is roughly the same as a single head of dimension 512.</p>
+<p>The heads do not divide responsibilities by fiat - they learn to specialize through training. Empirically, different heads attend to different patterns: one head may track subject-verb dependencies, another may track modifier-noun relationships, another may focus on coreference. Each head operates in a different learned subspace of the representation, and different subspaces capture different relationship types.</p>
+<hr>
+<h2 id=cross-attention>Cross-Attention</h2>
+<p>When you have two sequences - a source and a target - you can use <strong>cross-attention</strong>:</p>
+<p>$$Q = X_{\text{target}} W_Q, \quad K = X_{\text{source}} W_K, \quad V = X_{\text{source}} W_V.$$</p>
+<p>The queries come from the target sequence (e.g., the decoder), but the keys and values come from the source sequence (e.g., the encoder). Each target position attends to source positions.</p>
+<p>This is exactly the Bahdanau attention described earlier, reformulated in the Q, K, V framework. It is how a transformer decoder &ldquo;reads&rdquo; the encoder when doing translation or summarization: the decoder queries the encoder&rsquo;s representations using cross-attention at every layer.</p>
+<p>Cross-attention differs from self-attention only in the origin of the queries versus keys and values. The mechanics are identical.</p>
+<hr>
+<h2 id=the-quadratic-cost>The Quadratic Cost</h2>
+<p>Scaled dot-product attention has a cost: $O(n^2)$ in sequence length, where $n$ is the number of tokens.</p>
+<p>The attention matrix $\text{softmax}(QK^\top / \sqrt{d})$ is $n \times n$. Computing it requires $n^2$ dot products. Storing it requires $O(n^2)$ memory. For $n = 1000$, that&rsquo;s $10^6$ entries per head per layer - manageable. For $n = 100{,}000$, it&rsquo;s $10^{10}$ entries per head per layer - not manageable without specialized algorithms.</p>
+<p>This quadratic scaling is the central computational bottleneck of transformer models. It is why efficient attention - FlashAttention, sparse attention, linear attention - is an active research area. And it is why the context length of a language model is a meaningful constraint, not just an arbitrary limit.</p>
+<hr>
+<h2 id=hierarchical-attention>Hierarchical Attention</h2>
+<p>Flat attention attends over all tokens in a sequence simultaneously. But some structures are hierarchically organized: a document is made of paragraphs, each paragraph is made of sentences, each sentence is made of words. Attending over thousands of words at once is expensive and ignores this structure.</p>
+<p><strong>Hierarchical attention networks (HAN)</strong> - introduced by Yang et al. (2016) for document classification - apply two levels of attention in sequence.</p>
+<p><em>Word-level attention:</em> For each sentence $s$ containing words $w_1, \ldots, w_T$, encode each word with a bidirectional RNN to get annotations $h_1, \ldots, h_T$. Then apply attention:</p>
+<p>$$u_t = \tanh(W_w h_t + b_w), \quad \alpha_t = \frac{\exp(u_t^\top u_w)}{\sum_{t'} \exp(u_{t'}^\top u_w)}, \quad s = \sum_t \alpha_t h_t$$</p>
+<p>The word-level context vector $u_w$ is a learned query - it represents &ldquo;which words are informative.&rdquo; The sentence vector $s$ is the weighted sum of word annotations.</p>
+<p><em>Sentence-level attention:</em> Encode each sentence vector with another bidirectional RNN to get sentence annotations $h_1^s, \ldots, h_L^s$. Apply attention again:</p>
+<p>$$u_i^s = \tanh(W_s h_i^s + b_s), \quad \alpha_i^s = \frac{\exp({u_i^s}^\top u_s)}{\sum_{i'} \exp({u_{i'}^s}^\top u_s)}, \quad v = \sum_i \alpha_i^s h_i^s$$</p>
+<p>The document vector $v$ is the weighted sum of sentence vectors. This is fed to a classifier.</p>
+<p>The two context vectors $u_w$ and $u_s$ are the key design: they are learned end-to-end from labels. A document about sports will have high attention weights on sentences mentioning games and scores; within those sentences, high weights on nouns and verbs that carry semantic content.</p>
+<p><strong>Why hierarchy helps.</strong> Not all words matter equally, and not all sentences matter equally. A flat attention mechanism attending over all words in a 500-word document is less interpretable and less efficient than a two-level mechanism that first identifies relevant sentences and then attends within them. The hierarchical structure also matches how humans read: skim paragraphs, then read the important ones carefully.</p>
+<p><strong>Attention over images.</strong> The same idea applies to vision. An image can be divided into a grid of patches. Attention can be computed over patches to identify which spatial regions are relevant for a given query. This is the mechanism used in Vision Transformers (ViT): the image is split into fixed-size patches, each patch is linearly embedded, and a standard transformer with self-attention processes the sequence of patch embeddings. Cross-attention over image patches is used in captioning models and visual question answering: the text decoder attends over spatial positions in the image at each generation step, producing spatially grounded captions. The attention weights in this setting are directly interpretable as a heat map over the image - regions that are linguistically relevant receive high weight.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Formula</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alignment score</td>
+<td>$e_{ij} = a(s_{j-1}, h_i)$</td>
+</tr>
+<tr>
+<td>Attention weight</td>
+<td>$\alpha_{ij} = \exp(e_{ij}) / \sum_k \exp(e_{kj})$</td>
+</tr>
+<tr>
+<td>Context vector</td>
+<td>$c_j = \sum_i \alpha_{ij} h_i$</td>
+</tr>
+<tr>
+<td>Scaled dot-product attention</td>
+<td>$\text{softmax}(QK^\top / \sqrt{d}) , V$</td>
+</tr>
+<tr>
+<td>Self-attention</td>
+<td>$Q, K, V$ all come from the same sequence</td>
+</tr>
+<tr>
+<td>Cross-attention</td>
+<td>$Q$ from target; $K, V$ from source</td>
+</tr>
+<tr>
+<td>Multi-head attention</td>
+<td>$h$ heads in parallel; concatenate and project</td>
+</tr>
+<tr>
+<td>Hierarchical attention</td>
+<td>Word-level then sentence-level; context vectors learned end-to-end</td>
+</tr>
+<tr>
+<td>Attention over images</td>
+<td>Self-attention over patch embeddings (ViT); cross-attention for grounded captioning</td>
+</tr>
+<tr>
+<td>Complexity</td>
+<td>$O(n^2 d)$ in time and $O(n^2)$ in memory</td>
+</tr>
+</tbody>
+</table>
+<p>The core idea is elegant: instead of compressing context into a fixed-size vector, attend to all positions and let the model learn which ones matter. The alignment score measures compatibility, softmax normalizes it to a distribution, and the context vector is the resulting weighted average. Everything is differentiable. Everything is learned.</p>
+<p>What attention does not provide, on its own, is any notion of order. Feed attention the tokens of a sentence in any permutation and it produces the same result. The next piece - positional encodings - is what restores order to this otherwise orderless mechanism.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/positional-encodings/>Positional Encodings</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

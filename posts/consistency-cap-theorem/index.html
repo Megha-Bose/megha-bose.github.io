@@ -1,0 +1,176 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Consistency & CAP Theorem // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Consistency & CAP Theorem">
+<meta name=twitter:description content="Prerequisite: Load Balancing & Proxies · Databases & Indexes
+You update your DynamoDB user profile - change your display name from &ldquo;alice&rdquo; to &ldquo;Alice.&rdquo; You immediately read it back. The response shows &ldquo;alice.&rdquo; The old value. You didn&rsquo;t misread the API. The write succeeded. This is not a bug.
+Is it acceptable? The answer depends entirely on your workload. And the framework for thinking about why this happens, and when it matters, is what the CAP theorem - and its more useful successor, PACELC - are actually about.">
+<meta property="og:title" content="Consistency & CAP Theorem">
+<meta property="og:description" content="Prerequisite: Load Balancing & Proxies · Databases & Indexes
+You update your DynamoDB user profile - change your display name from &ldquo;alice&rdquo; to &ldquo;Alice.&rdquo; You immediately read it back. The response shows &ldquo;alice.&rdquo; The old value. You didn&rsquo;t misread the API. The write succeeded. This is not a bug.
+Is it acceptable? The answer depends entirely on your workload. And the framework for thinking about why this happens, and when it matters, is what the CAP theorem - and its more useful successor, PACELC - are actually about.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/consistency-cap-theorem/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Consistency & CAP Theorem</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/load-balancing-proxies/>Load Balancing & Proxies</a> · <a href=/posts/databases-indexes/>Databases & Indexes</a></p>
+<p>You update your DynamoDB user profile - change your display name from &ldquo;alice&rdquo; to &ldquo;Alice.&rdquo; You immediately read it back. The response shows &ldquo;alice.&rdquo; The old value. You didn&rsquo;t misread the API. The write succeeded. This is not a bug.</p>
+<p>Is it acceptable? The answer depends entirely on your workload. And the framework for thinking about <em>why</em> this happens, and when it matters, is what the CAP theorem - and its more useful successor, PACELC - are actually about.</p>
+<h2 id=the-setup-why-consistency-gets-hard-in-distributed-systems>The Setup: Why Consistency Gets Hard in Distributed Systems</h2>
+<p>On a single machine, consistency is trivial: there is one copy of the data. A write updates it; a subsequent read sees the write. Done.</p>
+<p>Distribute data across multiple machines and the story changes. Data must be replicated for fault tolerance. Replicas must be kept synchronized. And in a world where network links fail - where packets are dropped, delayed, or duplicated - keeping replicas perfectly synchronized at all times is provably impossible.</p>
+<p>The CAP theorem, proposed by Eric Brewer in 2000 and formally proven by Gilbert and Lynch in 2002, captures this impossibility as a trilemma.</p>
+<h2 id=cap-the-trilemma>CAP: The Trilemma</h2>
+<p><strong>Consistency</strong> in CAP means <strong>linearizability</strong>: every read reflects the most recent write, as if the entire distributed system were a single machine. Not the same as ACID&rsquo;s &ldquo;C&rdquo; (application-level invariants) - CAP&rsquo;s C is about the ordering and visibility of operations across nodes.</p>
+<p><strong>Availability</strong> means every request to a non-failed node receives a response - not an error, not a timeout. The response doesn&rsquo;t need to be fresh; it just needs to arrive.</p>
+<p><strong>Partition tolerance</strong> means the system continues operating when the network drops or delays messages between nodes.</p>
+<p>The theorem says you can have at most two of the three. But here&rsquo;s the critical insight that is almost always glossed over: <strong>partition tolerance is not optional</strong>. Network partitions happen in any real distributed system. Cables fail. Cloud provider networks have incidents. An AWS region-internal network event in 2019 affected multiple services simultaneously. If your system cannot tolerate partitions, it cannot operate in production.</p>
+<p>This reduces the real choice to: during a partition, do you favor <strong>Consistency</strong> or <strong>Availability</strong>?</p>
+<p><strong>CP systems</strong> (ZooKeeper, etcd, HBase) refuse to serve requests on nodes that cannot confirm they hold the latest data. During a partition, the minority partition returns errors or hangs until connectivity is restored. You get correct answers or no answer. ZooKeeper is the canonical CP store - it&rsquo;s used as a coordination primitive (distributed locks, leader election) precisely because it never serves stale data.</p>
+<p><strong>AP systems</strong> (Cassandra, DynamoDB in its default eventually-consistent mode, CouchDB) continue serving requests from all nodes during a partition. Nodes in the minority partition may return stale data. You get some answer, possibly outdated. Financial services that need to stay &ldquo;available&rdquo; for reads during a partial network failure often choose AP - better to show a customer their account balance from 30 seconds ago than to return a 503.</p>
+<h2 id=the-honest-critique-of-cap>The Honest Critique of CAP</h2>
+<p>The CAP theorem is one of the most cited and most misapplied results in distributed systems. A few important caveats:</p>
+<p>CAP applies to <strong>individual operations</strong>, not systems. A system can be CP for some operations and AP for others. DynamoDB is AP by default (eventually consistent reads) but CP when you pay for strongly consistent reads. Calling DynamoDB an &ldquo;AP system&rdquo; is a simplification that conceals its actual tunable behavior.</p>
+<p><strong>&ldquo;Consistency&rdquo; and &ldquo;Availability&rdquo; are not binary.</strong> CAP treats them as on/off, but real systems live on a spectrum. Cassandra with <code>CONSISTENCY ONE</code> is highly available and weakly consistent. With <code>CONSISTENCY ALL</code>, it&rsquo;s strongly consistent but effectively unavailable if any replica is down. Most real deployments use <code>CONSISTENCY QUORUM</code> - a middle ground.</p>
+<p>Martin Kleppmann&rsquo;s 2015 critique argued that CAP conflates different properties in misleading ways and that the theorem&rsquo;s practical guidance is too coarse to drive real engineering decisions. He&rsquo;s right. CAP is a useful conversation starter, not an engineering specification.</p>
+<h2 id=pacelc-the-better-model>PACELC: The Better Model</h2>
+<p>PACELC, proposed by Daniel Abadi in 2012, extends CAP to capture the tradeoff that matters most <em>during normal operation</em> - when there is no partition.</p>
+<p>The acronym unpacks as: <strong>P</strong>artition → choose <strong>C</strong> or <strong>A</strong>; <strong>E</strong>lse (no partition) → choose <strong>L</strong>atency or <strong>C</strong>onsistency.</p>
+<p>The &ldquo;Else&rdquo; clause is where most engineering decisions actually live. A strongly consistent write must wait for acknowledgment from a quorum of replicas before returning. Each replica acknowledgment adds network round-trip latency. Reduce consistency to eventual, and the write returns as soon as the local node acknowledges - much faster, but subsequent reads from other replicas may lag.</p>
+<p>A few real systems through the PACELC lens:</p>
+<ul>
+<li><strong>Cassandra with CONSISTENCY ONE</strong> → PA/EL: available under partition, low latency under normal operation (high availability, low consistency)</li>
+<li><strong>DynamoDB strongly consistent reads</strong> → PC/EC: consistent under partition, consistent-but-slower under normal operation</li>
+<li><strong>Google Spanner</strong> → PC/EC: linearizable globally (uses TrueTime - GPS and atomic clocks to assign globally ordered timestamps), but with cross-region write latency of 100–300ms</li>
+<li><strong>MySQL primary-replica</strong> → PC/EL: consistent (single primary) but low write latency (primary doesn&rsquo;t wait for replica ACK)</li>
+</ul>
+<p>PACELC is more useful than CAP for day-to-day decisions because it forces you to ask: &ldquo;What is my tolerance for stale reads, and what latency am I willing to pay to avoid them?&rdquo;</p>
+<h2 id=consistency-models-a-spectrum>Consistency Models: A Spectrum</h2>
+<p>Consistency is not binary. There is a spectrum from weak to strong.</p>
+<p><strong>Linearizability (strong consistency)</strong> is the gold standard. Operations appear to take effect atomically at some point between their start and end, and there is a total global order. If write W completes before read R begins, R must see W&rsquo;s value. This is expensive: it requires synchronous coordination across replicas for every operation.</p>
+<p><strong>Sequential consistency</strong> is weaker: operations appear in some sequential order consistent with each process&rsquo;s program order, but the order needn&rsquo;t reflect wall-clock time. Two clients might disagree about which of two concurrent writes &ldquo;happened first.&rdquo;</p>
+<p><strong>Causal consistency</strong> preserves causality: if A causally precedes B (A&rsquo;s result influenced B), every replica applies A before B. Concurrent operations with no causal relationship may appear in different orders on different replicas. MongoDB&rsquo;s causal sessions implement this - if you read the result of your own write, your subsequent reads will see at least that version.</p>
+<p><strong>Eventual consistency</strong> guarantees only that, absent new writes, all replicas will converge to the same value. In the interim, stale reads are possible. The question &ldquo;eventual consistency&rdquo; leaves open - and this is the real discomfort - is: <em>how eventual is eventual?</em> Milliseconds? Seconds? Minutes? The answer depends on replication topology, network conditions, and write rate. Under low write load in a healthy cluster, DynamoDB&rsquo;s eventual consistency window is typically under a second. Under high write load during a partial network partition, it could be much longer. The SLA doesn&rsquo;t tell you this; you need to measure it for your workload.</p>
+<p><strong>Read-your-writes</strong> is a session-level guarantee: a client that writes a value will always see that value in subsequent reads, even if those reads hit a replica that hasn&rsquo;t fully propagated the write. Stronger than pure eventual consistency for interactive applications - essential for anything like a settings page where a user saves a change and immediately sees the updated page.</p>
+<p><strong>Monotonic reads</strong> guarantee that if a client reads value V at time T, it will never read an older value at time T+1. Without this, a user refreshing a page might see an update appear and then disappear - profoundly confusing.</p>
+<h2 id=dynamodbs-tunable-consistency>DynamoDB&rsquo;s Tunable Consistency</h2>
+<p>DynamoDB is a useful case study because it exposes the tradeoff explicitly and charges you for the difference.</p>
+<p>By default, reads from DynamoDB are <strong>eventually consistent</strong> - they may return a slightly stale value if the write hasn&rsquo;t propagated to all replicas yet. This is the scenario from the opening: write a profile update, read it back, see the old value.</p>
+<p><strong>Strongly consistent reads</strong> (<code>ConsistentRead: true</code>) return the most recent write, always. The cost: higher read capacity unit consumption (twice as many RCUs as eventually consistent reads), higher latency (must coordinate with the primary replica rather than any available replica), and reduced availability during some partition scenarios.</p>
+<p>For most application reads - displaying a social feed, loading a product catalog - eventual consistency is fine. The user won&rsquo;t notice a 500ms-old value. For reads where staleness causes correctness problems - inventory count before a purchase, account balance before a transfer - strongly consistent reads are necessary.</p>
+<p>This is the practical application of PACELC: choose per-operation based on what the operation actually needs.</p>
+<h2 id=why-financial-systems-need-cp>Why Financial Systems Need CP</h2>
+<p>Consider two ATMs simultaneously reading the same bank account balance: $400. Both subtract $200. Both write back $200. The account now has $200, but $400 was withdrawn. This is the classic double-spend problem, and it requires linearizability to prevent.</p>
+<p>The ATM must hold a lock or use a compare-and-swap - an operation that reads, conditionally writes, and refuses to proceed if the value changed between the read and write. This requires the kind of coordination that AP systems cannot provide during a partition.</p>
+<p>Google Spanner achieves global linearizability using TrueTime: bounded-uncertainty timestamps from GPS and atomic clocks allow Spanner to assign globally ordered transaction timestamps and implement external consistency (the strongest consistency guarantee) across geographically distributed replicas. The cost is non-trivial: cross-region commits take 100–300ms of wall-clock time. For financial transaction processing, this is acceptable. For a social media feed, it is not.</p>
+<h2 id=the-future-crdts-and-hybrid-logical-clocks>The Future: CRDTs and Hybrid Logical Clocks</h2>
+<p>Two directions make eventual consistency more tractable for real applications.</p>
+<p><strong>CRDTs (Conflict-free Replicated Data Types)</strong> are data structures mathematically designed to merge concurrent updates without coordination. A grow-only counter accumulates increments from all replicas; the merge operation takes the maximum of each component. An observed-remove set handles add and remove operations without conflicts. The key insight: not all data types need to serialize updates - some operations commute, and CRDTs identify exactly those operations. Riak, Redis Cluster, and Figma&rsquo;s multiplayer canvas use CRDTs. They don&rsquo;t make eventually consistent systems &ldquo;strongly consistent&rdquo; - they make eventual convergence <em>guaranteed</em> and <em>deterministic</em>, eliminating the need for conflict resolution.</p>
+<p><strong>Hybrid Logical Clocks (HLCs)</strong> combine physical clocks with logical clocks (Lamport timestamps) to provide causally consistent timestamps that are close to real time but preserve happens-before relationships even when physical clocks skew. CockroachDB and YugabyteDB use HLCs to implement serializable transactions in geo-distributed databases without the GPS hardware requirements of Google Spanner.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key Insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CAP theorem</td>
+<td>P is mandatory; real choice is C vs A during a partition</td>
+</tr>
+<tr>
+<td>CAP&rsquo;s limitations</td>
+<td>Applies to individual ops, not systems; consistency is a spectrum</td>
+</tr>
+<tr>
+<td>PACELC</td>
+<td>Adds latency vs consistency tradeoff during normal operation</td>
+</tr>
+<tr>
+<td>Eventual consistency</td>
+<td>&ldquo;How eventual?&rdquo; depends on workload and cluster health - measure it</td>
+</tr>
+<tr>
+<td>DynamoDB tunable consistency</td>
+<td>Eventually consistent = cheaper + faster; strongly consistent = correct + costlier</td>
+</tr>
+<tr>
+<td>Financial systems and CP</td>
+<td>Linearizability required to prevent double-spend; CP unavoidable</td>
+</tr>
+<tr>
+<td>CRDTs</td>
+<td>Make eventual convergence deterministic without coordination</td>
+</tr>
+<tr>
+<td>PACELC in practice</td>
+<td>Per-operation decision based on correctness requirements vs latency budget</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/fault-tolerance/>Fault Tolerance</a> · <a href=/posts/sharding-data-replication/>Sharding & Data Replication</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

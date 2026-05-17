@@ -1,0 +1,231 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Hypothesis Testing & p-values // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Hypothesis Testing & p-values">
+<meta name=twitter:description content="Prerequisites:
+ Statistics Basics Law of Large Numbers & CLT   A pharmaceutical company tests a new drug. They enroll 200 patients, give half the drug and half a placebo. After eight weeks, the treated group improves by an average of 2.3 points on a symptom scale; the control group improves by 0.8 points. The drug looks better - but is it actually better, or could this difference have arisen by random chance even if the drug did nothing?">
+<meta property="og:title" content="Hypothesis Testing & p-values">
+<meta property="og:description" content="Prerequisites:
+ Statistics Basics Law of Large Numbers & CLT   A pharmaceutical company tests a new drug. They enroll 200 patients, give half the drug and half a placebo. After eight weeks, the treated group improves by an average of 2.3 points on a symptom scale; the control group improves by 0.8 points. The drug looks better - but is it actually better, or could this difference have arisen by random chance even if the drug did nothing?">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/hypothesis-testing-p-values/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Hypothesis Testing & p-values</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/statistics-basics/>Statistics Basics</a></li>
+<li><a href=/posts/law-of-large-numbers-clt/>Law of Large Numbers & CLT</a></li>
+</ul>
+<hr>
+<p>A pharmaceutical company tests a new drug. They enroll 200 patients, give half the drug and half a placebo. After eight weeks, the treated group improves by an average of 2.3 points on a symptom scale; the control group improves by 0.8 points. The drug looks better - but is it actually better, or could this difference have arisen by random chance even if the drug did nothing?</p>
+<p>This is the central question of hypothesis testing. Answering it incorrectly - declaring a useless drug effective, or dismissing an effective drug as noise - can mean millions of people are harmed or denied help. The framework for answering it is subtle, widely misunderstood, and deeply consequential.</p>
+<hr>
+<h2 id=the-setup>The Setup</h2>
+<p>Hypothesis testing frames the problem as a choice between two explanations.</p>
+<p><strong>The null hypothesis $H_0$</strong>: the boring explanation. The default, the status quo, the claim that nothing interesting is happening. In the drug trial: $H_0: \mu_\text{treatment} = \mu_\text{control}$ - the drug has no effect; both groups improve at the same rate.</p>
+<p><strong>The alternative hypothesis $H_1$</strong>: what you would conclude if $H_0$ were false. Usually $H_1: \mu_\text{treatment} \neq \mu_\text{control}$ (two-sided), or $H_1: \mu_\text{treatment} > \mu_\text{control}$ (one-sided, if you have prior reason to believe the drug only helps).</p>
+<p>A critical point: you never &ldquo;prove&rdquo; $H_1$. You ask whether the data are improbable under $H_0$. If yes - if the data would be very surprising in a world where $H_0$ is true - you reject $H_0$ in favor of $H_1$. If the data are consistent with $H_0$, you fail to reject $H_0$. You do not accept $H_0$; absence of evidence is not evidence of absence.</p>
+<p>The asymmetry is intentional. It mirrors the burden of proof: we require evidence to overturn the null, not evidence to support it.</p>
+<hr>
+<h2 id=the-p-value>The p-value</h2>
+<p>The <strong>p-value</strong> is the probability of observing data at least as extreme as what you actually saw, assuming $H_0$ is true:</p>
+<p>$$p = P(\text{test statistic} \geq t_\text{observed} \mid H_0).$$</p>
+<p>&ldquo;At least as extreme&rdquo; means: in the direction that would count as evidence against $H_0$. For a two-sided test, it means the absolute value of the statistic is at least as large as what you observed.</p>
+<p>A small p-value means: the data would be very unlikely if $H_0$ were true. This is evidence against $H_0$ - not proof that $H_0$ is false, but surprise at what you saw under the assumption it is true.</p>
+<h3 id=what-a-p-value-is-not>What a p-value is NOT</h3>
+<p>This is where most confusion lives.</p>
+<p>The p-value is <strong>not</strong> $P(H_0 \text{ is true} \mid \text{data})$. That quantity - the probability of the null hypothesis given the data - is a posterior probability. Computing it requires a prior over hypotheses, which is a Bayesian operation (see <a href=/posts/bayesian-inference/>Bayesian Inference</a>). The p-value is frequentist and makes no statement about the probability that $H_0$ is true.</p>
+<p>The p-value is <strong>not</strong> the probability that your result was due to chance. This is the same misinterpretation in different words.</p>
+<p>The p-value is <strong>not</strong> a measure of effect size. A tiny, clinically meaningless effect can produce $p &lt; 0.001$ with a large enough sample. Statistical significance and practical significance are different things.</p>
+<p>The p-value is a measure of how surprised you would be, given the null hypothesis. Nothing more.</p>
+<hr>
+<h2 id=the-test-statistic-and-its-null-distribution>The Test Statistic and Its Null Distribution</h2>
+<p>To compute a p-value, you need two things: a test statistic and its distribution under $H_0$.</p>
+<h3 id=one-sample-z-test>One-sample z-test</h3>
+<p>You observe a sample $x_1, \ldots, x_n$ and want to test whether the population mean $\mu$ equals some specific value $\mu_0$. If $\sigma$ (the population standard deviation) is known, the test statistic is:</p>
+<p>$$Z = \frac{\bar{x} - \mu_0}{\sigma / \sqrt{n}}.$$</p>
+<p>Under $H_0$, $Z \sim \mathcal{N}(0,1)$ exactly (by the Central Limit Theorem, for large $n$, or exactly if the data are Normal). A value of $Z = 2$ means the sample mean is 2 standard errors above $\mu_0$ - that happens with probability about 2.3% under $H_0$ (one-sided), or 4.6% (two-sided).</p>
+<h3 id=one-sample-t-test>One-sample t-test</h3>
+<p>In practice, $\sigma$ is usually unknown. You replace it with the sample standard deviation $s = \sqrt{\frac{1}{n-1}\sum(x_i - \bar{x})^2}$:</p>
+<p>$$T = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}.$$</p>
+<p>Under $H_0$, $T$ follows a <strong>t-distribution</strong> with $n-1$ degrees of freedom, written $t_{n-1}$. The t-distribution has heavier tails than the normal - it accounts for the additional uncertainty in estimating $\sigma$. As $n \to \infty$, $t_{n-1} \to \mathcal{N}(0,1)$.</p>
+<h3 id=worked-example-drug-trial>Worked example: drug trial</h3>
+<p>Suppose in our drug trial we observe $n = 100$ treated patients with sample mean improvement $\bar{x} = 2.3$, sample standard deviation $s = 4.0$, and the null hypothesis says the population mean is $\mu_0 = 0$ (no effect). The t-statistic is:</p>
+<p>$$T = \frac{2.3 - 0}{4.0 / \sqrt{100}} = \frac{2.3}{0.4} = 5.75.$$</p>
+<p>Under $H_0$, this follows $t_{99} \approx \mathcal{N}(0,1)$. A value of 5.75 is far out in the tail: the two-sided p-value is $P(|T| \geq 5.75) \approx 2 \times 10^{-8}$. That is extremely unlikely under the null. We reject $H_0$.</p>
+<hr>
+<h2 id=significance-level-and-the-decision-rule>Significance Level and the Decision Rule</h2>
+<p>Before seeing any data, you commit to a <strong>significance level</strong> $\alpha$: the threshold below which you will reject $H_0$. If $p &lt; \alpha$, reject; if $p \geq \alpha$, fail to reject.</p>
+<p>The conventional choice is $\alpha = 0.05$. This is an arbitrary tradition, not a mathematical law. Ronald Fisher chose it in the 1920s as a round number that seemed reasonable; it has no deep justification. Different fields use different values: particle physics uses $\alpha \approx 3 \times 10^{-7}$ (five sigma), genetics often uses $\alpha = 5 \times 10^{-8}$ for genome-wide studies.</p>
+<p>The significance level is chosen to control a specific error.</p>
+<hr>
+<h2 id=two-kinds-of-error>Two Kinds of Error</h2>
+<p>There are two ways to be wrong in hypothesis testing.</p>
+<p><strong>Type I error (false positive):</strong> $H_0$ is true, but you reject it. You conclude there is an effect when there is none. By construction, $P(\text{Type I error}) = \alpha$. When you set $\alpha = 0.05$, you accept a 5% chance of falsely rejecting a true null.</p>
+<p><strong>Type II error (false negative):</strong> $H_0$ is false, but you fail to reject it. The drug works, but your study failed to detect it. The probability of a Type II error is denoted $\beta$ - not to be confused with the parameter $\beta$ in Bayesian analysis.</p>
+<p><strong>Power</strong> $= 1 - \beta$: the probability of correctly rejecting a false null. Power depends on three things:</p>
+<ol>
+<li><strong>Effect size</strong>: a larger true effect is easier to detect.</li>
+<li><strong>Sample size $n$</strong>: more data reduces noise and increases power.</li>
+<li><strong>Significance level $\alpha$</strong>: a looser threshold (larger $\alpha$) makes rejection easier, increasing power but also increasing Type I error.</li>
+</ol>
+<p>In the drug trial: if the true effect is only 0.5 points (small) and $s = 4$, you would need a very large sample to detect it reliably. Power analysis - computing the sample size needed to achieve 80% or 90% power for a given effect size - is done before running the experiment.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> These two error types trade off: decreasing $\alpha$ to reduce false positives also increases the probability of false negatives. There is no setting that simultaneously minimizes both. The conventional $\alpha = 0.05$ and 80% power (i.e., $\beta = 0.20$) is a historical compromise, not an optimal solution. Many researchers argue for lower $\alpha$ in fields where false positives are costly, or for rethinking the framework entirely.</p>
+</blockquote>
+<hr>
+<h2 id=the-problem-with-p--005-as-a-threshold>The Problem with p &lt; 0.05 as a Threshold</h2>
+<p>The significance threshold has become a cargo cult. Journals publish studies with $p &lt; 0.05$ and reject those with $p > 0.05$, regardless of effect size, sample size, or scientific merit. This creates several serious problems.</p>
+<p><strong>Effect size is invisible.</strong> A study with $n = 1{,}000{,}000$ and a true effect of 0.001 units will have $p &lt; 0.05$. That effect may be too small to matter clinically or practically. Reporting $p &lt; 0.05$ without reporting the effect size and confidence interval is uninformative.</p>
+<p><strong>Publication bias.</strong> Studies with $p &lt; 0.05$ get published; studies with $p > 0.05$ often do not. This means the published literature is a biased sample of all experiments run. A body of published studies with $p \approx 0.04$ provides weaker evidence than it appears, because the corresponding null results are invisible.</p>
+<p><strong>Optional stopping.</strong> If you keep collecting data until $p &lt; 0.05$, you are guaranteed to eventually cross the threshold even if $H_0$ is true - because any random walk eventually hits any threshold. Running a test until you get significance is called <strong>p-hacking</strong> and dramatically inflates the true Type I error rate.</p>
+<hr>
+<h2 id=the-multiple-comparisons-problem>The Multiple Comparisons Problem</h2>
+<p>Suppose you run 20 independent hypothesis tests, each at $\alpha = 0.05$, and all 20 null hypotheses are actually true. The probability of at least one false positive is:</p>
+<p>$$1 - (1 - 0.05)^{20} = 1 - 0.95^{20} \approx 0.64.$$</p>
+<p>You have a 64% chance of incorrectly rejecting at least one true null just by running 20 tests. This is the <strong>multiple comparisons problem</strong>. It is endemic in exploratory data analysis, neuroimaging studies (where you test thousands of brain voxels), genetic association studies (millions of SNPs), and any setting where many hypotheses are tested simultaneously.</p>
+<h3 id=bonferroni-correction>Bonferroni correction</h3>
+<p>The simplest fix: if you run $m$ tests and want the <strong>family-wise error rate</strong> (probability of any false positive) to be at most $\alpha$, use significance level $\alpha/m$ for each individual test.</p>
+<p>$$\alpha_\text{per test} = \frac{\alpha}{m}.$$</p>
+<p>For $m = 20$ and $\alpha = 0.05$: use $\alpha_\text{per test} = 0.0025$. This is conservative - it controls the worst-case probability - but it is a defensible correction when the tests are independent.</p>
+<p>Other corrections (Benjamini-Hochberg, which controls the false discovery rate rather than the family-wise error rate) are less conservative and more appropriate when you expect some true effects among the many tests.</p>
+<hr>
+<h2 id=two-sided-vs-one-sided-tests>Two-sided vs. One-sided Tests</h2>
+<p>A <strong>two-sided test</strong> has $H_1: \mu \neq \mu_0$. The p-value counts probability in both tails: $P(|T| \geq |t_\text{obs}|)$. Use this when you have no prior reason to specify the direction of the effect.</p>
+<p>A <strong>one-sided test</strong> has $H_1: \mu > \mu_0$ (or $&lt; \mu_0$). The p-value counts probability in only one tail. Use this only when you would not care about an effect in the other direction - for example, testing whether a new drug is better (not merely different) than placebo.</p>
+<p>One-sided tests are more powerful (lower p-value for the same effect in the predicted direction) but dangerous if misapplied: a drug that is strongly worse than placebo would not be flagged by a one-sided test in the &ldquo;better&rdquo; direction. In practice, two-sided tests are standard unless there is a compelling pre-specified reason for one-sided.</p>
+<hr>
+<h2 id=non-parametric-tests>Non-parametric Tests</h2>
+<p>The z-test and t-test assume the data (or, by the CLT, the sample means) are approximately Normally distributed. When this fails - heavily skewed data, outliers, small samples from non-Normal populations - non-parametric tests are available.</p>
+<p>The <strong>Mann-Whitney U test</strong> (also called the Wilcoxon rank-sum test) tests whether one group tends to have larger values than another, without assuming Normality. It works on ranks of the data rather than raw values, making it robust to outliers and skew.</p>
+<p>The <strong>Wilcoxon signed-rank test</strong> is the non-parametric analogue of the one-sample t-test.</p>
+<p>Non-parametric tests are less powerful than their parametric counterparts when the parametric assumptions hold, but more reliable when they do not.</p>
+<hr>
+<h2 id=connection-to-machine-learning>Connection to Machine Learning</h2>
+<p>Hypothesis testing permeates machine learning practice, often without being named as such.</p>
+<p><strong>A/B testing</strong> is hypothesis testing. You want to know whether version B of a feature produces higher click-through rates than version A. The null hypothesis is that both versions have the same rate. The pitfalls - optional stopping, multiple comparisons from testing many metrics simultaneously, ignoring effect size - are the same.</p>
+<p><strong>Model comparison</strong> is hypothesis testing. &ldquo;Is model A significantly better than model B?&rdquo; can be framed as a test on evaluation metrics. The paired t-test (or Wilcoxon signed-rank test) on per-instance performance differences is a common approach.</p>
+<p><strong>p-hacking in ML.</strong> Running many experiments and reporting the best result without correction is the ML equivalent of p-hacking. Hyperparameter search over a large space is a form of multiple comparisons. Random seeds that happen to give good results inflate reported performance.</p>
+<p>The core tension in ML evaluation is the same as in hypothesis testing: you want to know whether an observed improvement is real or is noise. The same mathematical framework applies.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Null hypothesis $H_0$</td>
+<td>Default claim; no effect</td>
+</tr>
+<tr>
+<td>Alternative hypothesis $H_1$</td>
+<td>What you conclude if $H_0$ is rejected</td>
+</tr>
+<tr>
+<td>p-value</td>
+<td>$P(\text{data this extreme} \mid H_0)$</td>
+</tr>
+<tr>
+<td>Significance level $\alpha$</td>
+<td>Threshold for rejection; conventionally 0.05</td>
+</tr>
+<tr>
+<td>Type I error</td>
+<td>Reject $H_0$ when it is true; rate $= \alpha$</td>
+</tr>
+<tr>
+<td>Type II error</td>
+<td>Fail to reject $H_0$ when false; rate $= \beta$</td>
+</tr>
+<tr>
+<td>Power</td>
+<td>$1 - \beta$; probability of detecting a real effect</td>
+</tr>
+<tr>
+<td>t-statistic</td>
+<td>$(\bar{x} - \mu_0) / (s/\sqrt{n})$; follows $t_{n-1}$ under $H_0$</td>
+</tr>
+<tr>
+<td>Multiple comparisons</td>
+<td>Use Bonferroni: $\alpha_\text{per test} = \alpha / m$</td>
+</tr>
+<tr>
+<td>Two-sided vs. one-sided</td>
+<td>Two-sided is default; one-sided requires pre-specified direction</td>
+</tr>
+</tbody>
+</table>
+<p>The p-value is a measure of surprise, not a measure of truth. A small p-value means the data would be unusual if the null were true - it is evidence against the null, but not proof of the alternative, and not a statement about effect size, importance, or replicability.</p>
+<p>Use hypothesis testing for what it is: a disciplined framework for quantifying how much the data challenges a specific null claim. Be honest about multiple comparisons, preregister your hypotheses when possible, and always report effect sizes alongside p-values.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/confidence-intervals/>Confidence Intervals</a> - the complementary tool: instead of a binary reject/fail-to-reject decision, what range of parameter values is consistent with the data?</li>
+<li><a href=/posts/bayesian-inference/>Bayesian Inference</a> - the alternative framework, which does compute $P(H_0 \mid \text{data})$ and interprets evidence differently</li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

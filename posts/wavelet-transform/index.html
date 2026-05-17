@@ -1,0 +1,438 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Wavelet Transform // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Wavelet Transform">
+<meta name=twitter:description content="Prerequisites:
+ Fourier Analysis Sequences & Series   The Fourier transform tells you which frequencies are present in a signal. But it has no idea when they occur.
+Take a recording of a Beethoven piano sonata. It contains hundreds of frequencies - the fundamental tones, their harmonics, the attack transients when keys are struck, the decay as they fade. Compute the Fourier transform of the entire recording: you get a list of which frequencies are present.">
+<meta property="og:title" content="Wavelet Transform">
+<meta property="og:description" content="Prerequisites:
+ Fourier Analysis Sequences & Series   The Fourier transform tells you which frequencies are present in a signal. But it has no idea when they occur.
+Take a recording of a Beethoven piano sonata. It contains hundreds of frequencies - the fundamental tones, their harmonics, the attack transients when keys are struck, the decay as they fade. Compute the Fourier transform of the entire recording: you get a list of which frequencies are present.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/wavelet-transform/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Wavelet Transform</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Dec 11, 2020
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+30 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/fourier-analysis/>Fourier Analysis</a></li>
+<li><a href=/posts/sequences-and-series/>Sequences & Series</a></li>
+</ul>
+<hr>
+<p>The Fourier transform tells you which frequencies are present in a signal. But it has no idea when they occur.</p>
+<p>Take a recording of a Beethoven piano sonata. It contains hundreds of frequencies - the fundamental tones, their harmonics, the attack transients when keys are struck, the decay as they fade. Compute the Fourier transform of the entire recording: you get a list of which frequencies are present. But a low note in the first bar and the same low note in the last bar produce the same Fourier coefficient. A cymbal crash in the second minute and a cymbal crash in the eighth minute are indistinguishable. The Fourier transform has erased all temporal information.</p>
+<p>For many applications - seismology, speech recognition, audio processing, ECG analysis, data compression - you need to know both what frequency and when. A seismologist needs to know when the P-wave arrived. A speech recognizer needs to know when each phoneme begins. A cardiologist needs to know where in the heartbeat cycle the QRS complex sits. The Fourier transform cannot tell you any of this.</p>
+<p>This is the <strong>time-frequency problem</strong>. And it has a fundamental mathematical obstacle.</p>
+<hr>
+<h2 id=section-1-the-uncertainty-principle>Section 1: The Uncertainty Principle</h2>
+<p>This section establishes the mathematical bedrock before we describe any particular method. You need to understand the limit before you can appreciate why wavelets are the answer to it.</p>
+<p>Before describing any method for joint time-frequency analysis, you need to understand why there is no perfect solution. Not because our methods are inadequate - because the mathematics itself forbids it.</p>
+<p><strong>Theorem (Time-frequency uncertainty).</strong> For any function $f(t)$ with Fourier transform $F(\omega)$, define the time spread:</p>
+<p>$$(\Delta t)^2 = \frac{\int t^2 |f(t)|^2 dt}{\int |f(t)|^2 dt}$$</p>
+<p>and the frequency spread:</p>
+<p>$$(\Delta\omega)^2 = \frac{\int \omega^2 |F(\omega)|^2 d\omega}{\int |F(\omega)|^2 d\omega}.$$</p>
+<p>Then:</p>
+<p>$$\Delta t \cdot \Delta\omega \geq \frac{1}{2}.$$</p>
+<p>You cannot simultaneously have small $\Delta t$ (localized in time) and small $\Delta\omega$ (localized in frequency). The product has an irreducible lower bound.</p>
+<p>The extremal functions - those achieving equality - are Gaussians: $f(t) = e^{-t^2/2}$ has $\Delta t = \Delta\omega = 1/\sqrt{2}$, giving $\Delta t \cdot \Delta\omega = 1/2$.</p>
+<p>The uncertainty principle has concrete manifestations:</p>
+<ul>
+<li>A pure sinusoid $e^{i\omega_0 t}$ has $\Delta\omega = 0$ (perfectly localized in frequency) but $\Delta t = \infty$ (completely delocalized in time).</li>
+<li>A delta function $\delta(t - t_0)$ has $\Delta t = 0$ (perfectly localized in time) but $\Delta\omega = \infty$ (flat frequency content).</li>
+<li>Any practical signal occupies a &ldquo;cell&rdquo; of area $\geq 1/2$ in the time-frequency plane.</li>
+</ul>
+<p>This is not a limitation of any particular method. It is a theorem. Any method for time-frequency analysis is choosing how to partition the uncertainty budget - what time resolution to sacrifice for frequency resolution, and vice versa, at different locations in the signal.</p>
+<hr>
+<h2 id=section-2-the-short-time-fourier-transform>Section 2: The Short-Time Fourier Transform</h2>
+<p>The natural first idea: take the Fourier transform of small segments of the signal.</p>
+<p>Choose a window function $g(t)$ - a smooth, localized function that is concentrated near $t = 0$ and decays away from it. Typical choices: a Gaussian, or a tapered cosine (Hann window). The <strong>Short-Time Fourier Transform (STFT)</strong> is:</p>
+<p>$$\text{STFT}(b, \omega) = \int_{-\infty}^{\infty} f(t) \overline{g(t - b)} e^{-i\omega t} dt.$$</p>
+<p>The window $g(t-b)$ is centered at time $b$. For each pair $(b, \omega)$, you are computing how much of frequency $\omega$ is present in $f$ near time $b$. Sliding $b$ across the signal and computing for all $\omega$ produces a 2D map of the signal&rsquo;s time-frequency content - a <strong>spectrogram</strong>.</p>
+<p>The STFT works. It gives genuine time-frequency information. But it has a serious limitation.</p>
+<p>Once you choose the window $g$, the time resolution and frequency resolution are fixed for the entire signal. The window has some time width $\sigma_t$ and some frequency width $\sigma_\omega$ (related by the uncertainty principle: $\sigma_t \sigma_\omega \approx 1/2$). Every STFT coefficient corresponds to a rectangular &ldquo;Heisenberg box&rdquo; of dimensions $\sigma_t \times \sigma_\omega$ in the time-frequency plane. The entire signal is analyzed at this one resolution.</p>
+<p>For <strong>stationary signals</strong> (signals whose statistical properties do not change over time), this is fine. A sustained musical note has roughly the same frequency content throughout; a fixed resolution works.</p>
+<p>For <strong>non-stationary signals</strong> with features at multiple scales, the fixed resolution is a problem. A seismic signal contains slow surface waves (lasting minutes, low frequency) and fast body waves (lasting milliseconds, high frequency). A fixed window that is long enough to resolve the surface wave frequencies will smear the body wave arrival time; a short window that captures the body wave arrival will blur the surface wave frequencies. There is no single window size that works for both.</p>
+<p>The STFT is stuck. Its resolution is the same everywhere in the time-frequency plane, regardless of what the signal is doing.</p>
+<hr>
+<h2 id=section-3-why-the-stft-resolution-is-fixed>Section 3: Why the STFT Resolution Is Fixed</h2>
+<p>Here is the precise statement of the STFT&rsquo;s limitation.</p>
+<p>The STFT coefficient $\text{STFT}(b, \omega)$ can be thought of as the inner product of $f$ with the function $g(t-b)e^{i\omega t}$ - a windowed complex exponential centered at time $b$ and oscillating at frequency $\omega$. In the time-frequency plane, this function occupies a &ldquo;Heisenberg box&rdquo; - a region of dimensions roughly $\sigma_t \times \sigma_\omega$ centered at $(b, \omega)$.</p>
+<p>The dimensions $\sigma_t$ (time width) and $\sigma_\omega$ (frequency width) are fixed by the window $g$: $\sigma_t = \Delta t(g)$ and $\sigma_\omega = \Delta\omega(\hat{g})$. By the uncertainty principle, $\sigma_t \sigma_\omega \geq 1/2$.</p>
+<p>The entire time-frequency plane is tiled with boxes of the same fixed size. Every frequency is analyzed with the same time window. This is the fundamental rigidity of the STFT.</p>
+<p>In contrast, at a given frequency $\omega_0$, the relevant time scale for oscillations is $T_0 = 2\pi/\omega_0$. For high-frequency oscillations (large $\omega_0$, small $T_0$), a short time window captures many cycles and gives good frequency resolution. For low-frequency oscillations (small $\omega_0$, large $T_0$), a long time window is needed to see even one cycle. The STFT uses the same window everywhere, which means it is using either a too-long window for high frequencies or a too-short window for low frequencies - it cannot be optimal for both simultaneously.</p>
+<p>Wavelets fix this by making the window duration proportional to the oscillation period: the wavelet at scale $a$ (corresponding to frequency $\sim\omega_0/a$) has duration proportional to $a$. As scale increases (lower frequency), the wavelet stretches; as scale decreases (higher frequency), the wavelet compresses. Each Heisenberg box has the same area (the uncertainty bound) but different aspect ratios - tall and narrow for low frequencies, short and wide for high frequencies.</p>
+<hr>
+<h2 id=section-4-wavelets---the-adaptive-solution>Section 4: Wavelets - The Adaptive Solution</h2>
+<p>Wavelets replace the fixed window with analysis functions that automatically adapt their duration to the frequency being analyzed.</p>
+<p>The key idea: at high frequencies, use a short, narrow analysis function (good time resolution - you care about when the high-frequency event happened). At low frequencies, use a long, wide analysis function (good frequency resolution - high-frequency components are short enough that temporal precision is less important, but you want to distinguish nearby low frequencies).</p>
+<p>A <strong>wavelet</strong> $\psi(t)$ is a function satisfying two conditions:</p>
+<ol>
+<li>
+<p>It is localized in both time and frequency - concentrated near $t = 0$ and near some nonzero frequency $\omega_0$.</p>
+</li>
+<li>
+<p>It has zero mean: $\int_{-\infty}^{\infty} \psi(t) dt = 0$.</p>
+</li>
+</ol>
+<p>The zero-mean condition is mandatory. In the Fourier domain, $\hat{\psi}(0) = \int \psi(t) dt = 0$. This means the wavelet has no DC component - it is a band-pass function that oscillates and integrates to zero.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why must a wavelet have zero mean? Consider what happens if $\int \psi(t) dt \neq 0$. Then $|\hat{\psi}(0)| > 0$: the wavelet has energy at frequency zero, meaning it responds to the constant (DC) level of the signal. But the constant level carries no information about change or oscillation - it is just the baseline. A wavelet is meant to detect oscillatory features, transients, and variations. It should be blind to the background level. The admissibility condition $\hat{\psi}(0) = 0$ ensures the wavelet ignores DC and responds only to variations. Without it, the wavelet transform would confound signal features with signal level.</p>
+</blockquote>
+<p>Given a &ldquo;mother wavelet&rdquo; $\psi(t)$, generate a family by scaling (stretching or compressing) and translating (shifting):</p>
+<p>$$\psi_{a,b}(t) = \frac{1}{\sqrt{a}}\psi!\left(\frac{t-b}{a}\right), \qquad a > 0,; b \in \mathbb{R}.$$</p>
+<p>The scale parameter $a$ controls the duration: large $a$ stretches $\psi$ (longer duration, lower frequency); small $a$ compresses $\psi$ (shorter duration, higher frequency). The translation parameter $b$ shifts the center time. The $1/\sqrt{a}$ normalization keeps $|\psi_{a,b}|_2 = |\psi|_2$ for all $a, b$.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> What is the relationship between scale $a$ and frequency? If $\psi(t)$ has most of its energy at frequency $\omega_0$, then $\psi(t/a)$ has most of its energy at frequency $\omega_0/a$. Smaller $a$ means the wavelet is compressed in time, so it oscillates more rapidly - higher frequency. Larger $a$ means the wavelet is stretched out - lower frequency. The scale parameter is inversely proportional to frequency. This is why wavelet analysis is sometimes called a &ldquo;constant-$Q$&rdquo; analysis: the ratio of center frequency to bandwidth is constant, whereas the STFT maintains constant absolute bandwidth.</p>
+</blockquote>
+<hr>
+<h2 id=section-5-the-continuous-wavelet-transform>Section 5: The Continuous Wavelet Transform</h2>
+<p><strong>Definition.</strong> The <strong>Continuous Wavelet Transform (CWT)</strong> of $f(t)$ is:</p>
+<p>$$W(a, b) = \langle f, \psi_{a,b}\rangle = \int_{-\infty}^{\infty} f(t) \psi_{a,b}^<em>(t) dt = \frac{1}{\sqrt{a}}\int_{-\infty}^{\infty} f(t) \psi^</em>!\left(\frac{t-b}{a}\right) dt.$$</p>
+<p>The coefficient $W(a, b)$ measures how much the signal $f$ at time $b$ resembles the wavelet at scale $a$.</p>
+<p><strong>Interpretation.</strong> Large $|W(a, b)|$ means $f$ has a feature near time $b$ that looks like $\psi$ at scale $a$ (i.e., at frequency $\sim \omega_0/a$). Small $|W(a, b)|$ means the signal does not have that feature at that scale and time.</p>
+<p><strong>Reconstruction.</strong> Under the <strong>admissibility condition</strong> $C_\psi = \int_0^{\infty} |\hat{\psi}(\omega)|^2/\omega d\omega &lt; \infty$ (which is guaranteed when $\hat{\psi}(0) = 0$ and $\hat{\psi}$ is well-behaved), the original signal can be recovered:</p>
+<p>$$f(t) = \frac{1}{C_\psi}\int_0^{\infty}\int_{-\infty}^{\infty} W(a,b) \psi_{a,b}(t) \frac{db da}{a^2}.$$</p>
+<p>This is the inverse CWT. It says the signal is a continuous superposition of scaled-and-shifted wavelets, weighted by the CWT coefficients.</p>
+<p><strong>Energy conservation (CWT Parseval).</strong> $|f|^2 = \frac{1}{C_\psi}\int_0^{\infty}\int_{-\infty}^{\infty}|W(a,b)|^2 \frac{db da}{a^2}$.</p>
+<p>The CWT is redundant - there are infinitely many $(a, b)$ pairs, far more than the original signal has degrees of freedom. This redundancy is often useful for analysis (you can see the structure at every scale and time smoothly), but wasteful for compression or computation.</p>
+<hr>
+<h2 id=section-6-the-scalogram>Section 6: The Scalogram</h2>
+<p>The natural way to display the CWT output is as a two-dimensional plot in the $(b, a)$ plane, with the coefficient magnitude $|W(a,b)|$ shown as a color or intensity. This is the <strong>scalogram</strong> (or wavelet power spectrum).</p>
+<p>Convention: typically the vertical axis shows frequency (high at top, low at bottom), so small scale (high frequency) is at the top and large scale (low frequency) at the bottom. Time runs along the horizontal axis.</p>
+<p>Reading a scalogram: bright regions indicate where $|W(a,b)|$ is large - the signal has features at that time and scale. A horizontal bright band indicates a persistent oscillation at that frequency. A vertical bright band (cutting across all scales) indicates a sharp transient (like an impulse or step change). A bright blob localized in both time and frequency indicates a brief burst of oscillation.</p>
+<p><strong>Example: a chirp.</strong> A chirp signal increases in frequency over time: $f(t) = \cos(t^2/2)$. Its Fourier transform shows all frequencies from low to high but cannot tell you they increase with time. Its CWT scalogram shows a diagonal ridge: at early times, the bright region is at low frequency (large scale); at late times, the bright region is at high frequency (small scale). The scalogram reveals the time-frequency structure directly.</p>
+<p><strong>Example: speech.</strong> The scalogram of a spoken word shows vowels as horizontal bands (sustained harmonics at specific frequencies), consonants as brief wideband bursts, and silence as empty regions. The temporal evolution of frequency content - the formant structure - is immediately visible.</p>
+<p>The scalogram trades resolution for insight. Because of the uncertainty principle, each point in the scalogram represents a region of area $\geq 1/2$ in the time-frequency plane. High-frequency details are localized in time but smeared in frequency; low-frequency content is localized in frequency but smeared in time. This is the inherent geometry of any time-frequency analysis.</p>
+<hr>
+<h2 id=section-7-multi-resolution-analysis>Section 7: Multi-Resolution Analysis</h2>
+<p>To make the wavelet transform computationally practical and non-redundant, we need discrete sampling in the $(a, b)$ space, structured carefully. The right framework is <strong>multi-resolution analysis (MRA)</strong>.</p>
+<p>An MRA is a ladder of approximation spaces. The signal is analyzed at multiple scales simultaneously: at each scale, you have a coarse approximation and the detail (what you would need to add to the approximation to get to the next finer scale).</p>
+<p>More precisely: an MRA consists of a sequence of nested closed subspaces $\ldots \subset V_{-1} \subset V_0 \subset V_1 \subset \cdots$ of $L^2(\mathbb{R})$, where:</p>
+<ul>
+<li>$\bigcup_j V_j$ is dense in $L^2(\mathbb{R})$ (approximations get arbitrarily good at fine scales).</li>
+<li>$\bigcap_j V_j = {0}$ (the coarsest approximation is trivial).</li>
+<li>$f(t) \in V_j \iff f(2t) \in V_{j+1}$ (finer scales are obtained by halving the scale).</li>
+<li>There is a <strong>scaling function</strong> (father wavelet) $\phi(t)$ such that ${\phi(t-k) : k \in \mathbb{Z}}$ forms an orthonormal basis for $V_0$.</li>
+</ul>
+<p>The orthogonal complement of $V_j$ in $V_{j+1}$ is a space $W_j$ spanned by the shifted and scaled mother wavelet $\psi$. Decompose $V_{j+1} = V_j \oplus W_j$. Expand: $L^2(\mathbb{R}) = V_0 \oplus W_0 \oplus W_1 \oplus W_2 \oplus \cdots$ (or $\cdots \oplus W_{-2} \oplus W_{-1} \oplus W_0 \oplus \cdots$ for the doubly infinite case).</p>
+<p>In words: any signal can be decomposed into a coarse approximation (in $V_0$) plus detail at successively finer scales ($W_0, W_1, \ldots$). The coarse approximation captures the &ldquo;low-frequency content&rdquo;; each detail level captures the &ldquo;detail content&rdquo; at the corresponding scale.</p>
+<p>The scaling function $\phi$ and wavelet $\psi$ satisfy two refinement equations:</p>
+<p>$$\phi(t) = \sqrt{2}\sum_{k} h[k] \phi(2t - k)$$</p>
+<p>$$\psi(t) = \sqrt{2}\sum_{k} g[k] \phi(2t - k)$$</p>
+<p>where $h[k]$ are <strong>low-pass filter coefficients</strong> and $g[k] = (-1)^k h[1-k]$ are <strong>high-pass filter coefficients</strong> (the quadrature mirror filter relation). The filter coefficients $h[k]$ completely determine both $\phi$ and $\psi$.</p>
+<hr>
+<h2 id=section-8-the-discrete-wavelet-transform>Section 8: The Discrete Wavelet Transform</h2>
+<p>The MRA framework directly leads to an efficient algorithm: the <strong>Discrete Wavelet Transform (DWT)</strong>, implemented as a filter bank.</p>
+<p><strong>Decomposition.</strong> Given a discrete signal $x[n]$ at the finest scale:</p>
+<ol>
+<li>Convolve with the low-pass filter $h[k]$ and downsample by 2 (keep every other sample). Output: approximation coefficients $c[n]$ at the next coarser scale.</li>
+<li>Convolve with the high-pass filter $g[k]$ and downsample by 2. Output: detail coefficients $d[n]$ at the current scale.</li>
+<li>Apply the same two operations to the approximation coefficients $c[n]$ to get a coarser approximation and detail. Repeat.</li>
+</ol>
+<p>After $J$ levels of decomposition, a signal of length $N$ produces:</p>
+<ul>
+<li>$N/2^J$ approximation coefficients (the coarsest picture)</li>
+<li>$N/2^j$ detail coefficients at each level $j = 1, 2, \ldots, J$</li>
+</ul>
+<p>Total coefficients: $N/2^J + N/2^J + N/2^{J-1} + \cdots + N/2 = N$. The DWT is non-redundant.</p>
+<p><strong>Reconstruction.</strong> Reverse the process: upsample (insert zeros between samples) and convolve with reconstruction filters $\tilde{h}$ and $\tilde{g}$. Sum the approximation and detail at each level. After $J$ steps, you recover $x[n]$ exactly (perfect reconstruction, a key property of properly designed wavelet filter banks).</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why is the DWT $O(N)$ even though it operates at $J$ levels? At the first level, process $N$ samples. At the second level, process $N/2$ approximation coefficients. At the third level, $N/4$. And so on. The total work is $N + N/2 + N/4 + \cdots + N/2^J \leq 2N$. This is $O(N)$, regardless of $J$. Compare to the FFT, which is $O(N\log N)$. The DWT is faster because each level of decomposition reduces the problem size by half. The filter bank is a recursion with geometrically decreasing workloads, not logarithmically.</p>
+</blockquote>
+<p>The DWT is implemented in software as two standard convolution-and-downsample operations, repeated. It is fast, memory-efficient, and produces a hierarchical multi-scale representation.</p>
+<hr>
+<h2 id=section-9-the-wavelet-coefficients-in-practice>Section 9: The Wavelet Coefficients in Practice</h2>
+<p>What does the output of a DWT actually look like? Consider a simple example: a signal of $N = 8$ samples, $x = [x_0, x_1, x_2, x_3, x_4, x_5, x_6, x_7]$.</p>
+<p>With the Haar wavelet ($h = [1/\sqrt{2}, 1/\sqrt{2}]$, $g = [1/\sqrt{2}, -1/\sqrt{2}]$):</p>
+<p><strong>Level 1 decomposition.</strong></p>
+<ul>
+<li>Approximation: $c_1[k] = (x_{2k} + x_{2k+1})/\sqrt{2}$. Average adjacent pairs. 4 values.</li>
+<li>Detail: $d_1[k] = (x_{2k} - x_{2k+1})/\sqrt{2}$. Difference adjacent pairs. 4 values.</li>
+</ul>
+<p><strong>Level 2 decomposition.</strong> Apply the same to the 4 approximation coefficients:</p>
+<ul>
+<li>Approximation $c_2$: 2 values (averages of adjacent pairs from $c_1$).</li>
+<li>Detail $d_2$: 2 values (differences of adjacent pairs from $c_1$).</li>
+</ul>
+<p><strong>Level 3 decomposition.</strong> Apply to the 2 remaining approximation coefficients:</p>
+<ul>
+<li>Approximation $c_3$: 1 value.</li>
+<li>Detail $d_3$: 1 value.</li>
+</ul>
+<p>Final result: $1 + 1 + 2 + 4 = 8$ coefficients total. The wavelet coefficients are arranged as:</p>
+<p>$$[c_3, d_3, d_2[0], d_2[1], d_1[0], d_1[1], d_1[2], d_1[3]].$$</p>
+<p>The single $c_3$ coefficient is the overall average of the signal. The four $d_1$ coefficients capture the finest-scale variation (between adjacent samples). The two $d_2$ coefficients capture coarser variation. The one $d_3$ coefficient captures the coarsest detail.</p>
+<p>If the signal is smooth (neighboring samples have similar values), the detail coefficients are small - they measure differences, and differences are small when the signal varies slowly. If the signal has a sharp feature, only the detail coefficients at the appropriate scale and location will be large. This is sparsity emerging directly from the algorithm structure.</p>
+<hr>
+<h2 id=section-10-sparsity---why-wavelets-beat-fourier-for-some-tasks>Section 10: Sparsity - Why Wavelets Beat Fourier for Some Tasks</h2>
+<p>The Fourier transform represents signals in terms of sinusoids - functions that extend over all time with no spatial localization. A localized event (a click, a spike, a sharp edge) spreads its energy across all Fourier coefficients. You need many Fourier coefficients to accurately represent a localized feature.</p>
+<p>Wavelets are localized in both time and frequency. A spike in the signal near time $b$ at scale $a$ is captured by the wavelet coefficient $W(a, b)$ with $a$ small and $b$ near the spike location. All other coefficients $W(a', b')$ with $b'$ far from the spike or $a'$ much different from $a$ will be near zero. The spike&rsquo;s energy is <strong>concentrated</strong> in a few wavelet coefficients.</p>
+<p>This is <strong>sparsity</strong>: the wavelet representation of a signal with localized features requires far fewer significant coefficients than its Fourier representation.</p>
+<p><strong>Why sparsity matters for compression.</strong> A compression algorithm typically:</p>
+<ol>
+<li>Computes some transform of the signal.</li>
+<li>Retains only the $k$ largest-magnitude coefficients; sets the rest to zero.</li>
+<li>Stores the positions and values of those $k$ coefficients.</li>
+<li>Reconstructs by inverting the transform.</li>
+</ol>
+<p>If the representation is sparse (most energy in few coefficients), step 2 discards little energy and reconstruction is accurate. The more sparse the representation, the fewer coefficients you need and the higher the compression ratio.</p>
+<p>For natural images: smooth regions are efficiently represented by low-frequency Fourier coefficients. But edges - boundaries between objects - create high-frequency content that spreads across all Fourier coefficients. JPEG&rsquo;s DCT-based compression handles smooth regions well but produces &ldquo;ringing&rdquo; artifacts near edges. Wavelet-based compression (JPEG2000) represents smooth regions with coarse-scale wavelet coefficients and edges with fine-scale coefficients at the edge locations. The total number of significant coefficients is much smaller, especially at high compression ratios.</p>
+<p><strong>Concrete example.</strong> Consider an image with one sharp edge: white on the left, black on the right. Its Fourier representation has coefficients $1/(\pi k)$ for all odd $k$ - slowly decaying, requiring many terms for accurate reconstruction. Its 1D Haar wavelet representation has one coefficient at the scale corresponding to the edge width and at the edge location, with all other coefficients zero. The wavelet representation is exactly $2$ significant coefficients; the Fourier representation requires $O(N)$.</p>
+<hr>
+<h2 id=section-11-vanishing-moments---a-closer-look>Section 11: Vanishing Moments - A Closer Look</h2>
+<p>The concept of <strong>vanishing moments</strong> is central to understanding wavelet efficiency.</p>
+<p>A wavelet $\psi$ has $M$ vanishing moments if:</p>
+<p>$$\int_{-\infty}^{\infty} t^k \psi(t) dt = 0 \quad \text{for } k = 0, 1, \ldots, M-1.$$</p>
+<p>We already know $k = 0$ (zero mean) is required. Vanishing moments for $k \geq 1$ are extra.</p>
+<p><strong>Why vanishing moments matter.</strong> Suppose $f(t)$ is smooth near the point $b$. Expand in a Taylor series: $f(t) = f(b) + f'(b)(t-b) + \frac{f''(b)}{2!}(t-b)^2 + \cdots$. The wavelet coefficient at scale $a$ and time $b$ is:</p>
+<p>$$W(a,b) = \frac{1}{\sqrt{a}}\int f(t)\psi^*!\left(\frac{t-b}{a}\right) dt.$$</p>
+<p>Substitute the Taylor expansion. The zero-mean condition kills the constant term: $\int \psi^* dt = 0$ means the $f(b)$ term contributes zero. If $\psi$ has $M$ vanishing moments, then the terms for $k = 0, 1, \ldots, M-1$ all vanish. The first surviving term is order $a^{M+1/2}$ (after scaling). For small $a$ (fine scale, high frequency), $W(a,b) \to 0$ very fast.</p>
+<p>In practical terms: near a smooth region, the detail wavelet coefficients are extremely small (order $a^{M+1/2}$). Near a discontinuity (where the Taylor expansion breaks down), the coefficients are large. More vanishing moments means smoother functions have smaller coefficients, giving sparser representations.</p>
+<p><strong>Consequences for filter design.</strong> More vanishing moments require longer filters (more coefficients). This is a tradeoff: Haar has 1 vanishing moment and 2 filter coefficients. $D_4$ has 2 vanishing moments and 4 filter coefficients. $D_8$ has 4 vanishing moments and 8 coefficients. The longer the filter, the smoother the wavelet and the sparser the representation for smooth signals - but also the more computation per level.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why do vanishing moments affect smoothness? The connection is through the two-scale relation: $\phi(t) = \sqrt{2}\sum_k h[k]\phi(2t-k)$. The scaling function&rsquo;s smoothness is controlled by the zeros of the filter $H(e^{j\omega}) = \sum_k h[k]e^{-j\omega k}$ at $\omega = \pi$. Each vanishing moment contributes one zero at $\omega = \pi$: $M$ vanishing moments means $H(e^{j\pi}) = H'(e^{j\pi}) = \cdots = H^{(M-1)}(e^{j\pi}) = 0$. More zeros at $\pi$ means the high-pass filter rolls off more steeply, and the resulting wavelet is smoother.</p>
+</blockquote>
+<hr>
+<h2 id=section-12-common-wavelets>Section 12: Common Wavelets</h2>
+<p>The choice of wavelet affects the sparsity of the representation, the smoothness of reconstruction, and the computational properties of the transform.</p>
+<p><strong>Haar wavelet.</strong> The oldest and simplest wavelet:</p>
+<p>$$\psi_{\text{Haar}}(t) = \begin{cases} 1 & 0 \leq t &lt; 1/2 \\ -1 & 1/2 \leq t &lt; 1 \\ 0 & \text{otherwise} \end{cases}$$</p>
+<p>A step function that goes up then immediately down. The corresponding scaling function is $\phi(t) = \mathbf{1}_{[0,1)}$. The filter coefficients: $h = [1/\sqrt{2}, 1/\sqrt{2}]$ (low-pass: average adjacent pairs), $g = [1/\sqrt{2}, -1/\sqrt{2}]$ (high-pass: difference adjacent pairs). The DWT with Haar wavelets is just iterative averaging and differencing.</p>
+<p>Haar is orthogonal, has compact support (nonzero only on $[0,1]$), and is the simplest possible wavelet. Its weakness: it is not continuous - the scaling function and wavelet have discontinuities. This means the Haar DWT does not produce sparse representations for smooth signals (the discontinuous wavelet does not match smooth regions well). It is good for piecewise-constant signals and for understanding DWT algorithms.</p>
+<p><strong>Daubechies wavelets ($D_{2N}$).</strong> Ingrid Daubechies (1988) constructed a family of wavelets with compact support, orthogonality, and the maximum number of <strong>vanishing moments</strong> for their support size.</p>
+<p>A wavelet $\psi$ has $M$ vanishing moments if $\int t^k \psi(t) dt = 0$ for $k = 0, 1, \ldots, M-1$. More vanishing moments means the wavelet coefficients of smooth functions are smaller: if $f$ is $M$-times differentiable, then wavelet coefficients at fine scale $a$ decay as $a^{M+1/2}$. More vanishing moments produce sparser representations for smooth signals.</p>
+<p>The $D_4$ wavelet (Daubechies-4, using a 4-tap filter) has 2 vanishing moments and is the most common general-purpose choice. It is smoother than Haar (it is continuous) while remaining compactly supported. The $D_6$, $D_8$, $\ldots$ wavelets have progressively more vanishing moments and smoother shapes.</p>
+<p><strong>Morlet wavelet.</strong> A complex sinusoid modulated by a Gaussian:</p>
+<p>$$\psi_{\text{Morlet}}(t) = \pi^{-1/4} e^{i\omega_0 t} e^{-t^2/2}$$</p>
+<p>where $\omega_0$ is typically set to $5$ or $6$ radians (to satisfy the admissibility condition approximately). The Morlet wavelet is not compactly supported and does not generate an MRA, so it is used only for the continuous wavelet transform.</p>
+<p>The Gaussian envelope gives the Morlet wavelet optimal time-frequency localization (it achieves the uncertainty bound $\Delta t \cdot \Delta\omega = 1/2$). The sinusoidal carrier makes it well-suited for analyzing oscillatory signals - the CWT with a Morlet wavelet is closely related to the STFT with a Gaussian window.</p>
+<p>Morlet wavelets are widely used in neuroscience (EEG, fMRI data analysis), seismology, and audio analysis. Anywhere you want a smooth, interpretable time-frequency map.</p>
+<p><strong>Biorthogonal wavelets.</strong> Used in JPEG2000. They relax orthogonality (the analysis and reconstruction filters are different but dual) in order to achieve symmetric filters. Symmetric filters have linear phase - all frequencies are delayed by the same number of samples, which preserves the shape of transients. This is important for image compression, where phase distortion produces visible artifacts.</p>
+<p>The specific biorthogonal wavelet used in JPEG2000 (the CDF 9/7 wavelet) has 4 and 4 vanishing moments for the analysis and synthesis filters respectively, providing good sparsity for natural images.</p>
+<hr>
+<h2 id=section-13-applications>Section 13: Applications</h2>
+<p><strong>JPEG2000.</strong> The successor to JPEG uses the 2D DWT with the CDF 9/7 biorthogonal wavelet. The image is decomposed into coarse approximation and multi-scale detail subbands. Coefficients are quantized, with more precision given to low-frequency (coarse) subbands. The quantized coefficients are entropy-coded. JPEG2000 outperforms JPEG at low bitrates: at $0.1$ bits per pixel, JPEG2000 produces recognizable images while JPEG produces severe blocking artifacts. JPEG2000 is used in digital cinema (DCI standard), medical imaging (DICOM), and satellite imagery.</p>
+<p><strong>Signal denoising.</strong> Model the signal as $y = f + n$ where $f$ is the true signal and $n$ is white noise. In the wavelet domain, $f$ concentrates its energy in a few large coefficients (by sparsity); white noise spreads its energy uniformly across all coefficients with roughly equal magnitude ($\sigma/\sqrt{N}$ for noise power $\sigma^2$). <strong>Soft thresholding</strong>: for each wavelet coefficient $W$, set $\hat{W} = \text{sign}(W)\max(|W| - \lambda, 0)$. Reconstruct from the thresholded coefficients. Coefficients below $\lambda$ are noise; coefficients above $\lambda$ are signal. The Donoho-Johnstone theorem (1994) shows that universal thresholding at $\lambda = \sigma\sqrt{2\log N}$ achieves near-optimal denoising: the mean squared error is within a logarithmic factor of the best possible.</p>
+<p><strong>ECG analysis.</strong> The electrocardiogram records the electrical activity of the heart over time. The QRS complex - a sharp, localized waveform representing ventricular depolarization - is the most important feature. It lasts roughly $80$-$120$ milliseconds and contains energy at $5$-$50$ Hz. Wavelet analysis at the appropriate scale captures the QRS complex cleanly, suppressing the lower-frequency baseline wander (scale too large) and higher-frequency muscle noise (scale too small). The precise timing and shape of the QRS complex, extracted by wavelet analysis, is used to detect arrhythmias, measure heart rate variability, and diagnose cardiac conditions.</p>
+<p><strong>Seismic analysis.</strong> Seismic signals from earthquakes contain body waves (P- and S-waves, arriving first, high frequency, short duration) and surface waves (arriving later, lower frequency, longer duration). The Fourier transform cannot separate these temporally because they overlap in time. The CWT with a Morlet wavelet produces a scalogram (plot of $|W(a,b)|^2$) showing body waves as high-frequency bursts at their arrival times, and surface waves as lower-frequency sustained energy. The arrival time of the P-wave, identified from the scalogram, is used to locate the earthquake&rsquo;s epicenter.</p>
+<hr>
+<h2 id=section-14-why-jpeg-uses-dct-not-dwt>Section 14: Why JPEG Uses DCT, Not DWT</h2>
+<p>A natural question: why does JPEG use the Discrete Cosine Transform (DCT) rather than the DWT? And why does JPEG2000 switch to wavelets?</p>
+<p>The DCT is the DFT applied to a symmetrically extended signal (which produces real-valued coefficients). Applied to $8 \times 8$ image blocks, the DCT concentrates most energy in the upper-left corner (low-frequency components); the high-frequency components are typically near zero for natural images. Quantizing these coefficients (rounding to fewer bits) and discarding near-zero ones gives JPEG compression.</p>
+<p>The DCT has excellent energy compaction for smooth signals - it achieves near-optimal compression for Markov random field image models. Its weakness: it operates on independent $8 \times 8$ blocks. At high compression ratios, you can see block boundaries in the compressed image (the &ldquo;blocky&rdquo; JPEG artifact). The blocks do not share information, so sharp edges that cross block boundaries are not handled efficiently.</p>
+<p>The DWT operates on the entire image simultaneously. There are no block boundaries and no blocking artifacts. The wavelet representation captures edges as localized fine-scale coefficients regardless of where they fall in the image. At high compression, JPEG2000 produces &ldquo;blurry&rdquo; degradation (smooth fine-scale details are discarded) rather than &ldquo;blocky&rdquo; degradation. Perceptually, blurry is better than blocky at the same compression ratio.</p>
+<p>The tradeoff: the DWT is computationally more complex to implement efficiently, especially for arbitrary image sizes (you need to handle boundaries carefully). The DCT on $8 \times 8$ blocks is simple, fast, and well-suited to hardware implementation. This is why JPEG persists in practice despite JPEG2000&rsquo;s superior quality: the ecosystem and hardware support for JPEG is enormous.</p>
+<hr>
+<h2 id=section-15-thresholding-in-detail>Section 15: Thresholding in Detail</h2>
+<p>The thresholding procedure for denoising deserves a careful look because it illustrates how sparsity works in practice.</p>
+<p>Given noisy observations $y = f + n$ where $n$ is white Gaussian noise with variance $\sigma^2$, compute the DWT: $\mathbf{W} = \mathbf{W}y = \mathbf{W}f + \mathbf{W}n$. The noise $\mathbf{W}n$ has the same distribution as $n$ (the DWT is orthogonal, so it preserves white Gaussianness). The signal $\mathbf{W}f$ is concentrated in a few large coefficients (by sparsity of $f$ in the wavelet domain).</p>
+<p><strong>Hard thresholding.</strong> Set coefficient $w$ to zero if $|w| &lt; \lambda$, keep unchanged if $|w| \geq \lambda$:</p>
+<p>$$\hat{w} = w \cdot \mathbf{1}[|w| \geq \lambda].$$</p>
+<p>Removes small coefficients that are likely noise, keeps large ones that are likely signal.</p>
+<p><strong>Soft thresholding (shrinkage).</strong> Shrink all coefficients toward zero:</p>
+<p>$$\hat{w} = \text{sign}(w)\max(|w| - \lambda, 0).$$</p>
+<p>This produces a continuous estimator (unlike hard thresholding, which has a jump at $\pm\lambda$) and corresponds to minimizing $|y - f|^2/2 + \lambda|f|_{\ell^1}$ (Lasso regression in the wavelet domain).</p>
+<p><strong>Universal threshold.</strong> The Donoho-Johnstone universal threshold is $\lambda = \sigma\sqrt{2\log N}$ where $N$ is the signal length and $\sigma$ is the noise standard deviation (estimated from the finest-scale wavelet coefficients). At this threshold, the probability that any noise coefficient exceeds $\lambda$ is less than $1/N$ - so with high probability, all retained coefficients are signal. The resulting estimator achieves mean squared error within a logarithmic factor of the oracle estimator (which knows the true signal location).</p>
+<p>In practice: estimate $\sigma$ from the median absolute deviation of the finest-scale detail coefficients $d_1[k]$: $\hat{\sigma} = \text{median}(|d_1[k]|)/0.6745$. Apply soft thresholding to all detail coefficients except the finest scale (to avoid over-smoothing transients). Invert the DWT. The result is a denoised estimate of $f$.</p>
+<hr>
+<h2 id=section-16-compressed-sensing---a-brief-detour>Section 16: Compressed Sensing - A Brief Detour</h2>
+<p>Wavelet sparsity has implications that go beyond compression. Compressed sensing (Donoho, Candès, Tao, ~2005) makes a startling claim: if a signal has a sparse representation in some basis, you can reconstruct it exactly from far fewer measurements than the Nyquist-Shannon sampling theorem would suggest.</p>
+<p>The idea: you have a signal $f$ that has only $k$ nonzero coefficients in the wavelet domain - the other $N - k$ are zero. Naively, you would need $N$ samples to determine $f$. But it can be shown that with $O(k\log N)$ random linear measurements (projections of $f$ onto random vectors), you can recover $f$ exactly via convex optimization (specifically, $\ell^1$ minimization).</p>
+<p>Why $\ell^1$? The $\ell^1$ norm $|c|_1 = \sum |c_k|$ promotes sparsity in optimization because the level sets of $|c|_1$ are cross-polytopes (diamond shapes in 2D, octahedra in 3D) - they have corners on the coordinate axes. An optimization problem minimizing $\ell^1$ subject to constraints tends to find solutions where many coordinates are exactly zero.</p>
+<p>Wavelet sparsity is the key to making compressed sensing work for natural signals. Seismic imaging uses compressed sensing with wavelet-sparse signal models to reconstruct subsurface structure from far fewer measurements than traditional methods require. MRI uses compressed sensing with wavelet sparsity to reduce scan time (fewer $k$-space measurements, faster scans, less patient discomfort).</p>
+<p>This represents a shift in the philosophy of signal acquisition: instead of sampling at the Nyquist rate and then compressing, you acquire fewer measurements from the start, choosing them in a way that enables reconstruction of the sparse wavelet representation.</p>
+<hr>
+<h2 id=section-17-connection-to-deep-learning>Section 17: Connection to Deep Learning</h2>
+<p>One of the most intellectually satisfying results in modern machine learning is the connection between wavelets and convolutional neural networks.</p>
+<p><strong>CNN filters look like wavelets.</strong> When a CNN trained on images is examined, the filters learned in the first convolutional layer look remarkably like wavelets and Gabor functions - they are localized in space, oriented (sensitive to edges and gratings at particular angles), and appear at multiple scales. This is not surprising in retrospect. CNNs solve tasks that require detecting edges, textures, and shapes at multiple scales. Wavelets are the optimal tool for exactly these tasks. The network learns filters that are near-optimal for the data; the data requires wavelet-like filters.</p>
+<p><strong>Scattering transforms.</strong> Stéphane Mallat (2012) introduced the <strong>scattering network</strong>: a deep architecture in which the learned filters are replaced by fixed, predefined wavelets. The architecture is:</p>
+<ol>
+<li>Apply wavelet filters at multiple scales and orientations to produce wavelet coefficients.</li>
+<li>Apply the absolute value (modulus) to extract the magnitude, making the representation invariant to small shifts.</li>
+<li>Apply another round of wavelets to the magnitudes and take absolute values again.</li>
+<li>Repeat for several layers; average at the end.</li>
+</ol>
+<p>The scattering transform produces feature representations that are:</p>
+<ul>
+<li><strong>Invariant</strong> to translations (by design of the averaging).</li>
+<li><strong>Stable</strong> to small deformations: if the input is deformed by a diffeomorphism close to the identity, the output changes by at most a constant times the deformation magnitude. This stability guarantee is mathematically proven.</li>
+<li><strong>Informative</strong>: the scattering representation retains enough information to classify images accurately.</li>
+</ul>
+<p>The stability to deformations is essentially absent in standard CNNs (which can be fooled by small adversarial perturbations). The scattering transform sacrifices some flexibility (fixed rather than learned filters) and achieves provable robustness in return. Scattering networks work well on small datasets where learned filters overfit, and they have been successfully applied to audio classification, texture recognition, and molecular property prediction.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Time-frequency problem</td>
+<td>Need both when and what frequency; Fourier gives frequency but no time</td>
+</tr>
+<tr>
+<td>Uncertainty principle</td>
+<td>$\Delta t \cdot \Delta\omega \geq 1/2$; fundamental, not a method limitation</td>
+</tr>
+<tr>
+<td>STFT</td>
+<td>Fixed window; fixed resolution everywhere; good for stationary signals</td>
+</tr>
+<tr>
+<td>Wavelet $\psi(t)$</td>
+<td>Localized in time and frequency; zero mean required</td>
+</tr>
+<tr>
+<td>Zero mean</td>
+<td>$\hat{\psi}(0) = 0$; wavelet is blind to DC; responds only to variations</td>
+</tr>
+<tr>
+<td>Scale $a$</td>
+<td>Smaller $a$ = compressed wavelet = higher frequency; larger $a$ = lower frequency</td>
+</tr>
+<tr>
+<td>Translation $b$</td>
+<td>Center time of the wavelet; where in time you are analyzing</td>
+</tr>
+<tr>
+<td>CWT</td>
+<td>$W(a,b) = \frac{1}{\sqrt{a}}\int f(t)\psi^*!\left(\frac{t-b}{a}\right)dt$</td>
+</tr>
+<tr>
+<td>Admissibility</td>
+<td>$\hat{\psi}(0) = 0$ ensures reconstruction formula converges</td>
+</tr>
+<tr>
+<td>MRA</td>
+<td>Ladder of approximation spaces; signal = coarse part + multi-scale details</td>
+</tr>
+<tr>
+<td>DWT</td>
+<td>Filter bank: low-pass for approximation, high-pass for detail; repeated</td>
+</tr>
+<tr>
+<td>DWT complexity</td>
+<td>$O(N)$: geometric series of subband sizes adds to $2N$</td>
+</tr>
+<tr>
+<td>Sparsity</td>
+<td>Localized features concentrate in few wavelet coefficients; enables compression</td>
+</tr>
+<tr>
+<td>Haar</td>
+<td>Simplest wavelet; step function; orthogonal; discontinuous</td>
+</tr>
+<tr>
+<td>Daubechies $D_{2N}$</td>
+<td>Smooth; compact support; $N$ vanishing moments; general purpose</td>
+</tr>
+<tr>
+<td>Morlet</td>
+<td>Complex sinusoid $\times$ Gaussian; optimal uncertainty; CWT analysis</td>
+</tr>
+<tr>
+<td>Biorthogonal</td>
+<td>Symmetric filters; linear phase; used in JPEG2000</td>
+</tr>
+<tr>
+<td>Applications</td>
+<td>JPEG2000, denoising, ECG, seismology, scattering networks</td>
+</tr>
+<tr>
+<td>Compressed sensing</td>
+<td>Sparse wavelet representation enables exact recovery from $O(k\log N)$ measurements</td>
+</tr>
+<tr>
+<td>Scalogram</td>
+<td>2D plot of $|W(a,b)|^2$ vs. time $b$ and scale $a$; visual time-frequency map</td>
+</tr>
+<tr>
+<td>Vanishing moments</td>
+<td>$\int t^k\psi(t) dt = 0$ for $k &lt; M$; controls coefficient decay near smooth regions</td>
+</tr>
+<tr>
+<td>Frequency warping</td>
+<td>STFT has constant absolute bandwidth; wavelets have constant relative bandwidth ($Q$-factor)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id=three-distinctions-that-matter>Three Distinctions That Matter</h2>
+<p>Looking back at the full arc from Fourier to wavelets, three contrasts deserve a clear statement.</p>
+<p><strong>Fixed basis vs. adaptive analysis.</strong> The Fourier transform uses a fixed basis: the complex exponentials, which are the same regardless of what signal you give it. The CWT uses a family indexed by two parameters $(a, b)$ - you look at the signal at every scale and every time location. This is adaptive in the sense that the coefficients tell you where interesting things happen, even if the basis functions themselves are fixed.</p>
+<p><strong>Global vs. local analysis.</strong> A Fourier coefficient $\hat{f}(\omega)$ depends on $f(t)$ for all $t$ - it is inherently global. A wavelet coefficient $W(a, b)$ depends primarily on $f(t)$ near time $b$ at scale $a$ - it is inherently local. This locality is what makes wavelets useful for detecting transients, edges, and events.</p>
+<p><strong>Redundant vs. non-redundant.</strong> The CWT is highly redundant: you compute $W(a, b)$ for all $(a, b) \in \mathbb{R}^+ \times \mathbb{R}$, producing a 2D function from a 1D signal. The DWT is non-redundant: exactly $N$ input samples produce exactly $N$ output coefficients. Redundancy is useful for analysis and interpretation; non-redundancy is essential for compression and storage.</p>
+<p>The right tool depends on your goal. For compression: DWT. For analysis of oscillatory signals with unknown timing: CWT. For stationary signals where only frequency content matters: Fourier. For signals that are locally stationary within windows: STFT. The transforms are not competing alternatives; they are different tools suited to different aspects of the time-frequency tradeoff.</p>
+<p>A signal processing practitioner should think of the uncertainty principle not as a barrier but as a guide. Every analysis method is a choice of how to tile the time-frequency plane - what shape of Heisenberg boxes to use and how to arrange them. Fixed-size rectangles (STFT), dyadic rectangles of varying aspect ratios (DWT), or continuous families (CWT): each choice is optimal for different signal structures. Knowing which structure your signal has is the most important decision in time-frequency analysis.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/fourier-analysis/>Fourier Analysis</a></li>
+<li><a href=/posts/z-transform/>Z-Transform</a></li>
+<li><a href=/posts/complex-analysis/>Complex Analysis</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

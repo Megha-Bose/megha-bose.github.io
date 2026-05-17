@@ -1,0 +1,276 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Modern Optimizer Zoo // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Modern Optimizer Zoo">
+<meta name=twitter:description content="Prerequisites:
+ Gradients & Partial Derivatives Convexity & Optimization   Here is the entire gradient descent algorithm:
+$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \nabla f(\mathbf{x}_t).$$
+Compute the gradient. Scale it by the learning rate $\alpha$. Subtract. Repeat.
+That is all. No special structure. No adaptive logic. No memory of previous steps.
+And yet, nobody uses this algorithm to train modern neural networks. The researchers building the largest language models, the engineers deploying production image classifiers, the scientists training protein structure predictors - none of them use vanilla gradient descent.">
+<meta property="og:title" content="Modern Optimizer Zoo">
+<meta property="og:description" content="Prerequisites:
+ Gradients & Partial Derivatives Convexity & Optimization   Here is the entire gradient descent algorithm:
+$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \nabla f(\mathbf{x}_t).$$
+Compute the gradient. Scale it by the learning rate $\alpha$. Subtract. Repeat.
+That is all. No special structure. No adaptive logic. No memory of previous steps.
+And yet, nobody uses this algorithm to train modern neural networks. The researchers building the largest language models, the engineers deploying production image classifiers, the scientists training protein structure predictors - none of them use vanilla gradient descent.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/modern-optimizer-zoo/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Modern Optimizer Zoo</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Dec 11, 2020
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+19 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/gradients-partial-derivatives/>Gradients & Partial Derivatives</a></li>
+<li><a href=/posts/convexity-optimization/>Convexity & Optimization</a></li>
+</ul>
+<hr>
+<p>Here is the entire gradient descent algorithm:</p>
+<p>$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \nabla f(\mathbf{x}_t).$$</p>
+<p>Compute the gradient. Scale it by the learning rate $\alpha$. Subtract. Repeat.</p>
+<p>That is all. No special structure. No adaptive logic. No memory of previous steps.</p>
+<p>And yet, nobody uses this algorithm to train modern neural networks. The researchers building the largest language models, the engineers deploying production image classifiers, the scientists training protein structure predictors - none of them use vanilla gradient descent. They use Adam, AdamW, RMSProp, SGD with momentum, or variants thereof. These are all elaborations of the simple rule above. They all compute gradients and subtract them. But they add machinery that makes training dramatically more practical.</p>
+<p>What is that machinery, and why is it needed?</p>
+<hr>
+<h2 id=section-1-three-problems-with-vanilla-gradient-descent>Section 1: Three Problems with Vanilla Gradient Descent</h2>
+<p>There are three distinct problems that the modern optimizer zoo addresses. Understanding each of them explains the design of the algorithms.</p>
+<p><strong>Problem 1: Speed.</strong> For a convex $L$-smooth function, gradient descent converges at $O(1/t)$. After $t$ steps, the function value is within $O(1/t)$ of the optimum. To halve the error, you double the number of steps. This is a polynomial rate - manageable for moderate precision, agonizing for high precision.</p>
+<p>For non-convex deep networks, there is no convergence guarantee at all. The theoretical tools from convex optimization do not apply directly. But in practice, training a neural network requires the loss to drop by many orders of magnitude. A fixed step size with $O(1/t)$ intuition means the early phases of training go fast (loss drops rapidly) but the later phases are slow (the loss plateau is hard to escape). Vanilla gradient descent often stalls in the later phases.</p>
+<p><strong>Problem 2: Heterogeneous gradients.</strong> In a deep neural network, different parameters receive wildly different gradient magnitudes. A weight in the last fully-connected layer might receive gradients of order $1$ or $0.1$. A weight in the first convolutional layer, receiving gradients through many layers of backpropagation, might receive gradients of order $10^{-6}$.</p>
+<p>With a single global learning rate $\alpha$, you face an impossible tradeoff: $\alpha$ large enough to make progress on the small-gradient parameters is dangerously large for the large-gradient parameters (causing oscillations and divergence). $\alpha$ small enough to be safe for the large-gradient parameters leaves the small-gradient parameters essentially frozen. You need different effective step sizes for different parameters.</p>
+<p><strong>Problem 3: Gradient noise.</strong> Computing the full gradient requires summing over the entire training set:</p>
+<p>$$\nabla f(\mathbf{x}) = \frac{1}{n}\sum_{i=1}^n \nabla \ell(\mathbf{x}; z_i).$$</p>
+<p>For $n = 10^8$ training examples, each gradient computation requires a full pass over the data. This is expensive - impractically so when you need thousands of gradient steps. The solution is to estimate the gradient from a random mini-batch:</p>
+<p>$$\hat{\nabla} f(\mathbf{x}) = \frac{1}{B}\sum_{i \in \mathcal{B}} \nabla \ell(\mathbf{x}; z_i), \quad |\mathcal{B}| = B.$$</p>
+<p>This is $n/B$ times cheaper per step, but the estimate has variance proportional to $1/B$. The noise in the gradient estimate must be managed.</p>
+<p>Each of the optimizers we discuss addresses some combination of these three problems.</p>
+<hr>
+<h2 id=section-2-stochastic-gradient-descent>Section 2: Stochastic Gradient Descent</h2>
+<p>SGD replaces the full gradient with a mini-batch estimate at each step:</p>
+<p>$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \hat{\nabla} f(\mathbf{x}_t).$$</p>
+<p>The update is cheap: $O(B)$ instead of $O(n)$ gradient evaluations. With $B = 256$ and $n = 10^8$, each step is roughly $4 \times 10^5$ times cheaper than a full-batch step. This enables orders of magnitude more steps per unit wall-clock time, and empirically, many cheap noisy steps converge faster than few expensive exact steps.</p>
+<p><strong>Convergence of SGD.</strong> The mini-batch gradient is an unbiased estimate of the true gradient: $\mathbb{E}[\hat{\nabla} f(\mathbf{x})] = \nabla f(\mathbf{x})$. On average, each step moves in the right direction. The noise adds variance around the correct mean.</p>
+<p>With a constant learning rate, SGD does not converge to the exact minimum but oscillates in a neighborhood. The radius of oscillation is proportional to $\alpha$ times the gradient noise. With a decaying learning rate schedule $\alpha_t \to 0$ satisfying $\sum_t \alpha_t = \infty$ and $\sum_t \alpha_t^2 &lt; \infty$ (e.g., $\alpha_t = c/\sqrt{t}$), SGD converges almost surely for convex objectives.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If the gradient estimate is noisy, how does SGD make reliable progress? The gradient could point in the wrong direction.</p>
+<p>For a single step: the gradient estimate could indeed point in a bad direction, especially with small batch sizes. But in expectation, it points correctly. Over many steps, the noise averages out (random directions cancel), and the signal (the true gradient direction) accumulates. This is the law of large numbers applied to the sequence of gradient estimates.</p>
+<p>More precisely: define the gradient noise as $\xi_t = \hat{\nabla} f(\mathbf{x}_t) - \nabla f(\mathbf{x}_t)$. This has mean zero and bounded variance (under standard assumptions). The SGD iterate satisfies the same descent lemma as gradient descent, plus a noise term that averages to zero. When the learning rate decays, the noise term vanishes, and convergence follows.</p>
+</blockquote>
+<p><strong>The noise as a feature.</strong> SGD noise does more than average away. It actively helps in one important way: it prevents the optimizer from settling into sharp, narrow minima. A sharp minimum is one where the loss increases rapidly in some direction - a tall thin valley. The noise in SGD steps has enough variance to &ldquo;kick&rdquo; the optimizer out of these tall thin valleys, preferentially leaving it in wide, flat minima.</p>
+<p>Flat minima generalize better. Intuitively: a flat minimum is one where small perturbations to the weights change the loss only slightly. A sharp minimum is sensitive to perturbations. Since test data is always somewhat different from training data (distribution shift), the model evaluated on test data is, in a sense, a perturbed version of the model at training. Flat minima degrade gracefully; sharp minima can fail catastrophically.</p>
+<p>This is one reason SGD with momentum sometimes generalizes better than adaptive methods like Adam on image classification benchmarks, despite Adam converging to lower training loss faster.</p>
+<hr>
+<h2 id=section-3-momentum>Section 3: Momentum</h2>
+<p>SGD with a constant learning rate makes slow progress through ravines. A ravine is an elongated valley: the loss decreases steeply in one direction (the walls of the ravine) but very gently in another (the floor, pointing toward the minimum). In the steep direction, large gradients cause oscillations - the step overshoots, the gradient reverses, the next step overshoots back. In the gentle direction, small gradients mean slow progress.</p>
+<p>The cumulative effect: much of the gradient computation is wasted on the oscillating direction, and progress toward the minimum is slow.</p>
+<p>Momentum adds a velocity to the optimizer. Instead of using only the current gradient, the update accumulates an exponentially weighted moving average of past gradients:</p>
+<p>$$\mathbf{v}<em>t = \beta \mathbf{v}</em>{t-1} + (1-\beta)\nabla f(\mathbf{x}_t),$$</p>
+<p>$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \mathbf{v}_t.$$</p>
+<p>The hyperparameter $\beta \in [0, 1)$ controls the memory length. With $\beta = 0$, $\mathbf{v_t} = \nabla f(\mathbf{x_t})$ - no memory, just the current gradient. With $\beta = 0.9$, the velocity is an exponentially decaying average of approximately $1/(1-0.9) = 10$ past gradients.</p>
+<p><strong>Why momentum helps in ravines.</strong></p>
+<p>In the oscillating direction (the ravine walls): the gradient alternates sign each step - positive, then negative, then positive. The velocity in this direction is:</p>
+<p>$$v = g - \beta g + \beta^2 g - \cdots \approx \frac{g}{1 + \beta}.$$</p>
+<p>With $\beta = 0.9$: the effective gradient magnitude in the oscillating direction is roughly $g/1.9 \approx g/2$. The oscillations are damped.</p>
+<p>In the consistent direction (along the ravine floor): the gradient always points the same way. The velocity accumulates:</p>
+<p>$$v = g + \beta g + \beta^2 g + \cdots = \frac{g}{1-\beta}.$$</p>
+<p>With $\beta = 0.9$: the effective gradient in the consistent direction is roughly $g/0.1 = 10g$. The progress is amplified tenfold.</p>
+<p>Momentum simultaneously damps oscillations and amplifies consistent progress. The ball rolls through flat spots (it has built up velocity), shoots down consistent slopes (velocity accumulates), and does not oscillate as wildly in steep directions (opposite-sign gradients cancel in the velocity).</p>
+<hr>
+<h2 id=section-4-nesterov-momentum>Section 4: Nesterov Momentum</h2>
+<p>Nesterov&rsquo;s modification looks small - computing the gradient at a &ldquo;lookahead&rdquo; position instead of the current position - but it has meaningful consequences.</p>
+<p><strong>Standard momentum:</strong> compute gradient at current position $\mathbf{x_t}$, then update.</p>
+<p><strong>Nesterov momentum:</strong> compute gradient at the anticipated position $\mathbf{x_t} - \beta\mathbf{v_{t-1}}$ (where the current velocity would take you), then correct:</p>
+<p>$$\mathbf{v}<em>t = \beta \mathbf{v}</em>{t-1} + (1-\beta)\nabla f(\mathbf{x}<em>t - \beta\mathbf{v}</em>{t-1}),$$</p>
+<p>$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \mathbf{v}_t.$$</p>
+<p><strong>Physical intuition.</strong> Standard momentum is like a ball that first looks at where it is now, then commits to its velocity. Nesterov momentum is like a ball that projects where its current velocity will take it, looks at the gradient there, and incorporates that information before committing. If the lookahead position is on the downslope of a hill that standard momentum is about to overshoot, Nesterov can see this and slow down in advance.</p>
+<p><strong>Theoretical consequence.</strong> For smooth convex objectives, Nesterov momentum achieves $O(1/t^2)$ convergence - the same as Nesterov accelerated gradient descent from the previous post. Standard gradient descent with momentum achieves only $O(1/t)$. The Nesterov modification is what creates the acceleration.</p>
+<p>In practice, for deep learning, the difference between standard and Nesterov momentum is often small. Nesterov is used in some frameworks as the default (e.g., it is the <code>nesterov=True</code> option in PyTorch&rsquo;s SGD). The theoretical advantage matters more for convex problems than for the non-convex neural network case.</p>
+<hr>
+<h2 id=section-5-adagrad>Section 5: AdaGrad</h2>
+<p>Momentum addresses the speed and oscillation problems but not the heterogeneous gradient problem. Every coordinate still uses the same learning rate $\alpha$.</p>
+<p>AdaGrad adapts the learning rate per parameter based on its gradient history.</p>
+<p>Let $g_{t,j}$ denote the gradient with respect to parameter $j$ at step $t$. AdaGrad maintains a running sum of squared gradients for each parameter:</p>
+<p>$$G_{t,j} = G_{t-1,j} + g_{t,j}^2.$$</p>
+<p>The update for parameter $j$ uses a per-parameter learning rate:</p>
+<p>$$x_{t+1,j} = x_{t,j} - \frac{\alpha}{\sqrt{G_{t,j} + \epsilon}} g_{t,j}.$$</p>
+<p>The denominator $\sqrt{G_{t,j}}$ is large for parameters that have historically received large gradients (either in magnitude or frequency), reducing their effective learning rate. For parameters with small or infrequent gradients, $\sqrt{G_{t,j}}$ remains small and the effective learning rate remains large.</p>
+<p><strong>Why this helps with heterogeneous gradients.</strong> A parameter deep in the network that receives small gradients has a small $G_{t,j}$, so its effective learning rate is large - it takes big steps when it does get a gradient signal. A parameter in the output layer that receives large, frequent gradients has a large $G_{t,j}$, so its effective learning rate is small - it moves cautiously.</p>
+<p>AdaGrad is particularly effective for sparse gradients. In a text model with a large vocabulary, the embedding for a rare word has a nonzero gradient only when that word appears in the batch. Most steps give it a zero gradient (no update). When the word does appear, AdaGrad gives it a relatively large effective learning rate (since its $G_{t,j}$ has accumulated little). AdaGrad learns quickly from rare events.</p>
+<p><strong>The problem: dying learning rates.</strong> $G_{t,j}$ is a cumulative sum of squared gradients. It only increases, never decreasing. After enough steps, $G_{t,j}$ becomes large for all parameters, and all effective learning rates decay toward zero. The optimizer eventually stops making progress.</p>
+<p>For online learning with a fixed, finite training set (or when early stopping is used), this dying behavior can actually be desirable - the learning rate naturally decays as the model converges. But for neural networks trained over many epochs, this is a serious problem.</p>
+<hr>
+<h2 id=section-6-rmsprop>Section 6: RMSProp</h2>
+<p>RMSProp fixes AdaGrad&rsquo;s dying learning rate by replacing the cumulative sum of squared gradients with an exponentially decaying moving average:</p>
+<p>$$G_{t,j} = \beta G_{t-1,j} + (1-\beta) g_{t,j}^2.$$</p>
+<p>With the same update rule as AdaGrad:</p>
+<p>$$x_{t+1,j} = x_{t,j} - \frac{\alpha}{\sqrt{G_{t,j} + \epsilon}} g_{t,j}.$$</p>
+<p>The parameter $\beta$ (typically $0.9$, $0.99$, or $0.999$) controls the memory length: the moving average forgets old gradient history at a rate $(1-\beta)$, so the effective memory is approximately $1/(1-\beta)$ steps.</p>
+<p><strong>Key difference from AdaGrad.</strong> $G_{t,j}$ is now bounded: it tracks a running average, not an unbounded cumulative sum. If the gradients for parameter $j$ are consistently small for many steps, $G_{t,j}$ decays, and the effective learning rate increases. The optimizer can recover its step size after a period of small gradients.</p>
+<p>If the gradient for parameter $j$ suddenly becomes large, $G_{t,j}$ increases rapidly, reducing the step size quickly. The adaptation is local in time: only recent gradient history matters.</p>
+<p>RMSProp normalizes each gradient by the root-mean-square of its recent values. The effective update is roughly:</p>
+<p>$$\frac{g_{t,j}}{\sqrt{G_{t,j}}} \approx \frac{g_{t,j}}{\text{RMS}(g_{\cdot,j})}.$$</p>
+<p>This quantity is scale-free: if you multiply all gradients for parameter $j$ by a constant factor, the effective update is unchanged (numerator and denominator scale equally). RMSProp is robust to the scale of the gradients.</p>
+<p>RMSProp was proposed by Geoff Hinton in a Coursera lecture (never formally published, which is unusual for such an influential algorithm). It became the standard optimizer for recurrent neural networks before Adam arrived.</p>
+<hr>
+<h2 id=section-7-adam>Section 7: Adam</h2>
+<p>Adam combines the ideas of momentum (first moment estimation) and RMSProp (second moment estimation) into a single optimizer, and adds bias correction to handle the initialization.</p>
+<p><strong>The algorithm.</strong></p>
+<p>Initialize $m_0 = 0$ (first moment), $v_0 = 0$ (second moment), and step counter $t = 0$.</p>
+<p>At each step:</p>
+<p>Compute the mini-batch gradient $g_t = \hat{\nabla} f(\mathbf{x_t})$.</p>
+<p>Update the first moment (exponential moving average of gradients):</p>
+<p>$$m_t = \beta_1 m_{t-1} + (1-\beta_1) g_t.$$</p>
+<p>Update the second moment (exponential moving average of squared gradients):</p>
+<p>$$v_t = \beta_2 v_{t-1} + (1-\beta_2) g_t^2.$$</p>
+<p>Apply bias correction:</p>
+<p>$$\hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \qquad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}.$$</p>
+<p>Update the parameters:</p>
+<p>$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}.$$</p>
+<p>The default hyperparameters: $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\epsilon = 10^{-8}$, $\alpha = 10^{-3}$.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why bias correction? The formulas with $\hat{m}_t$ and $\hat{v}_t$ add complexity - what are they fixing?</p>
+<p>At initialization, $m_0 = 0$ and $v_0 = 0$. After the first step with gradient $g_1$:</p>
+<p>$m_1 = \beta_1 \cdot 0 + (1-\beta_1) g_1 = (1-\beta_1) g_1$.</p>
+<p>But the true first moment (the mean of all gradients so far, which is just $g_1$) is $g_1$. The estimate $m_1 = (1-\beta_1) g_1 = 0.1 g_1$ is biased toward zero by a factor of $(1-\beta_1) = 0.1$. Similarly for the second moment.</p>
+<p>Dividing by $(1-\beta_1^t)$ corrects this. At $t = 1$: $\hat{m}_1 = m_1/(1-\beta_1) = g_1$. At $t = 10$: $\beta_1^{10} = 0.9^{10} \approx 0.35$, so the correction factor is $1/0.65 \approx 1.54$ - still significant. At $t = 100$: $\beta_1^{100} = 0.9^{100} \approx 2.7 \times 10^{-5}$, the correction is negligible.</p>
+<p>The bias correction matters most in the early steps of training, when the moving averages have not yet accumulated enough history to be accurate. Without it, Adam takes very small steps at the start, even if the true gradient is large - poor behavior in the critical early phase.</p>
+</blockquote>
+<p><strong>Why Adam works across diverse problems.</strong></p>
+<p>The effective update per parameter is:</p>
+<p>$$\Delta x_j = \alpha \frac{\hat{m}<em>{t,j}}{\sqrt{\hat{v}</em>{t,j}} + \epsilon}.$$</p>
+<p>The numerator $\hat{m}<em>{t,j}$ is the momentum - the trend of the gradient. The denominator $\sqrt{\hat{v}</em>{t,j}}$ is the estimated standard deviation of recent gradients. Their ratio is approximately a signal-to-noise ratio: how large is the trend relative to the variability?</p>
+<p>Parameters whose gradient is consistently large (low variability) get a step of roughly $\alpha$ regardless of the raw gradient magnitude - the large gradient is divided by the large denominator. Parameters whose gradient oscillates wildly (high variability) get a smaller step. The update magnitudes are automatically bounded to be roughly $\alpha$.</p>
+<p>This scale-independence is what makes Adam work with a single learning rate across diverse architectures, datasets, and tasks. The same $\alpha = 10^{-3}$ often works for language models, image classifiers, and reinforcement learning - not because the problems have similar gradient scales, but because Adam normalizes them all to a similar effective step size.</p>
+<hr>
+<h2 id=section-8-adamw-and-decoupled-weight-decay>Section 8: AdamW and Decoupled Weight Decay</h2>
+<p>When you add L2 regularization to a loss function optimized with Adam, you might expect the behavior to match gradient descent with L2 regularization. It does not.</p>
+<p>Standard Adam implements weight decay by adding $\lambda w$ to the gradient before the Adam step:</p>
+<p>$$g_t \leftarrow g_t + \lambda \mathbf{x}_t.$$</p>
+<p>This modifies the gradient that enters the adaptive scaling. The weight decay term gets divided by $\sqrt{\hat{v}_t} + \epsilon$ just like the gradient, but $\hat{v}_t$ is estimated from the task gradient, not the regularization term. The effective regularization strength varies per parameter based on gradient history - parameters with large historical gradients receive less regularization. This is not what L2 regularization is supposed to do.</p>
+<p><strong>AdamW</strong> (decoupled weight decay) fixes this by applying weight decay directly to the weights, after the adaptive gradient step:</p>
+<p>$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon} - \alpha\lambda \mathbf{x}_t.$$</p>
+<p>The weight decay $-\alpha\lambda\mathbf{x_t}$ is not passed through the adaptive denominator. Every parameter is shrunk toward zero by the same factor $\alpha\lambda$, regardless of gradient history. This is the correct implementation of L2 regularization with Adam.</p>
+<p>For large language models - where proper regularization is critical for generalization - this distinction matters substantially. The GPT, BERT, and most modern transformer models are trained with AdamW, not Adam. The decoupled weight decay is not a minor detail; it is part of the recipe.</p>
+<hr>
+<h2 id=section-9-learning-rate-schedules>Section 9: Learning Rate Schedules</h2>
+<p>The learning rate $\alpha$ is not a static choice. Different phases of training call for different values.</p>
+<p><strong>Warmup.</strong> Start training with a very small learning rate and ramp it up over the first few hundred or thousand steps. The motivation: at initialization, the weights are random and the gradient estimates (especially via momentum/Adam&rsquo;s first moment) are poorly calibrated. Taking large steps with random gradients in the very first steps can destabilize training - large, poorly directed steps move the model to a regime where later gradients are also bad, compounding the problem.</p>
+<p>Warmup solves this by letting the moving averages build up reliable estimates before the learning rate becomes large. Linear warmup (ramp from $\alpha_{\min}$ to $\alpha_{\max}$ over the first $T_\text{warm}$ steps) is standard for transformers. BERT uses 10,000 warmup steps; GPT-style models use 1% to 5% of total training.</p>
+<p><strong>Cosine annealing.</strong> After warmup, decay the learning rate following a cosine curve:</p>
+<p>$$\alpha_t = \alpha_{\min} + \frac{1}{2}(\alpha_{\max} - \alpha_{\min})\left(1 + \cos\left(\frac{\pi (t - T_\text{warm})}{T - T_\text{warm}}\right)\right),$$</p>
+<p>where $T$ is the total number of training steps. The learning rate decreases smoothly from $\alpha_{\max}$ to $\alpha_{\min}$ following the shape of a cosine half-period.</p>
+<p>Cosine annealing is preferred over step decay (sudden drops) or linear decay because it is smooth, has no discontinuities, and automatically tapers to near-zero at the end of training, allowing fine-grained convergence. It is the default schedule for most large-scale training runs.</p>
+<p><strong>Reduce on plateau.</strong> Monitor a validation metric. When it stops improving for $k$ consecutive evaluations, multiply the learning rate by a factor (typically $0.1$). This is adaptive: training proceeds at a high learning rate while progress is fast, and automatically slows when progress stalls. Common in computer vision training (ResNet on ImageNet often uses 3 decays of $\times 0.1$).</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The learning rate is described as a single number, but it interacts with everything else in training. Is there a &ldquo;correct&rdquo; learning rate?</p>
+<p>No. The optimal learning rate depends on: batch size (doubling batch size roughly doubles the appropriate learning rate, since gradient variance halves); model architecture (the curvature of the loss landscape changes); dataset and task; the specific optimizer; and even the random seed (different random initializations have different loss landscape curvatures). This is why automatic learning rate finding methods exist: the &ldquo;warmup then sweep&rdquo; approach, the cyclic learning rate finder (run for a few batches while increasing $\alpha$ logarithmically; the loss starts increasing when $\alpha$ is too large, and the right value is just below that).</p>
+<p>Community defaults exist as starting points: Adam $\alpha = 3 \times 10^{-4}$ (sometimes called the &ldquo;Karpathy constant&rdquo; for its ubiquity in language model training), SGD $\alpha = 0.1$ for vision. These are not magic numbers - they are empirically validated starting points that should be tuned for each specific problem.</p>
+</blockquote>
+<hr>
+<h2 id=section-10-sgd-vs-adam---the-generalization-debate>Section 10: SGD vs Adam - the Generalization Debate</h2>
+<p>A surprising empirical fact emerged around 2018 and has not been fully explained theoretically: carefully tuned SGD with momentum often achieves better test error than Adam on image classification tasks, even when Adam achieves lower training loss faster.</p>
+<p><strong>Why Adam converges faster.</strong> The adaptive step sizes of Adam allow it to make progress even when the loss landscape is ill-conditioned. For different parameters, Adam effectively uses a different step size, exploiting the geometry of the loss landscape more efficiently than SGD&rsquo;s uniform step size.</p>
+<p><strong>Why SGD sometimes generalizes better.</strong> Adam&rsquo;s adaptive step sizes mean that it can take very large steps for some parameters (those with small $\hat{v}_t$). This allows Adam to find solutions in narrow, sharp valleys of the loss landscape where ordinary SGD would not venture. Sharp minima tend to be more sensitive to perturbations - the loss increases rapidly when weights change slightly. Since test data differs from training data (distribution shift), the model&rsquo;s test loss is essentially the training loss at perturbed weights. Flat minima degrade gracefully; sharp minima can fail.</p>
+<p>SGD with momentum, with its uniform step size, is less likely to enter narrow valleys. It tends to settle in wider, flatter regions of the loss landscape. Flat minima generalize better.</p>
+<p><strong>The practical consensus (as of 2024):</strong></p>
+<ul>
+<li>
+<p><strong>Transformers</strong> (GPT, BERT, T5, ViT, and all attention-based architectures): always use AdamW. SGD fails to converge reliably on attention mechanisms. The architecture requires adaptive step sizes.</p>
+</li>
+<li>
+<p><strong>ConvNets for image classification</strong> (ResNet, EfficientNet): carefully tuned SGD with momentum and cosine annealing often gives $0.5$-$1.5%$ better top-1 accuracy than Adam. AdamW is close and requires less tuning.</p>
+</li>
+<li>
+<p><strong>Fine-tuning pretrained models</strong>: use AdamW with small learning rate ($10^{-5}$ range) and warmup. The pretrained weights need gentle, consistent updates.</p>
+</li>
+<li>
+<p><strong>Convex problems</strong> (logistics regression, linear models): SGD with momentum converges to the true optimum with theoretical guarantees. Adam can also work, but its convergence theory is weaker outside the convex setting.</p>
+</li>
+</ul>
+<p>There is no universal winner. The optimizer is part of the model design decision, not an afterthought.</p>
+<hr>
+<h2 id=section-11-practical-starting-points>Section 11: Practical Starting Points</h2>
+<p>For practitioners who need defaults without extensive tuning:</p>
+<p><strong>Adam for deep learning:</strong></p>
+<p>$$\beta_1 = 0.9, \quad \beta_2 = 0.999, \quad \epsilon = 10^{-8}, \quad \alpha = 10^{-3}.$$</p>
+<p>Use linear warmup for the first 5-10% of training steps, then cosine annealing to $\alpha_{\min} = 10^{-5}$.</p>
+<p><strong>AdamW for transformer fine-tuning:</strong></p>
+<p>$$\beta_1 = 0.9, \quad \beta_2 = 0.999, \quad \text{weight decay} = 0.01, \quad \alpha = 2\text{-}5 \times 10^{-5}.$$</p>
+<p>Warmup for 100-500 steps, then linear or cosine decay.</p>
+<p><strong>SGD with momentum for vision:</strong></p>
+<p>$$\beta = 0.9, \quad \text{weight decay} = 10^{-4}, \quad \alpha = 0.1.$$</p>
+<p>Cosine annealing from $0.1$ to $0$. Batch size $256$; scale $\alpha$ linearly if batch size changes.</p>
+<p><strong>Gradient clipping.</strong> For recurrent networks and transformers, clip the gradient norm before updating: if $|\nabla f| > c$, scale the gradient to have norm $c$. Typical $c = 1.0$ or $c = 5.0$. Gradient clipping prevents the occasional very large gradient (from a bad batch) from destroying the model.</p>
+<p><strong>Diagnosing training problems:</strong></p>
+<ul>
+<li>Loss spikes: reduce $\alpha$, add warmup, check for bad batches, add gradient clipping.</li>
+<li>Loss plateaus immediately: $\alpha$ too small, or incorrect implementation of gradients.</li>
+<li>Loss decreases then stalls: try learning rate schedule, check for vanishing gradients in deep layers.</li>
+<li>Train loss low, validation loss high: increase weight decay, reduce model size, add dropout.</li>
+<li>Optimizer diverges: $\alpha$ too large, or numerical issues (try float32 instead of float16 for debugging).</li>
+</ul>
+<p>The modern optimizer zoo exists because no single optimizer is optimal for all problems. Adam is the safe default. SGD with momentum is often better for vision with careful tuning. AdamW is the standard for transformers. Understanding why each optimizer behaves as it does - what problem it was designed to solve - is what allows you to debug failures and make principled choices rather than cargo-culting hyperparameters.</p>
+<hr>
+<p><strong>Read Next:</strong></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

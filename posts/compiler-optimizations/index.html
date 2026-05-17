@@ -1,0 +1,241 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Compiler Optimizations // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Compiler Optimizations">
+<meta name=twitter:description content="Prerequisite:
+ How Compilers Work Assembly & Machine Code   You write a for loop that multiplies a million numbers by 2. Clean, obvious C - a loop index, a load, a multiply, a store, repeat a million times. You compile with -O3 and look at the assembly. The compiler did not emit a million multiplies. It emitted something completely different: eight iterations of a 32-wide AVX-512 vector instruction, each multiplying thirty-two floats simultaneously, followed by a small scalar cleanup loop for the remainder.">
+<meta property="og:title" content="Compiler Optimizations">
+<meta property="og:description" content="Prerequisite:
+ How Compilers Work Assembly & Machine Code   You write a for loop that multiplies a million numbers by 2. Clean, obvious C - a loop index, a load, a multiply, a store, repeat a million times. You compile with -O3 and look at the assembly. The compiler did not emit a million multiplies. It emitted something completely different: eight iterations of a 32-wide AVX-512 vector instruction, each multiplying thirty-two floats simultaneously, followed by a small scalar cleanup loop for the remainder.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/compiler-optimizations/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Compiler Optimizations</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+14 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong></p>
+<ul>
+<li><a href=/posts/how-compilers-work/>How Compilers Work</a></li>
+<li><a href=/posts/assembly-and-machine-code/>Assembly & Machine Code</a></li>
+</ul>
+<hr>
+<p>You write a for loop that multiplies a million numbers by 2. Clean, obvious C - a loop index, a load, a multiply, a store, repeat a million times. You compile with <code>-O3</code> and look at the assembly. The compiler did not emit a million multiplies. It emitted something completely different: eight iterations of a 32-wide AVX-512 vector instruction, each multiplying thirty-two floats simultaneously, followed by a small scalar cleanup loop for the remainder. You wrote C. The compiler wrote SIMD assembly. This gap - between what you write and what runs - is what compiler optimization is about.</p>
+<p>The gap is not magic. It is a sequence of formal transformations, each one provably preserving program behavior under stated assumptions. When those assumptions break (and they do break, in security code, in floating-point math, in timing-sensitive paths), the transformations become dangerous. Understanding what the compiler is doing, and why, is the difference between writing code that &ldquo;seems fast&rdquo; and code that actually is.</p>
+<h2 id=why-optimization-is-a-separate-phase>Why Optimization Is a Separate Phase</h2>
+<p>Early compilers were one-pass: parse a line, emit code for that line, repeat. The result was correct but slow - each statement was compiled in isolation with no knowledge of what came before or after. An expression computed twice was computed twice in the assembly. A variable written but never read was still written. A function called once was still called; its stack frame was set up, arguments were shuffled into registers, and control was transferred, even if the function was three lines that could be inlined without any of that overhead.</p>
+<p>The insight that changed everything: computation is not just about correctness; it is about equivalence. Two programs are equivalent if they produce the same observable outputs for the same inputs. The optimizer&rsquo;s job is to find a <em>faster</em> equivalent program. This is why the optimization stage sits between parsing and code generation - it operates on an abstract representation, free from the surface syntax of the source language, where transformations are cleanest to reason about.</p>
+<h2 id=the-llvm-pipeline-ir-and-ssa>The LLVM Pipeline: IR and SSA</h2>
+<p>LLVM&rsquo;s optimizer works on its Intermediate Representation (IR), a low-level, strongly typed assembly-like language. The compiler frontend (Clang for C/C++, rustc for Rust) translates source code into LLVM IR. The backend translates optimized IR into machine code. The optimizer - the middle-end - sees only IR and knows nothing about C syntax or x86 instructions.</p>
+<p>LLVM IR is written in <strong>Static Single Assignment (SSA) form</strong>: every value is defined exactly once, and every use refers to exactly one definition. When control flow merges - after an <code>if-else</code>, for instance - SSA uses a <code>phi</code> instruction to select between values from different incoming branches.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-llvm data-lang=llvm><span style=color:#75715e>; LLVM IR (simplified): int abs(int x)
+</span><span style=color:#75715e></span><span style=color:#66d9ef>define</span> <span style=color:#66d9ef>i32</span> @abs(<span style=color:#66d9ef>i32</span> %x) {
+entry:
+  %is_neg = <span style=color:#66d9ef>icmp</span> <span style=color:#66d9ef>slt</span> <span style=color:#66d9ef>i32</span> %x, <span style=color:#ae81ff>0</span>
+  <span style=color:#66d9ef>br</span> <span style=color:#66d9ef>i1</span> %is_neg, <span style=color:#66d9ef>label</span> %neg, <span style=color:#66d9ef>label</span> %pos
+neg:
+  %negated = <span style=color:#66d9ef>sub</span> <span style=color:#66d9ef>i32</span> <span style=color:#ae81ff>0</span>, %x
+  <span style=color:#66d9ef>br</span> <span style=color:#66d9ef>label</span> %merge
+pos:
+  <span style=color:#66d9ef>br</span> <span style=color:#66d9ef>label</span> %merge
+merge:
+  %result = <span style=color:#66d9ef>phi</span> <span style=color:#66d9ef>i32</span> [ %negated, %neg ], [ %x, %pos ]
+  <span style=color:#66d9ef>ret</span> <span style=color:#66d9ef>i32</span> %result
+}
+</code></pre></div><p>SSA makes analyses trivially easy. To find all uses of a value: look for uses of that SSA name - there is exactly one definition to trace. To check if a value is constant: look at its definition. This is why virtually every modern optimizer (GCC, LLVM, V8&rsquo;s TurboFan, Java&rsquo;s HotSpot C2) uses SSA internally.</p>
+<p>You can inspect LLVM IR directly:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>clang -O2 -emit-llvm -S -o foo.ll foo.c   <span style=color:#75715e># emit IR as text</span>
+opt --print-passes                          <span style=color:#75715e># list all optimization passes</span>
+opt -S -O2 foo.ll -o optimized.ll          <span style=color:#75715e># run passes on IR</span>
+</code></pre></div><h2 id=constant-folding-and-propagation>Constant Folding and Propagation</h2>
+<p>The most basic optimization: if an expression&rsquo;s operands are known at compile time, evaluate it at compile time. <code>int x = 3 * 7 + 2;</code> becomes <code>int x = 23;</code>. No runtime arithmetic at all. This extends transitively: if <code>x = 23</code> and <code>y = x + 1</code>, the compiler knows <code>y = 24</code> and can substitute that everywhere <code>y</code> is used.</p>
+<p>Combined with <strong>constant propagation</strong> - substituting known values into downstream expressions - and iterated to a fixed point, this can collapse surprisingly large computation trees. A loop with a compile-time-constant bound and body that only manipulates constants can sometimes vanish entirely, replaced by its final value.</p>
+<h2 id=dead-code-elimination>Dead Code Elimination</h2>
+<p><strong>Dead code elimination (DCE)</strong> removes instructions whose results are never observed. After constant folding collapses a branch condition to <code>false</code>, DCE can delete the unreachable branch. After propagation determines a variable is never read, DCE removes the write.</p>
+<p>These two passes feed each other: constant folding creates unreachable branches; DCE removes them, exposing more constants for folding. Modern compilers run them in a loop until no further progress is made.</p>
+<p>A subtle and important consequence: DCE can <strong>remove security checks</strong>. If the compiler determines that a condition is always true or always false (perhaps via undefined behavior reasoning - more on this below), it will eliminate the check. This is how null pointer checks, integer overflow guards, and timing-delay loops have been silently deleted by optimizers in security-sensitive code.</p>
+<h2 id=function-inlining-the-most-important-optimization>Function Inlining: The Most Important Optimization</h2>
+<p>Function inlining replaces a call site with a copy of the callee&rsquo;s body. The direct benefits: eliminating call overhead (saving/restoring registers, stack frame setup, the <code>call</code> and <code>ret</code> instructions). The indirect benefit - far larger - is that after inlining, all other optimizations can operate <strong>across the call boundary</strong>. Constants can be propagated into the callee. Dead code in the callee that depends on caller state can be eliminated. Loops in the callee can be fused with loops in the caller.</p>
+<p>Inlining is the single most impactful optimization the compiler performs. It is also the one most likely to go wrong.</p>
+<p>The compiler uses a <strong>budget</strong> - a heuristic limit on how much a function can grow via inlining. Functions exceeding the budget are not inlined. The budget exists for a good reason: aggressive inlining increases the size of <code>.text</code>, which increases <strong>instruction cache (icache) pressure</strong>. A CPU that must fetch instructions from many different places in the code exhausts its icache faster; icache misses are expensive (50-200 cycles each). There is a real regime where more inlining makes code slower, not faster, because the icache advantage of compact code outweighs the call overhead savings.</p>
+<p>You can override the heuristic with <code>__attribute__((always_inline))</code> (force inlining) or <code>__attribute__((noinline))</code> (prevent it). Judicious use of <code>noinline</code> on cold paths (error handlers, rare branches) keeps hot code compact.</p>
+<h2 id=loop-optimizations>Loop Optimizations</h2>
+<p>Loops are where programs spend most of their time, so the optimizer devotes disproportionate attention to them.</p>
+<p><strong>Loop-Invariant Code Motion (LICM)</strong> identifies computations inside a loop that produce the same result on every iteration and hoists them before the loop. If a loop computes <code>strlen(s)</code> every iteration but <code>s</code> never changes, LICM moves the call outside. This requires the compiler to prove <code>s</code> is not modified inside the loop - alias analysis matters here.</p>
+<p><strong>Loop unrolling</strong> replicates the loop body multiple times per iteration, reducing branch overhead and exposing more instruction-level parallelism. Unrolling by 4 means the branch is taken every 4 iterations instead of every 1. The compiler must emit a scalar cleanup loop for the remaining iterations when the trip count is not a multiple of the unroll factor. Over-unrolling increases code size and can hurt icache.</p>
+<p><strong>Loop fusion</strong> merges two adjacent loops that iterate over the same range into one, improving data locality (the data read by the first loop is still warm in cache when the second loop needs it). <strong>Loop fission</strong> does the opposite - splitting a loop to improve vectorizability or reduce register pressure. Both are applied where they improve memory access patterns.</p>
+<p><strong>Loop interchange</strong> swaps the nesting order of nested loops to achieve column-major vs row-major access. For a C 2D array (row-major), the innermost loop should walk columns; swapping row/column iteration order turns each cache line access from strided (cache-unfriendly) to sequential.</p>
+<h2 id=autovectorization>Autovectorization</h2>
+<p>This is what happened to your multiply-by-two loop. <strong>Autovectorization</strong> transforms a scalar loop into one that processes multiple data elements per instruction using SIMD (Single Instruction, Multiple Data) registers and operations.</p>
+<p>AVX-512 on modern x86 provides 512-bit vector registers - sixteen 32-bit floats per register. The vectorizer transforms:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n; i<span style=color:#f92672>++</span>)
+    out[i] <span style=color:#f92672>=</span> in[i] <span style=color:#f92672>*</span> <span style=color:#ae81ff>2.0f</span>;
+</code></pre></div><p>into something like: load 16 floats at once into a ZMM register, multiply all 16 by 2.0 with a single <code>vmulps</code> instruction, store 16 results. Then repeat for the next 16. The loop trip count drops by a factor of 16; throughput rises by the same factor.</p>
+<p>For the compiler to vectorize, it needs to prove: (1) loop iterations are independent - one iteration does not depend on a previous iteration&rsquo;s result; (2) memory accesses do not alias - <code>out</code> and <code>in</code> do not overlap; (3) the loop body is vectorizable - not all operations have SIMD equivalents.</p>
+<p>Condition 2 is where C&rsquo;s pointer aliasing rules cause problems.</p>
+<h2 id=alias-analysis-and-the-restrict-keyword>Alias Analysis and the <code>restrict</code> Keyword</h2>
+<p>Two pointers alias if they may refer to overlapping memory. Without proof that pointers do not alias, the compiler cannot reorder loads and stores between them. This blocks vectorization, LICM, and many other optimizations.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>scale</span>(<span style=color:#66d9ef>float</span> <span style=color:#f92672>*</span>out, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>float</span> <span style=color:#f92672>*</span>in, <span style=color:#66d9ef>float</span> factor, <span style=color:#66d9ef>int</span> n) {
+    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n; i<span style=color:#f92672>++</span>)
+        out[i] <span style=color:#f92672>=</span> in[i] <span style=color:#f92672>*</span> factor;
+}
+</code></pre></div><p>The compiler sees: <code>out</code> and <code>in</code> are both <code>float *</code>. They might point to overlapping memory. If <code>out[0]</code> is the same memory as <code>in[1]</code>, then storing <code>out[0]</code> changes <code>in[1]</code>, and writing iterations out of order produces different results. The compiler must assume this could happen. Vectorization blocked.</p>
+<p>The <code>restrict</code> keyword tells the compiler: &ldquo;I promise these pointers do not alias. Any aliasing is my bug, not yours.&rdquo;</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>scale</span>(<span style=color:#66d9ef>float</span> <span style=color:#f92672>*</span><span style=color:#66d9ef>restrict</span> out, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>float</span> <span style=color:#f92672>*</span><span style=color:#66d9ef>restrict</span> in, <span style=color:#66d9ef>float</span> factor, <span style=color:#66d9ef>int</span> n) {
+    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n; i<span style=color:#f92672>++</span>)
+        out[i] <span style=color:#f92672>=</span> in[i] <span style=color:#f92672>*</span> factor;
+}
+</code></pre></div><p>Now the compiler can vectorize. On a large array, this is a 4-16x throughput improvement. The <code>restrict</code> keyword is one of the highest-leverage annotations in performance-critical C.</p>
+<p>C++ lacks <code>restrict</code> in the standard, but GCC and Clang support <code>__restrict__</code> as an extension.</p>
+<h2 id=optimization-levels--o2-vs--o3>Optimization Levels: -O2 vs -O3</h2>
+<p><code>-O0</code>: no optimization. Every statement compiles independently. Variables are always read from and written to the stack. This makes debugging exact - the debugger can see every variable at every line - at the cost of 5-10x runtime performance.</p>
+<p><code>-O1</code>: basic optimizations. DCE, simple inlining, LICM. Compile time increases modestly.</p>
+<p><code>-O2</code>: the standard production level. Enables the full optimization pipeline: inlining with budget, aggressive DCE, CSE, LICM, loop unrolling, register allocation. Respects standard floating-point semantics.</p>
+<p><code>-O3</code>: enables optimizations that <code>-O2</code> conservatively avoids - most notably autovectorization and more aggressive inlining. But <code>-O3</code> also enables <strong>unsafe floating-point transformations</strong> such as reassociation (<code>(a + b) + c</code> rewritten as <code>a + (b + c)</code>), reciprocal approximations (replacing <code>x / y</code> with <code>x * (1/y)</code>), and fused multiply-add synthesis. These transformations change floating-point results, because floating-point arithmetic is not associative. For financial calculations or numerical stability-sensitive code, <code>-O3</code> can silently introduce errors.</p>
+<p>The specific flag that controls this is <code>-ffast-math</code> (implied by <code>-O3</code>). You can use <code>-O3 -fno-fast-math</code> to get <code>-O3</code>&rsquo;s other benefits without floating-point unsafety.</p>
+<p><code>-Os</code>: optimize for binary size, disabling transformations that grow the binary (like unrolling). Used for embedded targets where flash storage is the constraint.</p>
+<h2 id=undefined-behavior-as-an-optimization-lever>Undefined Behavior as an Optimization Lever</h2>
+<p>C and C++ specify that certain programs have undefined behavior (UB): signed integer overflow, null pointer dereference, use of uninitialized memory, out-of-bounds array access. The compiler is permitted to assume these situations never occur. If they do occur, the program&rsquo;s behavior is literally undefined - the compiler is allowed to generate any code it likes.</p>
+<p>This sounds like a footnote. It is not. Compilers use UB as a license to eliminate code.</p>
+<p>The classic example: signed integer overflow is UB. Therefore <code>x + 1 > x</code> is always true for signed <code>x</code> (if it were false, overflow would have occurred, which is UB, which can be assumed not to happen). The compiler may optimize away any check of the form <code>if (x + 1 &lt; x)</code> - including integer overflow security checks in C code. They vanish, silently, producing binaries that accept malformed inputs.</p>
+<p>A second example: if the compiler sees <code>*ptr</code> used unconditionally, it can conclude <code>ptr != NULL</code> is always true and eliminate any subsequent null check - including a security check added by a security-aware developer who did not realize the UB.</p>
+<p>UB-based misoptimizations are a real source of security vulnerabilities. The mitigations are: use <code>-fsanitize=undefined</code> during testing to catch UB, use Rust or other languages with defined overflow semantics in security-critical paths, and - when using C - compile security-sensitive functions with <code>-fwrapv</code> to give signed overflow defined wraparound semantics.</p>
+<h2 id=profile-guided-optimization>Profile-Guided Optimization</h2>
+<p>The compiler&rsquo;s inlining budget, branch prediction hints, and code layout decisions are based on static heuristics: guesses about what will be hot. <strong>Profile-Guided Optimization (PGO)</strong> replaces guesses with measurements.</p>
+<p>The workflow: compile with <code>-fprofile-generate</code>, run the binary on representative workloads (it records branch frequencies and call counts into a <code>.profdata</code> file), then recompile with <code>-fprofile-use</code>. The compiler now knows which functions are hot (inline aggressively), which branches are taken 99% of the time (lay out the hot path without branch instructions), and which code paths are dead (shrink or eliminate).</p>
+<p>PGO consistently delivers 10-20% speedups on real workloads. The caveat: the training workload must be representative. PGO-optimized code tuned on one workload can regress on a different workload. This is the core limitation: PGO is a snapshot of one workload&rsquo;s behavior, not a guarantee about all workloads.</p>
+<h2 id=link-time-optimization>Link-Time Optimization</h2>
+<p>Each <code>.c</code> file is compiled to a <code>.o</code> file independently. The compiler cannot inline across translation unit boundaries - at compile time, it sees only one file. A call to a helper function in another <code>.o</code> file always crosses an opaque call boundary: arguments are shuffled into calling-convention registers, a <code>call</code> is emitted, no further optimization is possible.</p>
+<p><strong>Link-Time Optimization (LTO)</strong> defers final code generation until link time. Instead of machine code, the compiler emits IR into the <code>.o</code> file. The linker combines all the IR, runs the full optimization pipeline across the entire program, and then generates machine code. Cross-module inlining, interprocedural dead code elimination, and global constant propagation all become possible.</p>
+<p>LTO is enabled with <code>-flto</code>. Typical speedup: 5-15% on programs with many small functions spread across files. The cost: link time increases substantially - the linker now does what was previously spread across all compilation steps. <strong>ThinLTO</strong> (<code>-flto=thin</code>) parallelizes this with a summary-based approach, preserving most of the speedup with acceptable link times.</p>
+<h2 id=the-compiler-in-the-ml-stack>The Compiler in the ML Stack</h2>
+<p>Modern machine learning frameworks have their own compiler pipelines that apply similar passes.</p>
+<p><strong><code>torch.compile</code></strong> (PyTorch 2.0+) uses the <strong>Inductor</strong> backend, which traces PyTorch operations and compiles them to <strong>Triton</strong> kernels - a Python-embedded DSL for writing GPU kernels. Inductor performs operator fusion (analogous to loop fusion: merging multiple elementwise operations into one kernel to reduce memory bandwidth), layout optimization (choosing the right tensor memory layout for each operation), and tiling (partitioning work across GPU thread blocks for cache locality). The result: kernels that outperform hand-written PyTorch in many cases.</p>
+<p><strong>XLA</strong> (Accelerated Linear Algebra), used by JAX and TensorFlow, operates on <strong>HLO (High Level Operations)</strong> IR. XLA&rsquo;s optimizer performs constant folding, dead code elimination, algebraic simplification (replacing <code>x * 1.0</code> with <code>x</code>), and <strong>operation fusion</strong> - the GPU-compute equivalent of loop fusion, merging adjacent operations into single kernels to eliminate intermediate memory writes.</p>
+<p>The conceptual parallels are exact: XLA&rsquo;s HLO optimizer and LLVM&rsquo;s optimizer solve the same fundamental problem with the same fundamental techniques, applied to different computation substrates.</p>
+<h2 id=the-optimization-debugging-tension>The Optimization-Debugging Tension</h2>
+<p>Optimized code is hard to debug. Variables optimized into registers do not appear in <code>gdb</code>. Code reordered for performance does not match source line numbers in stack traces. Inlined functions do not appear as separate frames. Functions the compiler proved unreachable are gone - including, sometimes, the one you wanted to step into.</p>
+<p>This is not a bug. It is the point. An optimized binary is a different program from the source code, related by equivalence under specified assumptions. When those assumptions are violated (UB, aliasing), or when you need to inspect intermediate state the compiler proved was unnecessary, you need <code>-O0</code>.</p>
+<p>The practical resolution: develop and test with optimizations on (or at least <code>-O2</code>), debug with <code>-O0 -g</code>. Use sanitizers (<code>-fsanitize=address,undefined</code>) to catch bugs without hiding them. Never use an unoptimized binary for performance benchmarks.</p>
+<p>The deeper lesson: the compiler is smarter than you about most optimizations. Write clear, idiomatic code. Profile first. Optimize only what the profiler identifies as hot. When you do need to help the compiler - add <code>restrict</code>, add <code>__builtin_expect</code>, reach for intrinsics - do so with a benchmark in hand that confirms the change made things better.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Optimization</th>
+<th>What It Does</th>
+<th>When It Matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Constant folding/propagation</td>
+<td>Evaluates known-at-compile-time expressions</td>
+<td>Compile-time constants, template instantiation</td>
+</tr>
+<tr>
+<td>Dead code elimination</td>
+<td>Removes unused computations and unreachable branches</td>
+<td>After inlining, UB reasoning</td>
+</tr>
+<tr>
+<td>Function inlining</td>
+<td>Copies callee body to call site</td>
+<td>Small, hot functions; enables other optimizations</td>
+</tr>
+<tr>
+<td>LICM</td>
+<td>Hoists loop-invariant computation before loop</td>
+<td>Loops with expensive invariant operations</td>
+</tr>
+<tr>
+<td>Loop unrolling</td>
+<td>Replicates loop body to reduce branch overhead</td>
+<td>Tight loops with small bodies</td>
+</tr>
+<tr>
+<td>Autovectorization</td>
+<td>Converts scalar loops to SIMD</td>
+<td>Embarrassingly parallel data processing</td>
+</tr>
+<tr>
+<td>Alias analysis / <code>restrict</code></td>
+<td>Proves pointers do not overlap</td>
+<td>Enabling vectorization in C/C++</td>
+</tr>
+<tr>
+<td>PGO</td>
+<td>Uses runtime profiles to guide heuristics</td>
+<td>10-20% on real workloads with representative training</td>
+</tr>
+<tr>
+<td>LTO</td>
+<td>Enables inter-module optimization at link time</td>
+<td>Programs with many small functions across files</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/linkers-and-loaders/>Linkers & Loaders</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

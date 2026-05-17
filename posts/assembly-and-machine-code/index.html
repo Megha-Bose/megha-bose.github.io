@@ -1,0 +1,258 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Assembly & Machine Code // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Assembly & Machine Code">
+<meta name=twitter:description content="Prerequisite: How Computers Execute Programs | Memory Management
+Take a simple C function and compile it with gcc -O0. You get perhaps 200 lines of x86-64 assembly: stack frame setup, arguments shuffled through memory, variables loaded and stored on every use. Compile the same function with gcc -O3. You get 15 lines - sometimes fewer. The compiler hoisted loop-invariant computations, eliminated dead stores, scheduled instructions to avoid pipeline stalls, and chose lea over imul because the latency is lower.">
+<meta property="og:title" content="Assembly & Machine Code">
+<meta property="og:description" content="Prerequisite: How Computers Execute Programs | Memory Management
+Take a simple C function and compile it with gcc -O0. You get perhaps 200 lines of x86-64 assembly: stack frame setup, arguments shuffled through memory, variables loaded and stored on every use. Compile the same function with gcc -O3. You get 15 lines - sometimes fewer. The compiler hoisted loop-invariant computations, eliminated dead stores, scheduled instructions to avoid pipeline stalls, and chose lea over imul because the latency is lower.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/assembly-and-machine-code/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Assembly & Machine Code</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/how-computers-execute-programs/>How Computers Execute Programs</a> | <a href=/posts/memory-management/>Memory Management</a></p>
+<p>Take a simple C function and compile it with <code>gcc -O0</code>. You get perhaps 200 lines of x86-64 assembly: stack frame setup, arguments shuffled through memory, variables loaded and stored on every use. Compile the same function with <code>gcc -O3</code>. You get 15 lines - sometimes fewer. The compiler hoisted loop-invariant computations, eliminated dead stores, scheduled instructions to avoid pipeline stalls, and chose <code>lea</code> over <code>imul</code> because the latency is lower. Same C code. Completely different machine behavior.</p>
+<p>That gap is what assembly lets you see. Not because you need to write assembly - almost nobody does anymore. But because understanding what the compiler produces is the difference between treating performance as mysterious and treating it as legible.</p>
+<h2 id=machine-code-and-its-history>Machine Code and Its History</h2>
+<p>In the early days of computing, before assemblers existed, programmers entered machine code directly - flipping switches, loading binary patterns, patching addresses by hand when code changed. The first &ldquo;assembler&rdquo; (Grace Hopper&rsquo;s A-0, 1952, was technically a higher-level language translator, but the concept of a tool that translated symbolic names into binary came in the early 1950s) was considered radical: why would you let a machine write its own code?</p>
+<p>Assembly is that symbolic representation. One assembly instruction corresponds to one machine instruction. The assembler&rsquo;s job is simple: translate mnemonic opcodes to binary opcodes, replace label names with actual addresses, and output an object file.</p>
+<p>What separates x86-64 from every competing ISA is a moat built on binary compatibility. When IBM shipped the 8086 in the PC in 1981, a massive installed base of software accumulated. Intel&rsquo;s commitment was that new processors would always run old binaries. The 286 ran 8086 code. The 386 added 32-bit protected mode but ran 286 code. The x86-64 extension (from AMD, licensed to Intel) added 64-bit mode but remained backward compatible. Every new processor generation - from Pentium to Core to Skylake to Alder Lake - runs the same binaries from 1981. This is why x86 survived the RISC vs CISC wars of the 1990s, when RISC architectures (MIPS, Alpha, SPARC) were architecturally cleaner and faster per clock. RISC won the argument. x86 won the market. Binary compatibility beat elegance.</p>
+<p>The irony: modern x86 processors are not actually CISC machines internally. Since the Pentium Pro (1995), Intel decomposes CISC instructions into micro-operations (µops) internally and executes them on a RISC-style out-of-order engine. The CISC instruction set is a compatibility layer - a translator that converts the legacy encoding into the actual operations the CPU executes. You write x86 assembly; the CPU runs something else entirely.</p>
+<h2 id=registers-the-cpus-working-memory>Registers: The CPU&rsquo;s Working Memory</h2>
+<p>Registers are named storage locations inside the CPU itself, directly accessible by the execution units. A memory access (even L1 cache) takes 4–5 cycles. A register access takes 0 cycles - it is already in the execution unit.</p>
+<p>x86-64 general-purpose registers: <code>rax</code>, <code>rbx</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>rsp</code>, <code>rbp</code>, and <code>r8</code> through <code>r15</code>. Each holds 64 bits. The same physical register is accessible at different widths to maintain backward compatibility:</p>
+<ul>
+<li><code>rax</code>: full 64-bit register</li>
+<li><code>eax</code>: low 32 bits (writing to <code>eax</code> zero-extends into <code>rax</code>)</li>
+<li><code>ax</code>: low 16 bits</li>
+<li><code>al</code>: low 8 bits</li>
+<li><code>ah</code>: bits 8–15 (historical artifact, limited use)</li>
+</ul>
+<p>Special-purpose registers:</p>
+<ul>
+<li><code>rip</code>: instruction pointer, always points to the next instruction. You cannot read or write it directly (except via <code>jmp</code>/<code>call</code>/<code>ret</code>).</li>
+<li><code>rflags</code>: condition bits set by arithmetic instructions - zero flag (ZF), carry flag (CF), sign flag (SF), overflow flag (OF). Conditional jumps read these flags.</li>
+<li><code>rsp</code>: stack pointer, points to the top of the call stack (lowest valid address).</li>
+<li><code>rbp</code>: base pointer, optional but conventional anchor for the stack frame.</li>
+</ul>
+<p>Floating-point and SIMD work happens in a separate register file:</p>
+<ul>
+<li><code>xmm0</code>–<code>xmm15</code>: 128-bit registers (SSE)</li>
+<li><code>ymm0</code>–<code>ymm15</code>: 256-bit registers (AVX2), each is the upper half of a <code>zmm</code> register plus the corresponding <code>xmm</code> register</li>
+<li><code>zmm0</code>–<code>zmm31</code>: 512-bit registers (AVX-512)</li>
+</ul>
+<p>When a function receives a <code>double</code> argument or returns one, it goes through <code>xmm0</code>. When a linear algebra kernel processes 8 floats simultaneously, they live in one <code>ymm</code> register.</p>
+<h2 id=instruction-classes>Instruction Classes</h2>
+<p><strong>Data movement.</strong> <code>mov dst, src</code> copies a value from register to register, memory to register, register to memory, or immediate to register. <code>movzx</code> zero-extends (useful for unsigned integers narrower than 64 bits). <code>movsx</code> sign-extends.</p>
+<p><code>push rax</code> is sugar for: decrement <code>rsp</code> by 8, then write <code>rax</code> to the memory at <code>rsp</code>. <code>pop rbx</code> does the reverse: read memory at <code>rsp</code> into <code>rbx</code>, then increment <code>rsp</code> by 8.</p>
+<p><strong>Arithmetic.</strong> <code>add rax, rbx</code> adds <code>rbx</code> to <code>rax</code> and stores the result in <code>rax</code>, setting flags. <code>sub</code>, <code>mul</code>, <code>imul</code>, <code>div</code>, <code>idiv</code>. <code>imul</code> is used even for unsigned multiplication when you only need the low 64 bits - the hardware doesn&rsquo;t distinguish signed from unsigned for the low half.</p>
+<p><code>lea rax, [rdi + rdi*4]</code> computes an address arithmetic expression (<code>rdi + rdi*4 = 5*rdi</code>) and stores the result in <code>rax</code> without touching memory. Compilers use <code>lea</code> for multiplication by small constants because it has lower latency and consumes fewer execution ports than <code>imul</code> on most Intel microarchitectures.</p>
+<p><strong>Logic.</strong> <code>and</code>, <code>or</code>, <code>xor</code>, <code>not</code>, <code>shl</code> (shift left), <code>shr</code> (shift right logical), <code>sar</code> (shift right arithmetic, preserves sign bit). <code>xor rax, rax</code> zeroes a register in one instruction with fewer bytes than <code>mov rax, 0</code> - the disassembly of any generated code is full of it.</p>
+<p><strong>Control flow.</strong> <code>jmp label</code> unconditionally transfers execution by loading <code>label</code> into <code>rip</code>. Conditional jumps - <code>je</code> (jump if equal / ZF=1), <code>jne</code>, <code>jl</code> (jump if less / SF≠OF), <code>jg</code>, <code>jge</code>, <code>jle</code>, <code>jb</code> (below, for unsigned), <code>ja</code> (above, for unsigned) - transfer execution only if the named condition holds in <code>rflags</code>.</p>
+<p>The typical sequence for an <code>if (a == b)</code> branch:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-nasm data-lang=nasm><span style=color:#a6e22e>cmp</span> rax, rbx   <span style=color:#75715e>; sets ZF if rax == rbx</span>
+<span style=color:#66d9ef>je</span><span style=color:#66d9ef>  equ</span>al      <span style=color:#75715e>; jumps to &#39;equal&#39; label if ZF is set</span>
+<span style=color:#75715e>; else branch here</span>
+</code></pre></div><p><code>call target</code> pushes the return address (the address of the instruction after the <code>call</code>) onto the stack, then jumps to <code>target</code>. <code>ret</code> pops that address and jumps to it. This is the entire mechanism behind function calls - no magic, just two instructions and a convention about what&rsquo;s on the stack.</p>
+<h2 id=the-system-v-amd64-calling-convention>The System V AMD64 Calling Convention</h2>
+<p>Linux and macOS agree on how function arguments are passed and returned. This agreement is the ABI (Application Binary Interface), and it is what allows code compiled by different compilers to interoperate.</p>
+<p>Integer and pointer arguments, in order: <code>rdi</code>, <code>rsi</code>, <code>rdx</code>, <code>rcx</code>, <code>r8</code>, <code>r9</code>. Arguments beyond the sixth go on the stack. Floating-point arguments: <code>xmm0</code>–<code>xmm7</code>. Return value: <code>rax</code> for integers/pointers, <code>xmm0</code> for floating-point.</p>
+<p>Registers are split into two classes:</p>
+<ul>
+<li><strong>Caller-saved</strong> (volatile): <code>rax</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>r8</code>, <code>r9</code>, <code>r10</code>, <code>r11</code>, <code>xmm0</code>–<code>xmm15</code>. A function may clobber these freely; the caller must save them before the call if it still needs their values afterward.</li>
+<li><strong>Callee-saved</strong> (non-volatile): <code>rbx</code>, <code>rbp</code>, <code>r12</code>–<code>r15</code>. If a function uses these registers, it must save them (push to stack on entry) and restore them (pop from stack on exit) before returning.</li>
+</ul>
+<p>The distinction is a performance optimization: most functions don&rsquo;t need to save many registers, and most callers don&rsquo;t need their caller-saved registers preserved across calls. The ABI minimizes unnecessary save/restore work in the common case.</p>
+<h2 id=stack-frames-in-assembly>Stack Frames in Assembly</h2>
+<p>When a function is called, the CPU pushes the return address automatically. The function then sets up a stack frame - an area of stack memory reserved for its local variables and saved registers:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-nasm data-lang=nasm><span style=color:#75715e>; Function prologue:</span>
+<span style=color:#a6e22e>push</span> rbp          <span style=color:#75715e>; save caller&#39;s base pointer</span>
+<span style=color:#a6e22e>mov</span>  rbp, rsp     <span style=color:#75715e>; anchor: rbp now points to the saved rbp</span>
+<span style=color:#a6e22e>sub</span>  rsp, <span style=color:#ae81ff>32</span>      <span style=color:#75715e>; reserve 32 bytes for local variables</span>
+
+<span style=color:#75715e>; Local variables live at negative offsets from rbp:</span>
+<span style=color:#75715e>; [rbp - 8]  = first local variable</span>
+<span style=color:#75715e>; [rbp - 16] = second local variable</span>
+
+<span style=color:#75715e>; Incoming arguments (beyond the first six) are at positive offsets:</span>
+<span style=color:#75715e>; [rbp + 16] = seventh argument (first six came in registers)</span>
+<span style=color:#75715e>; [rbp + 8]  = return address (pushed by call)</span>
+<span style=color:#75715e>; [rbp + 0]  = saved rbp (pushed by push rbp)</span>
+
+<span style=color:#75715e>; Function epilogue:</span>
+<span style=color:#a6e22e>mov</span>  rsp, rbp     <span style=color:#75715e>; restore stack pointer (deallocate locals)</span>
+<span style=color:#a6e22e>pop</span>  rbp          <span style=color:#75715e>; restore caller&#39;s base pointer</span>
+<span style=color:#a6e22e>ret</span>               <span style=color:#75715e>; pop return address into rip</span>
+</code></pre></div><p>With optimization (<code>-O1</code> or higher), compilers often omit the frame pointer (<code>rbp</code>) entirely - the frame pointer elimination optimization allows <code>rbp</code> to be used as a general-purpose register, freeing one extra register for computation. The stack is still correct (the compiler tracks offsets relative to <code>rsp</code> instead), but <code>rbp</code>-based stack unwinding no longer works, which is why debuggers and profilers sometimes need frame pointers to attribute call stacks correctly.</p>
+<h2 id=disassembling-a-real-function>Disassembling a Real Function</h2>
+<p>Take this C function:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>add_two</span>(<span style=color:#66d9ef>int</span> a, <span style=color:#66d9ef>int</span> b) {
+    <span style=color:#66d9ef>return</span> a <span style=color:#f92672>+</span> b;
+}
+</code></pre></div><p>Compiled unoptimized (<code>-O0</code>), disassembled with <code>objdump -d -M intel</code>:</p>
+<pre tabindex=0><code>add_two:
+  push   rbp
+  mov    rbp, rsp
+  mov    DWORD PTR [rbp-0x4], edi   ; spill arg a to stack
+  mov    DWORD PTR [rbp-0x8], esi   ; spill arg b to stack
+  mov    edx, DWORD PTR [rbp-0x4]  ; reload a
+  mov    eax, DWORD PTR [rbp-0x8]  ; reload b
+  add    eax, edx                   ; a + b → eax (return value)
+  pop    rbp
+  ret
+</code></pre><p>With <code>-O2</code>:</p>
+<pre tabindex=0><code>add_two:
+  lea    eax, [rdi + rsi]   ; compute a + b using LEA arithmetic
+  ret
+</code></pre><p>The optimized version uses <code>lea</code> (load effective address) to compute the sum without touching memory at all - <code>rdi</code> holds <code>a</code>, <code>rsi</code> holds <code>b</code>, and <code>lea eax, [rdi + rsi]</code> computes <code>rdi + rsi</code> and stores it in <code>eax</code>. The entire function is 2 instructions. The unoptimized version is 9 instructions and 4 memory accesses, all redundant.</p>
+<p>This is what optimization means at the assembly level: eliminating unnecessary memory accesses, choosing lower-latency instructions, removing redundant stack operations. Reading the difference between <code>-O0</code> and <code>-O2</code> output teaches you what the compiler considers &ldquo;unnecessary&rdquo; - and therefore what you should avoid writing in the first place.</p>
+<h2 id=att-syntax-vs-intel-syntax>AT&T Syntax vs Intel Syntax</h2>
+<p>Two syntaxes exist for x86 assembly, and they are confusingly opposite:</p>
+<ul>
+<li><strong>Intel syntax</strong> (used by NASM, Intel&rsquo;s documentation, MASM): <code>mov rax, rbx</code> means &ldquo;copy rbx into rax.&rdquo; Destination is first. No register prefixes, no immediate prefixes.</li>
+<li><strong>AT&T syntax</strong> (used by GAS, the GNU assembler; default for <code>objdump</code>): <code>mov %rbx, %rax</code> - source is first, registers are prefixed with <code>%</code>, immediates with <code>$</code>. Memory operands use <code>(%rax)</code> rather than <code>[rax]</code>.</li>
+</ul>
+<p>When reading <code>objdump -d</code> output on Linux, you see AT&T syntax by default. Pass <code>-M intel</code> to get Intel syntax: <code>objdump -d -M intel</code>. For reading assembly from papers, Intel documentation, or Windows tooling, you&rsquo;ll see Intel syntax. Most engineers find Intel syntax more readable. The underlying instructions are identical.</p>
+<h2 id=how-compilers-use-assembly>How Compilers Use Assembly</h2>
+<p>You don&rsquo;t need to write assembly to benefit from understanding it. The workflow is:</p>
+<ol>
+<li>Write C or C++.</li>
+<li>Compile with <code>gcc -O3 -S -masm=intel myfile.c</code> to emit assembly.</li>
+<li>Read the output to understand what the compiler actually produced.</li>
+</ol>
+<p>This reveals: whether the compiler vectorized a loop (you&rsquo;ll see <code>ymm</code> register usage), whether a function was inlined (no <code>call</code> instruction), whether a branch was transformed into a conditional move (<code>cmov</code>), and whether the compiler created an unrolled loop (repeated instruction blocks without a branch).</p>
+<p><a href=https://godbolt.org>Compiler Explorer</a> (godbolt.org) provides an interactive version of this: paste C code, see assembly for any compiler and optimization level in real time. It is the best way to develop intuition for compiler behavior.</p>
+<p>SIMD intrinsics live at the boundary between C and assembly. They are C functions with names like <code>_mm256_add_ps</code> that map one-to-one onto SIMD instructions. Writing intrinsics is essentially writing assembly with the syntactic sugar of C. The generated assembly is predictable and portable across compilers. This is the level of abstraction that high-performance numerical code (BLAS, signal processing libraries, video codecs) operates at.</p>
+<h2 id=assembly-in-security-why-attackers-care>Assembly in Security: Why Attackers Care</h2>
+<p>Security researchers read assembly because vulnerabilities are properties of machine code, not source code. A buffer overflow is: data written past the end of a stack buffer overwrites the saved return address. If you know the stack layout (readable from the assembly), you can predict exactly how many bytes to write to reach the return address and what address to put there.</p>
+<p>Return-Oriented Programming (ROP) is an exploitation technique that uses sequences of existing assembly instructions - &ldquo;gadgets&rdquo; - already present in the program or its libraries. A gadget is a short sequence ending in <code>ret</code>. By chaining gadgets (each <code>ret</code> transfers control to the next gadget), an attacker constructs arbitrary computation from existing code without injecting new instructions. Finding gadgets requires reading assembly across the entire binary.</p>
+<p>Buffer overflow mitigations (stack canaries, ASLR, NX/DEP) are also expressed in assembly: stack canaries insert a random value between local variables and the saved return address and check it before <code>ret</code>; address space layout randomization randomizes the base address of the binary and libraries so gadget addresses are unpredictable; NX marks stack memory non-executable so injected shellcode can&rsquo;t run. ROP is specifically designed to bypass NX - it doesn&rsquo;t inject code, it reuses existing code.</p>
+<p>Understanding these exploits requires reading assembly. Security researchers who don&rsquo;t read assembly are working blind.</p>
+<h2 id=the-practical-case-for-assembly-literacy>The Practical Case for Assembly Literacy</h2>
+<p>Almost nobody writes assembly manually anymore. The cases where you would: hand-optimized inner loops in CPU-specific performance libraries (the AVX-512 kernels in NumPy&rsquo;s MKL backend), embedded systems where code size constraints are severe, and bootstrapping stages of operating systems and firmware where no C runtime exists yet.</p>
+<p>But reading assembly is a different skill with a much broader application. You need it when:</p>
+<ul>
+<li>The profiler says a function is slow and you want to know why.</li>
+<li>A core dump shows a crash and you need to understand the stack frame.</li>
+<li>The debugger stops at an address with no source line and you need to figure out what&rsquo;s happening.</li>
+<li>You want to verify that the compiler vectorized a critical loop.</li>
+<li>A fuzzer finds a vulnerability and you need to understand the exploit primitive.</li>
+</ul>
+<p>Assembly is not a specialization. It is the language all programs eventually speak, and being able to read it turns hardware behavior from mysterious into legible.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>x86-64 Detail</th>
+<th>Why It Matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Argument passing</td>
+<td><code>rdi</code>, <code>rsi</code>, <code>rdx</code>, <code>rcx</code>, <code>r8</code>, <code>r9</code> for first 6 ints</td>
+<td>Explains why functions over 6 args are slower</td>
+</tr>
+<tr>
+<td>Return value</td>
+<td><code>rax</code> (int/ptr), <code>xmm0</code> (float/double)</td>
+<td>Understanding ABI for FFI and debugging</td>
+</tr>
+<tr>
+<td>Caller-saved regs</td>
+<td><code>rax</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>r8–r11</code>, <code>xmm0–15</code></td>
+<td>Function can clobber these; caller must save if needed</td>
+</tr>
+<tr>
+<td>Callee-saved regs</td>
+<td><code>rbx</code>, <code>rbp</code>, <code>r12–r15</code></td>
+<td>Function must save/restore these</td>
+</tr>
+<tr>
+<td>Stack frame</td>
+<td><code>rbp</code> anchors frame; locals at <code>[rbp-N]</code></td>
+<td>Stack frame layout for debugging, exploits</td>
+</tr>
+<tr>
+<td>Frame elimination</td>
+<td><code>-O1</code> removes <code>rbp</code> usage</td>
+<td>May break stack unwinding in profilers</td>
+</tr>
+<tr>
+<td>AT&T vs Intel</td>
+<td>Source-first vs dest-first</td>
+<td>Know which you&rsquo;re reading</td>
+</tr>
+<tr>
+<td><code>lea</code> for arithmetic</td>
+<td>Computes address math without memory access</td>
+<td>Compiler prefers this over <code>imul</code> for small constants</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/simd-vectorization/>SIMD & Vectorization</a> | <a href=/posts/how-compilers-work/>How Compilers Work</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Matrix Factorizations // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Matrix Factorizations">
+<meta name=twitter:description content="Prerequisite:
+ Singular Value Decomposition Eigenvalues & Eigenvectors   A matrix factorization decomposes a matrix into a product of structured factors - triangular, orthogonal, diagonal - that are easier to work with than the original. Different factorizations are optimal for different tasks: solving linear systems, least squares, handling positive-definite structure, or revealing spectral information. This post covers the five main factorizations used in scientific computing.
+LU Decomposition The Factorization Theorem (LU without pivoting).">
+<meta property="og:title" content="Matrix Factorizations">
+<meta property="og:description" content="Prerequisite:
+ Singular Value Decomposition Eigenvalues & Eigenvectors   A matrix factorization decomposes a matrix into a product of structured factors - triangular, orthogonal, diagonal - that are easier to work with than the original. Different factorizations are optimal for different tasks: solving linear systems, least squares, handling positive-definite structure, or revealing spectral information. This post covers the five main factorizations used in scientific computing.
+LU Decomposition The Factorization Theorem (LU without pivoting).">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/matrix-factorizations/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Matrix Factorizations</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Dec 11, 2020
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+10 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong></p>
+<ul>
+<li><a href=/posts/singular-value-decomposition/>Singular Value Decomposition</a></li>
+<li><a href=/posts/eigenvalues-eigenvectors/>Eigenvalues & Eigenvectors</a></li>
+</ul>
+<hr>
+<p>A matrix factorization decomposes a matrix into a product of structured factors - triangular, orthogonal, diagonal - that are easier to work with than the original. Different factorizations are optimal for different tasks: solving linear systems, least squares, handling positive-definite structure, or revealing spectral information. This post covers the five main factorizations used in scientific computing.</p>
+<h2 id=lu-decomposition>LU Decomposition</h2>
+<h3 id=the-factorization>The Factorization</h3>
+<p><strong>Theorem (LU without pivoting).</strong> If $A \in \mathbb{R}^{n \times n}$ has the property that all leading principal submatrices $A_{1:k, 1:k}$ are nonsingular (for $k = 1, \ldots, n-1$), then there exists a unique factorization</p>
+<p>$$A = LU,$$</p>
+<p>where $L$ is unit lower triangular (diagonal entries all 1) and $U$ is upper triangular.</p>
+<p><strong>Theorem (LU with partial pivoting).</strong> For any $A \in \mathbb{R}^{n \times n}$, there exists a permutation matrix $P$, unit lower triangular $L$, and upper triangular $U$ such that</p>
+<p>$$PA = LU.$$</p>
+<p>The permutation $P$ reorders rows to place the largest-magnitude entry in each column on the diagonal before elimination - this is <strong>partial pivoting</strong> and is essential for numerical stability.</p>
+<h3 id=connection-to-gaussian-elimination>Connection to Gaussian Elimination</h3>
+<p>LU decomposition <em>is</em> Gaussian elimination in disguise.</p>
+<p>$$\begin{pmatrix} a_{11} & a_{12} & a_{13} \ a_{21} & a_{22} & a_{23} \ a_{31} & a_{32} & a_{33} \end{pmatrix} \xrightarrow{\text{eliminate col 1}} \begin{pmatrix} u_{11} & u_{12} & u_{13} \ 0 & u_{22} & u_{23} \ 0 & u_{32} & u_{33} \end{pmatrix}$$</p>
+<p>The multipliers $m_{21} = a_{21}/a_{11}$ and $m_{31} = a_{31}/a_{11}$ are stored in $L$:</p>
+<p>$$L = \begin{pmatrix} 1 & 0 & 0 \ m_{21} & 1 & 0 \ m_{31} & m_{32} & 1 \end{pmatrix}$$</p>
+<p>Each elimination step applies an elementary lower triangular matrix $E_k$ from the left: $E_{n-1} \cdots E_1 A = U$, so $L = E_1^{-1} \cdots E_{n-1}^{-1}$ (each $E_k^{-1}$ just negates the subdiagonal entries of $E_k$, so $L$ accumulates the multipliers directly).</p>
+<p><strong>Cost:</strong> Factorization is $O(n^3)$; once $PA = LU$ is known, solving $Ax = b$ costs $O(n^2)$:</p>
+<ol>
+<li>Solve $Ly = Pb$ (forward substitution, $O(n^2)$).</li>
+<li>Solve $Ux = y$ (back substitution, $O(n^2)$).</li>
+</ol>
+<p>This makes LU ideal when you must solve $Ax = b$ for many different right-hand sides $b$ (factor once, solve multiple times cheaply).</p>
+<h3 id=existence-and-uniqueness>Existence and Uniqueness</h3>
+<p><strong>Theorem.</strong> If $A$ is nonsingular, then $PA = LU$ exists and $U$ is nonsingular. The factorization $A = LU$ (without pivoting) is unique when it exists.</p>
+<p><em>Uniqueness proof.</em> If $A = L_1 U_1 = L_2 U_2$, then $L_2^{-1} L_1 = U_2 U_1^{-1}$. The left side is unit lower triangular; the right side is upper triangular. A matrix that is both unit lower and upper triangular must be $I$. So $L_1 = L_2$ and $U_1 = U_2$. $\square$</p>
+<h3 id=numerical-notes>Numerical Notes</h3>
+<p>Partial pivoting (LAPACK&rsquo;s <code>dgetrf</code>) ensures $|l_{ij}| \leq 1$, bounding the <strong>growth factor</strong> $g = |U|<em>\infty / |A|</em>\infty$. In the worst case $g$ can be exponentially large ($g = 2^{n-1}$ for a specific adversarial matrix), but in practice partial pivoting is extremely reliable. <strong>Complete pivoting</strong> (pivoting rows <em>and</em> columns) has provably bounded growth but is rarely needed.</p>
+<h2 id=qr-decomposition>QR Decomposition</h2>
+<h3 id=the-factorization-1>The Factorization</h3>
+<p><strong>Theorem (QR Decomposition).</strong> For any $A \in \mathbb{R}^{m \times n}$ with $m \geq n$, there exists a factorization</p>
+<p>$$A = QR,$$</p>
+<p>where $Q \in \mathbb{R}^{m \times m}$ is orthogonal ($Q^T Q = I$) and $R \in \mathbb{R}^{m \times n}$ is upper triangular (zero below the diagonal).</p>
+<p>The <strong>thin QR</strong> keeps only the first $n$ columns of $Q$:</p>
+<p>$$A = \hat{Q}\hat{R}, \quad \hat{Q} \in \mathbb{R}^{m \times n},; \hat{R} \in \mathbb{R}^{n \times n},$$</p>
+<p>where $\hat{Q}$ has orthonormal columns ($\hat{Q}^T \hat{Q} = I_n$) and $\hat{R}$ is square upper triangular.</p>
+<p><strong>Uniqueness.</strong> If $A$ has full column rank and we require diagonal entries of $R$ to be positive, the thin QR is unique.</p>
+<h3 id=gramschmidt-process>Gram–Schmidt Process</h3>
+<p>The <strong>classical Gram–Schmidt</strong> algorithm computes QR by orthogonalizing the columns of $A$:</p>
+<pre tabindex=0><code>Input: columns a1, ..., an of A
+q1 = a1 / ||a1||
+r11 = ||a1||
+
+for j = 2, ..., n:
+    v = aj
+    for i = 1, ..., j-1:
+        r_ij = qi^T * aj        (projection coefficient)
+        v = v - r_ij * qi       (subtract projection)
+    r_jj = ||v||
+    qj = v / r_jj
+</code></pre><p>The columns $q_1, \ldots, q_n$ are the orthonormal basis (columns of $\hat{Q}$), and $r_{ij}$ fill $\hat{R}$.</p>
+<p><strong>Modified Gram–Schmidt</strong> (MGS) reorders the operations to subtract projections one at a time and is more numerically stable (avoids catastrophic cancellation when $a_j$ is nearly in the span of earlier columns). Even MGS loses orthogonality in floating point when columns are nearly dependent; in that case, use <strong>Householder QR</strong>.</p>
+<h3 id=householder-reflections>Householder Reflections</h3>
+<p>A <strong>Householder reflector</strong> is $H = I - 2vv^T / (v^T v)$, an orthogonal matrix that reflects across the hyperplane orthogonal to $v$. By choosing $v$ appropriately, $H$ maps any vector $x$ to $|x|e_1$.</p>
+<p>Householder QR applies $n$ reflectors from the left:</p>
+<p>$$H_n \cdots H_2 H_1 A = R \implies Q^T = H_n \cdots H_1 \implies Q = H_1 \cdots H_n.$$</p>
+<p>This is <strong>backward stable</strong>: the computed $Q$ and $R$ satisfy $A + \delta A = QR$ where $|\delta A|_F / |A|<em>F = O(\varepsilon</em>{\text{machine}})$.</p>
+<h3 id=application-least-squares>Application: Least Squares</h3>
+<p>The overdetermined system $Ax \approx b$ ($A \in \mathbb{R}^{m \times n}$, $m > n$, full column rank) has least squares solution minimizing $|Ax - b|_2^2$.</p>
+<p>Using thin QR $A = \hat{Q}\hat{R}$:</p>
+<p>$$|Ax - b|^2 = |\hat{Q}\hat{R}x - b|^2 = |\hat{R}x - \hat{Q}^T b|^2 + |(I - \hat{Q}\hat{Q}^T)b|^2.$$</p>
+<p>The second term is independent of $x$; minimizing requires $\hat{R}x = \hat{Q}^T b$. Since $\hat{R}$ is square upper triangular and nonsingular (full rank assumed):</p>
+<p>$$\hat{R}x^\ast = \hat{Q}^T b \quad \text{(solve by back-substitution)}.$$</p>
+<p>This is numerically superior to the normal equations $A^T A x = A^T b$ (which squares the condition number).</p>
+<h2 id=cholesky-decomposition>Cholesky Decomposition</h2>
+<h3 id=the-factorization-2>The Factorization</h3>
+<p><strong>Definition.</strong> $A \in \mathbb{R}^{n \times n}$ is <strong>positive definite</strong> (SPD) if $A = A^T$ and $x^T A x > 0$ for all $x \neq 0$.</p>
+<p><strong>Theorem (Cholesky).</strong> $A$ is symmetric positive definite if and only if there exists a unique lower triangular matrix $L$ with positive diagonal entries such that</p>
+<p>$$A = LL^T.$$</p>
+<p>This is the <strong>Cholesky decomposition</strong> (or Cholesky factorization).</p>
+<p><em>Proof (existence by induction).</em> Write $A = \begin{pmatrix} \alpha & v^T \ v & B \end{pmatrix}$. Since $A$ is SPD, $\alpha = e_1^T A e_1 > 0$, so $\ell_{11} = \sqrt{\alpha}$ is real. The Schur complement $S = B - vv^T/\alpha$ is also SPD (verify: $x^T S x = x^T B x - (v^T x)^2 / \alpha > 0$ for $x \neq 0$, using SPD of $A$). Apply induction to $S = \tilde{L}\tilde{L}^T$, and assemble:</p>
+<p>$$L = \begin{pmatrix} \ell_{11} & 0 \ v/\ell_{11} & \tilde{L}\end{pmatrix}. \qquad \square$$</p>
+<p><strong>Cost:</strong> Cholesky is $\approx n^3/3$ flops - <strong>half the cost of LU</strong> - because it exploits symmetry (only the lower triangle is computed). No pivoting is needed: all Schur complements of an SPD matrix are SPD, so the algorithm never encounters a zero pivot.</p>
+<h3 id=algorithm>Algorithm</h3>
+<pre tabindex=0><code>for j = 1, ..., n:
+    l_jj = sqrt(a_jj - sum_{k=1}^{j-1} l_jk^2)
+    for i = j+1, ..., n:
+        l_ij = (a_ij - sum_{k=1}^{j-1} l_ik * l_jk) / l_jj
+</code></pre><p>The algorithm fails (encounters $\sqrt{\text{negative}}$) if and only if $A$ is not positive definite - Cholesky is a practical test for positive definiteness.</p>
+<h3 id=numerical-stability-and-applications>Numerical Stability and Applications</h3>
+<p>Cholesky is numerically stable: the growth factor is 1 (diagonal entries of $L$ never exceed $\sqrt{a_{ii}}$). This makes it the preferred solver for SPD systems.</p>
+<p><strong>Connection to multivariate Gaussians.</strong> The density of $\mathcal{N}(\mu, \Sigma)$ involves $\Sigma^{-1}$ and $\det(\Sigma)$. With $\Sigma = LL^T$:</p>
+<ul>
+<li>$\Sigma^{-1} = L^{-T} L^{-1}$: solve two triangular systems.</li>
+<li>$\det(\Sigma) = (\det L)^2 = \left(\prod_{i=1}^n l_{ii}\right)^2$: trivial from diagonal.</li>
+<li><strong>Sampling</strong>: to generate $x \sim \mathcal{N}(\mu, \Sigma)$, draw $z \sim \mathcal{N}(0, I)$ and return $x = \mu + Lz$. This uses $L$ as a &ldquo;square root&rdquo; of $\Sigma$.</li>
+</ul>
+<p><strong>Optimization.</strong> In Newton&rsquo;s method, the Hessian $H$ of a strictly convex function is SPD. Cholesky factorization of $H$ is the standard way to solve $Hp = -\nabla f$ (the Newton step). The <strong>modified Cholesky</strong> algorithm additionally detects non-positive-definiteness and shifts the Hessian, useful when $H$ may be indefinite.</p>
+<h2 id=eigendecomposition>Eigendecomposition</h2>
+<p><strong>Theorem.</strong> $A \in \mathbb{F}^{n \times n}$ is diagonalizable if and only if</p>
+<p>$$A = Q \Lambda Q^{-1},$$</p>
+<p>where $\Lambda = \mathrm{diag}(\lambda_1, \ldots, \lambda_n)$ and $Q$ has eigenvectors as columns.</p>
+<p>For <strong>symmetric</strong> $A$: $Q$ can be taken orthogonal ($Q^T Q = I$), giving</p>
+<p>$$A = Q \Lambda Q^T \quad (A \text{ symmetric}),$$</p>
+<p>the <strong>spectral decomposition</strong>. Eigenvalues are real; $Q$ is an orthogonal change-of-basis to the eigenbasis.</p>
+<p><strong>Existence:</strong> Only for square matrices over algebraically closed fields (or symmetric matrices over $\mathbb{R}$). General matrices may not be diagonalizable.</p>
+<p><strong>Cost:</strong> Computing eigendecomposition is $O(n^3)$ via the QR algorithm. However, eigenvectors are more expensive to compute than eigenvalues alone.</p>
+<p><strong>When to use eigendecomposition:</strong></p>
+<ul>
+<li>Computing matrix powers: $A^k = Q\Lambda^k Q^{-1}$.</li>
+<li>Solving ODEs: $\dot{x} = Ax$, solution $x(t) = e^{At}x_0 = Qe^{\Lambda t}Q^{-1}x_0$.</li>
+<li>PCA (for square covariance matrices).</li>
+<li>Spectral graph theory (Laplacian eigenvectors).</li>
+</ul>
+<h2 id=schur-decomposition>Schur Decomposition</h2>
+<p><strong>Theorem (Schur).</strong> For any $A \in \mathbb{C}^{n \times n}$, there exists a unitary $Q$ and upper triangular $T$ such that</p>
+<p>$$A = QTQ^\ast.$$</p>
+<p>The diagonal entries of $T$ are the eigenvalues of $A$ (in any order). If $A$ is real and all eigenvalues are real, $Q$ can be taken real orthogonal and $T$ real upper triangular.</p>
+<p><em>Proof by induction.</em> $A$ has at least one eigenvalue $\lambda_1$ (over $\mathbb{C}$) with unit eigenvector $q_1$. Extend to an orthonormal basis; in this basis $A$ has the form $\begin{pmatrix}\lambda_1 & *^T \ 0 & A_1\end{pmatrix}$. Apply induction to $A_1$. $\square$</p>
+<p><strong>Schur vs Jordan.</strong> The Schur form is always upper triangular (not block diagonal with Jordan blocks). It is numerically computable and backward stable (the QR algorithm produces the Schur form). Jordan form is theoretically cleaner but numerically fragile.</p>
+<p><strong>Real Schur form.</strong> For real $A$ with complex eigenvalues (appearing in conjugate pairs $\alpha \pm i\beta$), the <strong>real Schur form</strong> is $A = QTQ^T$ where $T$ is <em>quasi-upper triangular</em>: block upper triangular with $1 \times 1$ blocks for real eigenvalues and $2 \times 2$ blocks for conjugate pairs. No complex arithmetic needed.</p>
+<h2 id=comparing-factorizations>Comparing Factorizations</h2>
+<table>
+<thead>
+<tr>
+<th>Factorization</th>
+<th>Form</th>
+<th>When it Exists</th>
+<th>Primary Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LU</td>
+<td>$PA = LU$</td>
+<td>Always (with pivoting)</td>
+<td>Solving $Ax = b$, computing $\det A$</td>
+</tr>
+<tr>
+<td>QR</td>
+<td>$A = QR$</td>
+<td>Always ($m \geq n$)</td>
+<td>Least squares, orthogonalization</td>
+</tr>
+<tr>
+<td>Cholesky</td>
+<td>$A = LL^T$</td>
+<td>$A$ symmetric positive definite</td>
+<td>SPD systems, sampling Gaussians</td>
+</tr>
+<tr>
+<td>Eigendecomp</td>
+<td>$A = Q\Lambda Q^{-1}$</td>
+<td>$A$ diagonalizable</td>
+<td>Powers, ODEs, PCA</td>
+</tr>
+<tr>
+<td>Schur</td>
+<td>$A = QTQ^\ast$</td>
+<td>Always (square)</td>
+<td>Canonical form, computing eigenvalues</td>
+</tr>
+<tr>
+<td>SVD</td>
+<td>$A = U\Sigma V^T$</td>
+<td>Always (any shape)</td>
+<td>Rank, least squares, dimensionality reduction</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Computational cost ($A \in \mathbb{R}^{n \times n}$):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Factorization</th>
+<th>Flops</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LU</td>
+<td>$\frac{2}{3}n^3$</td>
+</tr>
+<tr>
+<td>QR (Householder)</td>
+<td>$\frac{4}{3}n^3$</td>
+</tr>
+<tr>
+<td>Cholesky</td>
+<td>$\frac{1}{3}n^3$</td>
+</tr>
+<tr>
+<td>Eigendecomposition</td>
+<td>$\sim 10 n^3$ (QR alg)</td>
+</tr>
+<tr>
+<td>Schur</td>
+<td>$\sim 10 n^3$ (QR alg)</td>
+</tr>
+<tr>
+<td>SVD</td>
+<td>$\sim 11 n^3$ (for $m = n$)</td>
+</tr>
+</tbody>
+</table>
+<p>After factorization, solving $Ax = b$ costs:</p>
+<ul>
+<li>LU: $O(n^2)$ (triangular substitutions)</li>
+<li>Cholesky: $O(n^2)$ (same, but half as many since symmetric)</li>
+<li>QR: $O(n^2)$ (back-substitute, or thin QR for least squares)</li>
+</ul>
+<h2 id=examples>Examples</h2>
+<p><strong>LAPACK</strong> (Linear Algebra PACKage) is the standard library for dense numerical linear algebra, underlying NumPy, SciPy, MATLAB, Julia, and most ML frameworks.</p>
+<p>Key LAPACK routines:</p>
+<ul>
+<li><code>dgesv</code>: LU solve (wraps <code>dgetrf</code> + <code>dgetrs</code>)</li>
+<li><code>dpotrf</code> + <code>dpotrs</code>: Cholesky factorization + solve (for SPD systems)</li>
+<li><code>dgels</code>: QR-based least squares</li>
+<li><code>dgesvd</code> / <code>dgesdd</code>: SVD (divide-and-conquer version <code>dgesdd</code> is faster)</li>
+<li><code>dsyev</code>: symmetric eigendecomposition (Schur = eigendecomposition for symmetric)</li>
+</ul>
+<p><strong>Positive-definite Hessians in optimization.</strong> Newton&rsquo;s method requires solving $H \Delta x = -\nabla f$ where $H = \nabla^2 f$ is the Hessian. For strictly convex $f$, $H$ is SPD: use Cholesky. The <strong>L-BFGS</strong> algorithm approximates the inverse Hessian with a low-rank update, avoiding factorization entirely.</p>
+<p><strong>Covariance matrices.</strong> Covariance matrices $\Sigma = \mathbb{E}[(X - \mu)(X-\mu)^T]$ are symmetric positive semidefinite. In practice, sample covariance matrices may be PSD but not PD (when $n &lt; p$: fewer samples than features). Cholesky fails; use SVD or regularize: $\Sigma_\epsilon = \Sigma + \epsilon I$ (ridge regularization), which is always SPD.</p>
+<p><strong>Sparse matrices.</strong> For large sparse $A$ (e.g., finite element discretizations, graph Laplacians), dense factorizations are prohibitive. Sparse LU (e.g., UMFPACK), sparse Cholesky (CHOLMOD), and iterative solvers (conjugate gradient for SPD, GMRES for general) are used instead. Fill-in (new nonzeros in $L, U$) is managed by ordering heuristics (AMD, METIS).</p>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/random-matrix-theory/>Random Matrix Theory</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

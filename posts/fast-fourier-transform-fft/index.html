@@ -1,0 +1,198 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Fast Fourier Transform (FFT) // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Fast Fourier Transform (FFT)">
+<meta name=twitter:description content="Prerequisites:
+ Divide & Conquer   In 1965, James Cooley and John Tukey published the FFT. It was later discovered that Gauss had the same algorithm in 1805 but never published it. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$. A factor of fifty thousand.
+It enabled modern telecommunications, image compression (JPEG uses it), audio processing (MP3), and radar.">
+<meta property="og:title" content="Fast Fourier Transform (FFT)">
+<meta property="og:description" content="Prerequisites:
+ Divide & Conquer   In 1965, James Cooley and John Tukey published the FFT. It was later discovered that Gauss had the same algorithm in 1805 but never published it. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$. A factor of fifty thousand.
+It enabled modern telecommunications, image compression (JPEG uses it), audio processing (MP3), and radar.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/fast-fourier-transform-fft/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00">
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Fast Fourier Transform (FFT)</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 3, 2021
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+6 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/divide-and-conquer/>Divide & Conquer</a></li>
+</ul>
+<hr>
+<p>In 1965, James Cooley and John Tukey published the FFT. It was later discovered that Gauss had the same algorithm in 1805 but never published it. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$. A factor of fifty thousand.</p>
+<p>It enabled modern telecommunications, image compression (JPEG uses it), audio processing (MP3), and radar. It has been called &ldquo;the most important algorithm of the 20th century.&rdquo;</p>
+<hr>
+<h2 id=the-discrete-fourier-transform>The Discrete Fourier Transform</h2>
+<p>Given a sequence of $n$ numbers $x[0], x[1], \ldots, x[n-1]$ (say, audio samples over time), the DFT computes $n$ frequency components:</p>
+<p>$$X[k] = \sum_{j=0}^{n-1} x[j] , e^{-2\pi i jk/n}, \qquad k = 0, 1, \ldots, n-1$$</p>
+<p>Each $X[k]$ tells you how much of the frequency $k/n$ cycles per sample is present in the signal. Compute all $n$ of them naively and you need $n$ multiplications per output: $O(n^2)$ total.</p>
+<p>For $n = 10^6$: $10^{12}$ multiplications. At $10^9$ operations per second, that&rsquo;s 1000 seconds. Not useful for real-time audio.</p>
+<hr>
+<h2 id=the-key-insight-redundancy-in-the-dft-matrix>The Key Insight: Redundancy in the DFT Matrix</h2>
+<p>Write $\omega = e^{-2\pi i/n}$ (the primitive $n$-th root of unity). Then $X[k] = \sum_{j=0}^{n-1} x[j] \omega^{jk}$.</p>
+<p>The values $\omega^{jk}$ are not all distinct. Because $\omega^n = 1$, the sequence $1, \omega, \omega^2, \ldots, \omega^{n-1}$ cycles. A huge fraction of the computation in the naive DFT is redundant - you&rsquo;re computing the same complex exponentials over and over.</p>
+<p>Cooley-Tukey exploits this. Assume $n$ is a power of 2. Split $x$ into its even-indexed and odd-indexed elements:</p>
+<p>$$X[k] = \sum_{j=0}^{n/2-1} x[2j] , \omega_n^{2jk} + \sum_{j=0}^{n/2-1} x[2j+1] , \omega_n^{(2j+1)k}$$</p>
+<p>$$= \sum_{j=0}^{n/2-1} x[2j] , \omega_{n/2}^{jk} + \omega_n^k \sum_{j=0}^{n/2-1} x[2j+1] , \omega_{n/2}^{jk}$$</p>
+<p>$$= E[k] + \omega_n^k \cdot O[k]$$</p>
+<p>where $E$ is the DFT of the even-indexed elements and $O$ is the DFT of the odd-indexed elements - each a DFT of size $n/2$.</p>
+<p>Now the trick: $E[k]$ and $O[k]$ are periodic with period $n/2$. And $\omega_n^{k + n/2} = -\omega_n^k$. So:</p>
+<p>$$X[k] = E[k] + \omega_n^k \cdot O[k]$$
+$$X[k + n/2] = E[k] - \omega_n^k \cdot O[k]$$</p>
+<p>Two outputs from two half-size DFTs and one complex multiplication. This is the butterfly operation.</p>
+<hr>
+<h2 id=divide-and-conquer>Divide and Conquer</h2>
+<p>The recursion:</p>
+<p>$$T(n) = 2T(n/2) + O(n)$$</p>
+<p>This is the same recurrence as merge sort. By the master theorem: $T(n) = O(n \log n)$.</p>
+<p>For $n = 10^6$: instead of $10^{12}$ operations, we do $10^6 \cdot 20 = 2 \times 10^7$. Real-time audio processing becomes possible.</p>
+<pre tabindex=0><code>FFT(x[0..n-1]):
+    if n == 1: return x
+    even = FFT(x[0], x[2], x[4], ..., x[n-2])
+    odd  = FFT(x[1], x[3], x[5], ..., x[n-1])
+    for k = 0 to n/2 - 1:
+        t        = exp(-2*pi*i*k/n) * odd[k]
+        X[k]     = even[k] + t
+        X[k+n/2] = even[k] - t
+    return X
+</code></pre><p>The butterfly network: $\log_2 n$ stages, each doing $n/2$ butterfly operations. The total structure is a complete binary tree of DFT computations.</p>
+<hr>
+<h2 id=polynomial-multiplication>Polynomial Multiplication</h2>
+<p>Here is the application that makes FFT indispensable beyond signal processing.</p>
+<p>You have two polynomials of degree $n$:</p>
+<p>$$A(x) = a_0 + a_1 x + \cdots + a_n x^n$$
+$$B(x) = b_0 + b_1 x + \cdots + b_n x^n$$</p>
+<p>Their product $C = A \cdot B$ has degree $2n$. Computing the $2n+1$ coefficients of $C$ by the schoolbook method takes $O(n^2)$ multiplications.</p>
+<p>FFT does it in $O(n \log n)$ via the evaluation-interpolation strategy:</p>
+<ol>
+<li>Evaluate $A$ and $B$ at $2n+1$ points simultaneously (using FFT): $O(n \log n)$.</li>
+<li>Pointwise multiply: $A(x_i) \cdot B(x_i) = C(x_i)$ for each point. $O(n)$.</li>
+<li>Interpolate to recover the coefficients of $C$ (using inverse FFT): $O(n \log n)$.</li>
+</ol>
+<p>The natural evaluation points are the $n$-th roots of unity - exactly what the DFT computes. That&rsquo;s why FFT and polynomial multiplication are so tightly linked.</p>
+<p>This isn&rsquo;t just theoretical. Multiplying two large integers is polynomial multiplication over base 10 (or base $2^{32}$). Computer algebra systems, cryptographic libraries, and competitive programming all use FFT-based multiplication for large numbers.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The FFT only works for $n$ a power of 2. What if your signal has a different length?</p>
+<p>Zero-pad to the next power of 2. An audio frame of 1000 samples becomes 1024. The extra zeros don&rsquo;t affect the signal; they just make the algorithm applicable. For sizes that are highly composite (products of small primes), there are analogous &ldquo;mixed-radix&rdquo; FFT algorithms. For prime $n$, Bluestein&rsquo;s algorithm or Rader&rsquo;s algorithm handle the case, though they&rsquo;re rarely needed in practice because designers choose power-of-2 sizes.</p>
+</blockquote>
+<hr>
+<h2 id=the-inverse-fft>The Inverse FFT</h2>
+<p>To recover the signal $x$ from its frequency representation $X$, the inverse DFT is:</p>
+<p>$$x[j] = \frac{1}{n} \sum_{k=0}^{n-1} X[k] , e^{2\pi i jk/n}$$</p>
+<p>Notice: the inverse DFT is almost identical to the forward DFT - just conjugate the exponentials and divide by $n$. In code: conjugate the input, run the forward FFT, conjugate the output, divide by $n$. No separate algorithm needed.</p>
+<hr>
+<h2 id=applications>Applications</h2>
+<p><strong>Audio and image compression.</strong> MP3 uses the modified DCT (closely related to the DFT) to convert audio samples to frequency coefficients. JPEG uses the DCT on $8 \times 8$ pixel blocks. Both throw away high-frequency components (imperceptible to humans) for compression. The FFT makes this fast enough to run on consumer hardware.</p>
+<p><strong>Signal filtering.</strong> To convolve a signal with a filter kernel (e.g., applying an equalizer or a blur), computing the convolution directly is $O(nm)$. Via FFT, it&rsquo;s $O(n \log n)$: transform both to frequency domain, pointwise multiply, transform back. This is the convolution theorem: convolution in time = multiplication in frequency.</p>
+<p><strong>Number-theoretic transform (NTT).</strong> For cryptography - particularly lattice-based cryptography - you need exact integer arithmetic without floating-point errors. Replace complex exponentials with roots of unity modulo a prime $p$. Same $O(n \log n)$ algorithm, exact integer results. The prime $p = 998244353 = 119 \cdot 2^{23} + 1$ is popular because it supports NTTs up to size $2^{23}$.</p>
+<p><strong>Solving PDEs.</strong> Many differential equations (heat equation, wave equation, Schrödinger equation) become algebraic in the frequency domain. Spectral methods solve them by transforming to frequency domain, solving algebraically, and transforming back - all via FFT.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DFT definition</td>
+<td>$X[k] = \sum_{j=0}^{n-1} x[j] e^{-2\pi i jk/n}$</td>
+</tr>
+<tr>
+<td>Naive DFT cost</td>
+<td>$O(n^2)$</td>
+</tr>
+<tr>
+<td>FFT cost</td>
+<td>$O(n \log n)$</td>
+</tr>
+<tr>
+<td>Key trick</td>
+<td>Split even/odd indices, recurse, combine with butterfly</td>
+</tr>
+<tr>
+<td>Butterfly operation</td>
+<td>$X[k] = E[k] + \omega^k O[k]$; $X[k+n/2] = E[k] - \omega^k O[k]$</td>
+</tr>
+<tr>
+<td>Polynomial multiplication</td>
+<td>FFT evaluate + pointwise multiply + IFFT interpolate = $O(n \log n)$</td>
+</tr>
+<tr>
+<td>Requires</td>
+<td>$n$ a power of 2 (or zero-pad)</td>
+</tr>
+<tr>
+<td>Inverse FFT</td>
+<td>Conjugate, forward FFT, conjugate, divide by $n$</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/expectation-maximization/>Expectation-Maximization</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

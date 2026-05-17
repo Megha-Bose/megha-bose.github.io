@@ -1,0 +1,289 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>CPU Affinity & NUMA // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="CPU Affinity & NUMA">
+<meta name=twitter:description content="Prerequisite:
+ Lock-Free Data Structures Cache-Friendly Code   You add a second CPU socket to your server. The benchmark you care about - a database query planner - shows the expected improvement: roughly 1.8x throughput on CPU-bound work. But the p99 latency, which was 2ms before, is now 4ms. You did not expect that. You added more compute. Performance got worse for latency.
+What happened: the operating system, doing its best to utilize all cores, started migrating threads between sockets.">
+<meta property="og:title" content="CPU Affinity & NUMA">
+<meta property="og:description" content="Prerequisite:
+ Lock-Free Data Structures Cache-Friendly Code   You add a second CPU socket to your server. The benchmark you care about - a database query planner - shows the expected improvement: roughly 1.8x throughput on CPU-bound work. But the p99 latency, which was 2ms before, is now 4ms. You did not expect that. You added more compute. Performance got worse for latency.
+What happened: the operating system, doing its best to utilize all cores, started migrating threads between sockets.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/cpu-affinity-and-numa/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>CPU Affinity & NUMA</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong></p>
+<ul>
+<li><a href=/posts/lock-free-data-structures/>Lock-Free Data Structures</a></li>
+<li><a href=/posts/cache-friendly-code/>Cache-Friendly Code</a></li>
+</ul>
+<hr>
+<p>You add a second CPU socket to your server. The benchmark you care about - a database query planner - shows the expected improvement: roughly 1.8x throughput on CPU-bound work. But the p99 latency, which was 2ms before, is now 4ms. You did not expect that. You added more compute. Performance got worse for latency.</p>
+<p>What happened: the operating system, doing its best to utilize all cores, started migrating threads between sockets. A thread that built up warm data in socket 0&rsquo;s L3 cache gets moved to socket 1&rsquo;s core. Its working set is now on the wrong side of the QuickPath Interconnect. Every memory access that used to take 40 cycles (L3 hit) now takes 200 cycles (remote NUMA node). The memory bus is the bottleneck, and the OS is the one creating the problem.</p>
+<p>This is NUMA - Non-Uniform Memory Access - and it is the dominant performance architecture in server hardware. Understanding it does not require special hardware. Any dual-socket server, any large AWS instance, any modern AMD EPYC or Intel Xeon deployment has NUMA topology. And most software ignores it entirely, leaving performance on the table.</p>
+<h2 id=the-history-from-uma-to-numa>The History: From UMA to NUMA</h2>
+<p>The first symmetric multiprocessing (SMP) systems used a single shared memory bus: all processors connected to the same bus, accessing the same memory pool. This is <strong>Uniform Memory Access (UMA)</strong> - every processor sees the same latency to every memory address. It is easy to reason about. It scales poorly.</p>
+<p>The shared bus is the bottleneck. With 4 processors, each gets one quarter of the bus bandwidth. With 8, one eighth. By the mid-1990s, large SMP systems hit a wall: adding more processors made the bus more congested, not less.</p>
+<p>The solution was to partition memory. Give each processor package its own local memory controller and its own pool of DRAM. Connect the packages with a high-speed point-to-point link rather than a shared bus. Each processor can access its local memory at full speed. Accessing another processor&rsquo;s memory requires crossing the link - slower, but the link is dedicated and does not become a shared bottleneck.</p>
+<p>AMD introduced this architecture commercially with <strong>HyperTransport</strong> in the Opteron processor (2003), which broke the x86 server market open. Intel followed with <strong>QuickPath Interconnect (QPI)</strong> in Nehalem (2008), replaced by <strong>UltraPath Interconnect (UPI)</strong> in Skylake server (2017). AMD&rsquo;s current implementation is <strong>Infinity Fabric</strong>, shared between the CPU interconnect and the GPU interconnect in ROCm platforms. The marketing names change; the architecture is the same.</p>
+<h2 id=numa-topology-what-actually-exists>NUMA Topology: What Actually Exists</h2>
+<p>A dual-socket server has two <strong>NUMA nodes</strong>. Each node contains:</p>
+<ul>
+<li>The processor package: all cores, their private L1/L2 caches, and the shared L3 cache</li>
+<li>A memory controller attached to DIMMs on that node</li>
+</ul>
+<p>Access latency on a typical dual-socket Intel server:</p>
+<ul>
+<li>L1 cache: 4 cycles (~1.3ns)</li>
+<li>L2 cache: 12 cycles (~4ns)</li>
+<li>L3 cache: 40 cycles (~13ns)</li>
+<li>Local DRAM: ~65ns</li>
+<li>Remote DRAM (cross-socket): ~130ns</li>
+</ul>
+<p>The 2x latency penalty for remote memory is a floor. Under bandwidth pressure - many threads accessing remote memory simultaneously - the interconnect becomes a bottleneck and effective latency climbs further.</p>
+<p>Modern AMD EPYC processors complicate this further. EPYC uses a <strong>chiplet design</strong>: multiple CPU dies (CCDs) connected by Infinity Fabric within a single package. A 64-core EPYC has 8 chiplets of 8 cores each, with fabric latency between chiplets within the same socket that is measurably higher than L3 access within a chiplet. This creates <strong>sub-NUMA clustering</strong>: the OS may see a single NUMA node, but there is internal latency variation within that node. AMD and some Linux distributions expose this as multiple NUMA nodes per socket.</p>
+<h2 id=reading-your-topology>Reading Your Topology</h2>
+<p>Before tuning anything, understand the system:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>lscpu
+<span style=color:#75715e># Architecture: x86_64</span>
+<span style=color:#75715e># CPU(s): 64</span>
+<span style=color:#75715e># Thread(s) per core: 2         (hyperthreading)</span>
+<span style=color:#75715e># Core(s) per socket: 16</span>
+<span style=color:#75715e># Socket(s): 2</span>
+<span style=color:#75715e># NUMA node(s): 2</span>
+<span style=color:#75715e># NUMA node0 CPU(s): 0-15,32-47</span>
+<span style=color:#75715e># NUMA node1 CPU(s): 16-31,48-63</span>
+
+numactl --hardware
+<span style=color:#75715e># node 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 32 33 ...</span>
+<span style=color:#75715e># node 0 size: 128768 MB</span>
+<span style=color:#75715e># node 1 cpus: 16 17 18 19 20 21 22 23 24 25 26 27 28 ...</span>
+<span style=color:#75715e># node 1 size: 128885 MB</span>
+<span style=color:#75715e># node distances:</span>
+<span style=color:#75715e># node   0   1</span>
+<span style=color:#75715e>#   0:  10  21     ← local=10, remote=21 (2.1x slower)</span>
+<span style=color:#75715e>#   1:  21  10</span>
+</code></pre></div><p>The <code>numastat</code> command shows whether your system is currently suffering from NUMA imbalance:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>numastat
+<span style=color:#75715e>#                            node0          node1</span>
+<span style=color:#75715e># numa_hit               412345678       18273654   ← most accesses on node0</span>
+<span style=color:#75715e># numa_miss               8273456       45678901    ← lots of misses on node1</span>
+<span style=color:#75715e># numa_foreign            8273456       45678901    ← allocations placed on wrong node</span>
+</code></pre></div><p>High <code>numa_miss</code> or <code>numa_foreign</code> counts indicate the OS&rsquo;s default first-touch allocation policy is failing - threads are running on one socket and their memory is on another.</p>
+<p><code>lstopo</code> (from the hwloc package) renders the full topology including cache sharing relationships and PCI device attachment - critical for knowing which NIC is on which NUMA node, which matters enormously for network-intensive workloads.</p>
+<h2 id=cpu-affinity-keeping-threads-where-they-belong>CPU Affinity: Keeping Threads Where They Belong</h2>
+<p><strong>CPU affinity</strong> restricts a thread or process to run on a specified set of CPU cores, preventing the scheduler from migrating it. Migration is the enemy: moving a thread invalidates its warm L1/L2 cache, and if the move crosses sockets, its working set is suddenly on remote DRAM.</p>
+<p>From the shell:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Launch a process pinned to CPU cores 0-7 (all on NUMA node 0)</span>
+taskset -c 0-7 ./database_process
+
+<span style=color:#75715e># Pin an existing process (PID 12345) to core 4</span>
+taskset -cp <span style=color:#ae81ff>4</span> <span style=color:#ae81ff>12345</span>
+
+<span style=color:#75715e># Run on all cores of NUMA node 0, allocate memory from node 0</span>
+numactl --cpunodebind<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span> --membind<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span> ./database_process
+</code></pre></div><p>From C/C++:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;pthread.h&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;sched.h&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span>
+<span style=color:#66d9ef>void</span> <span style=color:#a6e22e>pin_thread_to_core</span>(<span style=color:#66d9ef>int</span> core_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(<span style=color:#f92672>&amp;</span>cpuset);
+    CPU_SET(core_id, <span style=color:#f92672>&amp;</span>cpuset);
+    pthread_setaffinity_np(pthread_self(), <span style=color:#66d9ef>sizeof</span>(cpu_set_t), <span style=color:#f92672>&amp;</span>cpuset);
+}
+</code></pre></div><p>From Python on Linux:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> os
+<span style=color:#75715e># Pin current process to cores 0, 1, 2, 3</span>
+os<span style=color:#f92672>.</span>sched_setaffinity(<span style=color:#ae81ff>0</span>, {<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>2</span>, <span style=color:#ae81ff>3</span>})
+</code></pre></div><p>Pinning is not a substitute for understanding. Pin threads to the wrong cores - for example, across the hyperthread sibling boundary - and you can make things worse. Pin threads but not memory, and remote DRAM accesses continue.</p>
+<h2 id=numa-aware-memory-allocation-the-other-half>NUMA-Aware Memory Allocation: The Other Half</h2>
+<p>Pinning a thread to socket 0&rsquo;s cores is necessary but not sufficient. Linux uses a <strong>first-touch</strong> memory allocation policy by default: when a thread accesses a page for the first time, that page is allocated on the NUMA node the accessing thread is currently running on. If a thread on socket 0 allocates a large buffer but a thread on socket 1 first touches it (initializes it), the buffer ends up on socket 1&rsquo;s memory - and socket 0&rsquo;s threads pay the remote access penalty forever.</p>
+<p>Explicit NUMA-aware allocation:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;numa.h&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;numaif.h&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span>
+<span style=color:#75715e>// Allocate on the local node of the current thread
+</span><span style=color:#75715e></span><span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>buf <span style=color:#f92672>=</span> numa_alloc_local(size);
+
+<span style=color:#75715e>// Allocate on a specific node
+</span><span style=color:#75715e></span><span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>buf2 <span style=color:#f92672>=</span> numa_alloc_onnode(size, <span style=color:#ae81ff>0</span>);
+
+<span style=color:#75715e>// Bind existing memory to a node (mmap + mbind)
+</span><span style=color:#75715e></span><span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>mem <span style=color:#f92672>=</span> mmap(NULL, size, PROT_READ <span style=color:#f92672>|</span> PROT_WRITE,
+                 MAP_PRIVATE <span style=color:#f92672>|</span> MAP_ANONYMOUS, <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0</span>);
+<span style=color:#66d9ef>unsigned</span> <span style=color:#66d9ef>long</span> nodemask <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span> <span style=color:#f92672>&lt;&lt;</span> <span style=color:#ae81ff>0</span>;  <span style=color:#75715e>// node 0
+</span><span style=color:#75715e></span>mbind(mem, size, MPOL_BIND, <span style=color:#f92672>&amp;</span>nodemask, <span style=color:#ae81ff>2</span>, <span style=color:#ae81ff>0</span>);
+
+<span style=color:#75715e>// Free
+</span><span style=color:#75715e></span>numa_free(buf, size);
+</code></pre></div><p><code>numa_alloc_local()</code> is especially useful in thread initialization code: if the thread is pinned to its NUMA node before allocating its working buffers, <code>local</code> allocation is automatic. The pattern: pin thread, then allocate.</p>
+<h2 id=hyperthreading-the-shared-core-problem>Hyperthreading: The Shared Core Problem</h2>
+<p>Intel&rsquo;s Hyperthreading (AMD: SMT) exposes two logical CPUs per physical core. The two logical cores share execution units, L1 and L2 caches, TLBs, and the memory controller interface - only the register files and some pipeline buffers are separate.</p>
+<p>For <strong>I/O-bound or latency-bound threads</strong> that frequently stall waiting for memory or network, hyperthreading is a win: when one thread stalls on a cache miss, the other can run on the shared execution units. Utilization improves with no additional contention.</p>
+<p>For <strong>compute-bound or memory-bandwidth-bound workloads</strong>, hyperthreading often hurts. Both threads compete for the same execution ports and the same cache. A matrix multiply that fills the L2 cache on one hyperthread leaves no room for the other; both thrash each other&rsquo;s working sets. Effective throughput on compute-bound work drops 20-40% compared to using both hyperthreads as independent physical cores.</p>
+<p>Identifying hyperthread siblings:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Show which logical CPUs share a physical core</span>
+cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list
+<span style=color:#75715e># Output: 0,32  ← logical CPUs 0 and 32 share one physical core</span>
+</code></pre></div><p>In latency-critical systems, it is common to only use one logical CPU per physical core - leave one hyperthread idle, or assign it exclusively to OS interrupts and housekeeping. The idle sibling reduces interference with the hot-path thread.</p>
+<h2 id=false-sharing-across-numa-nodes>False Sharing Across NUMA Nodes</h2>
+<p>False sharing - two threads writing different variables that happen to share a 64-byte cache line - is expensive within a socket (cache line bounces through the L3 coherence protocol). Across sockets, it is catastrophically expensive: each write requires the cache line to be invalidated on the remote socket and fetched back across the QPI/UPI interconnect. A false-sharing pair with one thread per socket can reduce throughput by 100x compared to a correctly padded version.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>// WRONG: thread 0 and thread 1 write to adjacent counters on the same cache line
+</span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> Counters {
+    <span style=color:#66d9ef>int64_t</span> thread0_count;  <span style=color:#75715e>// bytes 0-7
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>int64_t</span> thread1_count;  <span style=color:#75715e>// bytes 8-15  ← same 64-byte line as thread0_count
+</span><span style=color:#75715e></span>};
+
+<span style=color:#75715e>// CORRECT: pad each counter to its own cache line
+</span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>alignas</span>(<span style=color:#ae81ff>64</span>) PaddedCounter {
+    <span style=color:#66d9ef>int64_t</span> count;
+    <span style=color:#66d9ef>char</span> _pad[<span style=color:#ae81ff>56</span>];
+};
+PaddedCounter counters[NUM_THREADS];
+</code></pre></div><p>On a multi-socket system, also ensure each thread&rsquo;s counter is allocated on NUMA-local memory, not just padded.</p>
+<h2 id=databases-and-numa-awareness>Databases and NUMA Awareness</h2>
+<p>Databases are the canonical NUMA-sensitive application.</p>
+<p><strong>PostgreSQL</strong> allows binding background workers (bgwriter, checkpointer, autovacuum) to specific CPU sets, keeping I/O-intensive processes on the socket nearest their data. When configured naively on a NUMA system, PostgreSQL suffers from remote memory accesses in its shared buffer pool - a problem that tuning <code>numa_balancing</code> and <code>zone_reclaim_mode</code> kernel parameters can partially mitigate.</p>
+<p><strong>Oracle Database</strong> has explicit NUMA awareness options that partition the buffer cache across NUMA nodes and pin threads to their memory regions. For large in-memory workloads on 4-socket systems, Oracle&rsquo;s NUMA configuration can make the difference between linear scaling and a 2x wall.</p>
+<p><strong>Apache Kafka</strong> achieves zero-copy message delivery via <code>sendfile()</code>, which moves data from the page cache directly to the NIC&rsquo;s DMA buffer without passing through user space. On NUMA systems, this is only zero-overhead if the page cache pages and the NIC are on the same NUMA node - otherwise the <code>sendfile()</code> path crosses the interconnect. Kafka deployments that care about throughput align NIC placement with Kafka&rsquo;s data directory NUMA node.</p>
+<h2 id=cloud-numa-aws-and-the-nitro-architecture>Cloud NUMA: AWS and the Nitro Architecture</h2>
+<p>AWS instances have NUMA topology too, though it is less visible.</p>
+<p>Memory-optimized instances (r-family) are explicitly NUMA-aware in their design. An <code>r6i.32xlarge</code> has 128 vCPUs and 1TB of RAM, structured with multiple NUMA nodes underneath. AWS exposes this via <code>numactl --hardware</code> inside the instance. Applications running on large instances that ignore NUMA topology see the same penalty as on bare metal.</p>
+<p>The <strong>AWS Nitro architecture</strong> uses dedicated hardware for virtualization overhead - the Nitro card handles network and storage I/O, freeing host CPU cores for the guest. The Nitro card is attached to a specific PCIe bus, which is on a specific NUMA node. Network-intensive workloads benefit from pinning their threads to the NUMA node local to the Nitro card, reducing cross-fabric traffic.</p>
+<p>For ML training on AWS GPU instances (p4d, p4de), the NVLink interconnect between GPUs is NUMA-aware: GPUs on the same NUMA node can communicate faster than cross-NUMA pairs. PyTorch distributed training on these instances benefits from NCCL&rsquo;s awareness of the NVLink topology, which is exposed through the NUMA abstraction.</p>
+<h2 id=kernel-isolation-for-extreme-cases>Kernel Isolation for Extreme Cases</h2>
+<p>For the most latency-sensitive workloads, NUMA awareness and CPU pinning are not enough. The OS itself introduces jitter: scheduler ticks, RCU callbacks, timer interrupts, workqueue processing.</p>
+<p>The full isolation stack on Linux:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># In /etc/default/grub:</span>
+GRUB_CMDLINE_LINUX<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;isolcpus=4-7 nohz_full=4-7 rcu_nocbs=4-7&#34;</span>
+</code></pre></div><ul>
+<li><code>isolcpus=4-7</code>: removes CPUs 4-7 from the scheduler&rsquo;s general pool. No task is ever scheduled there unless it explicitly pinned itself.</li>
+<li><code>nohz_full=4-7</code>: disables the periodic scheduling-clock interrupt (normally fires every 1ms or 4ms) on these CPUs. Eliminates a major source of regular latency spikes.</li>
+<li><code>rcu_nocbs=4-7</code>: offloads Read-Copy-Update callbacks to other CPUs, preventing RCU work from interrupting the isolated cores.</li>
+</ul>
+<p>Combined with IRQ affinity (directing NIC interrupts to non-isolated CPUs), <code>SCHED_FIFO</code> priority for the hot-path thread, and <code>mlockall()</code> to prevent page faults, this configuration achieves single-digit microsecond scheduling jitter on commodity hardware.</p>
+<p>This level of tuning is appropriate for: high-frequency trading systems, industrial real-time control, network appliances processing line-rate traffic. For everything else, NUMA awareness (topology understanding, affinity pinning, NUMA-local allocation) delivers most of the benefit without the operational complexity.</p>
+<h2 id=the-honest-assessment>The Honest Assessment</h2>
+<p>NUMA optimization is micro-optimization in most contexts. A web application serving database-backed requests is almost never bottlenecked on NUMA topology. The right order is: fix algorithmic complexity first, then reduce lock contention, then address memory access patterns, then - if you are still bottlenecked and profiling shows remote NUMA accesses - add NUMA awareness.</p>
+<p>The contexts where NUMA awareness is not optional: databases with multi-socket deployments and large buffer pools, real-time data processing on multi-socket servers, ML training on large instances where interconnect bandwidth matters, kernel components and storage drivers. If you are building those, NUMA is not a micro-optimization - it is a first-class architectural concern that must be addressed at design time.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>What It Does</th>
+<th>When It Matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NUMA</td>
+<td>Memory latency varies by socket proximity</td>
+<td>Any multi-socket server workload</td>
+</tr>
+<tr>
+<td>CPU affinity (taskset, sched_setaffinity)</td>
+<td>Prevents thread migration across sockets</td>
+<td>Latency-sensitive, cache-sensitive code</td>
+</tr>
+<tr>
+<td>NUMA-local allocation (libnuma)</td>
+<td>Allocates memory near the allocating thread</td>
+<td>Prevents remote DRAM accesses</td>
+</tr>
+<tr>
+<td>numactl</td>
+<td>Binds process to CPU node and memory node</td>
+<td>Simplest NUMA binding for existing programs</td>
+</tr>
+<tr>
+<td>First-touch policy</td>
+<td>Pages go to the node that first touches them</td>
+<td>Must understand for correct NUMA-local init</td>
+</tr>
+<tr>
+<td>Hyperthreading</td>
+<td>Shares execution units per physical core</td>
+<td>Hurt compute-bound; help I/O-bound</td>
+</tr>
+<tr>
+<td>False sharing</td>
+<td>Cache line bounced between threads on different sockets</td>
+<td>Padding/alignment fixes 100x throughput regressions</td>
+</tr>
+<tr>
+<td>isolcpus + nohz_full</td>
+<td>Removes OS jitter from dedicated cores</td>
+<td>HFT, real-time, line-rate networking</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/kernel-bypass-networking/>Kernel-Bypass Networking</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

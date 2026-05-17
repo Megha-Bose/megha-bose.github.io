@@ -1,0 +1,256 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Positional Encodings // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Positional Encodings">
+<meta name=twitter:description content="Prerequisites:
+ Attention Mechanisms Fourier Analysis   Attention doesn&rsquo;t care about order.
+Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;man bites dog&rdquo; - it sees the same set of three vectors and produces the same output, just with rows permuted. There is nothing in the attention computation that distinguishes position 1 from position 2 from position 3. Swap any two tokens and the mechanism adapts automatically, producing a correspondingly swapped output.">
+<meta property="og:title" content="Positional Encodings">
+<meta property="og:description" content="Prerequisites:
+ Attention Mechanisms Fourier Analysis   Attention doesn&rsquo;t care about order.
+Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;man bites dog&rdquo; - it sees the same set of three vectors and produces the same output, just with rows permuted. There is nothing in the attention computation that distinguishes position 1 from position 2 from position 3. Swap any two tokens and the mechanism adapts automatically, producing a correspondingly swapped output.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/positional-encodings/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Positional Encodings</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+10 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/attention-mechanisms/>Attention Mechanisms</a></li>
+<li><a href=/posts/fourier-analysis/>Fourier Analysis</a></li>
+</ul>
+<hr>
+<p>Attention doesn&rsquo;t care about order.</p>
+<p>Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;man bites dog&rdquo; - it sees the same set of three vectors and produces the same output, just with rows permuted. There is nothing in the attention computation that distinguishes position 1 from position 2 from position 3. Swap any two tokens and the mechanism adapts automatically, producing a correspondingly swapped output.</p>
+<p>For a bag-of-words classifier, this might be acceptable. For a language model, it is catastrophic. &ldquo;The man bit the dog&rdquo; and &ldquo;the dog bit the man&rdquo; have opposite meanings. &ldquo;She gave him the book&rdquo; and &ldquo;She gave the book him&rdquo; have different grammatical status. Subject, verb, object - these are defined by position in the sentence, not by the words alone.</p>
+<p>The fix is positional encodings: inject some representation of position into each token&rsquo;s vector before attention runs. This is such a simple prescription and so non-trivially executed that the design of positional encodings has become one of the most active areas in large language model research.</p>
+<hr>
+<h2 id=the-problem-precisely>The Problem, Precisely</h2>
+<p>Self-attention computes:</p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}!\left(\frac{QK^\top}{\sqrt{d}}\right) V$$</p>
+<p>where $Q = XW_Q$, $K = XW_K$, $V = XW_V$.</p>
+<p>If you apply a permutation matrix $P$ to the rows of $X$ - rearranging the tokens - then $Q$ becomes $PQ$, $K$ becomes $PK$, and $V$ becomes $PV$. The attention matrix becomes:</p>
+<p>$$\text{softmax}!\left(\frac{(PQ)(PK)^\top}{\sqrt{d}}\right) = \text{softmax}!\left(\frac{PQK^\top P^\top}{\sqrt{d}}\right) = P \cdot \text{softmax}!\left(\frac{QK^\top}{\sqrt{d}}\right) \cdot P^\top.$$</p>
+<p>The output is $P \cdot \text{Attention}(Q, K, V) \cdot P^\top \cdot PV = P \cdot \text{Attention}(Q, K, V)$. The output rows are just the input rows permuted the same way. Self-attention is <strong>permutation-equivariant</strong>: permute the input, get a correspondingly permuted output, with no memory of which position was which.</p>
+<p>The solution: before computing attention, add a position-dependent vector to each token embedding so that the same token at different positions has a different representation.</p>
+<hr>
+<h2 id=absolute-sinusoidal-encodings>Absolute Sinusoidal Encodings</h2>
+<p>The original transformer (Vaswani et al. 2017) uses a fixed, deterministic positional encoding. For a sequence position $\text{pos} \in {0, 1, 2, \ldots}$ and an embedding dimension $d$, the positional vector $\text{PE}(\text{pos}) \in \mathbb{R}^d$ has entries:</p>
+<p>$$\text{PE}(\text{pos}, 2i) = \sin!\left(\frac{\text{pos}}{10000^{2i/d}}\right), \qquad \text{PE}(\text{pos}, 2i+1) = \cos!\left(\frac{\text{pos}}{10000^{2i/d}}\right)$$</p>
+<p>for $i = 0, 1, \ldots, d/2 - 1$. This vector is added to the token embedding: $\tilde{x}<em>{\text{pos}} = x</em>{\text{pos}} + \text{PE}(\text{pos})$.</p>
+<h3 id=what-this-encodes>What This Encodes</h3>
+<p>Think of the position encoding as a clock with many hands, each ticking at a different frequency.</p>
+<p>Dimension pair $(2i, 2i+1)$ encodes position using frequency $\omega_i = 1 / 10000^{2i/d}$.</p>
+<ul>
+<li>At $i = 0$: $\omega_0 = 1$. The sine and cosine complete a full cycle every $2\pi \approx 6.28$ positions. This is a high-frequency &ldquo;fast hand.&rdquo;</li>
+<li>At $i = d/2 - 1$: $\omega_{d/2-1} = 10000^{-1} = 0.0001$. The sine and cosine complete a full cycle every $2\pi / 0.0001 \approx 62{,}832$ positions. This is a low-frequency &ldquo;slow hand.&rdquo;</li>
+</ul>
+<p>Low-dimension pairs vary rapidly across positions; high-dimension pairs vary slowly. Together they tile the position axis across many scales - just as Fourier analysis decomposes a signal into many frequencies.</p>
+<p>The choice of $10000$ as the base is somewhat arbitrary; what matters is that the range of wavelengths (from $2\pi$ to $2\pi \times 10000$) covers the practical range of sequence lengths.</p>
+<h3 id=the-relative-position-property>The Relative Position Property</h3>
+<p>A key algebraic property: for any fixed offset $k$, there exists a rotation matrix $R_k$ such that:</p>
+<p>$$\text{PE}(\text{pos} + k) = R_k \cdot \text{PE}(\text{pos}).$$</p>
+<p>This follows because for a single frequency pair, $(\sin((\text{pos}+k)\omega), \cos((\text{pos}+k)\omega))$ is a 2D rotation of $(\sin(\text{pos} \cdot \omega), \cos(\text{pos} \cdot \omega))$ by angle $k\omega$.</p>
+<p>The implication: the dot product $\text{PE}(\text{pos}) \cdot \text{PE}(\text{pos}')$ depends only on the relative offset $\text{pos}' - \text{pos}$, not on the absolute positions. The model can, in principle, compute relative position relationships directly from the dot products of positional encodings, without needing to decode absolute positions first.</p>
+<h3 id=properties-what-you-get-what-you-dont>Properties: What You Get, What You Don&rsquo;t</h3>
+<p>The sinusoidal encoding has no learnable parameters - it is fixed by the formula. This means:</p>
+<ul>
+<li>It generalizes to sequence lengths longer than those seen during training. There is no embedding table to look up; the formula just works for any position.</li>
+<li>It provides a smooth, continuous representation of position.</li>
+<li>It encodes relative position implicitly via the rotation matrix property.</li>
+</ul>
+<p>What it does not provide: any learned adaptation to the specific task or data distribution.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why can&rsquo;t you just use one-hot position vectors - a different unit vector for each position? You could, in principle. A one-hot vector for position $t$ in a sequence of length 10,000 would be a 10,000-dimensional vector with a 1 in slot $t$. Three problems: (1) Size - these vectors would be 10,000-dimensional, needing to be projected down, adding parameters. (2) No inductive bias - the model learns, from scratch, that position 3 is &ldquo;close&rdquo; to position 4. Sinusoidal encodings build this in: nearby positions have similar encodings. (3) No length generalization - if you train with sequences up to length 512 and then see a sequence of length 1000, you encounter position vectors 513, 514, &mldr; that the model has never seen. The formula-based approach has no such failure mode.</p>
+</blockquote>
+<hr>
+<h2 id=learned-absolute-positional-encodings>Learned Absolute Positional Encodings</h2>
+<p>The simplest alternative: treat positions like tokens. Learn a separate vector $e_t$ for each position $t$ in the training sequence length, stored in an embedding table. Add $e_t$ to the token embedding at position $t$.</p>
+<p>This is what BERT uses. It is also used in GPT-2 and many other early transformer language models.</p>
+<p>Advantages: the model freely adapts the position embeddings to whatever representation is most useful for the task. In practice, learned encodings often outperform sinusoidal on standard benchmarks.</p>
+<p>Disadvantages: the model cannot extrapolate to lengths longer than it was trained on. If BERT is trained on sequences up to 512 tokens, position 513 has no embedding - you are outside the table. This is a hard limit.</p>
+<hr>
+<h2 id=relative-positional-encodings>Relative Positional Encodings</h2>
+<p>Absolute encodings (whether fixed or learned) embed a specific position index. But what a model really needs, most of the time, is to know the relative distance between two positions: is word A near word B or far away?</p>
+<p><strong>Shaw et al. (2018)</strong> introduced relative positional encodings for self-attention. Instead of adding position information to token embeddings, they add a position-dependent bias directly to the attention score:</p>
+<p>$$e_{ij} = \frac{(x_i W_Q)(x_j W_K + a_{i-j})^\top}{\sqrt{d}}$$</p>
+<p>where $a_{i-j} \in \mathbb{R}^d$ is a learned vector depending on the clipped relative distance $i - j$. The bias makes attention aware of relative position without requiring the model to decode absolute positions.</p>
+<p><strong>T5</strong> (Raffel et al. 2020) uses a simpler version: the attention score at relative distance $i - j$ receives an additive scalar bias $r(i - j)$ drawn from a learned small table. The table is shared across layers and heads.</p>
+<p>Relative encodings generalize better to unseen lengths because relative distances within training range remain in-distribution even when absolute positions are new.</p>
+<hr>
+<h2 id=alibi-linear-attention-biases>ALiBi: Linear Attention Biases</h2>
+<p><strong>ALiBi</strong> (Press et al. 2022) takes the relative bias idea further, eliminating learned parameters entirely.</p>
+<p>For each attention head $h$, ALiBi adds a fixed linear penalty to the attention score based on distance:</p>
+<p>$$e_{ij}^{(h)} = \frac{q_i \cdot k_j}{\sqrt{d}} - m_h \cdot (i - j)$$</p>
+<p>where $m_h$ is a per-head slope (a fixed geometric sequence: $1/2, 1/4, 1/8, \ldots$) and $(i - j) \geq 0$ is the distance (the query is always to the right of the key in causal attention).</p>
+<p>The effect: attending to distant positions is penalized. The penalty grows linearly with distance. Different heads apply different slopes: some heads are &ldquo;short-sighted&rdquo; (steep penalty), others are &ldquo;long-sighted&rdquo; (gentle penalty).</p>
+<p>ALiBi has no positional parameters to learn. It adds no overhead during computation. And empirically, models trained with ALiBi generalize remarkably well to sequences longer than those seen during training - the linear extrapolation of the bias naturally handles new distances.</p>
+<hr>
+<h2 id=rope-rotary-position-embedding>RoPE: Rotary Position Embedding</h2>
+<p>The dominant positional encoding in modern open-source LLMs is <strong>RoPE</strong> (Rotary Position Embedding), introduced by Su et al. (2021) and used in LLaMA, Falcon, Mistral, Qwen, GPT-NeoX, and most recent models.</p>
+<p>The key idea is to encode position by rotating the query and key vectors.</p>
+<p>For a 2D slice $(q_{2i}, q_{2i+1})$ of a query vector at position $m$:</p>
+<p>$$\begin{pmatrix} \tilde{q}<em>{2i} \\ \tilde{q}</em>{2i+1} \end{pmatrix} = \begin{pmatrix} \cos(m\theta_i) & -\sin(m\theta_i) \\ \sin(m\theta_i) & \cos(m\theta_i) \end{pmatrix} \begin{pmatrix} q_{2i} \\ q_{2i+1} \end{pmatrix}$$</p>
+<p>where $\theta_i = 10000^{-2i/d}$. The same rotation (with position $n$ instead of $m$) is applied to the key vector. The dot product then satisfies:</p>
+<p>$$\tilde{q}_m \cdot \tilde{k}<em>n = q_m^\top R</em>\theta^{(m-n)} k_n$$</p>
+<p>where $R_\theta^{(m-n)}$ is a rotation by angle proportional to the relative offset $m - n$.</p>
+<p>This is the elegant property of RoPE: <strong>absolute positions are encoded in the rotations, but dot products naturally compute relative position</strong>. You encode absolute position, but attention automatically becomes relative. You get both.</p>
+<h3 id=why-rope-won>Why RoPE Won</h3>
+<p>Compared to sinusoidal: RoPE is applied to $Q$ and $K$ directly, not just added to embeddings. The rotation affects the dot-product computation itself, not just the input representations. This is a richer and more direct injection of positional information.</p>
+<p>Compared to learned absolute: RoPE generalizes to unseen lengths and requires no position embedding table.</p>
+<p>Compared to ALiBi: RoPE has richer per-head position information (full rotations in multiple subspaces, not just a scalar bias). In practice, RoPE achieves better performance on standard benchmarks.</p>
+<h3 id=context-length-extension-with-rope>Context Length Extension With RoPE</h3>
+<p>One of the most practically important developments in LLM engineering is extending context windows. A model trained with RoPE at context length 4096 has learned rotation angles up to $4096 \cdot \theta_i$ for each frequency $\theta_i$. At positions beyond 4096, it encounters rotation angles it has never seen during training - degraded performance.</p>
+<p><strong>RoPE interpolation</strong> (Chen et al. 2023): instead of rotating by $m \cdot \theta_i$, rotate by $(m / s) \cdot \theta_i$ where $s$ is a scaling factor $s = L_{\text{new}} / L_{\text{train}}$. This compresses new positions into the range of trained positions. Combined with fine-tuning on longer sequences, this extends context from 4096 to 32768 tokens.</p>
+<p><strong>YaRN</strong> (Peng et al. 2023) and <strong>LongRoPE</strong> (Ding et al. 2024) refine this further, using different scaling for different frequency components - low-frequency dimensions extrapolate well; high-frequency dimensions need interpolation. These techniques have extended context windows from 4K to 128K or even 1M tokens in production models.</p>
+<hr>
+<h2 id=alibi-vs-rope-a-direct-comparison>ALiBi vs. RoPE: A Direct Comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>ALiBi</th>
+<th>RoPE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Parameters</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Computation overhead</td>
+<td>Negligible scalar bias</td>
+<td>Rotation of Q, K</td>
+</tr>
+<tr>
+<td>Length generalization</td>
+<td>Strong (linear extrapolation)</td>
+<td>Good with interpolation</td>
+</tr>
+<tr>
+<td>In-distribution performance</td>
+<td>Competitive</td>
+<td>State of the art</td>
+</tr>
+<tr>
+<td>Adoption</td>
+<td>Several open models</td>
+<td>LLaMA, Falcon, Mistral, most modern LLMs</td>
+</tr>
+</tbody>
+</table>
+<p>Both approaches eliminate learned position parameters. Both offer some degree of length generalization. RoPE dominates in performance and adoption; ALiBi is simpler to implement and arguably more principled for extrapolation.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Encoding</th>
+<th>Mechanism</th>
+<th>Parameters</th>
+<th>Extrapolation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sinusoidal (absolute)</td>
+<td>Fixed $\sin/\cos$ at multiple frequencies</td>
+<td>None</td>
+<td>Good</td>
+</tr>
+<tr>
+<td>Learned absolute</td>
+<td>Embedding table per position</td>
+<td>$L \times d$</td>
+<td>None (hard limit)</td>
+</tr>
+<tr>
+<td>Relative (Shaw/T5)</td>
+<td>Learned bias on attention score</td>
+<td>Small table</td>
+<td>Moderate</td>
+</tr>
+<tr>
+<td>ALiBi</td>
+<td>Fixed linear bias per head slope</td>
+<td>None</td>
+<td>Strong</td>
+</tr>
+<tr>
+<td>RoPE</td>
+<td>Rotation of Q and K vectors</td>
+<td>None</td>
+<td>Good + extendable</td>
+</tr>
+</tbody>
+</table>
+<p>Positional encodings are the glue between the order-agnostic attention mechanism and the order-dependent structure of language. Absolute encodings are simple but don&rsquo;t extrapolate. Relative encodings are more principled. RoPE is the current consensus - it encodes absolute positions in rotations while making dot products relative, and it extends gracefully with frequency interpolation.</p>
+<p>The choice of positional encoding determines the context length ceiling of an LLM. It is not a minor implementation detail; it is architecture.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/transformers-from-first-principles/>Transformers from First Principles</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Gaussian Processes // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Gaussian Processes">
+<meta name=twitter:description content="Prerequisites:
+ Joint Distributions Eigenvalues & Eigenvectors Statistics Basics   You&rsquo;ve placed weather sensors at ten locations around a city. You read the temperature at each one. Now someone asks: what&rsquo;s the temperature at a spot between two of your sensors - a location where you have no measurement at all?
+You could just average the nearest neighbors. But that throws away information: you know that nearby places tend to have similar temperatures, and that this similarity decays with distance.">
+<meta property="og:title" content="Gaussian Processes">
+<meta property="og:description" content="Prerequisites:
+ Joint Distributions Eigenvalues & Eigenvectors Statistics Basics   You&rsquo;ve placed weather sensors at ten locations around a city. You read the temperature at each one. Now someone asks: what&rsquo;s the temperature at a spot between two of your sensors - a location where you have no measurement at all?
+You could just average the nearest neighbors. But that throws away information: you know that nearby places tend to have similar temperatures, and that this similarity decays with distance.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/gaussian-processes/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Gaussian Processes</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/joint-distributions/>Joint Distributions</a></li>
+<li><a href=/posts/eigenvalues-eigenvectors/>Eigenvalues & Eigenvectors</a></li>
+<li><a href=/posts/statistics-basics/>Statistics Basics</a></li>
+</ul>
+<hr>
+<p>You&rsquo;ve placed weather sensors at ten locations around a city. You read the temperature at each one. Now someone asks: what&rsquo;s the temperature at a spot between two of your sensors - a location where you have no measurement at all?</p>
+<p>You could just average the nearest neighbors. But that throws away information: you know that nearby places tend to have similar temperatures, and that this similarity decays with distance. You&rsquo;d also like to express how confident you are in the estimate - wider uncertainty far from any sensor, tighter uncertainty near one. A simple average gives you a guess but not an honest account of what you don&rsquo;t know.</p>
+<p>Gaussian processes give you both: a principled estimate <em>and</em> a calibrated measure of uncertainty, derived directly from the structure of the data and your assumptions about how the function behaves. They are one of the most elegant ideas in machine learning, and they rest on concepts you already know.</p>
+<hr>
+<h2 id=from-one-gaussian-to-infinitely-many>From One Gaussian to Infinitely Many</h2>
+<p>Start small.</p>
+<p>A single Gaussian distribution is a probability distribution over one number. You draw a value $x \sim \mathcal{N}(\mu, \sigma^2)$ - it has mean $\mu$ and variance $\sigma^2$.</p>
+<p>A bivariate Gaussian is a distribution over <em>pairs</em> of numbers $(x_1, x_2)$. It is characterized by a mean vector and a $2 \times 2$ covariance matrix:</p>
+<p>$$\begin{pmatrix} x_1 \\ x_2 \end{pmatrix} \sim \mathcal{N}!\left(\begin{pmatrix} \mu_1 \\ \mu_2 \end{pmatrix}, \begin{pmatrix} \sigma_1^2 & \sigma_{12} \\ \sigma_{12} & \sigma_2^2 \end{pmatrix}\right).$$</p>
+<p>The covariance $\sigma_{12}$ captures how correlated $x_1$ and $x_2$ are. If $\sigma_{12}$ is large and positive, then when $x_1$ is above its mean, $x_2$ tends to be above its mean too. If $\sigma_{12} = 0$, they are independent.</p>
+<p>Now push this further. What if you had a distribution over a <em>function</em> $f$, rather than over a fixed finite-dimensional vector?</p>
+<p>A <strong>Gaussian process</strong> is exactly this. It is a probability distribution over functions. Formally:</p>
+<blockquote>
+<p><strong>Definition.</strong> A Gaussian process (GP) is a collection of random variables ${f(x) : x \in \mathcal{X}}$, any finite subset of which is jointly Gaussian.</p>
+</blockquote>
+<p>This is the key point. You never have to deal with all possible inputs at once. Whenever you pick a finite set of inputs ${x_1, x_2, \ldots, x_n}$, the corresponding function values $(f(x_1), f(x_2), \ldots, f(x_n))$ are jointly Gaussian, with some mean vector and covariance matrix.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> &ldquo;A distribution over functions&rdquo; sounds impossible - there are uncountably many functions from $\mathbb{R}$ to $\mathbb{R}$. How can you put a probability distribution on that? The trick is that a GP is defined entirely by its <strong>finite-dimensional marginals</strong>. You specify: for any finite input set, what is the joint Gaussian distribution? Kolmogorov&rsquo;s extension theorem guarantees that if these marginals are consistent (they agree whenever you ask about a shared subset of inputs), then there is a unique probability measure on function space that generates them. You never need to write down a density over infinite dimensions - you only ever query the process at finitely many points.</p>
+</blockquote>
+<p>A GP is completely specified by two things:</p>
+<ul>
+<li>A <strong>mean function</strong> $m(x) = \mathbb{E}[f(x)]$: the expected value of the function at each input.</li>
+<li>A <strong>kernel</strong> (or covariance function) $k(x, x') = \text{Cov}(f(x), f(x'))$: the covariance between function values at any pair of inputs.</li>
+</ul>
+<p>For any finite set of inputs $X = {x_1, \ldots, x_n}$, the joint distribution is:</p>
+<p>$$\mathbf{f} = (f(x_1), \ldots, f(x_n))^\top \sim \mathcal{N}(\mathbf{m}, K),$$</p>
+<p>where $\mathbf{m}<em>i = m(x_i)$ and $K</em>{ij} = k(x_i, x_j)$.</p>
+<hr>
+<h2 id=the-kernel-the-personality-of-the-process>The Kernel: The Personality of the Process</h2>
+<p>The kernel $k(x, x')$ is where all the modeling assumptions live. It encodes your beliefs about the function before you see any data: how smooth it is, whether it oscillates, how quickly it varies.</p>
+<h3 id=the-rbf--squared-exponential-kernel>The RBF / Squared Exponential Kernel</h3>
+<p>The most common choice is the <strong>radial basis function (RBF)</strong> kernel, also called the squared exponential:</p>
+<p>$$k(x, x') = \sigma_f^2 \exp!\left(-\frac{|x - x'|^2}{2\ell^2}\right).$$</p>
+<p>Two parameters:</p>
+<ul>
+<li><strong>Output scale</strong> $\sigma_f^2$: controls the overall variance of the function values.</li>
+<li><strong>Length scale</strong> $\ell$: controls how quickly correlation decays with distance. Small $\ell$ means the function varies rapidly; large $\ell$ means it varies slowly.</li>
+</ul>
+<p>The key behavior: when $x \approx x'$, the kernel is close to $\sigma_f^2$. When $x$ and $x'$ are far apart (relative to $\ell$), the kernel decays to zero - the function values become nearly independent. Functions drawn from a GP with the RBF kernel are infinitely differentiable, meaning they are very smooth.</p>
+<h3 id=periodic-kernel>Periodic Kernel</h3>
+<p>$$k(x, x') = \sigma_f^2 \exp!\left(-\frac{2\sin^2(\pi |x - x'| / p)}{\ell^2}\right).$$</p>
+<p>This generates functions that repeat with period $p$. Useful for modeling seasonal patterns, cycles in data, or anything periodic.</p>
+<h3 id=matérn-kernels>Matérn Kernels</h3>
+<p>The Matérn family interpolates between the extreme smoothness of the RBF kernel and rough, jagged functions. The parameter $\nu$ controls differentiability: $\nu = 1/2$ gives functions that are continuous but not differentiable (like Brownian motion paths); $\nu = 3/2$ gives once-differentiable functions; $\nu = 5/2$ gives twice-differentiable functions. Many real-world phenomena are better modeled with Matérn kernels than with the RBF - physical processes are rarely infinitely smooth.</p>
+<h3 id=what-makes-a-valid-kernel>What Makes a Valid Kernel?</h3>
+<p>Not every function $k(x, x')$ is a valid covariance function. The matrix $K$ with $K_{ij} = k(x_i, x_j)$ must be <strong>positive semi-definite</strong> for any input set - this is what ensures the distribution is a genuine multivariate Gaussian. Mercer&rsquo;s theorem characterizes valid kernels: they are precisely those that can be expressed as an inner product $k(x, x') = \langle \phi(x), \phi(x') \rangle$ in some (possibly infinite-dimensional) feature space $\phi$.</p>
+<hr>
+<h2 id=the-prior-sampling-functions-before-seeing-data>The Prior: Sampling Functions Before Seeing Data</h2>
+<p>Before observing any data, a GP with mean function $m \equiv 0$ and kernel $k$ defines a <strong>prior</strong> distribution over functions: $f \sim \mathcal{GP}(0, k)$.</p>
+<p>To sample from this prior, you pick a grid of input points $x_1, \ldots, x_n$, form the kernel matrix $K$, and draw a multivariate Gaussian sample:</p>
+<p>$$\mathbf{f} \sim \mathcal{N}(\mathbf{0}, K).$$</p>
+<p>With the RBF kernel, samples look like smooth, wavy curves - they vary at a rate determined by $\ell$, and their typical amplitude is set by $\sigma_f^2$. With a small length scale, the curves wiggle rapidly; with a large length scale, they vary slowly. With a Matérn-1/2 kernel, samples look like jagged, rough paths.</p>
+<p>The prior encodes what functions you consider plausible before seeing any evidence. It is not arbitrary - choosing a kernel is a modeling decision that reflects genuine knowledge about the problem. If you know your data has a periodic component, use a periodic kernel. If you believe the function is very smooth, the RBF is appropriate. If you want to be less committal about smoothness, use Matérn.</p>
+<hr>
+<h2 id=the-posterior-learning-from-data>The Posterior: Learning from Data</h2>
+<p>Here is where the GP becomes powerful. Suppose you observe noisy measurements at $n$ locations:</p>
+<p>$$y_i = f(x_i) + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0, \sigma_n^2),$$</p>
+<p>where $\sigma_n^2$ is the observation noise variance. You want to predict $f$ at new test inputs $X_* = {x_1^<em>, \ldots, x_m^</em>}$.</p>
+<p>The joint distribution of training outputs $\mathbf{y}$ and test function values $\mathbf{f}_*$ is Gaussian:</p>
+<p>$$\begin{pmatrix} \mathbf{y} \\ \mathbf{f}<em>* \end{pmatrix} \sim \mathcal{N}!\left(\mathbf{0},\ \begin{pmatrix} K + \sigma_n^2 I & K</em>* \\ K_*^\top & K_{**} \end{pmatrix}\right),$$</p>
+<p>where $K = k(X, X)$ is the $n \times n$ training kernel matrix, $K_* = k(X, X_<em>)$ is the $n \times m$ cross-kernel, and $K_{**} = k(X_</em>, X_*)$ is the $m \times m$ test kernel matrix.</p>
+<p>Conditioning on $\mathbf{y}$ (using the standard formula for Gaussian conditionals) gives the <strong>posterior</strong>:</p>
+<p>$$\mathbf{f}<em>* \mid X, \mathbf{y}, X</em>* \sim \mathcal{N}(\boldsymbol{\mu}<em>*, \Sigma</em>*),$$</p>
+<p>where:</p>
+<p>$$\boldsymbol{\mu}<em>* = K</em>*^\top (K + \sigma_n^2 I)^{-1} \mathbf{y},$$</p>
+<p>$$\Sigma_* = K_{**} - K_<em>^\top (K + \sigma_n^2 I)^{-1} K_</em>.$$</p>
+<p>These two equations are the core of GP regression. Let&rsquo;s unpack what they say.</p>
+<p><strong>The posterior mean</strong> $\boldsymbol{\mu}<em>*$ is a linear combination of the training observations $\mathbf{y}$, weighted by the kernel. Inputs $x</em><em>$ that are close to training points (high $k(x_</em>, x_i)$) get large weights; inputs far from all training points get small weights. This is principled interpolation.</p>
+<p><strong>The posterior variance</strong> $\Sigma_<em>$ tells you how uncertain you are. Look at $K_{**} - K_</em>^\top (K + \sigma_n^2 I)^{-1} K_*$: the first term is the prior variance at the test points; the second term is the reduction in variance due to the data. Near training points, the second term is large - the data tells you a lot. Far from all training points, the second term is small - you haven&rsquo;t learned much, and uncertainty is close to the prior.</p>
+<p>This is one of the defining features of GPs: <strong>uncertainty is automatically higher where you have less data</strong>, and lower where you have more. Neural networks, by contrast, give you a point prediction with no built-in sense of where they&rsquo;re extrapolating.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why does conditioning a Gaussian give another Gaussian? This is a property of the multivariate normal distribution. The conditional distribution of a subset of Gaussian variables given another subset is always Gaussian - and the mean and covariance of the conditional can be computed exactly using the partitioned matrix formulas. It&rsquo;s the Gaussian&rsquo;s self-consistency under conditioning that makes GPs analytically tractable.</p>
+</blockquote>
+<hr>
+<h2 id=hyperparameter-learning>Hyperparameter Learning</h2>
+<p>The kernel has parameters - the length scale $\ell$, the output scale $\sigma_f^2$, and the noise level $\sigma_n^2$. How do you choose them?</p>
+<p>The Bayesian answer: maximize the <strong>marginal likelihood</strong> (also called the evidence). The marginal likelihood is the probability of the observed data $\mathbf{y}$ under the GP model, averaged over all possible functions:</p>
+<p>$$\log p(\mathbf{y} \mid X, \theta) = -\frac{1}{2}\mathbf{y}^\top (K_\theta + \sigma_n^2 I)^{-1} \mathbf{y} - \frac{1}{2}\log|K_\theta + \sigma_n^2 I| - \frac{n}{2}\log 2\pi.$$</p>
+<p>The first term rewards fitting the data well. The second term penalizes complex models (large determinant corresponds to high prior uncertainty, i.e., a flexible model). This is an automatic Occam&rsquo;s razor: the marginal likelihood balances fit against complexity, and you can optimize it using gradient descent to find good hyperparameters.</p>
+<p>This is different from cross-validation: you get the model complexity penalty for free, without needing to hold out data.</p>
+<hr>
+<h2 id=computational-cost-the-main-limitation>Computational Cost: The Main Limitation</h2>
+<p>The bottleneck in GP regression is inverting the $n \times n$ kernel matrix $K + \sigma_n^2 I$. Exact matrix inversion costs $O(n^3)$ time and $O(n^2)$ memory. For $n = 1{,}000$ training points, this is fast. For $n = 100{,}000$, it is intractable.</p>
+<p>This is the Achilles' heel of GPs. Exact GPs scale poorly to large datasets - a fundamental constraint that has driven an entire subfield of approximate GP methods:</p>
+<ul>
+<li><strong>Sparse GPs</strong>: approximate the full kernel matrix using $m \ll n$ &ldquo;inducing points&rdquo;. Cost drops to $O(nm^2)$.</li>
+<li><strong>Kronecker structure</strong>: if inputs lie on a grid and the kernel is separable, exploit the Kronecker product structure for fast inference.</li>
+<li><strong>Random features</strong>: approximate the kernel using random Fourier features (Rahimi & Recht), turning the GP into a linear model in feature space.</li>
+</ul>
+<p>For moderate $n$ (up to tens of thousands), exact GPs remain one of the most principled probabilistic models available.</p>
+<hr>
+<h2 id=predictive-uncertainty-in-practice>Predictive Uncertainty in Practice</h2>
+<p>Here is a concrete example. Suppose you fit a GP to noisy observations of a smooth function. The posterior mean traces through the data, wiggling to fit the observations. The posterior variance is narrow near the training points - the model is confident there - and widens in the gaps between observations and beyond the edges of the training range.</p>
+<p>If you add a new observation in a previously uncertain region, the posterior mean shifts toward the new point and the posterior variance there collapses. The process learns. Each new observation updates the posterior globally, because the kernel connects every pair of inputs.</p>
+<p>This behavior - narrow uncertainty where you have data, wide uncertainty where you don&rsquo;t - is called <strong>calibration</strong>. A calibrated model means that when you say you&rsquo;re 95% confident the true value lies in an interval, you&rsquo;re right 95% of the time. GPs are well-calibrated by construction when the model assumptions hold. This makes them especially valuable in applications like Bayesian optimization, where acting on uncertainty is as important as making accurate predictions.</p>
+<hr>
+<h2 id=connections-to-other-models>Connections to Other Models</h2>
+<h3 id=gaussian-processes-and-neural-networks>Gaussian Processes and Neural Networks</h3>
+<p>Neal (1994) showed that a single-layer neural network with infinitely many hidden units and random weights drawn from a suitable prior converges to a GP. The kernel is determined by the activation function. This connection was extended by Matthews et al. and Lee et al. (2018) to deep networks: an infinitely wide, infinitely deep neural network corresponds to a specific GP kernel - the <strong>Neural Network Gaussian Process (NNGP)</strong> kernel.</p>
+<p>This means GPs and deep learning are not opposites - they sit at two ends of a spectrum. GPs are the infinite-width, exact Bayesian limit of neural networks. In practice, finite networks behave differently, but the NNGP connection illuminates why neural networks generalize: they are implicitly performing something like GP regression with a kernel induced by their architecture.</p>
+<h3 id=gaussian-processes-and-bayesian-optimization>Gaussian Processes and Bayesian Optimization</h3>
+<p>Bayesian optimization uses a GP as a surrogate model for an expensive black-box function (like the accuracy of a neural network as a function of its hyperparameters). You query the function at a few points, build a GP posterior, then choose the next point to query based on an <strong>acquisition function</strong> that trades off exploration (going where uncertainty is high) and exploitation (going where the mean is high). The GP&rsquo;s uncertainty estimates make this trade-off principled. This is how modern hyperparameter tuning tools like Optuna and GPyOpt work.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gaussian process</td>
+<td>Distribution over functions; any finite collection of function values is jointly Gaussian</td>
+</tr>
+<tr>
+<td>Mean function $m(x)$</td>
+<td>Expected function value at each input</td>
+</tr>
+<tr>
+<td>Kernel $k(x, x')$</td>
+<td>Covariance between function values; encodes prior beliefs about smoothness</td>
+</tr>
+<tr>
+<td>RBF kernel</td>
+<td>Smooth, infinitely differentiable functions; decays exponentially with distance</td>
+</tr>
+<tr>
+<td>Matérn kernel</td>
+<td>Controlled roughness; $\nu = 3/2$ or $5/2$ are common choices</td>
+</tr>
+<tr>
+<td>GP prior</td>
+<td>Distribution over functions before seeing data</td>
+</tr>
+<tr>
+<td>GP posterior (regression)</td>
+<td>Updated distribution after conditioning on noisy observations</td>
+</tr>
+<tr>
+<td>Posterior mean</td>
+<td>Predictive estimate; linear combination of training outputs</td>
+</tr>
+<tr>
+<td>Posterior variance</td>
+<td>Uncertainty; collapses near data, widens away from it</td>
+</tr>
+<tr>
+<td>Marginal likelihood</td>
+<td>Used to learn kernel hyperparameters; automatic complexity penalty</td>
+</tr>
+<tr>
+<td>Computational cost</td>
+<td>$O(n^3)$ exact; sparse methods reduce to $O(nm^2)$</td>
+</tr>
+<tr>
+<td>NNGP correspondence</td>
+<td>Infinitely wide neural networks converge to GPs</td>
+</tr>
+</tbody>
+</table>
+<p>Gaussian processes are, at heart, a generalization of the multivariate Gaussian to function spaces. The key machinery - Gaussian conditioning, positive-definite kernels, marginal likelihood optimization - all flows from probability theory you already know. What GPs add is the ability to put principled probability distributions directly over functions, inheriting all the benefits of Bayesian inference: automatic uncertainty quantification, hyperparameter learning through the marginal likelihood, and elegant posterior updates in closed form.</p>
+<p>The cost is scalability. For large datasets, you need approximations. But for moderate-scale problems, or problems where calibrated uncertainty is non-negotiable, Gaussian processes remain one of the most powerful tools in the probabilistic modeling toolkit.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/vc-dimension/>VC Dimension</a></li>
+<li><a href=/posts/machine-learning-first-principles/>Machine Learning First Principles</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

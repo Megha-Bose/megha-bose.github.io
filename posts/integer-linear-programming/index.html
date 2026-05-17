@@ -1,0 +1,195 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Integer Linear Programming // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Integer Linear Programming">
+<meta name=twitter:description content="Prerequisites:
+ Dynamic Programming Convexity & Optimization   A hospital needs to schedule 50 nurses across three shifts. The constraints pile up quickly: no nurse works two consecutive night shifts, every shift needs at least 8 nurses, certain nurses can&rsquo;t be rostered together, some nurses are only available on certain days. Write it all out and you have a system of linear inequalities - which is perfectly fine, linear programs are solvable in polynomial time.">
+<meta property="og:title" content="Integer Linear Programming">
+<meta property="og:description" content="Prerequisites:
+ Dynamic Programming Convexity & Optimization   A hospital needs to schedule 50 nurses across three shifts. The constraints pile up quickly: no nurse works two consecutive night shifts, every shift needs at least 8 nurses, certain nurses can&rsquo;t be rostered together, some nurses are only available on certain days. Write it all out and you have a system of linear inequalities - which is perfectly fine, linear programs are solvable in polynomial time.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/integer-linear-programming/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00">
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Integer Linear Programming</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 3, 2021
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/dynamic-programming/>Dynamic Programming</a></li>
+<li><a href=/posts/convexity-optimization/>Convexity & Optimization</a></li>
+</ul>
+<hr>
+<p>A hospital needs to schedule 50 nurses across three shifts. The constraints pile up quickly: no nurse works two consecutive night shifts, every shift needs at least 8 nurses, certain nurses can&rsquo;t be rostered together, some nurses are only available on certain days. Write it all out and you have a system of linear inequalities - which is perfectly fine, linear programs are solvable in polynomial time. But there is one more requirement: you cannot schedule 0.3 of a nurse. All variables must be whole numbers.</p>
+<p>That single word - integer - is the difference between polynomial and NP-hard. It is also the difference between a textbook exercise and the optimization engine inside every airline, supply chain, and logistics company you&rsquo;ve ever interacted with. Integer linear programming (ILP) is the most widely used optimization model in industry and one of the most technically deep in theory.</p>
+<hr>
+<h2 id=linear-programs-and-the-lp-relaxation>Linear Programs and the LP Relaxation</h2>
+<p>A linear program (LP) is an optimization problem where the objective and all constraints are linear:</p>
+<p>$$\max; c^T x \quad \text{subject to} \quad Ax \leq b,\quad x \geq 0.$$</p>
+<p>This is solvable in polynomial time - the simplex method, interior-point methods, and ellipsoid method all work. An ILP adds the constraint that $x \in \mathbb{Z}^n$: the variables must be integers.</p>
+<p>The <strong>LP relaxation</strong> is what you get when you drop the integrality constraint and allow $x \in \mathbb{R}^n$. It&rsquo;s solvable in polynomial time and gives you a useful bound. If the LP relaxation&rsquo;s optimal solution happens to be integral, you&rsquo;re done - you&rsquo;ve solved the ILP for free. If not, you have a fractional solution that you need to round or branch into an integral one.</p>
+<p>The LP relaxation is always at least as good as the ILP optimum (since we&rsquo;re optimizing over a larger set), so it serves as an <strong>upper bound</strong> (for maximization) on what any integer solution can achieve.</p>
+<hr>
+<h2 id=the-integrality-gap>The Integrality Gap</h2>
+<p>The <strong>integrality gap</strong> is how much you lose by requiring integrality:</p>
+<p>$$\text{gap} = \frac{OPT_{LP}}{OPT_{ILP}} \geq 1.$$</p>
+<p>For some problems the gap is exactly 1 - the LP relaxation automatically produces integer solutions. For others, the gap can be arbitrarily large. A clean example: vertex cover.</p>
+<p><strong>Vertex cover ILP.</strong> Given a graph $G = (V, E)$, find the smallest subset $S \subseteq V$ such that every edge has at least one endpoint in $S$. Write it as:</p>
+<p>$$\min \sum_{v} x_v \quad \text{s.t.} \quad x_u + x_v \geq 1 \text{ for each edge } (u,v), \quad x_v \in {0,1}.$$</p>
+<p>The LP relaxation allows $x_v \in [0, 1]$. On any graph, setting $x_v = 1/2$ for all $v$ is always feasible (every edge constraint is satisfied with equality). So the LP relaxation has value $n/2$. On a graph whose minimum vertex cover has size $n/2 + 1$ (e.g., a certain dense random graph), the gap is close to 1 - not dramatic. But on a $k$-clique, the LP gives $k/2$ while you need all $k-1$ vertices, giving a gap of $(k-1)/(k/2) \to 2$. The integrality gap for vertex cover ILP is 2.</p>
+<p>This gap matters: it limits how good any LP-rounding-based approximation algorithm can be, and it tells you how much information the LP relaxation captures about the ILP.</p>
+<hr>
+<h2 id=branch-and-bound>Branch and Bound</h2>
+<p>Branch and bound is the backbone of every modern ILP solver. The idea: explore a tree of increasingly constrained LPs, using LP bounds to prune branches that can&rsquo;t improve on the best integer solution found so far.</p>
+<p><strong>The algorithm:</strong></p>
+<ol>
+<li>Solve the LP relaxation. If the solution is integer, record it as the incumbent. If the LP is infeasible, stop (infeasible ILP).</li>
+<li>If the LP optimal value is worse than the current incumbent, prune this branch.</li>
+<li>Otherwise, pick a fractional variable $x_i^* \notin \mathbb{Z}$. <strong>Branch</strong>: create two child subproblems:
+<ul>
+<li>Left: add constraint $x_i \leq \lfloor x_i^* \rfloor$</li>
+<li>Right: add constraint $x_i \geq \lceil x_i^* \rceil$</li>
+</ul>
+</li>
+<li>Recurse on both children.</li>
+</ol>
+<p>The LP at each node provides an <strong>upper bound</strong> on what any integer solution in that subtree can achieve. If this bound is below the current best integer solution, there&rsquo;s no point exploring further - prune.</p>
+<p>The key insight is that LP bounds get tighter as we add constraints. Deep in the tree, the LP relaxation at each node is forced to be close to integral, so the bounds become very informative.</p>
+<p><strong>Variable selection</strong> - which fractional variable to branch on - profoundly affects performance. Branching on variables with fractional values close to 0.5 tends to produce balanced trees. <strong>Node selection</strong> - which open node to explore next - is equally important. Best-first (explore the node with the highest LP bound) uses more memory but finds good solutions quickly. Depth-first uses less memory but may get stuck in bad branches. Modern solvers blend both.</p>
+<hr>
+<h2 id=cutting-planes>Cutting Planes</h2>
+<p>Instead of branching, you can add linear constraints that cut off the fractional solution without removing any integer-feasible points. These are called <strong>cutting planes</strong> or <strong>cuts</strong>.</p>
+<p>The idea: the LP feasible region (a polytope) contains the integer feasible region, but they&rsquo;re not equal. We want to tighten the polytope by slicing off the fractional corners, making the LP feasible region closer to the convex hull of integer points.</p>
+<p><strong>Gomory cuts</strong> are a systematic way to generate cuts from the simplex tableau. If a basic variable $x_i$ has fractional value $\bar{x}_i = \lfloor \bar{x}_i \rfloor + f_i$ where $0 &lt; f_i &lt; 1$, and the corresponding tableau row is $x_i = \bar{x}<em>i - \sum_j \bar{a}</em>{ij} x_j$, then the Gomory cut is:</p>
+<p>$$\sum_j f(\bar{a}_{ij}), x_j \geq f_i$$</p>
+<p>where $f(a) = a - \lfloor a \rfloor$ is the fractional part. This cut is satisfied by all integer-feasible solutions (you can verify this by case analysis) but violated by the current fractional LP optimum. Add it and re-solve the LP. Repeat.</p>
+<p>Gomory proved that finitely many such cuts eventually produce an integer solution, for rational data. In practice, the convergence can be slow - cutting planes alone are rarely competitive - but combined with branch and bound, they are essential.</p>
+<p><strong>Branch and cut</strong> interleaves branching and cutting: at each node in the branch-and-bound tree, solve the LP, add violated cuts (tightening the bound), then branch if still fractional. Modern solvers generate a rich variety of cuts - Mixed-Integer Rounding (MIR) cuts, lift-and-project cuts, problem-specific cuts - and choosing which cuts to add when is itself a learned art.</p>
+<hr>
+<h2 id=totally-unimodular-matrices>Totally Unimodular Matrices</h2>
+<p>For some problems, the integrality gap is exactly 1 - the LP relaxation always produces integer solutions. This is not a coincidence; it follows from the structure of the constraint matrix.</p>
+<p>A matrix $A$ is <strong>totally unimodular (TU)</strong> if every square submatrix has determinant $0$, $+1$, or $-1$.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why does TU imply integrality? A basic feasible solution to $Ax \leq b$, $x \geq 0$ corresponds to a vertex of the polytope, which is the solution to a square subsystem $A' x = b'$. If $A'$ is a square submatrix of $A$ with determinant $\pm 1$, then by Cramer&rsquo;s rule $x = (A')^{-1} b'$ has integer entries whenever $b'$ is integer. So every vertex of the LP feasible polytope is an integer point - meaning the LP optimum is always achieved at an integer point.</p>
+</blockquote>
+<p>Which matrices are TU? Two beautiful families:</p>
+<p><strong>Bipartite graph incidence matrices.</strong> The vertex-edge incidence matrix of a bipartite graph (rows = vertices, columns = edges, $A_{ve} = 1$ if vertex $v$ is an endpoint of edge $e$) is TU. This means bipartite matching, assignment problems, and bipartite covering problems can all be solved as LPs - no branch and bound needed. The LP relaxation automatically gives integer solutions.</p>
+<p><strong>Network flow matrices.</strong> The constraint matrix for any min-cost flow problem on a directed graph is TU. This is why shortest path, maximum flow, and transportation problems are all polynomial - even though they look like ILPs, the LP relaxation is always integral.</p>
+<p><strong>Interval matrices.</strong> Many scheduling-on-intervals problems have TU constraint matrices. When you can encode your problem as a network flow or bipartite matching, you&rsquo;re in polynomial time. When you can&rsquo;t, you&rsquo;re in branch-and-bound territory.</p>
+<hr>
+<blockquote>
+<p><strong>Discomfort check.</strong> ILP is NP-hard but commercial solvers (Gurobi, CPLEX) solve problems with millions of variables. How?</p>
+</blockquote>
+<p>The theory says worst case is hard. Practice says most real problems have structure - network structure, sparsity, near-TU constraint matrices - that solvers exploit aggressively. Branch-and-bound with learned branching rules, dozens of cut types generated at each node, primal heuristics that find good integer solutions early, and parallel search across many nodes. Modern solvers also use machine learning to tune their own parameters. The gap between theory (exponential worst case) and practice (seconds to minutes for industrial instances) is one of the most striking in all of optimization.</p>
+<hr>
+<h2 id=applications>Applications</h2>
+<p>ILP is not a theoretical curiosity - it is the workhorse of operations research.</p>
+<p><strong>Airline crew scheduling.</strong> Assign flight crews to flights so that every flight is covered, crew rest requirements are met, no crew flies too many hours, and costs are minimized. This is a set covering / partitioning ILP with hundreds of thousands of binary variables. Airlines run these solvers daily.</p>
+<p><strong>Supply chain optimization.</strong> Decide which factories to build (binary), how much to produce at each (continuous), which routes to use (binary or continuous). Mixed-integer programs with both integer and continuous variables.</p>
+<p><strong>VLSI design.</strong> Place circuit components and route wires to minimize area and wire length. Quadratic assignment and routing subproblems solved via ILP with problem-specific cuts.</p>
+<p><strong>Protein structure prediction.</strong> Side-chain placement and rotamer selection: choose one rotamer per residue (binary variables) to minimize pairwise energy. Huge binary ILP, solved by branch and cut with LP bounds.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LP relaxation</td>
+<td>Drop integrality constraints; solvable in polynomial time</td>
+</tr>
+<tr>
+<td>Integrality gap</td>
+<td>How much LP optimum can exceed ILP optimum</td>
+</tr>
+<tr>
+<td>Branch and bound</td>
+<td>Tree search using LP bounds to prune; exponential worst case</td>
+</tr>
+<tr>
+<td>Gomory cuts</td>
+<td>Linear constraints cutting off fractional LP vertices</td>
+</tr>
+<tr>
+<td>Branch and cut</td>
+<td>Interleave cutting and branching; how modern solvers work</td>
+</tr>
+<tr>
+<td>Totally unimodular</td>
+<td>TU constraint matrix guarantees LP gives integer solutions</td>
+</tr>
+<tr>
+<td>TU examples</td>
+<td>Bipartite graphs, network flows, interval scheduling</td>
+</tr>
+</tbody>
+</table>
+<p>ILP is simultaneously NP-hard in theory and routine in practice. The integrality gap tells you how much you lose by relaxing. Branch and bound navigates the integer feasible region using LP bounds as a flashlight. TU matrices reveal the beautiful cases where LP and ILP agree. And cutting planes tighten the polytope until fractional solutions have no more room to hide.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/approximation-algorithms/>Approximation Algorithms</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

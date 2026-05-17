@@ -1,0 +1,200 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Simulated Annealing // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Simulated Annealing">
+<meta name=twitter:description content="Prerequisites:
+ Local Search & Hill Climbing Metropolis-Hastings & MCMC   When you cool molten steel too fast, it becomes brittle. The atoms don&rsquo;t have time to find low-energy configurations - they freeze into whatever disordered arrangement they happen to be in. When you cool it slowly (the process called annealing), the atoms can keep rearranging as the temperature drops, settling eventually into a crystal structure with minimal energy. The slow cooling gives the system time to find its ground state.">
+<meta property="og:title" content="Simulated Annealing">
+<meta property="og:description" content="Prerequisites:
+ Local Search & Hill Climbing Metropolis-Hastings & MCMC   When you cool molten steel too fast, it becomes brittle. The atoms don&rsquo;t have time to find low-energy configurations - they freeze into whatever disordered arrangement they happen to be in. When you cool it slowly (the process called annealing), the atoms can keep rearranging as the temperature drops, settling eventually into a crystal structure with minimal energy. The slow cooling gives the system time to find its ground state.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/simulated-annealing/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00">
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Simulated Annealing</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 3, 2021
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+7 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/local-search-hill-climbing/>Local Search & Hill Climbing</a></li>
+<li><a href=/posts/metropolis-hastings-mcmc/>Metropolis-Hastings & MCMC</a></li>
+</ul>
+<hr>
+<p>When you cool molten steel too fast, it becomes brittle. The atoms don&rsquo;t have time to find low-energy configurations - they freeze into whatever disordered arrangement they happen to be in. When you cool it slowly (the process called annealing), the atoms can keep rearranging as the temperature drops, settling eventually into a crystal structure with minimal energy. The slow cooling gives the system time to find its ground state.</p>
+<p>In 1983, Kirkpatrick, Gelatt, and Vecchi realized this is exactly what happens when you try to escape local optima in combinatorial optimization. Cool the &ldquo;temperature&rdquo; slowly - accept worse solutions less and less often as time goes on - and you can escape local traps. The slower you cool, the better the solution you find.</p>
+<p>This is simulated annealing.</p>
+<hr>
+<h2 id=the-boltzmann-acceptance-criterion>The Boltzmann Acceptance Criterion</h2>
+<p>Start with any feasible solution $s$. At each step:</p>
+<ol>
+<li>Propose a random neighbor $s'$ of the current solution.</li>
+<li>Compute $\Delta E = f(s') - f(s)$ (the change in objective value - positive means worse, for minimization).</li>
+<li>If $\Delta E &lt; 0$: accept $s'$ unconditionally (it&rsquo;s an improvement).</li>
+<li>If $\Delta E \geq 0$: accept $s'$ with probability</li>
+</ol>
+<p>$$P(\text{accept}) = e^{-\Delta E / T}$$</p>
+<p>where $T > 0$ is the current <strong>temperature</strong>.</p>
+<p>This is the <strong>Metropolis criterion</strong>, from statistical physics. At high temperature, $e^{-\Delta E/T} \approx 1$ for moderate $\Delta E$ - almost any move is accepted, enabling broad exploration. At low temperature, $e^{-\Delta E/T} \approx 0$ for any $\Delta E > 0$ - only improvements are accepted, just like hill climbing.</p>
+<p>The temperature schedule interpolates between these: early in the algorithm, we explore broadly; late in the algorithm, we exploit the best region found so far.</p>
+<hr>
+<h2 id=the-acceptance-probability-in-practice>The Acceptance Probability in Practice</h2>
+<p>Let&rsquo;s make this concrete. Suppose we&rsquo;re minimizing a cost function and a candidate move worsens the cost by $\Delta E$. At temperature $T = 5$:</p>
+<ul>
+<li>A small worsening $\Delta E = 1$: accepted with probability $e^{-1/5} \approx 0.82$.</li>
+<li>A moderate worsening $\Delta E = 5$: accepted with probability $e^{-5/5} \approx 0.37$.</li>
+<li>A large worsening $\Delta E = 20$: accepted with probability $e^{-20/5} \approx 0.018$.</li>
+</ul>
+<p>Large deteriorations are accepted much less often than small ones, even at the same temperature. The algorithm takes careful steps away from good regions rather than random leaps - it preferentially accepts small uphill moves and rarely accepts large ones.</p>
+<p>As temperature drops, even small uphill moves become less likely:</p>
+<ul>
+<li>At $T = 1$: $\Delta E = 1$ is accepted with probability $e^{-1} \approx 0.37$.</li>
+<li>At $T = 0.1$: $\Delta E = 1$ is accepted with probability $e^{-10} \approx 0.00005$.</li>
+</ul>
+<p>The algorithm gradually freezes into a near-optimal solution.</p>
+<hr>
+<h2 id=temperature-schedules>Temperature Schedules</h2>
+<p>The <strong>annealing schedule</strong> $T(t)$ controls how quickly we cool.</p>
+<p><strong>Geometric cooling (practical).</strong> The standard:</p>
+<p>$$T_{k+1} = \alpha \cdot T_k, \quad \alpha \in [0.90, 0.99].$$</p>
+<p>Start at $T_0$ chosen so that roughly 80% of moves are accepted (meaning the initial temperature is calibrated to the typical energy differences in the problem). Cool by a factor $\alpha$ every $L$ iterations (where $L$ is also a parameter). Stop when $T$ is near zero or no improvement occurs for many consecutive steps.</p>
+<p>Geometric cooling is fast and effective in practice, but provides no guarantee. The rate matters: $\alpha = 0.99$ (slow cooling) gives much better solutions than $\alpha = 0.90$ (fast cooling), at the cost of more computation.</p>
+<p><strong>Logarithmic cooling (theoretical).</strong> If $T(t) = c / \log(t + 1)$ for a sufficiently large constant $c$ (related to the largest energy barrier between any local optimum and the global optimum), then SA converges to the global optimum in probability. The constant $c$ is the depth of the deepest local trap in the landscape.</p>
+<p>The catch: &ldquo;converges in probability&rdquo; is misleading. The required number of steps is astronomical - essentially exponential. This schedule is theoretically optimal but practically useless.</p>
+<p><strong>Reheating.</strong> Some implementations periodically raise $T$ after the algorithm has cooled and converged to a local optimum. The idea: reheat enough to escape, then cool again. This is sometimes called <strong>iterated SA</strong> and can improve results when the problem has many local optima of similar depth.</p>
+<hr>
+<h2 id=the-connection-to-mcmc>The Connection to MCMC</h2>
+<p>At a fixed temperature $T$, the Metropolis acceptance criterion defines a Markov chain over the solution space. The chain&rsquo;s stationary distribution is the <strong>Boltzmann distribution</strong>:</p>
+<p>$$\pi_T(s) \propto e^{-f(s)/T}.$$</p>
+<p>At high $T$, this is nearly uniform - all solutions are roughly equally likely. As $T \to 0$, the distribution concentrates on the global minimum: solutions with lower energy have exponentially higher probability.</p>
+<p>Simulated annealing is running a sequence of Markov chains at decreasing temperatures, hoping that at each temperature the chain mixes well enough (reaches near-stationarity) before we cool further. If we cool too fast, the chain doesn&rsquo;t mix - we don&rsquo;t sample from $\pi_T$ accurately - and we can get stuck. The logarithmic cooling schedule is slow precisely because it gives enough time at each temperature for the chain to mix.</p>
+<p>This connection to MCMC means everything we know about Markov chain mixing - spectral gaps, conductance, the relationship between mixing time and energy barriers - applies to understanding when SA works well and when it doesn&rsquo;t.</p>
+<hr>
+<h2 id=simulated-annealing-for-tsp>Simulated Annealing for TSP</h2>
+<p>The same 2-opt neighborhood as pure local search, but now we accept worse tours with probability $e^{-\Delta L / T}$, where $\Delta L > 0$ is the increase in tour length.</p>
+<p>What this buys you: when 2-opt gets stuck at a local optimum, SA can accept a slightly longer tour to escape. From that new (slightly worse) position, a different sequence of improving 2-opt moves may lead to a much better local optimum.</p>
+<p>In practice, SA with 2-opt moves finds tours dramatically better than pure 2-opt hill climbing on hard TSP instances - often within 1–2% of optimal on benchmark instances. The key parameter is the cooling schedule: too fast and the algorithm gets stuck; too slow and you waste computation.</p>
+<hr>
+<blockquote>
+<p><strong>Discomfort check.</strong> Simulated annealing is guaranteed to find the global optimum if you cool slowly enough. So why not always cool slowly?</p>
+</blockquote>
+<p>&ldquo;Slowly enough&rdquo; means the logarithmic cooling schedule $T(t) = c / \log(t+1)$. To see why this is impractical: the mixing time of the Markov chain at temperature $T$ near 0 is exponential in $1/T$ (because escaping a local trap requires a sequence of uphill moves, each exponentially unlikely). The logarithmic schedule decays so slowly that the total time needed to escape any local trap is still exponential. You end up needing exponentially many steps - just as many as exhaustive search, roughly speaking. The theoretical guarantee exists, but it&rsquo;s not useful. In practice, you use geometric cooling with a carefully tuned $\alpha$, accept that you might get a near-optimal solution rather than the exact optimum, and run multiple restarts.</p>
+<hr>
+<h2 id=when-simulated-annealing-works-well>When Simulated Annealing Works Well</h2>
+<p>SA works well when:</p>
+<ul>
+<li>The search space is large and well-connected (many paths between any two solutions)</li>
+<li>The energy landscape is relatively smooth (small uphill moves can connect local optima)</li>
+<li>Starting fresh from a random point is expensive or unlikely to find good solutions quickly</li>
+<li>You have time to tune the cooling schedule to the problem</li>
+</ul>
+<p>SA works poorly when:</p>
+<ul>
+<li>The energy landscape is rugged with many deep isolated valleys</li>
+<li>Good solutions are in tiny, disconnected regions of the space</li>
+<li>The problem has hard constraints that are difficult to satisfy for random solutions</li>
+</ul>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metropolis criterion</td>
+<td>Accept worse solution with probability $e^{-\Delta E/T}$</td>
+</tr>
+<tr>
+<td>Temperature $T$</td>
+<td>Controls exploration-exploitation tradeoff</td>
+</tr>
+<tr>
+<td>Geometric cooling</td>
+<td>$T_k = \alpha T_{k-1}$; practical, no convergence guarantee</td>
+</tr>
+<tr>
+<td>Logarithmic cooling</td>
+<td>$T(t) = c/\log t$; provably optimal, astronomically slow</td>
+</tr>
+<tr>
+<td>Boltzmann distribution</td>
+<td>Stationary distribution of SA chain at fixed $T$</td>
+</tr>
+<tr>
+<td>Connection to MCMC</td>
+<td>SA = sequence of MH chains at decreasing temperatures</td>
+</tr>
+<tr>
+<td>Reheating</td>
+<td>Raise $T$ to escape deep local optima, then cool again</td>
+</tr>
+</tbody>
+</table>
+<p>Simulated annealing turns local search&rsquo;s fatal flaw - getting stuck at local optima - into a feature: you accept worse solutions strategically, with a probability that decreases as the algorithm matures. The physics analogy is not just poetic; it is exact. SA is running a physical cooling process on the combinatorial optimization landscape, and the theory of statistical mechanics tells you exactly what happens as the temperature goes to zero.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/tabu-search/>Tabu Search</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

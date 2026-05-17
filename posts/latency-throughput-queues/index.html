@@ -1,0 +1,205 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Latency, Throughput, & Queues // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Latency, Throughput, & Queues">
+<meta name=twitter:description content="Prerequisite: System Design Fundamentals · Networking: IP, TCP, HTTP
+A single database query takes 5ms. You&rsquo;ve measured it. You&rsquo;ve proven it in benchmarks. So why, when you deploy to production under load, does your P99 response time balloon to 500ms? Why do users start complaining about slowness at exactly the moment your load graph hits 80% capacity - and not before?
+The answer lies in a branch of mathematics called queuing theory, and it explains one of the most counterintuitive phenomena in distributed systems: systems don&rsquo;t degrade gracefully as they approach capacity.">
+<meta property="og:title" content="Latency, Throughput, & Queues">
+<meta property="og:description" content="Prerequisite: System Design Fundamentals · Networking: IP, TCP, HTTP
+A single database query takes 5ms. You&rsquo;ve measured it. You&rsquo;ve proven it in benchmarks. So why, when you deploy to production under load, does your P99 response time balloon to 500ms? Why do users start complaining about slowness at exactly the moment your load graph hits 80% capacity - and not before?
+The answer lies in a branch of mathematics called queuing theory, and it explains one of the most counterintuitive phenomena in distributed systems: systems don&rsquo;t degrade gracefully as they approach capacity.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/latency-throughput-queues/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Latency, Throughput, & Queues</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/system-design-fundamentals/>System Design Fundamentals</a> · <a href=/posts/networking-ip-tcp-http/>Networking: IP, TCP, HTTP</a></p>
+<p>A single database query takes 5ms. You&rsquo;ve measured it. You&rsquo;ve proven it in benchmarks. So why, when you deploy to production under load, does your P99 response time balloon to 500ms? Why do users start complaining about slowness at exactly the moment your load graph hits 80% capacity - and not before?</p>
+<p>The answer lies in a branch of mathematics called queuing theory, and it explains one of the most counterintuitive phenomena in distributed systems: systems don&rsquo;t degrade gracefully as they approach capacity. They fall off a cliff.</p>
+<h2 id=latency-and-throughput-related-but-not-the-same>Latency and Throughput: Related but Not the Same</h2>
+<p><strong>Latency</strong> is how long a single request takes to complete - from the moment it leaves the client to the moment the response arrives. It&rsquo;s the user&rsquo;s lived experience of your system. Every millisecond of latency is a millisecond a human being waited.</p>
+<p><strong>Throughput</strong> is how many requests your system completes per second. It&rsquo;s the system&rsquo;s productive capacity - how much work it can do in a given time window.</p>
+<p>These sound like they should move together, but they&rsquo;re actually independent quantities you must optimize separately. A single-threaded server might handle each request in 1ms (low latency) while only processing one request at a time (low throughput). A batch analytics pipeline might process a million records per second (high throughput) while taking an hour to return any result (high latency).</p>
+<p>The uncomfortable tradeoff emerges with batching. Suppose a producer accumulates messages and sends them in groups of 100 instead of one at a time. Throughput increases dramatically - fewer network round trips, each carrying more payload. But the first message in each batch must wait for 99 others before it&rsquo;s sent. Latency rises. Kafka producers expose this directly with the <code>linger.ms</code> configuration parameter: set it to zero for minimum latency, set it higher for maximum throughput. There is no free lunch.</p>
+<p>Optimizing for throughput can destroy latency. This is not an edge case - it&rsquo;s a fundamental property of batching systems, and it&rsquo;s why API-serving infrastructure and batch processing pipelines require separate design thinking.</p>
+<h2 id=median-latency-is-a-lie>Median Latency Is a Lie</h2>
+<p>Average latency hides the tail. If 99% of your requests complete in 10ms and 1% complete in 2,000ms, your average might be 29ms - which sounds perfectly acceptable. But at 10,000 requests per second, that 1% is 100 requests <em>every second</em> experiencing two-second delays. Those are real users. They are not in your average.</p>
+<p>The correct way to report latency:</p>
+<p><strong>P50 (median):</strong> Half of requests are faster, half slower. The typical case. Useful for understanding the common experience.</p>
+<p><strong>P95:</strong> 95% of requests are faster than this. Catches the common slow cases - overloaded database queries, occasional cache misses.</p>
+<p><strong>P99:</strong> 99% of requests are faster. The &ldquo;bad day&rdquo; experience - what happens when several unlucky things align. This is the number that should govern your SLO.</p>
+<p><strong>P99.9:</strong> One in a thousand requests. At high traffic volumes, this happens constantly. Netflix, Amazon, and Google all track tail latency at this level because at their scale, one-in-a-thousand is one-in-a-second.</p>
+<p>Tail latency is typically caused by resource contention: a garbage collection pause, a lock wait, a request queued behind an unusually slow one, or a noisy neighbor on shared cloud infrastructure. The insidious part is that GC pauses and lock contention <em>increase</em> as load increases - which means your P99 degrades faster than your P50 under load. The tail grows faster than the median.</p>
+<p>This is why P99 - not P50 - should be your performance target for user-facing services. P50 is a lie for user experience. The user who experiences the tail doesn&rsquo;t know they&rsquo;re in the tail. They just know your service felt slow.</p>
+<h2 id=littles-law-the-equation-behind-queue-sizing>Little&rsquo;s Law: The Equation Behind Queue Sizing</h2>
+<p>Little&rsquo;s Law is a mathematical result from queuing theory, proven under remarkably general conditions. You don&rsquo;t need Poisson arrivals or exponential service times. It holds almost universally:</p>
+<p>$$L = \lambda W$$</p>
+<p>Where $L$ is the average number of items in the system (queued <em>plus</em> being processed), $\lambda$ is the arrival rate (items per second), and $W$ is the average time an item spends in the system (seconds, including queue wait time plus service time).</p>
+<p>This equation is a sizing tool. If your request processing time is 50ms and you&rsquo;re receiving 1,000 requests per second, Little&rsquo;s Law says you need the system to support $L = 1000 \times 0.05 = 50$ concurrent requests in flight at any time. If your application thread pool has 20 threads, requests start queuing - and queued requests add to $W$, which increases $L$, which creates more queuing. The feedback loop tightens.</p>
+<p>Little&rsquo;s Law also explains why latency spikes when throughput is sustained near capacity. If $\lambda$ stays constant but service time $W$ increases (say, the database gets slower under load), $L$ must grow - more requests pile up. Those queued requests then experience additional wait time, further increasing $W$. This is not a metaphor. It is arithmetic.</p>
+<h2 id=the-hockey-stick-why-85-utilization-is-the-danger-zone>The Hockey Stick: Why 85% Utilization Is the Danger Zone</h2>
+<p>The M/M/1 queue is the simplest queuing theory model - Poisson arrivals, exponential service times, one server. Its closed-form result for mean queue length as a function of utilization $\rho = \lambda / \mu$ (arrival rate divided by service rate):</p>
+<p>$$L_q = \frac{\rho^2}{1 - \rho}$$</p>
+<p>Work through the numbers:</p>
+<table>
+<thead>
+<tr>
+<th>Utilization ($\rho$)</th>
+<th>Mean queue length ($L_q$)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>50%</td>
+<td>0.5 (negligible)</td>
+</tr>
+<tr>
+<td>70%</td>
+<td>1.6 (a small queue)</td>
+</tr>
+<tr>
+<td>80%</td>
+<td>3.2 (noticeable)</td>
+</tr>
+<tr>
+<td>85%</td>
+<td>4.8 (growing)</td>
+</tr>
+<tr>
+<td>90%</td>
+<td>8.1 (significant wait)</td>
+</tr>
+<tr>
+<td>95%</td>
+<td>18 (severe)</td>
+</tr>
+<tr>
+<td>99%</td>
+<td>98 (collapse)</td>
+</tr>
+</tbody>
+</table>
+<p>The hockey stick shape is unmistakable. From 50% to 80% utilization, queue length grows slowly and manageably. Then at around 85%, the curve bends sharply upward. A small additional load increase causes a dramatic increase in queue depth and, through Little&rsquo;s Law, in latency. This is the hockey stick - and it&rsquo;s why you never run a production system above 70-80% sustained utilization.</p>
+<p>Real systems violate M/M/1 assumptions constantly: traffic is bursty, not Poisson; service times are multimodal, not exponential; there are many servers, not one. But the qualitative shape holds universally. Near-100% utilization causes nonlinear latency growth in every queuing system, under every workload. The math is unambiguous.</p>
+<p>Cloud auto-scaling triggers should account for this. Scaling at 90% CPU utilization means you&rsquo;re already in the hockey stick region - latency has already spiked. Scaling at 60-70% gives headroom. AWS auto-scaling groups support custom metrics, including queue depth, as scaling triggers - and queue depth is often a better signal than CPU percentage because it directly reflects the user experience.</p>
+<h2 id=back-pressure-what-happens-when-queues-fill>Back-Pressure: What Happens When Queues Fill</h2>
+<p>When producers generate work faster than consumers can process it, queues grow. If queues grow without bound, you eventually exhaust memory and the system collapses catastrophically. Back-pressure is the mechanism that prevents this by propagating the overload signal <em>upstream</em> to the producer.</p>
+<p>The implementation varies by system:</p>
+<p><strong>TCP&rsquo;s flow control</strong> is back-pressure baked into the network protocol. When a receiver&rsquo;s buffer fills, it shrinks its advertised window size, which slows the sender. The overload signal travels upstream automatically.</p>
+<p><strong>AWS SQS visibility timeout</strong> is a form of back-pressure: when a message is received, it disappears from the queue for the visibility timeout period. If processing takes longer than expected and the timeout expires, the message reappears - but it creates implicit pressure: a consumer that cannot keep up will see the same messages cycling back, signaling that consumer capacity needs to increase.</p>
+<p><strong>Kafka consumer lag</strong> is the canonical back-pressure metric in event streaming. When consumer lag (the difference between the latest offset in a partition and the consumer&rsquo;s current offset) grows, it signals that consumers are falling behind producers. This is the metric that should trigger auto-scaling of Kafka consumer groups, not CPU.</p>
+<p><strong>Rate limiting</strong> at API gateways is proactive back-pressure - capping the arrival rate before it overwhelms downstream services. AWS API Gateway, Kong, and Nginx all implement token bucket or leaky bucket rate limiting. The design principle: fail fast at the edge with a 429 response rather than letting unconstrained traffic cascade through your service graph.</p>
+<p>The failure mode when back-pressure is absent is ugly: queue memory exhausts, the broker crashes, or consumers time out under the accumulated load - and the failure is sudden and total rather than graceful.</p>
+<h2 id=queuing-theory-meets-real-cloud-infrastructure>Queuing Theory Meets Real Cloud Infrastructure</h2>
+<p><strong>AWS SQS and queue depth as a scaling signal:</strong> SQS exposes <code>ApproximateNumberOfMessagesVisible</code> as a CloudWatch metric. This is Little&rsquo;s $L$ - the number of items in the system. Auto Scaling groups can scale on this metric directly. A queue depth of 1,000 messages with consumers processing at 100 messages per second means 10 seconds of backlog - actionable, visible, and entirely predictable from Little&rsquo;s Law.</p>
+<p><strong>Kafka and tail latency in disaggregated storage:</strong> Kafka&rsquo;s move toward tiered storage (storing older log segments on S3 rather than local broker disks) introduces a new tail latency source: S3 reads. S3 Express One Zone promises single-digit millisecond access, but &ldquo;single-digit&rdquo; is a median, not a guarantee. P99 latency for S3 reads can be substantially higher, especially across large objects. AWS EBS similarly introduces tail latency spikes that don&rsquo;t appear at P50. As storage disaggregation becomes the norm - Snowflake, Databricks, and Amazon Redshift all separate compute from storage - tail latency in the storage layer becomes the dominant performance concern.</p>
+<p><strong>Rate limiting as flow control:</strong> Stripe&rsquo;s API enforces per-key rate limits; so does the GitHub API. These are not arbitrary policy choices - they&rsquo;re engineering decisions to prevent any single client from pushing the API into the hockey stick region.</p>
+<h2 id=the-discomfort-you-cannot-have-both>The Discomfort: You Cannot Have Both</h2>
+<p>Here is the thing that textbook treatments gloss over: for a given system capacity, you must choose between optimizing for latency or optimizing for throughput. You cannot fully maximize both simultaneously.</p>
+<p>To maximize throughput: batch work, fill queues, keep servers busy. Latency rises because requests wait.</p>
+<p>To minimize latency: process immediately, keep queues empty, accept underutilized servers. Throughput falls because resources sit idle between requests.</p>
+<p>The right answer is workload-dependent. For user-facing APIs, latency wins - a user does not care how efficient your batching is. For offline analytics pipelines, throughput wins - no one is watching the ETL job tick over. For message brokers like Kafka serving both types of consumers, you configure separately: low <code>linger.ms</code> for real-time consumer groups, high <code>linger.ms</code> for batch consumers reading the same topic.</p>
+<p>The design decision is: who is your worst-affected user if you get this wrong? That tells you which metric to optimize.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key Insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Latency vs throughput</td>
+<td>Independent quantities; optimizing one can hurt the other</td>
+</tr>
+<tr>
+<td>P99 vs P50</td>
+<td>Median latency is misleading; P99 reflects the tail that users feel</td>
+</tr>
+<tr>
+<td>Little&rsquo;s Law ($L = \lambda W$)</td>
+<td>System length = arrival rate × time in system; use it for sizing</td>
+</tr>
+<tr>
+<td>The hockey stick</td>
+<td>Above ~85% utilization, queue length grows nonlinearly</td>
+</tr>
+<tr>
+<td>Back-pressure</td>
+<td>Propagate overload upstream; absent back-pressure causes sudden collapse</td>
+</tr>
+<tr>
+<td>Queue depth as metric</td>
+<td>A better auto-scaling signal than CPU for queue-backed workloads</td>
+</tr>
+<tr>
+<td>Tail latency in disaggregated storage</td>
+<td>S3/EBS P99 is substantially higher than P50; design for it</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/load-balancing-proxies/>Load Balancing & Proxies</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

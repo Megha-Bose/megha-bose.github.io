@@ -1,0 +1,168 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Load Balancing & Proxies // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Load Balancing & Proxies">
+<meta name=twitter:description content="Prerequisite: Latency, Throughput & Queues · Networking: IP, TCP, HTTP
+Ten servers. One million requests per second. How do you distribute work fairly - and what happens when three of those servers die at 2am?
+The naive answer is &ldquo;a load balancer,&rdquo; but that answer is a starting point, not a conclusion. The real question is: which algorithm distributes work fairly for your workload, what happens when the load balancer itself fails, and how does the statefulness of your application change every assumption in the design?">
+<meta property="og:title" content="Load Balancing & Proxies">
+<meta property="og:description" content="Prerequisite: Latency, Throughput & Queues · Networking: IP, TCP, HTTP
+Ten servers. One million requests per second. How do you distribute work fairly - and what happens when three of those servers die at 2am?
+The naive answer is &ldquo;a load balancer,&rdquo; but that answer is a starting point, not a conclusion. The real question is: which algorithm distributes work fairly for your workload, what happens when the load balancer itself fails, and how does the statefulness of your application change every assumption in the design?">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/load-balancing-proxies/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Load Balancing & Proxies</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+10 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/latency-throughput-queues/>Latency, Throughput & Queues</a> · <a href=/posts/networking-ip-tcp-http/>Networking: IP, TCP, HTTP</a></p>
+<p>Ten servers. One million requests per second. How do you distribute work fairly - and what happens when three of those servers die at 2am?</p>
+<p>The naive answer is &ldquo;a load balancer,&rdquo; but that answer is a starting point, not a conclusion. The real question is: which algorithm distributes work fairly for <em>your</em> workload, what happens when the load balancer itself fails, and how does the statefulness of your application change every assumption in the design?</p>
+<p>This is a story that evolved over about thirty years, from a DNS hack to globally-aware anycast routing. The evolution is worth tracing because each step was a response to a concrete failure mode of the previous approach.</p>
+<h2 id=a-brief-history-of-getting-work-to-the-right-machine>A Brief History of Getting Work to the Right Machine</h2>
+<p>In the early web era, &ldquo;load balancing&rdquo; meant <strong>DNS round-robin</strong>: the same domain resolved to multiple IP addresses in rotation. Browser asks for <code>example.com</code>, gets <code>10.0.0.1</code>. Next browser asks, gets <code>10.0.0.2</code>. Beautifully simple. Also deeply broken: DNS responses are cached, so a user might keep hitting a dead server for minutes after its A record should have been rotated out. And DNS knows nothing about server health.</p>
+<p>The 2000s brought <strong>hardware load balancers</strong> - appliances from F5 Networks and Cisco, purpose-built for high-throughput packet routing. These worked well for large enterprises that could afford six-figure hardware and had dedicated networking staff to configure them. But they were rigid, expensive, and slow to reconfigure as application topology changed.</p>
+<p>Then came <strong>software load balancers</strong>: HAProxy (2001) and Nginx (2004) brought L7 load balancing to commodity hardware. Engineers could now define backend pools in a config file, hot-reload configuration, and run the same software on $50/month cloud VMs. The F5 market didn&rsquo;t disappear, but it stopped being the only option.</p>
+<p>Finally: <strong>cloud-native load balancers</strong> - AWS ELB (2009), later ALB and NLB, GCP Cloud Load Balancing, Azure Load Balancer. These are managed services where the load balancer itself is infinitely scaled, globally distributed, and integrated with auto-scaling groups, health checks, and SSL certificate management. The engineering team no longer owns load balancer infrastructure; they configure it.</p>
+<h2 id=layer-4-vs-layer-7-what-the-load-balancer-can-see>Layer 4 vs Layer 7: What the Load Balancer Can See</h2>
+<p>The layer at which a load balancer operates determines what it knows about the traffic - and what routing decisions it can make.</p>
+<p><strong>Layer 4 (transport layer)</strong> load balancers route at the TCP/UDP level. They see source IP, destination IP, and port. They know nothing about HTTP paths, cookies, or request bodies. This ignorance is also their strength: because they don&rsquo;t parse application-layer content, they&rsquo;re extremely fast - capable of handling millions of connections with microsecond-level overhead. AWS Network Load Balancer (NLB) operates at this layer and can sustain millions of requests per second with ultra-low latency.</p>
+<p><strong>Layer 7 (application layer)</strong> load balancers parse HTTP, HTTP/2, and gRPC. They can route based on URL path, HTTP method, headers, cookies, or query parameters. This enables patterns impossible at L4: route <code>/api/*</code> to the API fleet and <code>/static/*</code> to a CDN-backed pool; route requests with <code>X-Beta: true</code> to a canary deployment; terminate TLS and forward plaintext to backends. AWS Application Load Balancer (ALB) operates here, supporting content-based routing, WebSocket, and HTTP/2 natively.</p>
+<p>The price of L7 intelligence is CPU overhead for parsing and slightly higher latency per request. Most production systems use L7 at the edge (ALB for external traffic) and L4 for internal east-west routing where path-based decisions aren&rsquo;t needed and raw throughput matters.</p>
+<h2 id=balancing-algorithms-more-than-round-robin>Balancing Algorithms: More Than Round-Robin</h2>
+<p><strong>Round-robin</strong> cycles through backends sequentially. Simple, effective when requests have similar cost and servers have similar capacity. Falls apart when some requests are 1ms and others are 5 seconds - the unlucky backend accumulates slow requests while the lucky one sits idle.</p>
+<p><strong>Weighted round-robin</strong> assigns a weight to each backend. A server with 8 cores gets twice the requests of a server with 4 cores. Useful during rolling upgrades when new and old instance types temporarily coexist in the same pool.</p>
+<p><strong>Least connections</strong> routes each new request to the backend with the fewest active connections. Far superior to round-robin for variable-duration requests. The overhead: the load balancer must maintain a global connection count, which is a coordination cost at very high connection rates.</p>
+<p><strong>Consistent hashing</strong> maps requests to backends using a hash of a request attribute - typically user ID or session key. The same user always hits the same backend. Critical for stateful workloads: distributed caches where eviction behavior depends on which node holds the key, or session-bearing services. The careful design: use a virtual node ring to ensure even distribution even when backends are added or removed. When a node fails, only its fraction of the keyspace needs to be remapped rather than reshuffling everything.</p>
+<p><strong>Power of two choices</strong> picks two backends at random and routes to the whichever has fewer connections. This achieves near-optimal load distribution with far less overhead than tracking all backends - a elegant result from probabilistic load balancing theory. Nginx Plus and Envoy support this.</p>
+<h2 id=how-aws-alb-actually-works>How AWS ALB Actually Works</h2>
+<p>AWS ALB is worth understanding in detail because it&rsquo;s the load balancer most teams encounter first and because its design reveals what cloud-native load balancing looks like at scale.</p>
+<p>An ALB sits in front of <strong>target groups</strong> - logical pools of instances, Lambda functions, or IP addresses. Routing rules inspect incoming requests and forward to the matching target group. Rules can match on host header (for multi-tenant virtual hosting), URL path, query string parameters, HTTP method, or source IP CIDR. This makes ALB the natural place to implement blue-green deployments (two target groups, one weighted routing rule) and canary releases (5% of traffic to the canary target group, 95% to production).</p>
+<p>ALB terminates SSL - your backends receive plaintext HTTP. This moves certificate management out of your application and into AWS Certificate Manager, where renewal is automatic and private keys never touch your application instances. Backends can optionally receive re-encrypted HTTPS (end-to-end encryption) when compliance requires it.</p>
+<p>ALB performs health checks against each target on a configurable path, port, and interval. Unhealthy targets are automatically drained: in-flight requests complete (up to the deregistration delay, default 300 seconds) before the target is removed. This prevents hard disconnections during rolling deploys.</p>
+<p>ALB itself is not a single machine - it scales automatically and is designed with no single point of failure. The load balancer is load-balanced. AWS SNS can route alerts when unhealthy target counts cross thresholds, giving you visibility into the health of your fleet from the load balancer&rsquo;s perspective.</p>
+<h2 id=the-sticky-session-problem>The Sticky Session Problem</h2>
+<p>Sticky sessions - also called session affinity - route requests from the same client to the same backend. Cookie-based affinity is the most reliable form: the load balancer injects a cookie (AWS ALB uses <code>AWSALB</code>) on the first response; subsequent requests carry that cookie, and the LB routes accordingly.</p>
+<p>Sticky sessions solve a real problem: if a user&rsquo;s session state lives in memory on backend-3, routing their next request to backend-5 breaks their session. But the solution creates a larger problem.</p>
+<p>When backend-3 fails, every user pinned to it loses their session simultaneously. You haven&rsquo;t eliminated the failure - you&rsquo;ve concentrated it. Worse, sticky sessions defeat load balancing: if one user&rsquo;s session is computationally expensive, that backend accumulates load while others sit idle. Horizontal scaling becomes less effective because traffic is pinned rather than distributed.</p>
+<p>The stateless design principle exists to eliminate this problem entirely. If session state lives in Redis or a database rather than server memory, any backend can serve any request. The load balancer can route round-robin, least-connections, or however it likes - there&rsquo;s no state to lose when a backend fails. This is not just an academic preference; it&rsquo;s the prerequisite for true horizontal scaling. Sticky sessions are the architectural smell that tells you session state has leaked into your compute layer.</p>
+<h2 id=health-checks-active-and-passive>Health Checks: Active and Passive</h2>
+<p>A load balancer that routes to unhealthy backends is worse than no load balancer at all - it concentrates failures rather than routing around them.</p>
+<p><strong>Active health checks</strong> send periodic probes to each backend - typically an HTTP GET to a <code>/health</code> or <code>/ready</code> endpoint - and mark backends unhealthy if they fail. AWS ALB performs active health checks on a configurable interval (default 30 seconds) with a configurable threshold (default 3 failures before marking unhealthy). The <code>/health</code> endpoint should check not just that the process is running but that it can reach its dependencies: database connections open, Redis reachable, downstream services responding.</p>
+<p><strong>Passive health checks</strong> observe real traffic. If a backend returns 5xx responses above a threshold or consistently times out, it is temporarily removed without any probe traffic. This catches failure modes that health check endpoints don&rsquo;t surface - a backend that returns 200 on <code>/health</code> but 503 on actual requests because its database pool is exhausted.</p>
+<p>Most production systems use both. The subtle distinction: active checks catch dead backends quickly; passive checks catch degraded-but-alive backends that active probes miss.</p>
+<h2 id=global-load-balancing-routing-across-regions>Global Load Balancing: Routing Across Regions</h2>
+<p>Once your system spans multiple cloud regions, load balancing becomes a routing problem at the DNS and BGP level.</p>
+<p><strong>GeoDNS</strong> (AWS Route 53 with latency-based routing or geolocation policies) returns different IP addresses based on where the DNS query originates. A user in Tokyo resolves <code>api.example.com</code> to your ap-northeast-1 deployment; a user in Frankfurt resolves to eu-west-1. Route 53&rsquo;s health checks integrate with latency-based routing: if ap-northeast-1 becomes unhealthy, Route 53 automatically routes Tokyo users to the next-closest region. TTL values matter here - a short TTL (60s) means faster failover at the cost of more DNS queries; a long TTL means cheaper operation but slower response to regional failures.</p>
+<p><strong>Anycast</strong> assigns the same IP address to servers in multiple datacenters. BGP routing naturally delivers packets to the topologically closest datacenter. GCP Cloud Load Balancing uses anycast globally - a single IP serves users from the nearest Google edge PoP in over 100 locations. Failover is automatic and fast (BGP convergence, typically seconds). AWS Global Accelerator uses anycast to route traffic to the nearest AWS edge location and then to the nearest healthy regional endpoint over AWS&rsquo;s backbone network, avoiding the public internet for the long-haul leg.</p>
+<p><strong>Global Server Load Balancing (GSLB)</strong> combines health monitoring with DNS-based routing to implement disaster recovery. Route 53 with health checks and weighted routing can implement an active-passive failover: primary region gets 100% of traffic when healthy; on health check failure, Route 53 automatically shifts traffic to the secondary region.</p>
+<h2 id=the-load-balancer-as-a-single-point-of-failure>The Load Balancer as a Single Point of Failure</h2>
+<p>Here is the irony: load balancers exist to eliminate single points of failure, but a single load balancer is itself a single point of failure.</p>
+<p>The traditional solution: run load balancers in an active-passive HA pair. Both run the same configuration; a virtual IP floats between them via Keepalived/VRRP. When the primary fails, the secondary takes the VIP within seconds. HAProxy is commonly deployed this way.</p>
+<p>Cloud-native load balancers (AWS ALB, GCP Cloud LB) handle this transparently - the service is distributed across multiple availability zones and scales automatically. The trade-off is control: you cannot inspect or modify the underlying load balancer infrastructure.</p>
+<p><strong>Envoy and service meshes</strong> (Istio, Linkerd) take a different approach: distribute the load balancing function across every service instance as a sidecar proxy, rather than concentrating it in a centralized LB. Each Envoy sidecar handles load balancing, health checking, retries, and circuit breaking for its parent service&rsquo;s outbound connections. The control plane (Istio&rsquo;s istiod) distributes routing configuration to all sidecars. The result: no single load balancing tier to fail. The cost: significant operational complexity and the latency overhead of two additional proxy hops for every inter-service call.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key Insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L4 vs L7 LB</td>
+<td>L4 is faster; L7 knows HTTP paths and headers - enables canary, routing</td>
+</tr>
+<tr>
+<td>Round-robin vs least-connections</td>
+<td>Least-connections wins for variable-duration requests</td>
+</tr>
+<tr>
+<td>Consistent hashing</td>
+<td>Required for stateful workloads; use virtual nodes for even distribution</td>
+</tr>
+<tr>
+<td>AWS ALB</td>
+<td>Content-based routing, SSL termination, automatic health-based draining</td>
+</tr>
+<tr>
+<td>Sticky sessions</td>
+<td>Solve stateful routing but defeat horizontal scaling; prefer external session stores</td>
+</tr>
+<tr>
+<td>Active + passive health checks</td>
+<td>Active catches dead backends; passive catches degraded-but-alive ones</td>
+</tr>
+<tr>
+<td>GeoDNS vs Anycast</td>
+<td>GeoDNS is flexible; Anycast is faster and automatic (GCP Cloud LB)</td>
+</tr>
+<tr>
+<td>LB as SPOF</td>
+<td>Cloud-native LBs (ALB) distribute across AZs; on-prem LBs need HA pairs</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/consistency-cap-theorem/>Consistency & the CAP Theorem</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

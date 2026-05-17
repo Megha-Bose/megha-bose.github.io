@@ -1,0 +1,260 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Recursion: When Functions Call Themselves // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Recursion: When Functions Call Themselves">
+<meta name=twitter:description content="Prerequisite: Functions, Scope, and Reusable Code
+ Hold two mirrors facing each other and look inside. You see a hallway of reflections stretching into a vanishing point - each reflection contains an image of itself, slightly smaller, slightly darker, until it disappears into the distance.
+This is self-reference. The image contains itself. The definition contains itself. It is a structure that should not be able to exist, and yet there it is, perfectly finite, perfectly stable, arising from an infinite regress that stops only because each copy is smaller than the last.">
+<meta property="og:title" content="Recursion: When Functions Call Themselves">
+<meta property="og:description" content="Prerequisite: Functions, Scope, and Reusable Code
+ Hold two mirrors facing each other and look inside. You see a hallway of reflections stretching into a vanishing point - each reflection contains an image of itself, slightly smaller, slightly darker, until it disappears into the distance.
+This is self-reference. The image contains itself. The definition contains itself. It is a structure that should not be able to exist, and yet there it is, perfectly finite, perfectly stable, arising from an infinite regress that stops only because each copy is smaller than the last.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/recursion-when-functions-call-themselves/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Recursion: When Functions Call Themselves</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/functions-scope-reusable-code/>Functions, Scope, and Reusable Code</a></p>
+<hr>
+<p>Hold two mirrors facing each other and look inside. You see a hallway of reflections stretching into a vanishing point - each reflection contains an image of itself, slightly smaller, slightly darker, until it disappears into the distance.</p>
+<p>This is self-reference. The image contains itself. The definition contains itself. It is a structure that should not be able to exist, and yet there it is, perfectly finite, perfectly stable, arising from an infinite regress that stops only because each copy is smaller than the last.</p>
+<p>Recursion is the same idea applied to computation. A function calls itself. That call calls itself again. The calls nest until they reach a case small enough to answer directly, and then the answers propagate back up through the chain. The result is a technique of remarkable power and elegance - and, until you have built the right mental model, remarkable confusion.</p>
+<h2 id=why-recursion-was-invented>Why Recursion Was Invented</h2>
+<p>Recursion was not a clever trick added to programming languages. It emerged naturally from the mathematics of computation. Alonzo Church&rsquo;s lambda calculus (1936) and Kurt Gödel&rsquo;s work on recursive functions preceded electronic computers by decades. When McCarthy designed Lisp in 1958, he made recursion the primary mechanism for repetition - not because it was fashionable, but because it was the most direct way to express computations defined inductively.</p>
+<p>A factorial is defined inductively: 0! = 1, and n! = n × (n-1)!. The Fibonacci sequence is defined inductively: F(0) = 0, F(1) = 1, F(n) = F(n-1) + F(n-2). Tree traversal is defined inductively: process a node, then recursively process each child. These definitions <em>are</em> recursive - and recursive code reflects them directly:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>factorial</span>(n):
+    <span style=color:#66d9ef>if</span> n <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>:          <span style=color:#75715e># base case: the definition gives a direct answer</span>
+        <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>
+    <span style=color:#66d9ef>return</span> n <span style=color:#f92672>*</span> factorial(n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>)   <span style=color:#75715e># recursive case: reduce to a smaller instance</span>
+</code></pre></div><p>The code looks like the mathematical definition. This is not a coincidence.</p>
+<h2 id=the-two-mandatory-pieces>The Two Mandatory Pieces</h2>
+<p>Every correct recursive function has exactly two components:</p>
+<p><strong>A base case</strong> - the simplest input where you return a result directly, without a recursive call. For factorial, that is <code>n == 0</code>. For tree traversal, it is an empty tree or a leaf node. For string reversal, it is an empty string.</p>
+<p><strong>A recursive case</strong> - the general case, where you call yourself with a <em>strictly smaller or simpler</em> input. The crucial word is <em>strictly</em>. If the recursive call does not make progress toward the base case, you have infinite recursion.</p>
+<p>Forgetting the base case, or writing a recursive case that does not reduce the input, causes the function to call itself until Python raises:</p>
+<pre tabindex=0><code>RecursionError: maximum recursion depth exceeded
+</code></pre><p>This is a stack overflow - the call stack ran out of space. We will get to why shortly.</p>
+<h2 id=building-the-mental-model>Building the Mental Model</h2>
+<p>This is the hard part. Let me be direct about why recursion feels wrong at first: the human mind is not naturally comfortable with leaving a computation in a suspended state. When you read <code>return n * factorial(n - 1)</code>, something in your brain wants to know what <code>factorial(n - 1)</code> is <em>right now</em>, before moving on. But you cannot know - it depends on another call, which depends on another call.</p>
+<p>The trick is to stop trying to trace the execution. Instead, use inductive reasoning. Ask yourself:</p>
+<ol>
+<li>Does the base case return the right answer? For <code>factorial(0)</code>, yes - 1 is correct.</li>
+<li>If <code>factorial(n - 1)</code> magically returns the right answer, does <code>n * factorial(n - 1)</code> return the right answer for <code>n</code>? Yes - by the definition of factorial.</li>
+</ol>
+<p>That is all you need. If the base case is right and the recursive step is right <em>given that the recursive call works</em>, then the function is correct for all valid inputs, by induction. You do not need to trace the call chain.</p>
+<p>This is the same reasoning mathematicians use when writing inductive proofs. Recursion is induction in code.</p>
+<h2 id=what-is-actually-happening-stack-frames>What Is Actually Happening: Stack Frames</h2>
+<p>Now for the mechanism. We covered stack frames in <a href=/posts/functions-scope-reusable-code/>Functions, Scope, and Reusable Code</a> - every function call creates a frame on the call stack holding local variables and the return address. Recursive calls are no different:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>factorial(<span style=color:#ae81ff>4</span>)
+<span style=color:#75715e># Creates frame: n=4, waiting to compute 4 * factorial(3)</span>
+<span style=color:#75715e>#   factorial(3)</span>
+<span style=color:#75715e>#   Creates frame: n=3, waiting to compute 3 * factorial(2)</span>
+<span style=color:#75715e>#     factorial(2)</span>
+<span style=color:#75715e>#     Creates frame: n=2, waiting to compute 2 * factorial(1)</span>
+<span style=color:#75715e>#       factorial(1)</span>
+<span style=color:#75715e>#       Creates frame: n=1, waiting to compute 1 * factorial(0)</span>
+<span style=color:#75715e>#         factorial(0)</span>
+<span style=color:#75715e>#         Returns 1  ← base case, no more frames pushed</span>
+<span style=color:#75715e>#       Returns 1 * 1 = 1</span>
+<span style=color:#75715e>#     Returns 2 * 1 = 2</span>
+<span style=color:#75715e>#   Returns 3 * 2 = 6</span>
+<span style=color:#75715e># Returns 4 * 6 = 24</span>
+</code></pre></div><p>The call stack grows as calls accumulate, then shrinks as they return. The deepest point - the moment just before the base case returns - is where the most frames exist simultaneously. For <code>factorial(n)</code>, that is n+1 frames. For <code>factorial(1000)</code>, that is 1001 frames.</p>
+<p>Python&rsquo;s default limit is 1000 frames (configurable via <code>sys.setrecursionlimit</code>). This is not arbitrary caution - each stack frame consumes memory, and the operating system allocates a fixed region for the call stack. Overflow it and the process crashes.</p>
+<p>This is why recursion depth matters, and why recursion is poorly suited for processing flat, large collections.</p>
+<h2 id=tree-recursion-where-it-gets-beautiful>Tree Recursion: Where It Gets Beautiful</h2>
+<p>The most compelling use case for recursion is data that is recursively defined - trees.</p>
+<p>A tree node has a value and a list of children. Each child is itself a tree node. The structure is recursive. Code that processes it naturally mirrors that structure:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Node</span>:
+    <span style=color:#66d9ef>def</span> __init__(self, value, children<span style=color:#f92672>=</span><span style=color:#66d9ef>None</span>):
+        self<span style=color:#f92672>.</span>value <span style=color:#f92672>=</span> value
+        self<span style=color:#f92672>.</span>children <span style=color:#f92672>=</span> children <span style=color:#f92672>or</span> []
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>tree_sum</span>(node):
+    <span style=color:#e6db74>&#34;&#34;&#34;Sum all values in a tree of arbitrary depth.&#34;&#34;&#34;</span>
+    <span style=color:#66d9ef>return</span> node<span style=color:#f92672>.</span>value <span style=color:#f92672>+</span> sum(tree_sum(child) <span style=color:#66d9ef>for</span> child <span style=color:#f92672>in</span> node<span style=color:#f92672>.</span>children)
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>tree_depth</span>(node):
+    <span style=color:#e6db74>&#34;&#34;&#34;Return the maximum depth of the tree.&#34;&#34;&#34;</span>
+    <span style=color:#66d9ef>if</span> <span style=color:#f92672>not</span> node<span style=color:#f92672>.</span>children:
+        <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>
+    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> max(tree_depth(child) <span style=color:#66d9ef>for</span> child <span style=color:#f92672>in</span> node<span style=color:#f92672>.</span>children)
+
+root <span style=color:#f92672>=</span> Node(<span style=color:#ae81ff>1</span>, [
+    Node(<span style=color:#ae81ff>2</span>, [Node(<span style=color:#ae81ff>4</span>), Node(<span style=color:#ae81ff>5</span>)]),
+    Node(<span style=color:#ae81ff>3</span>, [Node(<span style=color:#ae81ff>6</span>)])
+])
+
+print(tree_sum(root))    <span style=color:#75715e># 21</span>
+print(tree_depth(root))  <span style=color:#75715e># 3</span>
+</code></pre></div><p>Try writing <code>tree_sum</code> iteratively. You will need to manually manage a stack - pushing and popping nodes, accumulating results. The recursive version has no such bookkeeping because the call stack <em>is</em> the stack. The machine&rsquo;s own architecture handles the state management.</p>
+<p>This extends to depth-first search, parsing nested expressions, processing JSON or XML, generating permutations, and the divide-and-conquer algorithms (merge sort, quicksort, binary search) that appear throughout computer science.</p>
+<h2 id=the-exponential-cost-problem-fibonacci>The Exponential Cost Problem: Fibonacci</h2>
+<p>Fibonacci is the standard example of naive recursion going catastrophically wrong:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fib</span>(n):
+    <span style=color:#66d9ef>if</span> n <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>2</span>:
+        <span style=color:#66d9ef>return</span> n
+    <span style=color:#66d9ef>return</span> fib(n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> fib(n <span style=color:#f92672>-</span> <span style=color:#ae81ff>2</span>)
+</code></pre></div><p>This is correct. It is also disastrously slow. <code>fib(5)</code> calls <code>fib(4)</code> and <code>fib(3)</code>. <code>fib(4)</code> calls <code>fib(3)</code> and <code>fib(2)</code>. <code>fib(3)</code> is computed twice. <code>fib(2)</code> is computed three times. The call tree grows exponentially - computing <code>fib(n)</code> requires $O(2^n)$ calls.</p>
+<p>The problem is <strong>overlapping subproblems</strong>: the same computation happens many times. The fix is memoization - cache results and reuse them:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> functools
+
+<span style=color:#a6e22e>@functools</span><span style=color:#f92672>.</span>lru_cache(maxsize<span style=color:#f92672>=</span><span style=color:#66d9ef>None</span>)
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fib</span>(n):
+    <span style=color:#66d9ef>if</span> n <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>2</span>:
+        <span style=color:#66d9ef>return</span> n
+    <span style=color:#66d9ef>return</span> fib(n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> fib(n <span style=color:#f92672>-</span> <span style=color:#ae81ff>2</span>)
+
+print(fib(<span style=color:#ae81ff>100</span>))   <span style=color:#75715e># 354224848179261915075, computed instantly</span>
+</code></pre></div><p><code>lru_cache</code> stores the return value for each set of arguments. The second time <code>fib(3)</code> is called, it returns the cached value immediately. This brings Fibonacci from $O(2^n)$ time to $O(n)$ time - solving 100 calls instead of $2^{100}$ calls.</p>
+<p>This is the bridge to <strong>dynamic programming</strong>: when a recursive problem has overlapping subproblems, cache the results. The memoized recursion and the bottom-up dynamic programming table are two ways of solving the same structure.</p>
+<h2 id=tail-recursion-the-optimization-python-does-not-have>Tail Recursion: The Optimization Python Does Not Have</h2>
+<p>There is a particular form of recursion called <strong>tail recursion</strong>, where the recursive call is the very last thing the function does - with no pending computation afterward:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Tail recursive - the recursive call IS the return value</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>factorial_tail</span>(n, accumulator<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>):
+    <span style=color:#66d9ef>if</span> n <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>:
+        <span style=color:#66d9ef>return</span> accumulator
+    <span style=color:#66d9ef>return</span> factorial_tail(n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>, n <span style=color:#f92672>*</span> accumulator)   <span style=color:#75715e># last operation</span>
+</code></pre></div><p>Compare with the original:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># Not tail recursive - after the recursive call, we still need to multiply</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>factorial</span>(n):
+    <span style=color:#66d9ef>if</span> n <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>:
+        <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>
+    <span style=color:#66d9ef>return</span> n <span style=color:#f92672>*</span> factorial(n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>)   <span style=color:#75715e># must multiply after the call returns</span>
+</code></pre></div><p>In languages that implement <strong>tail call optimization</strong> (TCO) - Scheme, Haskell, most functional languages, modern JavaScript - tail recursive functions are automatically converted to loops by the compiler. No new stack frame is pushed; the current frame is reused. Tail recursion becomes O(1) stack space, making it safe for arbitrarily deep recursion.</p>
+<p><strong>Python does not do this.</strong> Guido van Rossum has explicitly stated he will not add TCO to Python, arguing that the resulting loss of stack traces makes debugging too difficult. This is a real design tradeoff - tail recursion eliminates stack overflow at the cost of opacity.</p>
+<p>The consequence: if you write a tail-recursive function in Python, it still creates n stack frames. For deep recursion, convert it to a loop:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>factorial_iter</span>(n):
+    result <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>
+    <span style=color:#66d9ef>while</span> n <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span>:
+        result <span style=color:#f92672>*=</span> n
+        n <span style=color:#f92672>-=</span> <span style=color:#ae81ff>1</span>
+    <span style=color:#66d9ef>return</span> result
+</code></pre></div><p>This is the iterative equivalent of the tail-recursive version. Same logic, no stack depth concern, faster in practice.</p>
+<h2 id=when-to-use-recursion-and-when-not-to>When to Use Recursion and When Not To</h2>
+<p><strong>Reach for recursion when:</strong></p>
+<ul>
+<li>The problem is recursively defined (trees, nested structures, grammars).</li>
+<li>The recursive solution is significantly clearer than the iterative equivalent.</li>
+<li>The input depth is bounded (file systems rarely exceed depth 20; a balanced binary search tree over a million elements has depth at most 20).</li>
+<li>The problem structure naturally produces divide-and-conquer: split, solve, combine.</li>
+</ul>
+<p><strong>Prefer iteration when:</strong></p>
+<ul>
+<li>You are processing a flat data structure (a list, an array). Iterating 100,000 elements recursively will hit the recursion limit. A loop will not.</li>
+<li>Performance matters and you cannot afford the function call overhead.</li>
+<li>The recursion depth is proportional to input size and could be large.</li>
+<li>You are in Python and the elegant tail-recursive form cannot benefit from TCO.</li>
+</ul>
+<p><strong>Common gotcha:</strong> Python&rsquo;s recursion limit is 1000, not 1000 per call chain - it is 1000 <em>total active frames across all recursive calls</em>. If your function calls another function which calls another, those all count against the limit.</p>
+<h2 id=connection-to-divide-and-conquer-dfs-and-dynamic-programming>Connection to Divide and Conquer, DFS, and Dynamic Programming</h2>
+<p>Recursion is not just a coding technique - it is the underlying structure of entire classes of algorithms.</p>
+<p><strong>Divide and conquer</strong> algorithms (merge sort, quicksort, binary search) recursively split a problem, solve the pieces, and combine the results. The recursion tree is the algorithm&rsquo;s structure.</p>
+<p><strong>Depth-first search</strong> (DFS) on a graph is recursion over a tree-like structure: visit a node, then recursively visit unvisited neighbors. The call stack naturally maintains the path being explored.</p>
+<p><strong>Dynamic programming</strong> is memoized recursion made explicit. The recursive formulation identifies the structure; the memoization (or the bottom-up table) eliminates the redundant computation.</p>
+<p>Every time you encounter these topics in algorithms, you are looking at recursion in a different outfit.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base case</td>
+<td>Required; the direct answer without a recursive call</td>
+</tr>
+<tr>
+<td>Recursive case</td>
+<td>Must strictly reduce the input toward the base case</td>
+</tr>
+<tr>
+<td>Stack frames</td>
+<td>One per active call; Python default limit is 1000</td>
+</tr>
+<tr>
+<td>Tail recursion</td>
+<td>A special form Python does NOT optimize - convert to loops</td>
+</tr>
+<tr>
+<td>Memoization</td>
+<td>Caches subproblem results; transforms $O(2^n)$ to $O(n)$ for Fibonacci</td>
+</tr>
+<tr>
+<td>Best use cases</td>
+<td>Trees, nested structures, divide-and-conquer, DFS</td>
+</tr>
+<tr>
+<td>Worst use cases</td>
+<td>Flat collections, inputs where depth is proportional to size</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/object-oriented-programming/>Object-Oriented Programming</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

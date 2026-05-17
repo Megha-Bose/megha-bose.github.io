@@ -1,0 +1,439 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Vector Calculus for ML // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Vector Calculus for ML">
+<meta name=twitter:description content="Prerequisites:
+ Gradients & Partial Derivatives Functions & Mappings (the matrices-are-linear-maps section) The Chain Rule & Backpropagation   A neural network layer takes a vector $x \in \mathbb{R}^n$ and produces a vector $y \in \mathbb{R}^m$. To train the network, you need to compute the derivative of the loss with respect to every parameter - and the loss is a scalar, but the layer&rsquo;s output is a vector. The derivative of a scalar-valued function of a vector is itself a vector (the gradient).">
+<meta property="og:title" content="Vector Calculus for ML">
+<meta property="og:description" content="Prerequisites:
+ Gradients & Partial Derivatives Functions & Mappings (the matrices-are-linear-maps section) The Chain Rule & Backpropagation   A neural network layer takes a vector $x \in \mathbb{R}^n$ and produces a vector $y \in \mathbb{R}^m$. To train the network, you need to compute the derivative of the loss with respect to every parameter - and the loss is a scalar, but the layer&rsquo;s output is a vector. The derivative of a scalar-valued function of a vector is itself a vector (the gradient).">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/vector-calculus-for-ml/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Vector Calculus for ML</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Dec 11, 2020
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+26 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/gradients-partial-derivatives/>Gradients & Partial Derivatives</a></li>
+<li><a href=/posts/functions-mappings/>Functions & Mappings</a> (the matrices-are-linear-maps section)</li>
+<li><a href=/posts/the-chain-rule-backpropagation/>The Chain Rule & Backpropagation</a></li>
+</ul>
+<hr>
+<p>A neural network layer takes a vector $x \in \mathbb{R}^n$ and produces a vector $y \in \mathbb{R}^m$. To train the network, you need to compute the derivative of the loss with respect to every parameter - and the loss is a scalar, but the layer&rsquo;s output is a vector. The derivative of a scalar-valued function of a vector is itself a vector (the gradient). But the derivative of a vector-valued function of a vector is a matrix.</p>
+<p>What is that matrix? Why is it a matrix? And what does it have to do with the chain rule and backpropagation?</p>
+<p>These are the questions this post answers. The answers unify everything: gradients, Jacobians, backpropagation, and the chain rule are all the same idea - the derivative as a linear map - expressed in different dimensions.</p>
+<hr>
+<h2 id=section-1-the-derivative-is-always-a-linear-map>Section 1: The Derivative Is Always a Linear Map</h2>
+<p>Start with the most familiar case.</p>
+<p>For $f: \mathbb{R} \to \mathbb{R}$, the derivative $f'(a)$ is a number. At the point $a$, the best linear approximation to $f$ is:</p>
+<p>$$f(a + h) \approx f(a) + f'(a) \cdot h$$</p>
+<p>The number $f'(a)$ is a linear map from $\mathbb{R}$ to $\mathbb{R}$: it multiplies $h$ by a scalar. In matrix language, it is a $1 \times 1$ matrix.</p>
+<p>For $f: \mathbb{R}^n \to \mathbb{R}$, the gradient $\nabla f(x)$ is a vector. At the point $x$, the best linear approximation is:</p>
+<p>$$f(x + \delta) \approx f(x) + \nabla f(x) \cdot \delta$$</p>
+<p>The gradient $\nabla f(x)$ (as a row vector) is a linear map from $\mathbb{R}^n$ to $\mathbb{R}$: it sends a displacement vector $\delta$ to a scalar via the dot product. In matrix language, it is a $1 \times n$ matrix.</p>
+<p>For $f: \mathbb{R}^n \to \mathbb{R}^m$, at the point $x$, the best linear approximation is:</p>
+<p>$$f(x + \delta) \approx f(x) + J \delta$$</p>
+<p>where $J$ is some $m \times n$ matrix - called the <strong>Jacobian</strong>. This matrix $J$ is a linear map from $\mathbb{R}^n$ to $\mathbb{R}^m$: it sends a displacement vector $\delta \in \mathbb{R}^n$ to an output displacement in $\mathbb{R}^m$.</p>
+<p><strong>The unifying principle:</strong> the derivative is always the best linear approximation. It is always a linear map. In coordinates, it is always a matrix. What changes as we go from 1D to $n$D to vector-valued functions is just the shape of that matrix.</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Derivative</th>
+<th>Matrix shape</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$f: \mathbb{R} \to \mathbb{R}$</td>
+<td>$f'(x)$ - a number</td>
+<td>$1 \times 1$</td>
+</tr>
+<tr>
+<td>$f: \mathbb{R}^n \to \mathbb{R}$</td>
+<td>$\nabla f(x)$ - a vector</td>
+<td>$1 \times n$ (row vector)</td>
+</tr>
+<tr>
+<td>$f: \mathbb{R}^n \to \mathbb{R}^m$</td>
+<td>$J_f(x)$ - the Jacobian</td>
+<td>$m \times n$</td>
+</tr>
+</tbody>
+</table>
+<p>These are not three different things. They are one thing - the derivative as a linear map - in three different dimensional settings.</p>
+<hr>
+<h2 id=section-2-the-total-derivative---formal-definition>Section 2: The Total Derivative - Formal Definition</h2>
+<p><strong>Definition.</strong> A function $f: \mathbb{R}^n \to \mathbb{R}^m$ is <strong>differentiable</strong> at $x$ if there exists a linear map $Df(x): \mathbb{R}^n \to \mathbb{R}^m$ such that:</p>
+<p>$$\lim_{|\delta| \to 0} \frac{|f(x + \delta) - f(x) - Df(x)\delta|}{|\delta|} = 0$$</p>
+<p>When such a linear map exists, it is unique and called the <strong>total derivative</strong> (or <strong>Fréchet derivative</strong>) of $f$ at $x$.</p>
+<p>In words: $Df(x)$ is the unique linear map such that $f(x + \delta) \approx f(x) + Df(x)\delta$ with an error that is smaller than $|\delta|$ as $\delta \to 0$.</p>
+<p>This is exactly the same definition as for $f: \mathbb{R} \to \mathbb{R}$, where $Df(x) = f'(x)$ is the number that satisfies $f(x + h) \approx f(x) + f'(x) h$ with error $o(h)$. The only change is that everything is now vector-valued and the linear map is a matrix.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> The derivative being a linear map - not just a number - might feel strange. But you have been using this idea all along. When you write $f(x + h) \approx f(x) + f'(x) h$, the right-hand side is the linear function $h \mapsto f'(x) h$ added to $f(x)$. The &ldquo;linear function $h \mapsto f'(x) h$&rdquo; is a linear map from $\mathbb{R}$ to $\mathbb{R}$, encoded by the number $f'(x)$. In higher dimensions, the same linear map exists, but it needs a matrix to encode it.</p>
+</blockquote>
+<hr>
+<h2 id=section-3-the-jacobian---the-derivative-in-coordinates>Section 3: The Jacobian - The Derivative in Coordinates</h2>
+<p>Given $f = (f_1, \ldots, f_m): \mathbb{R}^n \to \mathbb{R}^m$, the matrix of $Df(x)$ in the standard basis is the <strong>Jacobian</strong>:</p>
+<p>$$J_f(x) = \begin{pmatrix} \frac{\partial f_1}{\partial x_1} & \frac{\partial f_1}{\partial x_2} & \cdots & \frac{\partial f_1}{\partial x_n} \\ \frac{\partial f_2}{\partial x_1} & \frac{\partial f_2}{\partial x_2} & \cdots & \frac{\partial f_2}{\partial x_n} \\ \vdots & \vdots & \ddots & \vdots \\ \frac{\partial f_m}{\partial x_1} & \frac{\partial f_m}{\partial x_2} & \cdots & \frac{\partial f_m}{\partial x_n} \end{pmatrix}$$</p>
+<p>The $(i, j)$ entry is $J_{ij} = \frac{\partial f_i}{\partial x_j}$: how does the $i$-th output change when you change the $j$-th input?</p>
+<p><strong>Connecting back to Functions & Mappings.</strong> We proved there that every linear map $T: \mathbb{R}^n \to \mathbb{R}^m$ can be represented as an $m \times n$ matrix, where the $j$-th column is where $T$ sends the $j$-th basis vector. The Jacobian is exactly this matrix for the linear map $Df(x)$. The $j$-th column of $J_f$ tells you how a unit perturbation in the $x_j$-direction propagates through $f$ to affect all outputs.</p>
+<p><strong>Special cases:</strong></p>
+<ul>
+<li>
+<p>$m = 1$: the Jacobian is a $1 \times n$ matrix (row vector). Transposed, this is the gradient $\nabla f$. So the Jacobian of a scalar-valued function is the gradient transposed: $J_f = \nabla f^T$.</p>
+</li>
+<li>
+<p>$m = n$ and $f$ is a linear map given by matrix $A$: $f(x) = Ax$. The Jacobian of a linear map is the matrix itself: $J_{Ax} = A$. The derivative of a linear function is the linear function. This makes sense: the best linear approximation to a linear function at any point is the function itself.</p>
+</li>
+</ul>
+<p><strong>Why the Jacobian IS the linear map from Functions & Mappings.</strong> The Jacobian at a point $x$ is the best linear approximation to $f$ near $x$. If $f$ itself were linear ($f(x) = Ax$), the Jacobian would be $A$ everywhere. For nonlinear $f$, the Jacobian is a different matrix at each point - the local linear approximation at that point. Every concept from Functions & Mappings (injectivity, surjectivity, rank, kernel, image) applies to the Jacobian, and it tells you about the local behavior of $f$:</p>
+<ul>
+<li>The rank of $J_f(x)$ tells you how many independent directions $f$ maps to near $x$.</li>
+<li>$\ker(J_f(x)) = {0}$ (injective Jacobian) means $f$ is locally injective - no two nearby points map to the same output.</li>
+<li>$\text{Im}(J_f(x)) = \mathbb{R}^m$ (surjective Jacobian) means $f$ locally covers all of $\mathbb{R}^m$.</li>
+<li>Full rank Jacobian ($\text{rank}(J_f) = \min(m, n)$) is the condition for the inverse function theorem.</li>
+</ul>
+<hr>
+<h2 id=section-4-computing-jacobians---worked-examples>Section 4: Computing Jacobians - Worked Examples</h2>
+<p><strong>Example 1: A linear map.</strong> $f(x) = Ax$ where $A$ is an $m \times n$ matrix.</p>
+<p>$J_f(x) = A$ everywhere. The Jacobian of a linear map is constant - the map itself.</p>
+<p><strong>Example 2: A quadratic map.</strong> $f: \mathbb{R}^2 \to \mathbb{R}^2$ defined by $f(x, y) = (x^2 + y, xy)$.</p>
+<p>$$J_f = \begin{pmatrix} \frac{\partial(x^2 + y)}{\partial x} & \frac{\partial(x^2 + y)}{\partial y} \\ \frac{\partial(xy)}{\partial x} & \frac{\partial(xy)}{\partial y} \end{pmatrix} = \begin{pmatrix} 2x & 1 \\ y & x \end{pmatrix}$$</p>
+<p>At $(1, 2)$: $J_f = \begin{pmatrix} 2 & 1 \\ 2 & 1 \end{pmatrix}$. This matrix has rank 1 ($\det = 2 - 2 = 0$): the map $f$ is locally non-injective at this point. Two different nearby inputs get sent to the same output direction.</p>
+<p>At $(1, 0)$: $J_f = \begin{pmatrix} 2 & 1 \\ 0 & 1 \end{pmatrix}$. This has rank 2 ($\det = 2 \neq 0$): the map is locally invertible at this point.</p>
+<p><strong>Example 3: Softmax.</strong> The softmax function maps $\mathbb{R}^n \to \mathbb{R}^n$:</p>
+<p>$$\text{softmax}(x)<em>i = \frac{e^{x_i}}{\sum</em>{j=1}^n e^{x_j}} = s_i$$</p>
+<p>The Jacobian entries are:</p>
+<p>$$\frac{\partial s_i}{\partial x_j} = \begin{cases} s_i(1 - s_i) & i = j \\ -s_i s_j & i \neq j \end{cases}$$</p>
+<p>In matrix form: $J = \text{diag}(s) - s s^T$ (diagonal matrix of softmax outputs minus their outer product). This Jacobian is always singular: its columns sum to zero (because $\sum_i s_i = 1$ implies $\sum_i \frac{\partial s_i}{\partial x_j} = 0$). Softmax is not locally invertible - multiple inputs map to the same output direction (adding a constant to all $x_i$ does not change the softmax output).</p>
+<p><strong>Example 4: A neural network layer with ReLU.</strong> $f: \mathbb{R}^n \to \mathbb{R}^m$ defined by $f(x) = \text{ReLU}(Wx + b)$, where $W$ is $m \times n$.</p>
+<p>The composition: $x \mapsto z = Wx + b \mapsto f = \text{ReLU}(z)$.</p>
+<p>The Jacobian of $\text{ReLU}(z)$ with respect to $z$: ReLU acts component-wise, so its Jacobian is diagonal:</p>
+<p>$$J_{\text{ReLU}}(z) = \text{diag}(\mathbf{1}[z_1 > 0], \mathbf{1}[z_2 > 0], \ldots, \mathbf{1}[z_m > 0])$$</p>
+<p>where $\mathbf{1}[z_i > 0]$ is 1 if the neuron is active and 0 if not.</p>
+<p>The Jacobian of $Wx + b$ with respect to $x$ is $W$.</p>
+<p>The Jacobian of the full layer (by the chain rule, which we will see next):</p>
+<p>$$J_f(x) = J_{\text{ReLU}}(Wx + b) \cdot W = \text{diag}(\mathbf{1}[z > 0]) \cdot W$$</p>
+<p>This is $W$ with the rows corresponding to &ldquo;dead&rdquo; neurons (where $z_i \leq 0$) zeroed out.</p>
+<hr>
+<h2 id=section-5-the-chain-rule-as-matrix-multiplication>Section 5: The Chain Rule as Matrix Multiplication</h2>
+<p>In single-variable calculus, if $h = g \circ f$ (apply $f$ first, then $g$), then:</p>
+<p>$$h'(x) = g'(f(x)) \cdot f'(x)$$</p>
+<p>The derivatives multiply. This is the chain rule.</p>
+<p>In multivariable calculus, the analog is:</p>
+<p><strong>Theorem (Multivariable Chain Rule).</strong> If $f: \mathbb{R}^n \to \mathbb{R}^m$ is differentiable at $x$ and $g: \mathbb{R}^m \to \mathbb{R}^p$ is differentiable at $f(x)$, then $h = g \circ f: \mathbb{R}^n \to \mathbb{R}^p$ is differentiable at $x$ and:</p>
+<p>$$J_h(x) = J_g(f(x)) \cdot J_f(x)$$</p>
+<p>where $\cdot$ denotes matrix multiplication. The Jacobians multiply.</p>
+<p><strong>The mapping is exact.</strong> In 1D: $h'(x) = g'(f(x)) \cdot f'(x)$ (scalar multiplication). In higher dimensions: $J_h = J_g \cdot J_f$ (matrix multiplication). Scalar multiplication is the special case of matrix multiplication when all matrices are $1 \times 1$.</p>
+<p>The dimensions work out: $J_g$ is $p \times m$, $J_f$ is $m \times n$, so $J_g \cdot J_f$ is $p \times n$, which is the right shape for a map from $\mathbb{R}^n$ to $\mathbb{R}^p$.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why does the chain rule become matrix multiplication? In 1D, $h'(x) = g'(f(x)) \cdot f'(x)$ measures the rate of change of $g \circ f$ at $x$. In higher dimensions, the &ldquo;rate of change&rdquo; is a linear map. The total linear map from input displacements to output displacements is found by first applying the linear approximation of $f$ (sending $\delta \in \mathbb{R}^n$ to $J_f \delta \in \mathbb{R}^m$), then applying the linear approximation of $g$ (sending $J_f \delta \in \mathbb{R}^m$ to $J_g \cdot J_f \delta \in \mathbb{R}^p$). Composing two linear maps is matrix multiplication. The chain rule IS composition of linear maps.</p>
+</blockquote>
+<p><strong>Example.</strong> Let $f(x) = (x_1^2, x_2^2): \mathbb{R}^2 \to \mathbb{R}^2$ and $g(y) = y_1 + y_2: \mathbb{R}^2 \to \mathbb{R}$.</p>
+<p>$h(x) = g(f(x)) = x_1^2 + x_2^2$.</p>
+<p>Jacobian of $f$: $J_f = \begin{pmatrix} 2x_1 & 0 \\ 0 & 2x_2 \end{pmatrix}$ (a $2 \times 2$ matrix).</p>
+<p>Jacobian of $g$: $J_g = (1, 1)$ (a $1 \times 2$ row vector).</p>
+<p>By the chain rule: $J_h = J_g \cdot J_f = (1, 1) \begin{pmatrix} 2x_1 & 0 \\ 0 & 2x_2 \end{pmatrix} = (2x_1, 2x_2)$.</p>
+<p>This is the gradient $\nabla h = (2x_1, 2x_2)$, which is correct.</p>
+<hr>
+<h2 id=section-6-backpropagation-is-the-jacobian-chain-rule>Section 6: Backpropagation IS the Jacobian Chain Rule</h2>
+<p>A neural network with $L$ layers computes:</p>
+<p>$$\text{output} = f_L \circ f_{L-1} \circ \cdots \circ f_2 \circ f_1(x)$$</p>
+<p>The loss is:</p>
+<p>$$\ell = \text{loss}(f_L \circ \cdots \circ f_1(x), y)$$</p>
+<p>To train the network, you need $\frac{\partial \ell}{\partial \theta_i}$ for every parameter $\theta_i$ in every layer. By the chain rule:</p>
+<p>$$J_\ell = J_{\text{loss}} \cdot J_{f_L} \cdot J_{f_{L-1}} \cdots J_{f_1}$$</p>
+<p>This is a product of matrices. The total Jacobian of the loss is the product of Jacobians of each layer.</p>
+<p><strong>The forward-backward distinction.</strong> To compute this product, you can go left-to-right (forward mode) or right-to-left (backward mode).</p>
+<p><strong>Forward mode (left-to-right):</strong> $J_\ell = J_{\text{loss}} \cdot (J_{f_L} \cdot (J_{f_{L-1}} \cdots J_{f_1}))$. Compute from right to left, building up the product one layer at a time. Each intermediate product is a matrix. If the input dimension is $n$ and you are computing the gradient of $\ell$ (a scalar) with respect to all parameters, you need to carry a matrix at each step. Cost: one forward pass per input dimension $n$.</p>
+<p><strong>Backward mode (right-to-left):</strong> $(J_{\text{loss}} \cdot J_{f_L}) \cdot J_{f_{L-1}} \cdots J_{f_1}$. Start with $J_{\text{loss}}$ (a row vector, since loss is scalar), then multiply by $J_{f_L}$ on the right, and so on. At every step, you have a row vector - not a matrix. Cost: one backward pass for all parameters simultaneously.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why does the direction of matrix multiplication matter for cost? Consider a product $A \cdot B \cdot C$ where $A$ is $1 \times m$, $B$ is $m \times n$, and $C$ is $n \times p$. Computing $(A \cdot B) \cdot C$: first multiply $1 \times m$ by $m \times n$ to get $1 \times n$ (cost: $mn$), then multiply $1 \times n$ by $n \times p$ to get $1 \times p$ (cost: $np$). Total: $mn + np$. Computing $A \cdot (B \cdot C)$: first multiply $m \times n$ by $n \times p$ to get $m \times p$ (cost: $mnp$!), then multiply $1 \times m$ by $m \times p$. The second approach is much more expensive because you form a large intermediate matrix. Backpropagation is efficient precisely because the loss is scalar ($m = 1$): starting from the loss and going backward keeps all intermediate products as vectors, not matrices.</p>
+</blockquote>
+<p><strong>Backpropagation is backward mode automatic differentiation.</strong> The &ldquo;backward pass&rdquo; of neural network training is right-to-left evaluation of the Jacobian chain product, starting from the loss gradient (a scalar) and propagating it backward through each layer. At each layer, the local Jacobian is multiplied in from the left.</p>
+<p>For a neural network with $N$ parameters, backward mode computes all $N$ partial derivatives $\frac{\partial \ell}{\partial \theta_i}$ in one backward pass with cost proportional to the forward pass. This is why training is feasible: $N$ can be $10^8$, but backpropagation still only takes twice the compute of the forward pass.</p>
+<hr>
+<h2 id=section-7-the-gradient-of-a-matrix---loss-derivatives-in-practice>Section 7: The Gradient of a Matrix - Loss Derivatives in Practice</h2>
+<p>In machine learning, parameters are often organized as matrices. For a linear layer with weight matrix $W \in \mathbb{R}^{m \times n}$, the output is $y = Wx$. The loss $\ell$ depends on $y$ and hence on $W$.</p>
+<p>What is $\frac{\partial \ell}{\partial W}$? This means: how does the scalar loss change as we vary each entry $W_{ij}$?</p>
+<p>The answer is a matrix of the same shape as $W$: the $(i, j)$ entry of $\frac{\partial \ell}{\partial W}$ is $\frac{\partial \ell}{\partial W_{ij}}$.</p>
+<p><strong>Example: Linear regression loss.</strong> $\ell = |Wx - y|^2 = (Wx - y)^T(Wx - y)$.</p>
+<p>We want $\frac{\partial \ell}{\partial W}$.</p>
+<p>By the chain rule: $\frac{\partial \ell}{\partial W_{ij}} = \frac{\partial \ell}{\partial z_i} \cdot \frac{\partial z_i}{\partial W_{ij}}$, where $z = Wx - y$.</p>
+<p>$\frac{\partial \ell}{\partial z_i} = 2z_i$ (since $\ell = \sum_k z_k^2$).</p>
+<p>$\frac{\partial z_i}{\partial W_{ij}} = x_j$ (since $z_i = \sum_k W_{ik} x_k - y_i$, so the $j$-th term gives $x_j$).</p>
+<p>Therefore: $\frac{\partial \ell}{\partial W_{ij}} = 2z_i x_j$.</p>
+<p>In matrix form: $\frac{\partial \ell}{\partial W} = 2z x^T = 2(Wx - y)x^T$.</p>
+<p>This is an outer product. The gradient with respect to $W$ is the outer product of the error vector $(Wx - y)$ with the input $x$. This is the update rule for linear regression gradient descent:</p>
+<p>$$W \leftarrow W - \alpha \cdot 2(Wx - y)x^T$$</p>
+<p>Each parameter $W_{ij}$ is adjusted proportionally to the prediction error in output $i$ times the corresponding input feature $j$. This is exactly the Hebbian learning intuition: connections between active inputs and erroneous outputs get the largest update.</p>
+<hr>
+<h2 id=section-8-divergence---when-the-output-is-a-vector-field>Section 8: Divergence - When the Output Is a Vector Field</h2>
+<p>So far we have focused on Jacobians of functions $f: \mathbb{R}^n \to \mathbb{R}^m$. Now we consider functions $F: \mathbb{R}^n \to \mathbb{R}^n$ - vector fields, which assign a vector to each point in space.</p>
+<p>Given a vector field $F = (F_1, F_2, F_3): \mathbb{R}^3 \to \mathbb{R}^3$, the Jacobian is a $3 \times 3$ matrix. Two special combinations of this matrix have names:</p>
+<p><strong>Divergence.</strong> The trace of the Jacobian:</p>
+<p>$$\nabla \cdot F = \frac{\partial F_1}{\partial x} + \frac{\partial F_2}{\partial y} + \frac{\partial F_3}{\partial z}$$</p>
+<p>The divergence measures how much the field &ldquo;spreads out&rdquo; at a point. If $\nabla \cdot F > 0$, the field has a source (fluid flowing outward). If $\nabla \cdot F &lt; 0$, it has a sink. If $\nabla \cdot F = 0$ everywhere, the field is incompressible (volume is conserved).</p>
+<p>In machine learning: the divergence appears in normalizing flows. If $x(t)$ evolves according to the ODE $\dot{x} = v_\theta(x, t)$, the log-density of $x(t)$ changes at the rate $-\nabla \cdot v_\theta$. Computing the full Jacobian to find the divergence costs $O(n^2)$ in general. Hutchinson&rsquo;s trace estimator approximates the trace using random vectors: $\text{tr}(J) \approx \mathbb{E}[\epsilon^T J \epsilon]$ for $\epsilon \sim \mathcal{N}(0, I)$, reducing the cost to $O(n)$.</p>
+<p><strong>Curl.</strong> The antisymmetric part of the Jacobian (in 3D):</p>
+<p>$$\nabla \times F = \left(\frac{\partial F_3}{\partial y} - \frac{\partial F_2}{\partial z}, \quad \frac{\partial F_1}{\partial z} - \frac{\partial F_3}{\partial x}, \quad \frac{\partial F_2}{\partial x} - \frac{\partial F_1}{\partial y}\right)$$</p>
+<p>The curl measures the infinitesimal rotation of the field at a point. A field with zero curl everywhere is called conservative (or irrotational) - it is the gradient of some scalar potential, $F = \nabla \phi$. Conservative fields arise naturally in physics: gravitational fields and electrostatic fields are both conservative.</p>
+<hr>
+<h2 id=section-9-the-laplacian---divergence-of-the-gradient>Section 9: The Laplacian - Divergence of the Gradient</h2>
+<p>The gradient $\nabla f$ of a scalar field is a vector field. Take the divergence of that vector field:</p>
+<p>$$\Delta f = \nabla \cdot (\nabla f) = \sum_{i=1}^n \frac{\partial^2 f}{\partial x_i^2}$$</p>
+<p>This is the <strong>Laplacian</strong> of $f$, written $\Delta f$ or $\nabla^2 f$.</p>
+<p>The Laplacian measures how $f$ at a point compares to its average over nearby points. Specifically, $\Delta f(x) > 0$ means $f(x)$ is below its local average (the function wants to increase), and $\Delta f(x) &lt; 0$ means $f(x)$ is above its local average.</p>
+<p>Functions with $\Delta f = 0$ everywhere are <strong>harmonic</strong> - they sit at exactly their local average everywhere. Harmonic functions model steady-state temperature distributions, electrostatic potentials in charge-free space, and probability currents.</p>
+<p><strong>The graph Laplacian.</strong> For discrete data on a graph $G = (V, E)$ with adjacency matrix $A$ and degree matrix $D$, the analogous object is $L = D - A$. For a signal $x \in \mathbb{R}^{|V|}$ (a value at each node):</p>
+<p>$$x^T L x = \sum_{(i,j) \in E} (x_i - x_j)^2$$</p>
+<p>This is the total variation of the signal: how much it varies between connected nodes. Minimizing $x^T L x$ encourages smooth signals (nearby nodes have similar values). This is the discrete analog of the continuous Dirichlet energy $\int |\nabla f|^2$.</p>
+<p>Graph neural networks use $L$ to aggregate neighborhood information. Spectral graph convolutions multiply in the eigenbasis of $L$ - the &ldquo;graph Fourier transform&rdquo; - analogous to how classical convolution multiplies in the Fourier basis (eigenbasis of the continuous Laplacian).</p>
+<hr>
+<h2 id=section-10-the-inverse-function-theorem>Section 10: The Inverse Function Theorem</h2>
+<p>For a function $f: \mathbb{R} \to \mathbb{R}$, if $f'(a) \neq 0$ at some point $a$, then $f$ is locally invertible near $a$: there is a neighborhood of $a$ on which $f$ is one-to-one and onto its image.</p>
+<p>For $f: \mathbb{R}^n \to \mathbb{R}^n$, the analog is:</p>
+<p><strong>Inverse Function Theorem.</strong> If $f: \mathbb{R}^n \to \mathbb{R}^n$ is continuously differentiable and $J_f(a)$ is invertible (has nonzero determinant) at $a$, then $f$ is locally invertible near $a$, and the derivative of the local inverse is $(J_f(a))^{-1}$.</p>
+<p>The mapping: &ldquo;$f'(a) \neq 0$&rdquo; becomes &ldquo;$J_f(a)$ is invertible (full rank)&rdquo;.</p>
+<p>This theorem is fundamental in differential geometry and physics: it tells you when a change of variables is valid, when a system of equations can be solved locally, and when a neural network layer is locally reversible.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why does the invertibility of $J_f$ at one point imply invertibility of $f$ in a neighborhood? Because $J_f$ is the best linear approximation to $f$ near the point. If the linear approximation is invertible, then for small perturbations, the full function is approximately linear, and approximately linear with an invertible matrix is invertible. More precisely, if $J_f(a)$ is invertible, the linear map $h \mapsto J_f(a)h$ stretches every direction. By continuity of $f$, for small enough perturbations, $f$ also stretches every direction, ensuring it is one-to-one.</p>
+</blockquote>
+<hr>
+<h2 id=section-11-forward-vs-backward-mode---why-both-matter>Section 11: Forward vs. Backward Mode - Why Both Matter</h2>
+<p>We established that backpropagation uses backward mode (right-to-left Jacobian multiplication). But forward mode (left-to-right) is sometimes better.</p>
+<p><strong>Forward mode</strong> is efficient when you need to compute $J_f v$ for a specific vector $v$ (a Jacobian-vector product). Cost: one forward pass. Useful when:</p>
+<ul>
+<li>The function has few inputs and many outputs ($n \ll m$): to compute $J_f$ column by column, each column costs one forward pass, for $n$ total passes.</li>
+<li>You want directional derivatives: $J_f v = D_v f$, the derivative of $f$ in direction $v$.</li>
+</ul>
+<p><strong>Backward mode</strong> is efficient when you need to compute $u^T J_f$ for a specific vector $u$ (a vector-Jacobian product). Cost: one backward pass. Useful when:</p>
+<ul>
+<li>The function has many inputs and few outputs ($m \ll n$): to compute the gradient $\nabla \ell = J_\ell$ (where $\ell$ is scalar), one backward pass gives all $n$ partial derivatives simultaneously.</li>
+<li>This is exactly the neural network training case: millions of parameters ($n$), scalar loss ($m = 1$).</li>
+</ul>
+<p><strong>Higher-order derivatives.</strong> The Hessian $H$ is the Jacobian of the gradient $\nabla f$. To compute $Hv$ (a Hessian-vector product):</p>
+<ul>
+<li>Use forward-over-backward: run backward mode to get $\nabla f$, then run forward mode to differentiate $\nabla f$ in direction $v$.</li>
+<li>Cost: two passes through the network (one forward, one backward).</li>
+</ul>
+<p>This is used in Newton-CG methods that solve $Hd = -\nabla f$ approximately using conjugate gradient, each iteration of which requires one Hessian-vector product.</p>
+<hr>
+<h2 id=section-12-score-functions-and-the-gradient-of-a-log-density>Section 12: Score Functions and the Gradient of a Log-Density</h2>
+<p>A pattern that appears throughout probabilistic ML: the <strong>score function</strong> $\nabla_x \log p(x)$.</p>
+<p>For a probability density $p(x)$, the score is the gradient of the log-density with respect to the data point $x$. It points in the direction of increasing probability - toward high-probability regions.</p>
+<p><strong>In diffusion models.</strong> Diffusion models (DDPM, score matching) learn to estimate $s_\theta(x) \approx \nabla_x \log p(x)$. Given a noisy observation $\tilde{x} = x + \sigma \epsilon$:</p>
+<ul>
+<li>The score of the noise distribution is $\nabla_{\tilde{x}} \log p(\tilde{x}|x) = -\epsilon/\sigma$.</li>
+<li>A network $s_\theta$ is trained to estimate this score.</li>
+<li>At sampling time, the score field is used to reverse the diffusion: $x_{t-1} = x_t + \alpha s_\theta(x_t) + \text{noise}$.</li>
+</ul>
+<p>The score function is a vector field on data space. Its divergence appears in the Fokker-Planck equation governing how probability density evolves. Its geometry (level sets, gradient flow) determines the structure of the learned data distribution.</p>
+<p><strong>Stein&rsquo;s identity.</strong> For any smooth function $\phi(x)$ and a distribution $p(x)$ with score $s(x) = \nabla_x \log p(x)$:</p>
+<p>$$\mathbb{E}_p[\phi(x) s(x)^T + \nabla_x \phi(x)] = 0$$</p>
+<p>This identity connects the score (a first-order object) to expectations of functions of $x$. It is used in score matching to estimate $s(x)$ without access to the normalizing constant of $p(x)$.</p>
+<hr>
+<h2 id=section-13-the-jacobian-determinant-and-change-of-variables>Section 13: The Jacobian Determinant and Change of Variables</h2>
+<p>For a map $f: \mathbb{R}^n \to \mathbb{R}^n$ (square Jacobian), the determinant of the Jacobian plays a special role: it measures how the map scales volume.</p>
+<p>If the Jacobian at a point $x$ is $J_f(x)$, then a small $n$-dimensional cube of volume $dV$ near $x$ gets mapped to a region of volume $|\det J_f(x)| \cdot dV$ near $f(x)$.</p>
+<ul>
+<li>$|\det J_f| > 1$: the map expands volume locally.</li>
+<li>$|\det J_f| &lt; 1$: the map compresses volume locally.</li>
+<li>$|\det J_f| = 0$: the map is locally degenerate - it collapses volume (not locally invertible).</li>
+<li>$|\det J_f| = 1$: the map preserves volume (volume-preserving or measure-preserving).</li>
+</ul>
+<p><strong>The change-of-variables formula for integration:</strong></p>
+<p>$$\int_{f(U)} g(y) dy = \int_U g(f(x)) |\det J_f(x)| dx$$</p>
+<p>This generalizes the single-variable substitution rule $\int g(f(x)) f'(x) dx = \int g(y) dy$: the single-variable term $|f'(x)|$ becomes $|\det J_f(x)|$.</p>
+<p><strong>In machine learning: normalizing flows.</strong> A normalizing flow learns an invertible map $f_\theta: \mathbb{R}^n \to \mathbb{R}^n$ that transforms a simple base distribution (Gaussian) into a complex data distribution. The change-of-variables formula gives:</p>
+<p>$$\log p_X(x) = \log p_Z(f_\theta^{-1}(x)) + \log |\det J_{f_\theta^{-1}}(x)|$$</p>
+<p>The log-probability of a data point $x$ equals the log-probability of its preimage under the base distribution, plus a correction term accounting for how the map expands or compresses volume. Training the flow requires computing $\log |\det J|$, which costs $O(n^3)$ in general.</p>
+<p><strong>Specially structured flows</strong> choose $f$ so that $J$ is triangular (lower or upper): the determinant of a triangular matrix is just the product of diagonal entries, computable in $O(n)$. Real NVP, GLOW, and many other architectures use this trick.</p>
+<hr>
+<h2 id=section-14-jacobians-in-attention---gradients-through-softmax>Section 14: Jacobians in Attention - Gradients Through Softmax</h2>
+<p>The self-attention mechanism in transformers computes:</p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d}}\right) V$$</p>
+<p>The softmax is applied to each row of the score matrix $A = QK^T / \sqrt{d}$, giving attention weights $S = \text{softmax}(A)$. The output is $O = SV$.</p>
+<p>To train the transformer, you need $\frac{\partial L}{\partial Q}$, $\frac{\partial L}{\partial K}$, and $\frac{\partial L}{\partial V}$, where $L$ is the loss.</p>
+<p><strong>Gradient through $V$:</strong> $O = SV$, so $\frac{\partial L}{\partial V} = S^T \frac{\partial L}{\partial O}$. This is straightforward matrix backprop.</p>
+<p><strong>Gradient through the attention weights:</strong> $O = SV$ gives $\frac{\partial L}{\partial S} = \frac{\partial L}{\partial O} V^T$. Then you need to backpropagate through the softmax.</p>
+<p>For a single row $s = \text{softmax}(a)$ with $a \in \mathbb{R}^n$, the Jacobian is:</p>
+<p>$$J_{\text{softmax}} = \text{diag}(s) - s s^T$$</p>
+<p>(derived in Section 4). Applying this Jacobian: given incoming gradient $g = \frac{\partial L}{\partial s}$, the gradient with respect to $a$ is:</p>
+<p>$$\frac{\partial L}{\partial a} = J_{\text{softmax}}^T g = \text{diag}(s) g - s s^T g = s \odot g - s(s \cdot g)$$</p>
+<p>where $\odot$ is element-wise multiplication. In words: subtract the weighted average $s \cdot g$ from each component.</p>
+<p>This formula is efficient: it costs $O(n)$ per row (not $O(n^2)$ for forming the full Jacobian). The Jacobian is never explicitly stored - only the Jacobian-vector product is computed, directly from the softmax output $s$ and the upstream gradient $g$.</p>
+<p>This is the general pattern in deep learning: never form the Jacobian explicitly, only compute Jacobian-vector products as needed during backpropagation.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If you never form the Jacobian explicitly, in what sense does it exist? It exists mathematically as the derivative (the best linear approximation) of each layer. The backpropagation algorithm implicitly evaluates products of Jacobians from right to left - it never stores them but uses the formula for each Jacobian-vector product as needed. The Jacobian is real; what you skip is materializing it in memory.</p>
+</blockquote>
+<hr>
+<h2 id=section-15-implicit-differentiation-and-implicit-layers>Section 15: Implicit Differentiation and Implicit Layers</h2>
+<p>The chain rule through a Jacobian applies whenever you can describe the computation explicitly: output as a function of input. But what if the computation is defined implicitly?</p>
+<p><strong>The implicit function theorem.</strong> Suppose $g(x, y) = 0$ defines $y$ implicitly as a function of $x$ near a point $(x_0, y_0)$ where $\frac{\partial g}{\partial y}$ is invertible. Then:</p>
+<p>$$\frac{\partial y}{\partial x} = -\left(\frac{\partial g}{\partial y}\right)^{-1} \frac{\partial g}{\partial x}$$</p>
+<p>In single-variable calculus, this reduces to $dy/dx = -(g_y)^{-1} g_x = -g_x/g_y$, which is the implicit differentiation formula you know.</p>
+<p><strong>Example.</strong> $g(x, y) = x^2 + y^2 - 1 = 0$ (the unit circle). Then $g_x = 2x$ and $g_y = 2y$. The implicit derivative: $dy/dx = -2x / 2y = -x/y$. Matches what you compute by implicit differentiation.</p>
+<p><strong>In machine learning: deep equilibrium models.</strong> A deep equilibrium model (DEQ) defines its output $z$ as the fixed point of a map: $z = f_\theta(z, x)$. This is an implicit equation $g(z, x, \theta) = z - f_\theta(z, x) = 0$.</p>
+<p>To train the model, you need $\frac{\partial z}{\partial \theta}$ (how the fixed point changes as parameters change). By the implicit function theorem:</p>
+<p>$$\frac{\partial z}{\partial \theta} = -\left(\frac{\partial g}{\partial z}\right)^{-1} \frac{\partial g}{\partial \theta} = (I - J_f)^{-1} \frac{\partial f}{\partial \theta}$$</p>
+<p>where $J_f = \frac{\partial f}{\partial z}$ is the Jacobian of $f$ with respect to its first argument. This formula says: backpropagating through an infinite-depth network (the fixed-point equation) is equivalent to solving a linear system $(I - J_f)v = \frac{\partial f}{\partial \theta}$.</p>
+<p>In practice, this linear system is solved approximately using a fixed-point iteration, making DEQs computationally similar in cost to a fixed-depth network.</p>
+<p><strong>The key insight.</strong> You do not need to know how $y$ depends on $x$ explicitly to compute $dy/dx$ - you only need the Jacobians of $g$ evaluated at the solution. The chain rule extends to implicit computations through the implicit function theorem.</p>
+<hr>
+<h2 id=section-16-gradient-flow-and-continuous-time-optimization>Section 16: Gradient Flow and Continuous-Time Optimization</h2>
+<p>Gradient descent is a discrete-time algorithm. What is the continuous-time limit?</p>
+<p>Define a function $x(t)$ that evolves by the ordinary differential equation:</p>
+<p>$$\frac{dx}{dt} = -\nabla f(x(t))$$</p>
+<p>This is the <strong>gradient flow</strong> - the path of steepest descent, traveled continuously. As $t \to \infty$, $x(t)$ approaches a critical point of $f$ (where $\nabla f = 0$).</p>
+<p>The connection to gradient descent: gradient descent with step size $\alpha$ approximates the gradient flow by Euler discretization:</p>
+<p>$$x(t + \alpha) \approx x(t) + \alpha \frac{dx}{dt}\bigg|_{t} = x(t) - \alpha \nabla f(x(t))$$</p>
+<p>Smaller step sizes give better approximations to the continuous flow.</p>
+<p><strong>Why continuous-time is useful for analysis.</strong> The gradient flow satisfies:</p>
+<p>$$\frac{d}{dt} f(x(t)) = \nabla f(x(t)) \cdot \frac{dx}{dt} = \nabla f \cdot (-\nabla f) = -|\nabla f|^2 \leq 0$$</p>
+<p>The loss decreases monotonically along the gradient flow. (This uses the chain rule for partial derivatives from Section 9 of the Gradients post.) For gradient descent with a finite step size, the loss can temporarily increase if the step size is too large.</p>
+<p><strong>The Polyak-Lojasiewicz condition.</strong> If the function satisfies $|\nabla f(x)|^2 \geq \mu (f(x) - f^\ast)$ for some $\mu > 0$ and global minimum $f^\ast$, then the gradient flow converges exponentially:</p>
+<p>$$f(x(t)) - f^\ast \leq (f(x(0)) - f^\ast) e^{-2\mu t}$$</p>
+<p>This is proved by applying the chain rule to $f(x(t)) - f^\ast$:</p>
+<p>$$\frac{d}{dt}[f(x(t)) - f^\ast] = -|\nabla f|^2 \leq -\mu(f(x(t)) - f^\ast)$$</p>
+<p>Then Gronwall&rsquo;s inequality gives the exponential bound.</p>
+<p>This framework connects optimization theory to dynamical systems. The behavior of gradient descent - convergence rates, oscillations, sensitivity to learning rate - can be analyzed using tools from ODEs and control theory applied to the gradient flow.</p>
+<hr>
+<h2 id=section-17-putting-it-all-together---the-derivative-at-every-scale>Section 17: Putting It All Together - The Derivative at Every Scale</h2>
+<p>We started with the question: what is the derivative of a function from $\mathbb{R}^n$ to $\mathbb{R}^m$?</p>
+<p>The answer: it is the Jacobian, the $m \times n$ matrix of all partial derivatives. It is the best linear approximation to the function near a point. It is a linear map from input space to output space.</p>
+<p>And this is the same answer at every scale:</p>
+<ul>
+<li>$f: \mathbb{R} \to \mathbb{R}$: Jacobian is $1 \times 1$ - a number.</li>
+<li>$f: \mathbb{R}^n \to \mathbb{R}$: Jacobian is $1 \times n$ - the gradient (transposed).</li>
+<li>$f: \mathbb{R}^n \to \mathbb{R}^m$: Jacobian is $m \times n$ - the full Jacobian matrix.</li>
+</ul>
+<p>The chain rule multiplies Jacobians as matrices, generalizing scalar multiplication. Backpropagation is backward-mode Jacobian chain evaluation, efficient because the loss is scalar. The gradient of a matrix-valued parameter is an outer product. The Laplacian is the trace of the Jacobian of the gradient.</p>
+<p>All of vector calculus for machine learning flows from this one unified view: the derivative is always the best linear approximation, always representable as a matrix, always composable by matrix multiplication.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Single-Variable</th>
+<th>Multivariable (General)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Derivative of $f: \mathbb{R}^n \to \mathbb{R}^m$</td>
+<td>$f'(x)$ - a number ($1 \times 1$ matrix)</td>
+<td>$J_f(x)$ - an $m \times n$ matrix</td>
+</tr>
+<tr>
+<td>Best linear approximation</td>
+<td>$f(x+h) \approx f(x) + f'(x) h$</td>
+<td>$f(x + \delta) \approx f(x) + J_f(x) \delta$</td>
+</tr>
+<tr>
+<td>Chain rule</td>
+<td>$h'(x) = g'(f(x)) \cdot f'(x)$</td>
+<td>$J_h(x) = J_g(f(x)) \cdot J_f(x)$ (matrix product)</td>
+</tr>
+<tr>
+<td>Gradient (scalar output)</td>
+<td>$f'(x)$</td>
+<td>$\nabla f = J_f^T$ (transposed Jacobian)</td>
+</tr>
+<tr>
+<td>Local invertibility condition</td>
+<td>$f'(a) \neq 0$</td>
+<td>$J_f(a)$ invertible (inverse function theorem)</td>
+</tr>
+<tr>
+<td>Backpropagation</td>
+<td>Right-to-left multiplication</td>
+<td>Right-to-left Jacobian chain multiplication</td>
+</tr>
+<tr>
+<td>Divergence</td>
+<td>$f'(x)$ (scalar functions have no analog)</td>
+<td>$\text{tr}(J_F)$ for vector fields $F$</td>
+</tr>
+<tr>
+<td>Laplacian</td>
+<td>$f''(x)$ (of the gradient)</td>
+<td>$\text{tr}(J_{\nabla f}) = \sum_i \partial^2 f / \partial x_i^2$</td>
+</tr>
+<tr>
+<td>Parameter gradient $\partial \ell / \partial W$</td>
+<td>$\partial \ell / \partial w$</td>
+<td>Outer product $(J_\ell)^T x^T$ for linear layers</td>
+</tr>
+</tbody>
+</table>
+<p>Every concept in vector calculus for ML reduces to one idea: the derivative is a linear map. Express it as a matrix, compose it by multiplication, evaluate it efficiently by choosing the right direction of traversal.</p>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/ordinary-differential-equations/>Ordinary Differential Equations</a></li>
+<li><a href=/posts/convex-optimization/>Convex Optimization</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

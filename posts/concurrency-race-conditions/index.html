@@ -1,0 +1,308 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Concurrency & Race Conditions // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Concurrency & Race Conditions">
+<meta name=twitter:description content="Two users click &ldquo;Transfer $500&rdquo; on their banking app at exactly the same moment. Both requests hit the server simultaneously. Both read the same balance - $700. Both compute the new balance: $200. Both write $200 back. One transfer disappears. The account that should show $200 shows $200, but the balance that should show -$300 shows $200 too. $500 has been conjured from nothing.
+This is a race condition. It is not a theoretical problem.">
+<meta property="og:title" content="Concurrency & Race Conditions">
+<meta property="og:description" content="Two users click &ldquo;Transfer $500&rdquo; on their banking app at exactly the same moment. Both requests hit the server simultaneously. Both read the same balance - $700. Both compute the new balance: $200. Both write $200 back. One transfer disappears. The account that should show $200 shows $200, but the balance that should show -$300 shows $200 too. $500 has been conjured from nothing.
+This is a race condition. It is not a theoretical problem.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/concurrency-race-conditions/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Concurrency & Race Conditions</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p>Two users click &ldquo;Transfer $500&rdquo; on their banking app at exactly the same moment. Both requests hit the server simultaneously. Both read the same balance - $700. Both compute the new balance: $200. Both write $200 back. One transfer disappears. The account that should show $200 shows $200, but the balance that should show -$300 shows $200 too. $500 has been conjured from nothing.</p>
+<p>This is a race condition. It is not a theoretical problem. Knight Capital Group lost $440 million in 45 minutes in 2012, partly due to a race condition in their order-routing system. Therac-25 radiation therapy machines killed patients in the late 1980s due to a race condition in their control software. Concurrency bugs do not show up in testing and they do not care about your code review process.</p>
+<h2 id=why-concurrency-exists-two-different-problems>Why Concurrency Exists: Two Different Problems</h2>
+<p>Before diving into solutions, it is worth separating the two motivations for concurrent code - they have different solutions.</p>
+<p><strong>I/O-bound concurrency:</strong> Your program spends most of its time waiting. Waiting for a database query to return. Waiting for an HTTP request to complete. Waiting for a file read. A single-threaded program that makes 100 HTTP requests does so serially - request 1 finishes, then request 2 starts. But while request 1 is in flight, the CPU is idle. Concurrency lets you have 100 requests in flight simultaneously, even on a single CPU core.</p>
+<p><strong>CPU-bound parallelism:</strong> Your program does heavy computation. Image processing, video encoding, ML inference, scientific simulation. To actually go faster, you need multiple CPU cores doing work simultaneously. This is true parallelism, not just concurrent waiting.</p>
+<p>Conflating these two leads to wrong solutions. Using 100 threads to parallelize CPU-bound Python code on a single-GIL interpreter does not help. Using async/await for a computationally intensive algorithm on a single-core event loop does not help. The right tool depends on which problem you have.</p>
+<h2 id=race-conditions-when-interleaving-goes-wrong>Race Conditions: When Interleaving Goes Wrong</h2>
+<p><code>counter += 1</code> looks atomic. It is not. It compiles to three operations: load the current value from memory into a register, add 1 to the register, store the result back to memory. The OS scheduler can preempt a thread between any two of these operations.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> threading
+
+counter <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>increment</span>():
+    <span style=color:#66d9ef>global</span> counter
+    <span style=color:#66d9ef>for</span> _ <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>100_000</span>):
+        counter <span style=color:#f92672>+=</span> <span style=color:#ae81ff>1</span>   <span style=color:#75715e># load, add, store - three steps, not one</span>
+
+t1 <span style=color:#f92672>=</span> threading<span style=color:#f92672>.</span>Thread(target<span style=color:#f92672>=</span>increment)
+t2 <span style=color:#f92672>=</span> threading<span style=color:#f92672>.</span>Thread(target<span style=color:#f92672>=</span>increment)
+t1<span style=color:#f92672>.</span>start(); t2<span style=color:#f92672>.</span>start()
+t1<span style=color:#f92672>.</span>join();  t2<span style=color:#f92672>.</span>join()
+
+print(counter)
+<span style=color:#75715e># Expected: 200,000</span>
+<span style=color:#75715e># Actual: anywhere between 100,001 and 200,000</span>
+</code></pre></div><p>What happens: Thread 1 loads <code>counter = 42</code>. Thread 2 loads <code>counter = 42</code> before Thread 1 has stored. Thread 1 stores <code>43</code>. Thread 2 stores <code>43</code>. Two increments, one result. One increment is lost.</p>
+<p>This is a <strong>lost update</strong> - the classic race condition pattern. It is non-deterministic; it may not appear under light load, only manifesting under specific timing and CPU scheduling conditions. Production load surfaces it.</p>
+<p>The bank balance scenario is the same structure: read, compute, write, with an adversarial context switch between read and write.</p>
+<h2 id=mutual-exclusion-the-lock-solution>Mutual Exclusion: The Lock Solution</h2>
+<p>A <strong>mutex</strong> (mutual exclusion lock) ensures only one thread can execute a protected section at a time. When a thread acquires the lock, other threads block until it releases:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> threading
+
+counter <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>
+lock <span style=color:#f92672>=</span> threading<span style=color:#f92672>.</span>Lock()
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>safe_increment</span>():
+    <span style=color:#66d9ef>global</span> counter
+    <span style=color:#66d9ef>for</span> _ <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>100_000</span>):
+        <span style=color:#66d9ef>with</span> lock:          <span style=color:#75715e># acquire on enter, guaranteed release on exit</span>
+            counter <span style=color:#f92672>+=</span> <span style=color:#ae81ff>1</span>
+
+t1 <span style=color:#f92672>=</span> threading<span style=color:#f92672>.</span>Thread(target<span style=color:#f92672>=</span>safe_increment)
+t2 <span style=color:#f92672>=</span> threading<span style=color:#f92672>.</span>Thread(target<span style=color:#f92672>=</span>safe_increment)
+t1<span style=color:#f92672>.</span>start(); t2<span style=color:#f92672>.</span>start()
+t1<span style=color:#f92672>.</span>join();  t2<span style=color:#f92672>.</span>join()
+
+print(counter)  <span style=color:#75715e># Always 200,000</span>
+</code></pre></div><p>The <code>with lock:</code> pattern is critical. A bare <code>lock.acquire()</code> without <code>lock.release()</code> in a <code>finally</code> block will deadlock if the protected code raises an exception. Python&rsquo;s context manager guarantees release.</p>
+<p>Mutexes serialize access, which eliminates the race but also eliminates parallelism in the protected section. The critical section should be as small as possible - lock granularity matters. A lock that covers an entire function is safe but slow; a lock that covers only the shared state update is fast but requires careful reasoning about what &ldquo;shared state&rdquo; means.</p>
+<h2 id=deadlock-mutexes-in-conflict>Deadlock: Mutexes in Conflict</h2>
+<p>Deadlock occurs when two threads each hold a lock the other needs. Neither can proceed. The program freezes permanently, not crashing - just stopped.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> threading
+
+lock_a <span style=color:#f92672>=</span> threading<span style=color:#f92672>.</span>Lock()
+lock_b <span style=color:#f92672>=</span> threading<span style=color:#f92672>.</span>Lock()
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>thread1</span>():
+    <span style=color:#66d9ef>with</span> lock_a:
+        <span style=color:#75715e># ... do some work ...</span>
+        <span style=color:#66d9ef>with</span> lock_b:      <span style=color:#75715e># blocks if thread2 holds lock_b</span>
+            do_work()
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>thread2</span>():
+    <span style=color:#66d9ef>with</span> lock_b:
+        <span style=color:#75715e># ... do some work ...</span>
+        <span style=color:#66d9ef>with</span> lock_a:      <span style=color:#75715e># blocks if thread1 holds lock_a</span>
+            do_work()
+</code></pre></div><p>Thread 1 acquires lock_a. Thread 2 acquires lock_b. Thread 1 tries to acquire lock_b - blocked. Thread 2 tries to acquire lock_a - blocked. Neither will ever release what the other needs. This is the <strong>dining philosophers problem</strong> in code: $n$ philosophers, $n$ forks, each needs two forks to eat. If every philosopher picks up their left fork simultaneously, everyone starves.</p>
+<p>Deadlock requires four conditions, all simultaneously (Coffman, 1971):</p>
+<ol>
+<li><strong>Mutual exclusion:</strong> At least one resource is held exclusively</li>
+<li><strong>Hold and wait:</strong> A thread holds a resource while waiting for another</li>
+<li><strong>No preemption:</strong> Resources are not forcibly taken</li>
+<li><strong>Circular wait:</strong> A cycle of threads each waiting for the next</li>
+</ol>
+<p>Breaking any one condition prevents deadlock. The practical solution: <strong>impose a global lock ordering</strong>. If every thread that needs both lock_a and lock_b always acquires them in the same order (always lock_a first), circular wait is impossible. This is tedious to enforce manually at scale, which is why higher-level abstractions (message queues, the actor model) that hide locks entirely are often preferable.</p>
+<h2 id=pythons-gil-the-elephant-in-the-room>Python&rsquo;s GIL: The Elephant in the Room</h2>
+<p>The <strong>Global Interpreter Lock</strong> is a single mutex in CPython that prevents more than one thread from executing Python bytecode at any time. It exists because CPython&rsquo;s reference counting for garbage collection is not thread-safe: without the GIL, two threads could simultaneously decrement a reference count to zero and both free the same object.</p>
+<p>This has practical consequences that confuse most Python programmers:</p>
+<p><strong>I/O-bound work with threads works fine.</strong> When a thread makes a blocking system call (reading from a socket, waiting for a subprocess, sleeping), it releases the GIL. Other threads can run during that wait. <code>requests.get(url)</code> in a thread releases the GIL while waiting for the response. Running 100 such threads concurrently is effective - they all wait simultaneously.</p>
+<p><strong>CPU-bound work with threads does not parallelize.</strong> Two threads running pure Python loops never actually run simultaneously, even on an 8-core machine. They take turns holding the GIL, each holding it for a few milliseconds before yielding. No speedup. For CPU-bound work, use <code>multiprocessing</code> - separate processes, separate GILs.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># I/O-bound: threading is effective</span>
+<span style=color:#f92672>import</span> threading<span style=color:#f92672>,</span> requests
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fetch</span>(url, results, i):
+    results[i] <span style=color:#f92672>=</span> requests<span style=color:#f92672>.</span>get(url)<span style=color:#f92672>.</span>status_code  <span style=color:#75715e># releases GIL while waiting</span>
+
+urls <span style=color:#f92672>=</span> [<span style=color:#e6db74>&#34;https://httpbin.org/status/200&#34;</span>] <span style=color:#f92672>*</span> <span style=color:#ae81ff>20</span>
+results <span style=color:#f92672>=</span> [<span style=color:#66d9ef>None</span>] <span style=color:#f92672>*</span> <span style=color:#ae81ff>20</span>
+threads <span style=color:#f92672>=</span> [threading<span style=color:#f92672>.</span>Thread(target<span style=color:#f92672>=</span>fetch, args<span style=color:#f92672>=</span>(u, results, i))
+           <span style=color:#66d9ef>for</span> i, u <span style=color:#f92672>in</span> enumerate(urls)]
+<span style=color:#66d9ef>for</span> t <span style=color:#f92672>in</span> threads: t<span style=color:#f92672>.</span>start()
+<span style=color:#66d9ef>for</span> t <span style=color:#f92672>in</span> threads: t<span style=color:#f92672>.</span>join()
+<span style=color:#75715e># 20 requests complete in ~1 second, not 20 seconds</span>
+</code></pre></div><h3 id=python-313-and-the-no-gil-experiment>Python 3.13 and the No-GIL Experiment</h3>
+<p>PEP 703, merged into Python 3.13 as an opt-in, removes the GIL. Python 3.13 can be built with <code>--disable-gil</code>. What changes:</p>
+<ul>
+<li>CPU-bound Python threads can now run truly in parallel on multiple cores</li>
+<li><code>threading</code> becomes genuinely useful for CPU-bound work</li>
+<li>The reference counting mechanism is replaced with thread-safe atomic operations</li>
+</ul>
+<p>What does not change immediately:</p>
+<ul>
+<li>Extension modules (NumPy, pandas, etc.) that assumed the GIL were the synchronization mechanism may have latent thread-safety bugs exposed</li>
+<li>Performance of single-threaded Python may be slightly slower (atomic operations have overhead)</li>
+<li>The ecosystem needs time to audit and update C extensions</li>
+</ul>
+<p>The transition is deliberately cautious. Python 3.13 ships with both GIL and no-GIL builds. Python 3.14 will make no-GIL the default only after the ecosystem has had time to adapt. This is the right call - breaking the scientific Python ecosystem would be a catastrophe.</p>
+<h2 id=asyncawait-concurrency-without-threads>Async/Await: Concurrency Without Threads</h2>
+<p>Here is the thing about threads: they are expensive. Each thread needs a stack (typically 1–8 MB), a kernel thread structure, and scheduler metadata. 10,000 simultaneous HTTP connections → 10,000 threads → 10–80 GB of stack space. This is the <strong>C10K problem</strong>, documented in 1999, that broke the Apache model of &ldquo;one thread per connection.&rdquo;</p>
+<p><code>asyncio</code> solves this with a single-threaded event loop model. There are no threads - just coroutines that voluntarily yield when waiting for I/O:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> asyncio<span style=color:#f92672>,</span> aiohttp
+
+<span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fetch</span>(session, url):
+    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>with</span> session<span style=color:#f92672>.</span>get(url) <span style=color:#66d9ef>as</span> resp:
+        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>await</span> resp<span style=color:#f92672>.</span>text()   <span style=color:#75715e># yields control while waiting; no thread blocked</span>
+
+<span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>main</span>():
+    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>with</span> aiohttp<span style=color:#f92672>.</span>ClientSession() <span style=color:#66d9ef>as</span> session:
+        tasks <span style=color:#f92672>=</span> [fetch(session, url) <span style=color:#66d9ef>for</span> url <span style=color:#f92672>in</span> urls <span style=color:#f92672>*</span> <span style=color:#ae81ff>100</span>]
+        results <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> asyncio<span style=color:#f92672>.</span>gather(<span style=color:#f92672>*</span>tasks)   <span style=color:#75715e># all 100 in flight simultaneously</span>
+
+asyncio<span style=color:#f92672>.</span>run(main())
+</code></pre></div><p>The event loop runs in a single thread. When a coroutine hits an <code>await</code>, it suspends and the event loop runs another coroutine that is ready. When the awaited I/O completes (signaled by epoll/kqueue at the OS level), the event loop resumes the suspended coroutine.</p>
+<p>This is not &ldquo;async is just threads.&rdquo; The threading model is preemptive - the scheduler interrupts threads at arbitrary points, requiring locks to protect shared state. The async model is cooperative - a coroutine yields only at <code>await</code> points, which you control. Between awaits, you have exclusive use of the CPU, so shared state is safe without locks (in a single-event-loop setup). This eliminates entire categories of race conditions.</p>
+<p>The cost: CPU-bound work blocks the event loop. If a coroutine runs a tight computation for 100 ms without any <code>await</code>, every other coroutine waits 100 ms. Long CPU work must be offloaded to <code>asyncio.run_in_executor</code> (a thread or process pool) or broken into smaller chunks with explicit <code>await asyncio.sleep(0)</code> yields.</p>
+<p>A practical rule of thumb: for I/O-bound Python servers handling thousands of concurrent connections, asyncio is the right model. For CPU-bound work, multiprocessing. For small numbers of concurrent tasks with shared state, threading is often simpler than async. Do not reach for async because it sounds modern.</p>
+<h2 id=distributed-locks-when-the-lock-is-across-machines>Distributed Locks: When the Lock is Across Machines</h2>
+<p>The bank balance race condition from the opening does not disappear in a distributed system - it gets worse. If two servers can both handle &ldquo;Transfer $500&rdquo; requests for the same account simultaneously, you need a distributed lock.</p>
+<p><strong>Redis SETNX</strong> is the classic approach: before processing a transaction, try to set a key with <code>SETNX</code> (Set if Not eXists). If the set succeeds, you hold the lock. If not, another server holds it. Expire the key automatically so a crashed server does not hold the lock forever.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> redis
+r <span style=color:#f92672>=</span> redis<span style=color:#f92672>.</span>Redis()
+
+lock_key <span style=color:#f92672>=</span> <span style=color:#e6db74>f</span><span style=color:#e6db74>&#34;lock:account:</span><span style=color:#e6db74>{</span>account_id<span style=color:#e6db74>}</span><span style=color:#e6db74>&#34;</span>
+lock_held <span style=color:#f92672>=</span> r<span style=color:#f92672>.</span>set(lock_key, <span style=color:#e6db74>&#34;locked&#34;</span>, nx<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>, ex<span style=color:#f92672>=</span><span style=color:#ae81ff>5</span>)  <span style=color:#75715e># nx=only if not exists, ex=expire in 5s</span>
+
+<span style=color:#66d9ef>if</span> lock_held:
+    <span style=color:#66d9ef>try</span>:
+        <span style=color:#75715e># safe to update account balance</span>
+        process_transfer(account_id, amount)
+    <span style=color:#66d9ef>finally</span>:
+        r<span style=color:#f92672>.</span>delete(lock_key)   <span style=color:#75715e># release lock</span>
+</code></pre></div><p>The hard problem with distributed locks: what if the lock holder crashes after acquiring the lock but before releasing it? The <code>ex=5</code> expiry handles this - the lock expires after 5 seconds. But what if the operation takes longer than 5 seconds? What if network partitions cause both servers to think they hold the lock? The <strong>Redlock algorithm</strong> (Martin Kleppmann&rsquo;s analysis of which is required reading) shows that even with Redis clustering, distributed locks have fundamental uncertainty under failure conditions.</p>
+<p>The deeper lesson: distributed locking is hard enough that many systems avoid it by design. Database transactions with proper isolation levels handle this problem without application-level locks. The actor model (Erlang, Akka) gives each entity a mailbox - only one message processes at a time, no explicit locking. The cloud function model (AWS Lambda) scales by running many single-threaded function instances; the database handles coordination.</p>
+<h2 id=lock-free-and-wait-free-algorithms>Lock-Free and Wait-Free Algorithms</h2>
+<p>For performance-critical code, locks have overhead: context switches when a thread blocks, cache coherence traffic, lock convoys (one slow thread delays all others). <strong>Lock-free</strong> algorithms use atomic CPU operations to achieve synchronization without locks.</p>
+<p>Modern CPUs provide <strong>compare-and-swap</strong> (CAS): atomically check if a memory location has an expected value and, if so, replace it with a new value. This is a single hardware instruction that cannot be interrupted.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>// Atomic compare-and-swap: if *ptr == old, store new; return true if swapped
+</span><span style=color:#75715e></span><span style=color:#66d9ef>bool</span> <span style=color:#a6e22e>__atomic_compare_exchange_n</span>(<span style=color:#66d9ef>int</span> <span style=color:#f92672>*</span>ptr, <span style=color:#66d9ef>int</span> <span style=color:#f92672>*</span>old, <span style=color:#66d9ef>int</span> new, ...);
+</code></pre></div><p>Lock-free counters, stacks, and queues can be built from CAS. They are correct under arbitrary thread interleaving without any blocking. The tradeoff: they are much harder to implement correctly, and the ABA problem (a location changes from A to B and back to A, making CAS think nothing changed) lurks everywhere.</p>
+<p>Python exposes none of this directly. <code>threading.Lock</code> is the appropriate tool. At the C level, <code>&lt;stdatomic.h></code> (C11) provides portable atomic operations. Rust&rsquo;s <code>std::sync::atomic</code> provides them with the ownership model guaranteeing correct usage.</p>
+<h2 id=structured-concurrency-making-async-manageable>Structured Concurrency: Making Async Manageable</h2>
+<p>Classic async code creates &ldquo;fire and forget&rdquo; tasks that are hard to reason about. If one task fails, when does the parent know? What happens to the other tasks?</p>
+<p>Python 3.11&rsquo;s <code>asyncio.TaskGroup</code> implements structured concurrency - the idea that concurrent tasks should have a well-defined lifetime tied to a scope:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>main</span>():
+    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>with</span> asyncio<span style=color:#f92672>.</span>TaskGroup() <span style=color:#66d9ef>as</span> tg:
+        task1 <span style=color:#f92672>=</span> tg<span style=color:#f92672>.</span>create_task(fetch(url1))
+        task2 <span style=color:#f92672>=</span> tg<span style=color:#f92672>.</span>create_task(fetch(url2))
+        task3 <span style=color:#f92672>=</span> tg<span style=color:#f92672>.</span>create_task(fetch(url3))
+    <span style=color:#75715e># All tasks complete (or fail) before this line runs</span>
+    <span style=color:#75715e># If any task raises, the exception propagates here</span>
+    <span style=color:#75715e># and remaining tasks are cancelled</span>
+</code></pre></div><p>If <code>fetch(url2)</code> raises an exception, the <code>TaskGroup</code> cancels <code>task1</code> and <code>task3</code> and re-raises. You cannot leak tasks - the context manager enforces that all tasks either complete or are cancelled before the scope exits. This makes async code as readable and safe as sequential code, while maintaining the concurrency.</p>
+<p>Kotlin coroutines and Swift&rsquo;s structured concurrency have similar designs. This is where async programming is heading: structured lifetimes, automatic cancellation, no leaked tasks.</p>
+<h2 id=rust-data-race-prevention-at-compile-time>Rust: Data Race Prevention at Compile Time</h2>
+<p>Rust&rsquo;s ownership and borrowing rules make data races <strong>impossible by construction</strong>. The borrow checker enforces:</p>
+<ul>
+<li>Multiple threads can have immutable references to data simultaneously (reading is fine)</li>
+<li>Only one thread can have a mutable reference at a time (exclusive write access)</li>
+<li>References cannot outlive the data they point to</li>
+</ul>
+<p>This is enforced at compile time, with zero runtime overhead. A program that has a data race does not compile. There is no runtime check, no segfault, no subtle bug discoverable only in production - just a compile error.</p>
+<p>The practical consequence: safe concurrent Rust code is normal Rust code that happens to use <code>Arc&lt;Mutex&lt;T>></code> or message-passing channels. The ownership model is the synchronization model.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>Use Case</th>
+<th>Cost</th>
+<th>Risk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mutex</td>
+<td>Shared mutable state, any language</td>
+<td>Thread blocking, contention</td>
+<td>Deadlock if ordered wrong</td>
+</tr>
+<tr>
+<td>Atomic operations</td>
+<td>Simple counters, flags</td>
+<td>Minimal (hardware instruction)</td>
+<td>ABA problem, complexity</td>
+</tr>
+<tr>
+<td>Async/event loop</td>
+<td>I/O-bound, many concurrent connections</td>
+<td>Minimal (no thread stack)</td>
+<td>CPU work blocks loop</td>
+</tr>
+<tr>
+<td>multiprocessing</td>
+<td>CPU-bound Python, GIL bypass</td>
+<td>Process creation overhead, IPC cost</td>
+<td>Higher memory use</td>
+</tr>
+<tr>
+<td>Distributed lock (Redis)</td>
+<td>Cross-server coordination</td>
+<td>Network RTT + Redis overhead</td>
+<td>Complex failure modes</td>
+</tr>
+<tr>
+<td>Database transactions</td>
+<td>Financial operations, consistency</td>
+<td>DB locking overhead</td>
+<td>Deadlock, lock contention</td>
+</tr>
+<tr>
+<td>Actor model</td>
+<td>High-concurrency, message-driven</td>
+<td>Mailbox overhead</td>
+<td>Message ordering complexity</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/networking-ip-tcp-http/>Networking: IP, TCP & HTTP</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

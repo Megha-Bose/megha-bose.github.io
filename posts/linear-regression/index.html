@@ -1,0 +1,254 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Linear Regression // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Linear Regression">
+<meta name=twitter:description content="Prerequisites:
+ Machine Learning: First Principles Expectation, Variance & Covariance Gradients & Partial Derivatives   You have a spreadsheet with 1000 rows. Each row is a house that recently sold: its size in square feet and its sale price. You want to predict the price of a new house given only its size.
+The simplest possible strategy: draw a line. Price = w · size + b. If you pick the right w and b, this line will be a useful predictor.">
+<meta property="og:title" content="Linear Regression">
+<meta property="og:description" content="Prerequisites:
+ Machine Learning: First Principles Expectation, Variance & Covariance Gradients & Partial Derivatives   You have a spreadsheet with 1000 rows. Each row is a house that recently sold: its size in square feet and its sale price. You want to predict the price of a new house given only its size.
+The simplest possible strategy: draw a line. Price = w · size + b. If you pick the right w and b, this line will be a useful predictor.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/linear-regression/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Linear Regression</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Mar 6, 2022
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li><a href=/posts/machine-learning-first-principles/>Machine Learning: First Principles</a></li>
+<li><a href=/posts/expectation-variance-covariance/>Expectation, Variance & Covariance</a></li>
+<li><a href=/posts/gradients-partial-derivatives/>Gradients & Partial Derivatives</a></li>
+</ul>
+<hr>
+<p>You have a spreadsheet with 1000 rows. Each row is a house that recently sold: its size in square feet and its sale price. You want to predict the price of a new house given only its size.</p>
+<p>The simplest possible strategy: draw a line. Price = w · size + b. If you pick the right w and b, this line will be a useful predictor. But how do you find the right w and b? You can&rsquo;t just eyeball 1000 data points.</p>
+<p>This question - how to fit the best line through data - is linear regression. It is the simplest machine learning algorithm that actually works. It is also the foundation for understanding logistic regression, neural networks, and virtually everything else in supervised learning. And despite its simplicity, it has a beautiful mathematical structure that rewards careful study.</p>
+<hr>
+<h2 id=the-model>The Model</h2>
+<p>For a single input feature, the model is:</p>
+<p>$$h_w(x) = wx + b$$</p>
+<p>This is a line. $w$ is the slope (how much price increases per square foot) and $b$ is the intercept (baseline price at zero square footage, which doesn&rsquo;t need to be physically meaningful).</p>
+<p>For $n$ input features - size, number of bedrooms, age of the house, distance to the nearest school - the model is:</p>
+<p>$$h_w(x) = w_1 x_1 + w_2 x_2 + \cdots + w_n x_n + b = w^T x + b$$</p>
+<p>This is a hyperplane in $n+1$ dimensions. With one feature it&rsquo;s a line. With two features it&rsquo;s a plane through 3D space. With $n$ features it&rsquo;s something you can&rsquo;t visualize but can still compute with.</p>
+<p>A notational convenience: absorb the bias $b$ into the weight vector by appending a constant feature $x_0 = 1$ to every input. Then $w^T x + b = w^T x$ with the extended vectors. We&rsquo;ll keep $b$ explicit in the intuition and use the matrix form where it makes the algebra cleaner.</p>
+<p>Given $m$ training examples ${(x^{(i)}, y^{(i)})}_{i=1}^m$, we can write all predictions at once:</p>
+<p>$$\hat{y} = Xw$$</p>
+<p>where $X \in \mathbb{R}^{m \times (n+1)}$ is the design matrix (each row is one training example with a prepended 1), $w \in \mathbb{R}^{n+1}$ includes the bias, and $\hat{y} \in \mathbb{R}^m$ is the vector of predictions.</p>
+<hr>
+<h2 id=the-loss-function>The Loss Function</h2>
+<p>We need a way to measure how wrong our predictions are. The standard choice is <strong>mean squared error</strong> (MSE):</p>
+<p>$$L(w) = \frac{1}{m} \sum_{i=1}^{m} \left(h_w(x^{(i)}) - y^{(i)}\right)^2 = \frac{1}{m} |Xw - y|^2$$</p>
+<p>Why squared error rather than absolute error $|h_w(x^{(i)}) - y^{(i)}|$ or something else?</p>
+<p><strong>Mathematical convenience.</strong> The squared error is differentiable everywhere. Absolute error has a kink at zero and is not differentiable there, making optimization harder. MSE is a smooth bowl - it has a unique minimum, and calculus can find it.</p>
+<p><strong>Probabilistic justification.</strong> Suppose the true relationship is $y^{(i)} = w^T x^{(i)} + \varepsilon^{(i)}$ where each noise term $\varepsilon^{(i)} \sim \mathcal{N}(0, \sigma^2)$ is an independent Gaussian error. Then the likelihood of the data is:</p>
+<p>$$P(y | X, w) = \prod_{i=1}^m \frac{1}{\sqrt{2\pi}\sigma} \exp\left(-\frac{(y^{(i)} - w^T x^{(i)})^2}{2\sigma^2}\right)$$</p>
+<p>Maximizing this likelihood is equivalent to minimizing $\sum_i (y^{(i)} - w^T x^{(i)})^2$. MSE is exactly maximum likelihood estimation under Gaussian noise. This connection isn&rsquo;t a coincidence - it&rsquo;s why squared error is the natural loss for regression when errors are expected to be symmetric and small ones are much more common than large ones.</p>
+<p>Large errors get penalized proportionally more (quadratically) than small ones. A prediction that&rsquo;s off by 10 incurs 100 units of loss; a prediction off by 20 incurs 400. This is a feature, not a bug - it strongly penalizes outlier predictions.</p>
+<hr>
+<h2 id=the-normal-equations-exact-solution>The Normal Equations: Exact Solution</h2>
+<p>The loss $L(w) = \frac{1}{m}|Xw - y|^2$ is a quadratic function of $w$. Quadratic functions have a unique minimum (if the leading coefficient is positive), and calculus can find it exactly. Set the gradient to zero.</p>
+<p><strong>Computing the gradient.</strong> Expand the squared norm:</p>
+<p>$$|Xw - y|^2 = (Xw - y)^T(Xw - y) = w^T X^T X w - 2 y^T X w + y^T y$$</p>
+<p>Differentiating with respect to $w$:</p>
+<p>$$\nabla_w L = \frac{1}{m}(2X^T X w - 2 X^T y) = \frac{2}{m} X^T(Xw - y)$$</p>
+<p>Set this to zero:</p>
+<p>$$X^T X w = X^T y$$</p>
+<p>Solving for $w$:</p>
+<p>$$w = (X^T X)^{-1} X^T y$$</p>
+<p>This is the <strong>normal equation</strong>. It gives the exact optimal weights in closed form - no iteration, no learning rate, no hyperparameters. Plug in your data, invert a matrix, multiply, done.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why can we invert $X^T X$? It&rsquo;s an $(n+1) \times (n+1)$ matrix. It&rsquo;s invertible exactly when the columns of $X$ are linearly independent - that is, when no feature is a perfect linear combination of the others. If you have two identical features (say, square footage in both square feet and square feet again), the columns are linearly dependent and $X^T X$ is singular. In practice, this means removing duplicate or perfectly collinear features before solving. Near-perfect collinearity (two very highly correlated features) doesn&rsquo;t make the matrix singular but makes it ill-conditioned - small perturbations in the data cause large swings in $w$. Ridge regression (below) directly addresses this.</p>
+</blockquote>
+<hr>
+<h2 id=geometric-interpretation-projection>Geometric Interpretation: Projection</h2>
+<p>Here is the most elegant way to see what linear regression is doing.</p>
+<p>The predictions $\hat{y} = Xw$ are always in the <strong>column space</strong> of $X$ - the set of all vectors that can be written as linear combinations of the columns of $X$. As $w$ ranges over all possible weight vectors, $Xw$ traces out a subspace of $\mathbb{R}^m$.</p>
+<p>The true labels $y$ almost certainly don&rsquo;t lie in this subspace (unless the data fits a hyperplane perfectly, which real data never does). We want to find the point in col$(X)$ that is closest to $y$. Closest in the Euclidean sense means minimizing $|Xw - y|^2$.</p>
+<p>The closest point in a subspace to a vector outside it is the <strong>orthogonal projection</strong>. The residual vector $y - \hat{y}$ must be perpendicular to every column of $X$:</p>
+<p>$$X^T (y - \hat{y}) = 0 \implies X^T y = X^T X w \implies w = (X^T X)^{-1} X^T y$$</p>
+<p>The normal equations literally say &ldquo;the residuals are normal (perpendicular) to the column space.&rdquo; This is where the name comes from. Ordinary least squares is the orthogonal projection of the label vector onto the column space of the feature matrix.</p>
+<p>This picture is useful beyond aesthetics. It immediately tells you: if you add a feature that is already in the column space of existing features, you gain nothing - the projection doesn&rsquo;t change. Feature redundancy is geometrically visible.</p>
+<hr>
+<h2 id=maximum-likelihood-same-solution-different-story>Maximum Likelihood: Same Solution, Different Story</h2>
+<p>Let&rsquo;s make the probabilistic interpretation precise. Assume each $y^{(i)} = w^T x^{(i)} + \varepsilon^{(i)}$ with $\varepsilon^{(i)} \overset{\text{iid}}{\sim} \mathcal{N}(0, \sigma^2)$.</p>
+<p>The conditional distribution of $y^{(i)}$ given $x^{(i)}$ and $w$ is:</p>
+<p>$$y^{(i)} | x^{(i)}, w \sim \mathcal{N}(w^T x^{(i)}, \sigma^2)$$</p>
+<p>The log-likelihood of the entire dataset is:</p>
+<p>$$\ell(w) = \sum_{i=1}^m \log P(y^{(i)} | x^{(i)}, w) = -\frac{m}{2} \log(2\pi\sigma^2) - \frac{1}{2\sigma^2} \sum_{i=1}^m (y^{(i)} - w^T x^{(i)})^2$$</p>
+<p>Maximizing $\ell(w)$ with respect to $w$ is equivalent to minimizing $\sum_i (y^{(i)} - w^T x^{(i)})^2$. The solution is exactly the normal equation. Linear regression = MLE under Gaussian noise. The least-squares criterion isn&rsquo;t arbitrary - it&rsquo;s the right thing to do when you believe errors are normally distributed.</p>
+<hr>
+<h2 id=when-the-exact-solution-is-too-slow>When the Exact Solution Is Too Slow</h2>
+<p>The normal equation is exact but expensive. Computing $X^T X$ costs $O(mn^2)$ operations (matrix multiply of $m \times (n+1)$ by $(n+1) \times m$). Inverting the $(n+1) \times (n+1)$ result costs $O(n^3)$.</p>
+<p>For $m = 10{,}000$ examples and $n = 1{,}000$ features, this is manageable. But for $n = 1{,}000{,}000$ features - common in text processing, genomics, or online advertising - the inversion alone requires $10^{18}$ operations. It is simply infeasible.</p>
+<p>The alternative is <strong>gradient descent</strong>: iteratively nudge $w$ in the direction that decreases the loss. The gradient of $L$ is:</p>
+<p>$$\nabla_w L = \frac{2}{m} X^T (Xw - y)$$</p>
+<p>The update rule is:</p>
+<p>$$w \leftarrow w - \eta \cdot \frac{2}{m} X^T (Xw - y)$$</p>
+<p>Each step costs $O(mn)$ - one matrix-vector multiply to compute predictions, one to compute the gradient. For large $n$, this is far cheaper than forming and inverting $X^T X$.</p>
+<p>For <strong>very large datasets</strong>, even computing the gradient over all $m$ examples is expensive. <strong>Stochastic gradient descent</strong> (SGD) estimates the gradient using a single randomly-chosen example or a small mini-batch. Each step is cheap, and convergence still happens in expectation.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Gradient descent converges to the same solution as the normal equation (since the MSE loss is convex with a unique global minimum), but it takes many iterations. How many? For MSE, the convergence rate depends on the learning rate $\eta$ and the condition number of $X^T X$ (the ratio of its largest to smallest eigenvalue). A poorly conditioned matrix - one with eigenvalues spanning many orders of magnitude - causes slow convergence and requires careful tuning of $\eta$. This is one reason preprocessing (feature normalization) matters: it keeps eigenvalues in a similar range and speeds up gradient descent.</p>
+</blockquote>
+<hr>
+<h2 id=measuring-fit-r>Measuring Fit: R²</h2>
+<p>How do you know if the model is good? The loss value in absolute terms is hard to interpret - it depends on the scale of $y$. A normalized measure is the <strong>coefficient of determination</strong>, $R^2$:</p>
+<p>$$R^2 = 1 - \frac{SS_{\text{res}}}{SS_{\text{tot}}} = 1 - \frac{\sum_i (y^{(i)} - \hat{y}^{(i)})^2}{\sum_i (y^{(i)} - \bar{y})^2}$$</p>
+<p>where $\bar{y}$ is the mean of the labels. $SS_{\text{res}}$ is the variance unexplained by the model; $SS_{\text{tot}}$ is the total variance in the labels.</p>
+<p>$R^2 = 1$: the model explains all the variance. Every prediction is perfect.</p>
+<p>$R^2 = 0$: the model explains none of the variance. Predicting the mean $\bar{y}$ for every input would do just as well.</p>
+<p>$R^2 &lt; 0$: the model is worse than predicting the mean. This can happen for misspecified models evaluated on test data.</p>
+<p>$R^2$ is the fraction of variance explained by the model. It&rsquo;s a useful summary but not a complete picture - a model can have high $R^2$ on training data but poor $R^2$ on test data (overfitting).</p>
+<hr>
+<h2 id=ridge-regression-regularization>Ridge Regression: Regularization</h2>
+<p>Linear regression minimizes $|Xw - y|^2$. If $n$ is large relative to $m$, or if features are highly correlated, the solution can have very large weights - it fits the training data well by exploiting collinearities, then generalizes poorly.</p>
+<p><strong>Ridge regression</strong> adds a penalty on the size of the weights:</p>
+<p>$$L_{\text{ridge}}(w) = |Xw - y|^2 + \lambda |w|^2$$</p>
+<p>The $\lambda |w|^2$ term is the regularizer. Taking the gradient and setting to zero:</p>
+<p>$$2X^T(Xw - y) + 2\lambda w = 0$$</p>
+<p>$$w_{\text{ridge}} = (X^T X + \lambda I)^{-1} X^T y$$</p>
+<p>Two things to notice. First, $(X^T X + \lambda I)$ is always invertible for $\lambda > 0$, even when $X^T X$ is singular. Adding $\lambda$ to the diagonal shifts all eigenvalues up by $\lambda$, so none are zero. Ridge regression solves the collinearity problem by construction.</p>
+<p>Second, as $\lambda$ increases, the weights are pulled toward zero. With very large $\lambda$, all weights are near zero and the model predicts close to the mean regardless of input. The $\lambda$ parameter controls the bias-variance trade-off: larger $\lambda$ introduces more bias (predictions closer to the mean) but reduces variance (less sensitivity to the particular training set).</p>
+<p><strong>Bayesian interpretation.</strong> Ridge regression is maximum a posteriori (MAP) estimation with a Gaussian prior $w \sim \mathcal{N}(0, \sigma^2/\lambda \cdot I)$. The prior says: before seeing data, we believe the weights are small. The posterior mode (MAP estimate) balances the likelihood (data fit) against the prior (weight size). Ridge is not just a regularization trick - it&rsquo;s exact Bayesian inference under a specific prior.</p>
+<hr>
+<h2 id=lasso-sparse-solutions>Lasso: Sparse Solutions</h2>
+<p><strong>Lasso</strong> (Least Absolute Shrinkage and Selection Operator) replaces the squared penalty with an absolute value:</p>
+<p>$$L_{\text{lasso}}(w) = |Xw - y|^2 + \lambda |w|_1 = |Xw - y|^2 + \lambda \sum_j |w_j|$$</p>
+<p>The $\ell_1$ penalty has a remarkable property: the optimal solution often has many weights equal to exactly zero. Lasso simultaneously fits the model and performs feature selection, automatically setting irrelevant weights to zero.</p>
+<p>Why does $\ell_1$ produce sparsity while $\ell_2$ doesn&rsquo;t? The geometry is the reason. The $\ell_2$ ball ${w : |w|^2 \leq c}$ is a smooth sphere. The $\ell_1$ ball ${w : |w|_1 \leq c}$ has corners - one at each coordinate axis. The constrained minimum of a function on a smooth sphere can be anywhere on the boundary, but on the $\ell_1$ ball, the minimum tends to hit corners where many coordinates are zero.</p>
+<p>Lasso doesn&rsquo;t have a closed-form solution (because $|w|_1$ is not differentiable at $w_j = 0$). It requires iterative methods such as coordinate descent. But it&rsquo;s an indispensable tool when you have many features and expect only a few to be relevant.</p>
+<hr>
+<h2 id=assumptions-and-when-they-break>Assumptions and When They Break</h2>
+<p>Linear regression makes several assumptions. Knowing them tells you when the model is trustworthy and when you should be suspicious.</p>
+<p><strong>Linearity.</strong> The true relationship between features and label is linear (or linear after your feature engineering). If the true relationship is cubic, a linear model will systematically mispredict. Diagnostic: plot residuals vs. fitted values - a curved pattern suggests non-linearity.</p>
+<p><strong>Homoscedasticity.</strong> The variance of the noise $\varepsilon^{(i)}$ is constant across all inputs. If variance grows with the prediction (e.g., expensive houses have more variable prices), OLS estimates are still unbiased but are no longer the minimum-variance estimator. Weighted least squares or log-transforming the label can help.</p>
+<p><strong>Independence.</strong> Errors are independent of each other. This fails for time series (today&rsquo;s error correlates with tomorrow&rsquo;s) or spatial data (nearby houses have correlated errors). Ignoring this gives overly optimistic confidence intervals.</p>
+<p><strong>No perfect multicollinearity.</strong> No feature is an exact linear combination of others. Near-multicollinearity doesn&rsquo;t break the algebra but causes numerical instability and inflated variance in the weights. Ridge regression is the remedy.</p>
+<hr>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Formula</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td>$\hat{y} = Xw$</td>
+<td>Hyperplane in feature space</td>
+</tr>
+<tr>
+<td>MSE loss</td>
+<td>$L = \frac{1}{m}|Xw - y|^2$</td>
+<td>Differentiable, unique minimum</td>
+</tr>
+<tr>
+<td>Normal equation</td>
+<td>$w = (X^TX)^{-1}X^Ty$</td>
+<td>Exact; costs $O(mn^2 + n^3)$</td>
+</tr>
+<tr>
+<td>Geometric view</td>
+<td>$\hat{y}$ = orthogonal projection of $y$ onto col$(X)$</td>
+<td>Residuals $\perp$ col$(X)$</td>
+</tr>
+<tr>
+<td>MLE connection</td>
+<td>Minimizing MSE = MLE under $\varepsilon \sim \mathcal{N}(0, \sigma^2)$</td>
+<td>Same solution</td>
+</tr>
+<tr>
+<td>Gradient descent</td>
+<td>$w \leftarrow w - \frac{2\eta}{m}X^T(Xw-y)$</td>
+<td>Scales to large $n$, $m$</td>
+</tr>
+<tr>
+<td>$R^2$</td>
+<td>$1 - SS_{\text{res}}/SS_{\text{tot}}$</td>
+<td>Fraction of variance explained</td>
+</tr>
+<tr>
+<td>Ridge</td>
+<td>$w = (X^TX + \lambda I)^{-1}X^Ty$</td>
+<td>Shrinks weights; always invertible</td>
+</tr>
+<tr>
+<td>Lasso</td>
+<td>$|Xw - y|^2 + \lambda|w|_1$</td>
+<td>Sparse weights; feature selection</td>
+</tr>
+</tbody>
+</table>
+<p>Linear regression fits a hyperplane. The normal equation finds the best hyperplane exactly. Geometrically, it projects the label vector onto the column space of the feature matrix. Probabilistically, it is MLE under Gaussian noise. Gradient descent finds the same answer iteratively when the matrix inversion is too expensive. Ridge and Lasso extend the model to handle collinearity and sparsity.</p>
+<p>This is the simplest story in supervised learning. But the same structure - a model, a loss, and optimization - recurs in every algorithm that follows.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href=/posts/logistic-regression/>Logistic Regression</a> - the same linear model, adapted to predict probabilities and classify</li>
+<li><a href=/posts/bias-variance-overfitting/>Bias, Variance & Overfitting</a> - why a model that fits training data perfectly often fails on new data</li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

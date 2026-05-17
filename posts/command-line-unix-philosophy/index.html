@@ -1,0 +1,280 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>Command Line & Unix Philosophy // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Command Line & Unix Philosophy">
+<meta name=twitter:description content="The server is throwing 500 errors. The application logs are 40 GB. You have no GUI, no Splunk license, no time. You have a terminal.
+zcat app.log.*.gz | grep &#34;ERROR&#34; | awk '{print $8}' | sort | uniq -c | sort -rn | head -20 Thirty seconds later, you know the top 20 error types by frequency, with counts. You did not write a Python script. You did not spin up a log aggregation tool.">
+<meta property="og:title" content="Command Line & Unix Philosophy">
+<meta property="og:description" content="The server is throwing 500 errors. The application logs are 40 GB. You have no GUI, no Splunk license, no time. You have a terminal.
+zcat app.log.*.gz | grep &#34;ERROR&#34; | awk '{print $8}' | sort | uniq -c | sort -rn | head -20 Thirty seconds later, you know the top 20 error types by frequency, with counts. You did not write a Python script. You did not spin up a log aggregation tool.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/command-line-unix-philosophy/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Command Line & Unix Philosophy</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p>The server is throwing 500 errors. The application logs are 40 GB. You have no GUI, no Splunk license, no time. You have a terminal.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>zcat app.log.*.gz | grep <span style=color:#e6db74>&#34;ERROR&#34;</span> | awk <span style=color:#e6db74>&#39;{print $8}&#39;</span> | sort | uniq -c | sort -rn | head -20
+</code></pre></div><p>Thirty seconds later, you know the top 20 error types by frequency, with counts. You did not write a Python script. You did not spin up a log aggregation tool. You piped five programs together, each doing exactly one thing, and they composed into a solution you will never commit to any repository.</p>
+<p>This is the Unix philosophy in action. Not as nostalgia, but as a genuinely useful way to think about software that has outlasted the decade it was born in by half a century.</p>
+<h2 id=bell-labs-1969-the-worst-is-better-argument>Bell Labs, 1969: The Worst-Is-Better Argument</h2>
+<p>By 1969, computing had divided into two camps. The establishment camp believed software should be comprehensive, elegant, and theoretically correct - the MIT/Stanford school. Bell Labs had been part of the ambitious Multics project, a time-sharing OS that tried to do everything: file versioning, access control, distributed computing, fault tolerance. Multics was technically impressive and perpetually unfinished.</p>
+<p>When Bell Labs pulled out of Multics, Ken Thompson and Dennis Ritchie built Unix in a matter of weeks on a discarded PDP-7. Unix was not elegant. It made no attempt to be comprehensive. It ran on hardware that could barely run anything. But it worked, and it was finished.</p>
+<p>The philosophy that emerged - articulated most clearly by Doug McIlroy, Bell Labs' head of research - was a reaction to Multics:</p>
+<blockquote>
+<p>Write programs that do one thing and do it well. Write programs to work together. Write programs to handle text streams, because that is a universal interface.</p>
+</blockquote>
+<p>Richard Gabriel&rsquo;s 1991 essay &ldquo;Worse Is Better&rdquo; named this the &ldquo;New Jersey school&rdquo; vs the &ldquo;MIT approach.&rdquo; The MIT approach pursues correctness and completeness. The New Jersey approach accepts imperfect solutions that ship. The essay, written as a critique, inadvertently explained why Unix won: a slightly wrong tool that exists is more useful than a perfect tool that doesn&rsquo;t.</p>
+<p>Unix won. Linux is Unix. macOS is Unix. iOS and Android run Unix kernels. Every cloud server you will ever work with runs a Unix-descended OS. The philosophy from Bell Labs 1969 is the philosophy running the internet.</p>
+<h2 id=everything-is-a-file>Everything Is a File</h2>
+<p>The central abstraction of Unix is audaciously simple: represent everything as a file.</p>
+<p>Regular files and directories are files, obviously. But so are:</p>
+<ul>
+<li>Devices: <code>/dev/sda</code> is a disk, <code>/dev/null</code> discards everything you write to it, <code>/dev/urandom</code> produces random bytes</li>
+<li>Processes: <code>/proc/1234/</code> is a directory for process 1234, with files containing its memory maps, open file descriptors, CPU usage</li>
+<li>Sockets: network connections are file descriptors you read and write</li>
+<li>Pipes: the output of <code>ls</code> piped to <code>grep</code> flows through a file descriptor</li>
+</ul>
+<p>The practical consequence: every program that reads from stdin and writes to stdout can be composed with every other such program, because &ldquo;stdin&rdquo; and &ldquo;stdout&rdquo; are just file descriptors. The programs do not need to know what they are connected to.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>cat /dev/urandom | base64 | head -c <span style=color:#ae81ff>32</span>    <span style=color:#75715e># 32 random base64 characters</span>
+dd <span style=color:#66d9ef>if</span><span style=color:#f92672>=</span>/dev/sda of<span style=color:#f92672>=</span>/dev/sdb bs<span style=color:#f92672>=</span>4M          <span style=color:#75715e># clone a disk, byte for byte</span>
+curl https://api.example.com/data | jq <span style=color:#e6db74>&#39;.items[]&#39;</span> | wc -l   <span style=color:#75715e># count API results</span>
+</code></pre></div><p>The last line fetches a URL, pipes the JSON body to <code>jq</code> (a JSON processor), extracts each item, and counts them. <code>curl</code>, <code>jq</code>, and <code>wc</code> were written by different people, in different decades, for different purposes. They compose because they all speak text streams through stdin/stdout.</p>
+<h2 id=stdin-stdout-stderr-the-universal-interface>stdin, stdout, stderr: The Universal Interface</h2>
+<p>Every Unix process inherits three open file descriptors:</p>
+<ul>
+<li><strong>stdin (fd 0):</strong> Input. By default, the terminal keyboard. Can be redirected from a file or pipe.</li>
+<li><strong>stdout (fd 1):</strong> Normal output. By default, the terminal. Can be redirected to a file or pipe.</li>
+<li><strong>stderr (fd 2):</strong> Error output. By default, the terminal. Kept separate so errors do not corrupt pipelines.</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>ls /nonexistent 2&gt;/dev/null   <span style=color:#75715e># discard errors, keep stdout</span>
+ls /nonexistent 2&gt;&amp;<span style=color:#ae81ff>1</span> | grep <span style=color:#e6db74>&#34;No such&#34;</span>  <span style=color:#75715e># merge stderr into stdout, then grep</span>
+cmd &gt; output.txt 2&gt; errors.txt         <span style=color:#75715e># separate stdout and stderr into files</span>
+</code></pre></div><p>The separation of stdout and stderr is subtle but critical. When you pipe <code>grep "ERROR" app.log | wc -l</code>, you want to count the error lines, not the error messages about unreadable log files. stderr goes to the terminal (where a human sees it), stdout flows through the pipeline (where the next program processes it).</p>
+<h2 id=pipes-composition-as-architecture>Pipes: Composition as Architecture</h2>
+<p>The <code>|</code> operator chains programs together, connecting stdout of the left program to stdin of the right. The programs run concurrently - the shell spawns all of them simultaneously and the kernel buffers data between them through the pipe.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Count unique IP addresses hitting a server, top 10 by frequency</span>
+awk <span style=color:#e6db74>&#39;{print $1}&#39;</span> access.log | sort | uniq -c | sort -rn | head -10
+</code></pre></div><p>Each program does one thing:</p>
+<ul>
+<li><code>awk '{print $1}'</code> - extract the first field (IP address) from each line</li>
+<li><code>sort</code> - sort lines alphabetically (required for <code>uniq</code> to work correctly)</li>
+<li><code>uniq -c</code> - collapse adjacent identical lines, prepending a count</li>
+<li><code>sort -rn</code> - sort numerically, reversed (largest count first)</li>
+<li><code>head -10</code> - take the first 10 lines</li>
+</ul>
+<p>No intermediate files. No Python script. No schema. Five programs, each independently useful, composed into something none of them could do alone.</p>
+<p>This composition model is why microservices feel familiar to anyone who knows Unix. A microservice that accepts JSON, transforms it, and emits JSON to a message queue is implementing the Unix pipeline pattern at network scale. Kafka topics are named pipes. The architecture of &ldquo;small, composable services connected by streams&rdquo; is the Unix philosophy applied to distributed systems.</p>
+<h2 id=the-core-tools-what-they-actually-do>The Core Tools: What They Actually Do</h2>
+<h3 id=grep>grep</h3>
+<p><code>grep</code> (Global Regular Expression Print) reads lines and prints those matching a pattern:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>grep <span style=color:#e6db74>&#34;ERROR&#34;</span> app.log                      <span style=color:#75715e># lines containing ERROR</span>
+grep -n <span style=color:#e6db74>&#34;ERROR&#34;</span> app.log                   <span style=color:#75715e># with line numbers</span>
+grep -v <span style=color:#e6db74>&#34;DEBUG&#34;</span> app.log                   <span style=color:#75715e># lines NOT containing DEBUG</span>
+grep -r <span style=color:#e6db74>&#34;TODO&#34;</span> src/                       <span style=color:#75715e># recursive, all files</span>
+grep -E <span style=color:#e6db74>&#34;5[0-9]{2}&#34;</span> access.log           <span style=color:#75715e># extended regex: 5xx HTTP codes</span>
+grep -l <span style=color:#e6db74>&#34;pattern&#34;</span> *.py                    <span style=color:#75715e># print only filenames, not matches</span>
+</code></pre></div><p><code>grep</code> is usually the fastest way to find anything in a log file, faster than any GUI log viewer for large files because it reads sequentially and does not build indexes.</p>
+<h3 id=awk>awk</h3>
+<p><code>awk</code> is a mini-language for processing structured text. Each line is split into fields (<code>$1</code>, <code>$2</code>, etc.) by whitespace (or a delimiter you specify with <code>-F</code>). You can filter, transform, and aggregate:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>awk <span style=color:#e6db74>&#39;{print $1, $4}&#39;</span> access.log          <span style=color:#75715e># print fields 1 and 4</span>
+awk <span style=color:#e6db74>&#39;$9 &gt;= 500 {print $0}&#39;</span> access.log    <span style=color:#75715e># lines where field 9 (status code) &gt;= 500</span>
+awk -F: <span style=color:#e6db74>&#39;{print $1}&#39;</span> /etc/passwd         <span style=color:#75715e># colon-delimited: print usernames</span>
+awk <span style=color:#e6db74>&#39;{sum += $5} END {print sum}&#39;</span> data.txt  <span style=color:#75715e># sum field 5 across all lines</span>
+awk <span style=color:#e6db74>&#39;NR &gt; 100 &amp;&amp; NR &lt;= 200 {print}&#39;</span>     <span style=color:#75715e># print lines 101-200</span>
+</code></pre></div><p><code>awk</code> is not a text search tool. It is a text transformation and aggregation tool. If <code>grep</code> finds things, <code>awk</code> reshapes them.</p>
+<h3 id=sed>sed</h3>
+<p><code>sed</code> (Stream Editor) applies transformations to every line:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>sed <span style=color:#e6db74>&#39;s/foo/bar/&#39;</span> file.txt                <span style=color:#75715e># replace first occurrence per line</span>
+sed <span style=color:#e6db74>&#39;s/foo/bar/g&#39;</span> file.txt               <span style=color:#75715e># replace all occurrences per line</span>
+sed -n <span style=color:#e6db74>&#39;5,20p&#39;</span> file.txt                  <span style=color:#75715e># print lines 5-20</span>
+sed <span style=color:#e6db74>&#39;/^$/d&#39;</span> file.txt                     <span style=color:#75715e># delete empty lines</span>
+sed -i <span style=color:#e6db74>&#39;s/localhost/prod.db/g&#39;</span> config    <span style=color:#75715e># edit in place (modify the file)</span>
+</code></pre></div><p><code>sed</code> shines for batch search-and-replace across files:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Replace all occurrences in all Python files (macOS needs &#39;&#39; after -i)</span>
+find . -name <span style=color:#e6db74>&#34;*.py&#34;</span> | xargs sed -i <span style=color:#e6db74>&#39;s/old_function/new_function/g&#39;</span>
+</code></pre></div><h3 id=find-and-xargs>find and xargs</h3>
+<p><code>find</code> searches the filesystem by name, modification time, size, permissions:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>find . -name <span style=color:#e6db74>&#34;*.log&#34;</span> -mtime +30         <span style=color:#75715e># log files older than 30 days</span>
+find . -name <span style=color:#e6db74>&#34;*.py&#34;</span> -size +100k         <span style=color:#75715e># Python files over 100 KB</span>
+find /tmp -type f -empty -delete        <span style=color:#75715e># delete empty files in /tmp</span>
+find . -name <span style=color:#e6db74>&#34;*.pyc&#34;</span> -print0 | xargs -0 rm   <span style=color:#75715e># delete all .pyc (handles spaces in names)</span>
+</code></pre></div><p><code>xargs</code> converts stdin lines into command-line arguments:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>find . -name <span style=color:#e6db74>&#34;*.log&#34;</span> -print0 | xargs -0 gzip         <span style=color:#75715e># gzip all logs</span>
+find . -name <span style=color:#e6db74>&#34;*.py&#34;</span> -print0 | xargs -0 -P <span style=color:#ae81ff>4</span> pylint   <span style=color:#75715e># lint 4 files in parallel</span>
+</code></pre></div><p>The <code>-print0</code> / <code>-0</code> combination handles filenames with spaces by null-terminating instead of newline-terminating. This is one of bash&rsquo;s infamous edge cases - text is not a safe format for filenames.</p>
+<h2 id=shell-scripting-power-and-peril>Shell Scripting: Power and Peril</h2>
+<p>Shell scripts are programs. They should be treated as such: version-controlled, reviewed, tested. The defaults are wrong, so set them:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e>#!/usr/bin/env bash
+</span><span style=color:#75715e></span>set -euo pipefail
+<span style=color:#75715e>#  -e: exit immediately on any error (otherwise errors are silently ignored)</span>
+<span style=color:#75715e>#  -u: error on unset variables (typos in variable names become errors)</span>
+<span style=color:#75715e>#  -o pipefail: pipeline fails if any command fails (not just the last one)</span>
+
+readonly CONFIG_FILE<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;/etc/myapp/config.yaml&#34;</span>
+readonly LOG_DIR<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;/var/log/myapp&#34;</span>
+
+log<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    echo <span style=color:#e6db74>&#34;[</span><span style=color:#66d9ef>$(</span>date -Iseconds<span style=color:#66d9ef>)</span><span style=color:#e6db74>] </span>$*<span style=color:#e6db74>&#34;</span> &gt;&amp;<span style=color:#ae81ff>2</span>   <span style=color:#75715e># log to stderr</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>if</span> <span style=color:#f92672>[[</span> ! -f <span style=color:#e6db74>&#34;</span>$CONFIG_FILE<span style=color:#e6db74>&#34;</span> <span style=color:#f92672>]]</span>; <span style=color:#66d9ef>then</span>
+    log <span style=color:#e6db74>&#34;ERROR: config file not found: </span>$CONFIG_FILE<span style=color:#e6db74>&#34;</span>
+    exit <span style=color:#ae81ff>1</span>
+<span style=color:#66d9ef>fi</span>
+</code></pre></div><p>Without <code>set -e</code>, a failing command in a shell script is silently ignored and execution continues. <code>rm -rf "$dir/"</code> with <code>$dir</code> being empty becomes <code>rm -rf /</code> without <code>set -u</code>. Without <code>set -o pipefail</code>, <code>grep "ERROR" huge.log | head -1</code> can &ldquo;succeed&rdquo; (exit 0) even if <code>grep</code> found nothing.</p>
+<h3 id=when-to-switch-to-python>When to Switch to Python</h3>
+<p>Bash is good at:</p>
+<ul>
+<li>Running other programs and connecting their inputs/outputs</li>
+<li>File manipulation (rename, move, find)</li>
+<li>Quick one-liners and simple iteration</li>
+</ul>
+<p>Bash is terrible at:</p>
+<ul>
+<li>Array handling (associative arrays are a late addition with bizarre syntax)</li>
+<li>String manipulation (quoting rules are a security nightmare)</li>
+<li>Error handling (the default is to ignore errors silently)</li>
+<li>Complex logic (deeply nested <code>if</code>/<code>for</code> becomes unreadable quickly)</li>
+<li>Anything involving JSON, YAML, or structured data</li>
+</ul>
+<p>The rule of thumb: if your shell script has more than 50–100 lines, or if you find yourself fighting quoting rules, or if you need to parse anything more complex than whitespace-separated text, switch to Python. Python&rsquo;s <code>subprocess</code> module, <code>pathlib</code>, and <code>argparse</code> give you everything bash does with better error handling, better string manipulation, and <code>jq</code>-free JSON parsing.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> subprocess<span style=color:#f92672>,</span> pathlib<span style=color:#f92672>,</span> json
+
+<span style=color:#75715e># What bash does badly: subprocess with structured output</span>
+result <span style=color:#f92672>=</span> subprocess<span style=color:#f92672>.</span>run(
+    [<span style=color:#e6db74>&#34;kubectl&#34;</span>, <span style=color:#e6db74>&#34;get&#34;</span>, <span style=color:#e6db74>&#34;pods&#34;</span>, <span style=color:#e6db74>&#34;-o&#34;</span>, <span style=color:#e6db74>&#34;json&#34;</span>],
+    capture_output<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>, text<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>, check<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>
+)
+pods <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>loads(result<span style=color:#f92672>.</span>stdout)
+<span style=color:#66d9ef>for</span> pod <span style=color:#f92672>in</span> pods[<span style=color:#e6db74>&#34;items&#34;</span>]:
+    print(pod[<span style=color:#e6db74>&#34;metadata&#34;</span>][<span style=color:#e6db74>&#34;name&#34;</span>], pod[<span style=color:#e6db74>&#34;status&#34;</span>][<span style=color:#e6db74>&#34;phase&#34;</span>])
+</code></pre></div><h2 id=the-unix-philosophy-at-cloud-scale>The Unix Philosophy at Cloud Scale</h2>
+<p>The Unix design principles did not stay on single machines. They scaled to entire systems architectures.</p>
+<p><strong>Immutable containers as programs:</strong> A Docker container is a unit that does one thing, reads from stdin (environment variables, config files), and writes to stdout (logs). You do not SSH into a container to fix it - you replace it, just as you do not modify a Unix binary, you recompile and redeploy.</p>
+<p><strong>Microservices as Unix processes:</strong> A microservice that accepts HTTP requests, processes them, and writes results to a database is implementing the Unix pipeline pattern at service granularity. The &ldquo;do one thing&rdquo; principle scales.</p>
+<p><strong>Kubernetes manifests as composition:</strong> A Kubernetes manifest describing a Deployment, a Service, and a ConfigMap is composing resources the way a shell script composes programs. The declarative YAML syntax is verbose, but the underlying philosophy - describe what you want, let the system figure out how - is pipe-adjacent.</p>
+<p><strong>Message queues as named pipes:</strong> Kafka, SQS, RabbitMQ are all named pipes with persistence and delivery guarantees. The <code>producer → topic → consumer</code> pattern is <code>command | pipe | command</code> with durability.</p>
+<p>The companies that &ldquo;get&rdquo; DevOps fastest are often the ones with strong Unix cultures - the teams that think in pipelines, that treat infrastructure as text, that compose small tools rather than building monoliths.</p>
+<h2 id=critique-the-genuine-limitations>Critique: The Genuine Limitations</h2>
+<p>Being honest about Unix&rsquo;s warts is important:</p>
+<p><strong>Text is not a universal interface.</strong> Tab-separated, space-separated, newline-delimited - the &ldquo;format&rdquo; is implicit and fragile. <code>ls -l</code> output changes format across platforms. filenames with spaces break naive scripts. JSON, Parquet, and Avro exist because text streams are insufficient for structured, typed data. <code>jq</code> is a workaround for the fact that Unix tools cannot natively handle JSON.</p>
+<p><strong>Bash quoting rules are catastrophic.</strong> The difference between <code>"$var"</code> and <code>$var</code> and <code>'$var'</code> and <code>$(echo $var)</code> requires years of experience to internalize correctly. Shell injection vulnerabilities are a real class of security bug caused directly by quoting complexity. Bash arrays are an afterthought with hostile syntax. None of this would be designed this way from scratch in 2024.</p>
+<p><strong>Error handling is wrong by default.</strong> <code>set -euo pipefail</code> should be the default, not an opt-in. The fact that silent failure is the baseline mode has caused production incidents. This design decision made sense in 1979 when scripts were short and interactive. It is a liability in automation.</p>
+<p><strong>Process creation is the composability mechanism.</strong> Forking a process for every <code>sort</code> and <code>grep</code> invocation is cheap on modern hardware but conceptually heavyweight. Python generators achieve similar composition within a single process, without the serialization-to-text overhead.</p>
+<p>Despite these limitations, the Unix command line remains the most productive environment for ad-hoc data exploration, log analysis, and systems administration ever designed. Not because it is perfect, but because it is available everywhere, requires no setup, and composes in ways that purpose-built tools cannot match.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Does One Thing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>grep</code></td>
+<td>Find lines matching a pattern</td>
+</tr>
+<tr>
+<td><code>awk</code></td>
+<td>Transform/aggregate structured text fields</td>
+</tr>
+<tr>
+<td><code>sed</code></td>
+<td>Substitute/delete/select lines in a stream</td>
+</tr>
+<tr>
+<td><code>sort</code></td>
+<td>Sort lines (optionally by field or numerically)</td>
+</tr>
+<tr>
+<td><code>uniq</code></td>
+<td>Collapse adjacent identical lines (count with <code>-c</code>)</td>
+</tr>
+<tr>
+<td><code>find</code></td>
+<td>Search filesystem by attributes</td>
+</tr>
+<tr>
+<td><code>xargs</code></td>
+<td>Convert stdin lines to command arguments</td>
+</tr>
+<tr>
+<td><code>wc</code></td>
+<td>Count lines, words, bytes</td>
+</tr>
+<tr>
+<td><code>cut</code></td>
+<td>Extract columns by delimiter</td>
+</tr>
+<tr>
+<td><code>jq</code></td>
+<td>Transform JSON (the missing Unix tool for structured data)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href=/posts/git-version-control/>Git & Version Control</a></li>
+</ul>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

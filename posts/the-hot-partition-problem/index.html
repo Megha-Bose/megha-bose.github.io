@@ -1,0 +1,186 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>The Hot Partition Problem // Megha Bose</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.2">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Megha Bose">
+<meta name=description content>
+<link rel=stylesheet href=/css/main.min.5523c4754776b1d5eccd3100867b4fecd6fa2924858201923e8f5cc4ce8b579a.css>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css crossorigin=anonymous>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="The Hot Partition Problem">
+<meta name=twitter:description content="Prerequisite: Databases & Indexes
+ It&rsquo;s Black Friday. The time is 8:59 AM Eastern. A product page for a $79 gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%. Disk IOPS saturate. Response latencies climb from 2 milliseconds to 30 seconds.">
+<meta property="og:title" content="The Hot Partition Problem">
+<meta property="og:description" content="Prerequisite: Databases & Indexes
+ It&rsquo;s Black Friday. The time is 8:59 AM Eastern. A product page for a $79 gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%. Disk IOPS saturate. Response latencies climb from 2 milliseconds to 30 seconds.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/the-hot-partition-problem/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class=app-header>
+<a href=http://megha-bose.github.io/><img class=app-header-avatar src=/avatar.jpg alt="Megha Bose"></a>
+<span class=app-header-title>Megha Bose</span><p class=app-header-tagline>Yet another wave in the ocean</p>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About Me</a>
+<br>
+<a class=app-header-menu-item href=/resume/> Resume</a>
+<br>
+<a class=app-header-menu-item href=/categories/>Blog Topics</a>
+<br>
+<a class=app-header-menu-item href=/bookshelf/>Bookshelf</a>
+</nav>
+<div class=app-header-social>
+<a href=https://github.com/Megha-Bose target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href=https://www.linkedin.com/in/megha-bose/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href=https://twitter.com/MegsB2001 target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href=https://www.instagram.com/nimbus2o01/ target=_blank rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class=theme-toggle id=theme-toggle aria-label="Toggle light/dark mode">
+<span class=theme-toggle-icon></span>
+</button>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>The Hot Partition Problem</h1>
+<div class=post-meta>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+11 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><strong>Prerequisite:</strong> <a href=/posts/databases-indexes/>Databases & Indexes</a></p>
+<hr>
+<p>It&rsquo;s Black Friday. The time is 8:59 AM Eastern. A product page for a $79 gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%. Disk IOPS saturate. Response latencies climb from 2 milliseconds to 30 seconds. The load balancer starts timing out requests. The product page goes blank. The entire e-commerce platform shows errors, not because the system ran out of capacity overall, but because one partition is on fire while twenty others are sitting mostly idle.</p>
+<p>This is the hot partition problem. More capacity doesn&rsquo;t fix it. Adding shards distributes the new capacity evenly, but the traffic is not even - it&rsquo;s concentrated. The hot shard&rsquo;s share of traffic doesn&rsquo;t decrease when you add more shards.</p>
+<h2 id=what-creates-hot-partitions>What Creates Hot Partitions</h2>
+<p><strong>Power-law distributions in access patterns</strong> are the fundamental cause. Hash-based sharding distributes keys evenly across the keyspace - but only if traffic is distributed evenly across keys. In almost every real system it isn&rsquo;t. User-generated content follows a power law: a tiny fraction of content accounts for the vast majority of reads. A single tweet from Beyoncé gets hundreds of millions of impressions; the average tweet gets three. The shard holding Beyoncé&rsquo;s data absorbs traffic proportional to her popularity, not to the total number of users.</p>
+<p><strong>Celebrity and viral content</strong> is the acute version. An account with 50 million followers posts something. That post&rsquo;s shard absorbs a spike orders of magnitude larger than any typical post. The shard has no way to adapt - it&rsquo;s a fixed slice of the keyspace, and all requests for that content must go through it.</p>
+<p><strong>Sequential and time-based partition keys</strong> create a different failure mode: monotonic hot partitions. If your shard key is a timestamp or auto-incrementing integer, all new writes go to the &ldquo;latest&rdquo; partition - always the same one. This is one of the most common operational mistakes in systems using Bigtable, HBase, or DynamoDB with a poorly chosen key. The last partition is always hot; all prior partitions are cold and idle. You get the worst of both worlds: wasted capacity and a saturated write path.</p>
+<p><strong>Thundering herd at cache miss:</strong> when a cached item expires and thousands of concurrent requests all simultaneously miss the cache and pound the underlying partition, the spike is brief but can be catastrophic. This is structurally the same problem - concentrated traffic on one destination - triggered by a timer rather than popularity.</p>
+<h2 id=the-real-story-beyoncé-and-twitters-architecture>The Real Story: Beyoncé and Twitter&rsquo;s Architecture</h2>
+<p>In February 2013, Beyoncé announced her pregnancy at the Grammy Awards. Twitter&rsquo;s architecture at the time used a push-based fan-out model: when a user posts, the tweet is written into every follower&rsquo;s precomputed timeline feed. For most users this works fine.</p>
+<p>For Beyoncé, who had tens of millions of followers, a single tweet triggered tens of millions of write operations - all of them hitting the fan-out workers simultaneously, all of them trying to write to different users' timeline caches. The fan-out workers fell behind. The queue grew. Timelines stopped updating. The system that was designed to handle scale was overwhelmed by a single event.</p>
+<p>This is not purely a hot partition problem (the writes themselves were distributed across many users' partitions), but it illustrates the same root cause: access patterns that are radically non-uniform collide with infrastructure designed for uniform distribution.</p>
+<p>Twitter, Reddit during major news events, and Steam during major game launches (2021&rsquo;s Cyberpunk launch caused Steam to show errors for hours) have all hit variations of this problem. The pattern is always: one item, one event, one moment in time - concentrated load that infrastructure assumed would be spread.</p>
+<h2 id=detecting-hot-partitions>Detecting Hot Partitions</h2>
+<p>You cannot fix what you cannot see. The mistake is monitoring only aggregate cluster metrics. A healthy cluster-level average hides a saturated individual partition.</p>
+<p>Per-partition metrics are required: request rate, CPU utilization, read/write throughput, and latency - all broken down by partition or shard. The diagnostic signatures:</p>
+<ul>
+<li>One partition&rsquo;s throughput is 10x the median, while others are under their provisioned capacity</li>
+<li>P99 latency for requests to one shard is 500ms while others are 5ms</li>
+<li>One Kafka partition&rsquo;s consumer lag grows continuously while neighboring partitions stay current</li>
+</ul>
+<p>Most managed services expose this natively. DynamoDB&rsquo;s CloudWatch metrics include <code>ConsumedReadCapacityUnits</code> and <code>ConsumedWriteCapacityUnits</code> per partition. Kafka exposes per-partition offset lag through JMX. Redis Cluster exposes per-slot statistics via <code>CLUSTER INFO</code>.</p>
+<h2 id=solution-1-key-salting>Solution 1: Key Salting</h2>
+<p>The most direct fix for a hot key is to artificially spread it across multiple virtual shards by appending a random suffix.</p>
+<p>For a hot key like <code>product:viral-item</code>, instead of routing all reads and writes to one location, distribute across N:</p>
+<pre tabindex=0><code>product:viral-item:0
+product:viral-item:1
+...
+product:viral-item:N-1
+</code></pre><p>Pick the shard suffix randomly on write. On read, scatter across all N shards and merge the results. The hot key&rsquo;s traffic is now distributed N-ways.</p>
+<p>The cost on reads is scatter-gather: N parallel requests instead of one. For write-heavy hot keys, this is a good trade. For read-heavy keys with high N, the overhead of merging becomes significant. N is tunable - size it to the actual hotness factor, not a fixed number.</p>
+<h2 id=solution-2-dynamodb-adaptive-capacity---and-why-its-not-enough>Solution 2: DynamoDB Adaptive Capacity - and Why It&rsquo;s Not Enough</h2>
+<p>DynamoDB has a feature called adaptive capacity that automatically redistributes provisioned throughput from cold partitions to hot ones. It detects usage imbalance and shifts capacity in response. For moderate, sustained hot partitions - where one item legitimately needs more throughput than its partition was allocated - this buys significant relief without application changes.</p>
+<p>The limitation is fundamental physics. A DynamoDB partition has a hard ceiling on its throughput regardless of how much capacity you&rsquo;ve provisioned for the table overall. Adaptive capacity can reallocate capacity up to the partition&rsquo;s physical ceiling. If a viral event drives traffic a hundred times above that ceiling, adaptive capacity cannot help. The partition is saturated. You need application-level solutions.</p>
+<p>DynamoDB&rsquo;s recommendation for truly hot items is to add a random suffix to the partition key (key salting) and use DAX (DynamoDB Accelerator) - an in-memory caching layer purpose-built for DynamoDB. DAX sits in front of DynamoDB, absorbs read traffic for hot keys, and reduces the hit rate on DynamoDB itself dramatically.</p>
+<h2 id=solution-3-caching-as-a-hot-partition-shield>Solution 3: Caching as a Hot Partition Shield</h2>
+<p>For read-heavy hot partitions, placing a caching layer in front eliminates most of the load. AWS ElastiCache (Redis) is the canonical choice for this: cache the hot item, serve reads from Redis, and let the underlying partition handle only cache misses and writes.</p>
+<p>Redis handles hundreds of thousands of reads per second on a single node. DynamoDB at default settings handles far fewer per partition. The cache acts as a multiplier: a cache hit rate of 99% means the partition sees 1% of the original read traffic.</p>
+<p>The complexity this introduces: cache invalidation. How does every application server know when the hot item&rsquo;s value changes? The options:</p>
+<ul>
+<li><strong>TTL-based expiry:</strong> accept that reads may be briefly stale. Fine for product views; problematic for inventory counts.</li>
+<li><strong>Write-through caching:</strong> update the cache whenever the backing store is updated. Keeps the cache current but adds write-path latency.</li>
+<li><strong>Pub/sub invalidation:</strong> publish an invalidation message when the item changes; all cache nodes evict and re-fetch. More complex but avoids staleness.</li>
+</ul>
+<p>The &ldquo;first write&rdquo; cold start problem: when a new viral item appears, there is no cache entry. The first wave of requests all miss the cache simultaneously and hammer the partition. Request coalescing (discussed below) is the fix.</p>
+<h2 id=solution-4-request-coalescing>Solution 4: Request Coalescing</h2>
+<p>When many concurrent requests arrive for the same key within a short window, coalescing deduplicates them. The first request fetches from the underlying store; all subsequent requests for the same key during the same in-flight window wait for that first request&rsquo;s result and share it.</p>
+<p>This is also called request collapsing or thundering herd protection. Varnish implements it at the HTTP caching layer with its &ldquo;grace mode.&rdquo; Application-level implementations use a shared promise or future: the first goroutine (or thread) to see a cache miss &ldquo;owns&rdquo; the fetch; subsequent goroutines subscribe to the same future and receive the result when it completes.</p>
+<p>This converts N simultaneous partition reads into one, regardless of concurrency level. It&rsquo;s particularly effective for the cold-start problem on newly viral content.</p>
+<h2 id=solution-5-write-buffering-with-sqs>Solution 5: Write Buffering with SQS</h2>
+<p>For write-heavy hot partitions, buffering writes through a queue decouples the write rate from the application&rsquo;s request rate. Instead of every request writing directly to the hot partition, requests write to an SQS queue. A consumer drains the queue at a controlled rate and batch-writes to the database.</p>
+<p>This doesn&rsquo;t eliminate the writes, but it smooths the spike - converting bursty write traffic into a steady, controlled write rate. The cost is latency: the data isn&rsquo;t written immediately, so reads after a write may not reflect the latest state. Acceptable for view counts and follower counts; not acceptable for inventory levels where overselling is a real risk.</p>
+<h2 id=real-world-architectures>Real-World Architectures</h2>
+<p><strong>Twitter&rsquo;s hybrid fan-out:</strong> Twitter resolved the celebrity problem by defining a follower threshold (roughly 10,000 followers in early versions of the system). Accounts below the threshold use write-time fan-out: a post is pushed into each follower&rsquo;s precomputed timeline at post time. Accounts above the threshold are treated differently: their posts are pulled at read time and merged into each requesting user&rsquo;s precomputed feed. This bounds write amplification for celebrity accounts. The fan-out workers are no longer asked to write to 100 million timelines for a single post.</p>
+<p><strong>Redis Cluster and hot slots:</strong> Redis Cluster uses 16,384 hash slots. All keys that hash to the same slot live on the same node. If multiple high-traffic keys hash to the same slot, that slot&rsquo;s node is hot. Redis Cluster does not automatically rebalance within a slot - the application must use key salting (<code>{key}:suffix</code> syntax, which changes how the key is slotted) and perform scatter-gather at the application layer.</p>
+<p><strong>Consistent hashing and virtual nodes:</strong> Consistent hashing partially mitigates hot partitions by distributing keyspace more evenly and making it cheaper to add capacity. Virtual nodes (each physical node is responsible for multiple points on the hash ring) improve the distribution. But consistent hashing distributes keyspace uniformly - it does not distribute access patterns uniformly. A hot key on consistent hashing is still a hot key; you&rsquo;ve just made it cheaper to add more nodes around it.</p>
+<h2 id=when-solutions-make-things-worse>When Solutions Make Things Worse</h2>
+<p>Caching hot data introduces cache invalidation complexity that can become its own source of bugs. A cache that&rsquo;s out of sync with the source of truth is worse than no cache at all in systems where correctness matters.</p>
+<p>Key salting adds application complexity: every write must choose a shard suffix, every read must scatter-gather across all suffixes. The number of suffixes becomes a configuration parameter you must tune per key type. Changing it after the fact requires a data migration.</p>
+<p>Write buffering via SQS means your system is no longer strongly consistent by default. A client that writes and then immediately reads may read stale data. This is acceptable in many contexts but must be a deliberate choice, not an accidental one.</p>
+<h2 id=multi-region-complications>Multi-Region Complications</h2>
+<p>In a multi-region deployment, hot partitions are complicated by cross-region replication lag. If a viral item is written in US-EAST-1 and read in EU-WEST-1, the replication lag means EU-WEST-1 may serve stale data during peak traffic. The hot partition problem combines with the eventual consistency problem.</p>
+<p>Global tables in DynamoDB provide multi-active replication - reads and writes in any region, with last-writer-wins conflict resolution. This spreads read traffic globally and reduces per-region hot partition severity. But it doesn&rsquo;t eliminate the hot key problem - it just distributes it geographically.</p>
+<h2 id=future-outlook>Future Outlook</h2>
+<p>Serverless architectures are inherently more resistant to hot partition problems at the application layer. Lambda functions are stateless and run in parallel automatically - there&rsquo;s no concept of a partition that can be hot. The hot partition problem gets pushed down to the storage layer (still a DynamoDB partition, still an S3 prefix, still a relational database row). Stateless compute at infinite scale is not the same as infinitely scalable storage.</p>
+<p>The long-term solution is storage systems designed with hotness as a first-class concept - systems that automatically detect hot keys and transparently shard them at the storage layer without application changes. DynamoDB&rsquo;s adaptive capacity is an early version of this. Future systems will likely handle more of this transparently.</p>
+<h2 id=summary>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>Solution</th>
+<th>Trade-off</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Viral/celebrity content reads</td>
+<td>Read-through cache (ElastiCache)</td>
+<td>Cache invalidation complexity</td>
+</tr>
+<tr>
+<td>Viral content write spikes</td>
+<td>Key salting (scatter-gather)</td>
+<td>N reads per logical read</td>
+</tr>
+<tr>
+<td>Sequential write keys</td>
+<td>Pre-split partitions, random prefix</td>
+<td>Query complexity</td>
+</tr>
+<tr>
+<td>Thundering herd on cache miss</td>
+<td>Request coalescing</td>
+<td>Implementation complexity</td>
+</tr>
+<tr>
+<td>Write-heavy spikes</td>
+<td>SQS write buffering</td>
+<td>Eventual consistency</td>
+</tr>
+<tr>
+<td>Sustained moderate hot key</td>
+<td>DynamoDB adaptive capacity</td>
+<td>Physical ceiling still exists</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong> <a href=/posts/feed-design-push-vs-pull/>Feed Design: Push vs Pull</a></p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js crossorigin=anonymous onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>
