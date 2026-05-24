@@ -191,8 +191,44 @@ flowchart TD
 <h2 id="avl-and-red-black-trees-keeping-the-promise">AVL and Red-Black Trees: Keeping the Promise</h2>
 <p>The fix for BST degeneration is balancing: enforce that the height stays $O(\log n)$ through rotations that restructure the tree.</p>
 <p><strong>AVL trees</strong> maintain the invariant that for every node, the heights of its left and right subtrees differ by at most 1. After any insertion or deletion, walk back up the tree checking this invariant. If a node violates it, apply a rotation - a local restructuring operation that rearranges a small subtree without breaking the BST property.</p>
-<p>There are four rotation cases: left-left, right-right, left-right, and right-left (the last two are double rotations). The details of which rotation to apply in which case are mechanical; the key insight is that a single or double rotation is always enough to fix a violation at one node, and at most $O(\log n)$ nodes need checking after an insertion. This keeps all operations at $O(\log n)$.</p>
-<p><strong>Red-black trees</strong> use a different invariant: each node is colored red or black, and the coloring satisfies four rules that together ensure the tree&rsquo;s height is at most $2 \log_2(n+1)$. Red-black trees require fewer rotations per insertion and deletion than AVL trees, making them faster in write-heavy workloads. They&rsquo;re used in C++&rsquo;s <code>std::map</code>, Java&rsquo;s <code>TreeMap</code>, and the Linux kernel&rsquo;s process scheduler.</p>
+<p>There are four rotation cases: left-left, right-right, left-right, and right-left (the last two are double rotations). Here is the simplest case - a right rotation fixing a left-left imbalance, where inserting A caused C to become unbalanced:</p>
+<div class="mermaid">
+flowchart LR
+    subgraph after["After rotation"]
+        B2["B"] --> A2["A"] & C2["C"]
+    end
+    subgraph before["Before (C unbalanced)"]
+        C1["C\nbf = -2"] --> B1["B\nbf = -1"]
+        B1 --> A1["A"]
+    end
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The key insight is that a single or double rotation is always enough to fix a violation at one node, and at most $O(\log n)$ nodes need checking after an insertion. This keeps all operations at $O(\log n)$.</p>
+<blockquote>
+<p>Seeing rotations happen interactively makes them much easier to understand than reading about them. Try inserting a few values into this <a href="https://www.cs.usfca.edu/~galles/visualization/AVLtree.html" target="_blank" rel="noopener noreferrer">AVL tree visualizer</a>
+ and watch the rotations fire.</p>
+</blockquote>
+<p><strong>Red-black trees</strong> use a different invariant: each node is colored red or black, with four rules that together ensure the tree&rsquo;s height is at most $2 \log_2(n+1)$. The key rules are: no two consecutive red nodes on any path, and every path from root to a null leaf has the same number of black nodes. This is what prevents the tree from becoming lopsided.</p>
+<div class="mermaid">
+flowchart TD
+    A["7"]:::black --> B["3"]:::red & C["18"]:::red
+    B --> D["1"]:::black & E["5"]:::black
+    C --> F["10"]:::black & G["22"]:::black
+    classDef black fill:#222,color:#fff,stroke:#444
+    classDef red fill:#c0392b,color:#fff,stroke:#c0392b
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Red-black trees require fewer rotations per insertion and deletion than AVL trees, making them faster in write-heavy workloads. They&rsquo;re used in C++&rsquo;s <code>std::map</code>, Java&rsquo;s <code>TreeMap</code>, and the Linux kernel&rsquo;s process scheduler.</p>
 <p>You don&rsquo;t need to memorize the rotation cases. What matters is the guarantee: balanced BSTs give $O(\log n)$ for search, insert, and delete, always, regardless of insertion order.</p>
 <hr>
 <h2 id="heaps-trees-stored-in-arrays">Heaps: Trees Stored in Arrays</h2>
