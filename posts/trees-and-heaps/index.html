@@ -105,7 +105,7 @@ Trees are not an abstract data structure invented by computer scientists. They a
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          15 min read
+          16 min read
         </div>
       </div>
     </header>
@@ -288,7 +288,10 @@ flowchart TD
 
 <p><strong>Search</strong> works exactly like BST search, generalized: at each node, binary search the sorted keys to find which child to descend into. Each node visit is one disk read. Time: $O(\log_t n)$ disk reads, or $O(t \log_t n)$ key comparisons.</p>
 <p><strong>Insertion</strong> always happens at a leaf. Search down to the correct leaf and insert the key. If the leaf has room (fewer than $2t - 1$ keys), you&rsquo;re done. If it&rsquo;s full, <strong>split</strong> it: push the median key up to the parent and divide the node into two nodes of $t - 1$ keys each. If the parent is also full, split it too. Splits can cascade up to the root. When the root splits, the tree grows taller by one level - the only way a B-tree gains height.</p>
-<p><strong>B+ trees</strong> are a variant used by almost every database. Before explaining the difference: a database <strong>index</strong> is a separate data structure that the database maintains alongside your table, mapping column values to the rows that contain them - so that a query like &ldquo;find all users where age = 30&rdquo; doesn&rsquo;t have to scan every row in the table. Without an index, every query is a full table scan: $O(n)$. With an index, it&rsquo;s a tree lookup: $O(\log n)$. The index is the reason databases stay fast even with millions of rows.</p>
+<p><strong>B+ trees</strong> are a variant used by almost every database. Before explaining the difference, here is how a database index actually works.</p>
+<p>Your table is just rows stored on disk in no particular order - a flat file. To answer &ldquo;find all users where age = 30,&rdquo; the database would normally read every single row and check the age field. With a million rows, that is a million disk reads.</p>
+<p>An index on the <code>age</code> column is a B+ tree built separately, where each key in the tree is an age value, and each key points to the disk location of the row with that age. To answer the query, the database walks down the B+ tree - at each node it reads one disk block and follows the right branch - arriving at the leaf node that holds age 30 and the pointer to the actual row. Instead of a million reads, it takes three or four.</p>
+<p>For a range query like &ldquo;age BETWEEN 25 AND 35,&rdquo; the database finds the leaf containing 25, then follows the linked chain of leaf nodes rightward until it passes 35, collecting row pointers along the way. The leaf chain is why B+ trees are used over regular B-trees for this purpose.</p>
 <p>B+ trees are the standard index structure. The difference from regular B-trees: internal nodes store only keys (no data), and all actual data lives in the leaf nodes. The leaves are also linked together in a sorted linked list. This makes range queries fast - find the start key, then scan the leaf chain without going back up the tree. B+ trees are what PostgreSQL, MySQL, and SQLite use for their indexes.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BTreeNode</span>:
     <span style="color:#66d9ef">def</span> __init__(self, t, leaf<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>):
