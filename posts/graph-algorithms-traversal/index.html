@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          13 min read
+          14 min read
         </div>
       </div>
     </header>
@@ -128,6 +128,109 @@
 <p><strong>Two representations dominate in practice:</strong></p>
 <p><strong>Adjacency matrix.</strong> A $V \times V$ matrix where entry $(i, j) = 1$ (or the edge weight) if edge $(i, j)$ exists. Edge lookup is $O(1)$, but the matrix always uses $O(V^2)$ space - wasteful for sparse graphs where most entries are zero.</p>
 <p><strong>Adjacency list.</strong> For each vertex, store only the neighbors that actually exist. Space: $O(V + E)$. Edge lookup is $O(\text{degree}(v))$, but for sparse graphs (where $E \ll V^2$) this is much better. Most real graphs - road networks, social networks, the web - are sparse, so adjacency lists dominate.</p>
+<hr>
+<h2 id="which-algorithm-works-on-which-graph">Which Algorithm Works on Which Graph?</h2>
+<p>Not every algorithm applies to every graph. Some require the graph to be a DAG; some break on negative edge weights; some only make sense on undirected graphs. Here is a reference for all the graph algorithms covered across this series of posts.</p>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Directed / Undirected</th>
+<th>Weighted</th>
+<th>Key constraint</th>
+<th>What it finds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BFS</td>
+<td>Both</td>
+<td>No</td>
+<td>None</td>
+<td>Shortest path (fewest hops), bipartiteness</td>
+</tr>
+<tr>
+<td>DFS</td>
+<td>Both</td>
+<td>No</td>
+<td>None</td>
+<td>Cycles, finish order, connected components</td>
+</tr>
+<tr>
+<td>Topological sort</td>
+<td>Directed only</td>
+<td>No</td>
+<td>Must be a DAG</td>
+<td>Linear ordering respecting all dependencies</td>
+</tr>
+<tr>
+<td>Kosaraju&rsquo;s SCCs</td>
+<td>Directed only</td>
+<td>No</td>
+<td>None</td>
+<td>All strongly connected components</td>
+</tr>
+<tr>
+<td>Kruskal&rsquo;s MST</td>
+<td>Undirected</td>
+<td>Yes</td>
+<td>Connected</td>
+<td>Minimum spanning tree</td>
+</tr>
+<tr>
+<td>Prim&rsquo;s MST</td>
+<td>Undirected</td>
+<td>Yes</td>
+<td>Connected</td>
+<td>Minimum spanning tree</td>
+</tr>
+<tr>
+<td>Union-Find</td>
+<td>Undirected</td>
+<td>No</td>
+<td>None</td>
+<td>Connected components, cycle detection</td>
+</tr>
+<tr>
+<td>Dijkstra&rsquo;s</td>
+<td>Both</td>
+<td>Yes</td>
+<td>No negative weights</td>
+<td>Shortest paths from a source</td>
+</tr>
+<tr>
+<td>Bellman-Ford</td>
+<td>Both</td>
+<td>Yes</td>
+<td>No negative cycles</td>
+<td>Shortest paths; detects negative cycles</td>
+</tr>
+<tr>
+<td>Floyd-Warshall</td>
+<td>Both</td>
+<td>Yes</td>
+<td>No negative cycles</td>
+<td>All-pairs shortest paths</td>
+</tr>
+<tr>
+<td>Ford-Fulkerson / max flow</td>
+<td>Directed</td>
+<td>Yes (capacities)</td>
+<td>None</td>
+<td>Maximum flow through a network</td>
+</tr>
+<tr>
+<td>DP on DAG (longest path)</td>
+<td>Directed only</td>
+<td>Yes</td>
+<td>Must be a DAG</td>
+<td>Longest weighted path</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why do some algorithms require a DAG?</strong> Topological sort and DAG-DP both rely on filling answers in dependency order - if there is a cycle, that order does not exist. DFS detects cycles precisely so you know whether topological sort is even valid.</p>
+<p><strong>Why does Dijkstra&rsquo;s fail on negative weights?</strong> Dijkstra&rsquo;s greedily finalises each vertex with the assumption that no shorter path to it will be found later. A negative-weight edge can always create a shorter path through a node already finalised, breaking that assumption. Bellman-Ford avoids this by relaxing all edges $V-1$ times without any greedy finalisation.</p>
+<p><strong>Why do MST algorithms require undirected graphs?</strong> A spanning tree connects all vertices with undirected edges. In a directed graph the equivalent concept is a minimum spanning arborescence, which requires a different algorithm (Edmonds' algorithm).</p>
 <hr>
 <h2 id="breadth-first-search">Breadth-First Search</h2>
 <p>BFS explores vertices in order of their distance from the source - first the source itself, then all its neighbors, then their neighbors, and so on. It uses a FIFO queue. Think of it as ripples spreading outward from a stone dropped in water: every node at distance $k$ is fully processed before any node at distance $k+1$.</p>
