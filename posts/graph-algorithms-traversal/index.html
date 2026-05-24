@@ -241,9 +241,9 @@ finish_order, cycle <span style="color:#f92672">=</span> dfs(graph)
 <hr>
 <h2 id="topological-sort">Topological Sort</h2>
 <p>A <strong>topological ordering</strong> of a DAG is a linear order of vertices such that for every directed edge $(u \to v)$, $u$ comes before $v$ in the order. This is the natural order for dependency graphs: compile $A$ before anything that imports $A$, install packages before their dependents.</p>
-<p><strong>DFS-based topological sort:</strong> Run DFS on the DAG. Collect vertices in reverse order of finish time - the last vertex to finish goes first.</p>
+<p><strong>DFS-based topological sort:</strong> Run DFS on the DAG. Reverse <code>finish_order</code> - the last node appended (the one whose entire subtree was explored first) should appear last in the topological order.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> Why does reversing finish times give topological order? This is genuinely non-obvious. Here&rsquo;s the key fact: if $(u, v)$ is a directed edge in a DAG, then $f[v] &lt; f[u]$. Why? When we start DFS from $u$ and follow the edge to $v$, we explore $v$ completely (finishing it) before we finish $u$. So $v$ finishes before $u$. Reversing finish order puts $u$ before $v$ - exactly what we want. Walk through a small example: a triangle $A \to B \to C$ with no other edges. DFS from $A$ discovers $B$, then $C$. $C$ finishes first (finish time 2), then $B$ (finish time 4), then $A$ (finish time 6). Reverse order: $A, B, C$. Correct: $A$ must come before $B$, $B$ before $C$.</p>
+<p><strong>Discomfort check.</strong> Why does reversing <code>finish_order</code> give topological order? If $(u, v)$ is a directed edge in a DAG, DFS explores $v$ completely and appends it to <code>finish_order</code> before it can return from $u$ and append $u$. So $v$ always appears earlier in <code>finish_order</code> than $u$. Reversing puts $u$ before $v$ - exactly what we want. Walk through a small example: a chain $A \to B \to C$. DFS from $A$ recurses into $B$, then into $C$. $C$ is appended first, then $B$, then $A$. <code>finish_order</code> = [C, B, A]. Reversed: [A, B, C]. Correct.</p>
 </blockquote>
 <p>Time: $O(V + E)$.</p>
 <p><strong>Kahn&rsquo;s algorithm (alternative):</strong> Maintain a queue of all vertices with in-degree 0 (nothing depends on them yet). Repeatedly remove a vertex, add it to the output, and decrement the in-degrees of its neighbors. If any neighbor&rsquo;s in-degree reaches 0, add it to the queue. If the output has fewer than $V$ vertices when the queue empties, a cycle exists.</p>
@@ -309,11 +309,11 @@ print(topo_sort_kahns(build))  <span style="color:#75715e"># [&#39;main&#39;, &#
 <p>In a directed graph, a <strong>strongly connected component (SCC)</strong> is a maximal set of vertices where every vertex can reach every other vertex.</p>
 <p><strong>Kosaraju&rsquo;s algorithm</strong> finds all SCCs in $O(V + E)$ using two DFS passes:</p>
 <ol>
-<li>Run DFS on $G$; record vertices in order of decreasing finish time (a stack).</li>
+<li>Run DFS on $G$; record vertices in <code>finish_order</code> (last appended = explored deepest first).</li>
 <li>Compute $G^T$ (the transpose: reverse all edges).</li>
 <li>Run DFS on $G^T$ in the order from step 1. Each DFS tree in this pass is one SCC.</li>
 </ol>
-<p><strong>Why does this work?</strong> If $u$ and $v$ are in the same SCC, they&rsquo;re mutually reachable in $G$ and in $G^T$. The vertex with the highest finish time in the first pass is the &ldquo;root&rdquo; of its SCC - it can reach all other vertices in the SCC in $G$, but in $G^T$, you can reach it from all of them. So starting DFS in $G^T$ from the highest-finish-time vertex collects exactly one SCC before moving to vertices in other SCCs.</p>
+<p><strong>Why does this work?</strong> If $u$ and $v$ are in the same SCC, they&rsquo;re mutually reachable in $G$ and in $G^T$. The last vertex appended to <code>finish_order</code> in the first pass is the &ldquo;root&rdquo; of its SCC - it can reach all other vertices in the SCC in $G$, but in $G^T$, you can reach it from all of them. So starting DFS in $G^T$ from the last-finished vertex collects exactly one SCC before moving to vertices in other SCCs.</p>
 <hr>
 <h2 id="connected-components-bridges-and-articulation-points">Connected Components, Bridges, and Articulation Points</h2>
 <p>In an undirected graph:</p>
@@ -336,7 +336,7 @@ print(topo_sort_kahns(build))  <span style="color:#75715e"># [&#39;main&#39;, &#
 <li>&ldquo;Does this graph contain a cycle?&rdquo; - a GRAY neighbor during DFS is a back edge, which means a cycle</li>
 <li>&ldquo;Is this a DAG?&rdquo; - no back edges found = DAG</li>
 <li>&ldquo;Find all paths from X to Y&rdquo; - DFS commits to one path at a time and backtracks</li>
-<li>&ldquo;Topological ordering of a DAG&rdquo; - reverse DFS finish times give it directly</li>
+<li>&ldquo;Topological ordering of a DAG&rdquo; - reverse <code>finish_order</code> from DFS</li>
 <li>&ldquo;Find strongly connected components&rdquo; - Kosaraju&rsquo;s and Tarjan&rsquo;s both run DFS</li>
 <li>Maze solving, puzzle solving - any &ldquo;explore a choice, and undo if it fails&rdquo; pattern maps to DFS</li>
 </ul>
@@ -397,7 +397,7 @@ print(topo_sort_kahns(build))  <span style="color:#75715e"># [&#39;main&#39;, &#
 </tr>
 </tbody>
 </table>
-<p>BFS and DFS are the two fundamental primitives. Almost every other graph algorithm uses one or both as a subroutine. The choice between them comes down to what you need: BFS for shortest paths and level structure, DFS for tree structure, finish times, and cycle detection.</p>
+<p>BFS and DFS are the two fundamental primitives. Almost every other graph algorithm uses one or both as a subroutine. The choice between them comes down to what you need: BFS for shortest paths and level structure, DFS for tree structure, ordering, and cycle detection.</p>
 <p>Euler&rsquo;s insight in 1735 - that the structure of connections matters more than the physical layout - is still the right way to think about computational problems involving relationships. Abstract away the details. Keep only the vertices and edges.</p>
 <hr>
 <p><strong>Read next:</strong></p>
