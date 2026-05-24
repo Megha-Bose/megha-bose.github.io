@@ -105,7 +105,7 @@ He didn&rsquo;t invent it to solve a puzzle." />
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          10 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -139,13 +139,31 @@ He didn&rsquo;t invent it to solve a puzzle." />
 <p>One optimization: track whether any swap occurred during a pass. If no swap occurred, the array is already sorted and you can exit early. This makes bubble sort $O(n)$ on already-sorted input - the same as insertion sort&rsquo;s best case.</p>
 <p>Bubble sort is stable (equal elements preserve their relative order) and in-place ($O(1)$ extra space). In practice it is slower than insertion sort by a constant factor, because each swap requires three assignments while insertion sort shifts elements one position at a time. It is taught for its simplicity, not its performance. No serious implementation uses it.</p>
 <p><strong>When to use it.</strong> Essentially never. Insertion sort is strictly better on every practical criterion: same asymptotic complexity, fewer writes per element, and better cache behavior on nearly-sorted inputs.</p>
-<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bubble_sort</span>(arr):
+    n <span style="color:#f92672">=</span> len(arr)
+    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(n):
+        swapped <span style="color:#f92672">=</span> <span style="color:#66d9ef">False</span>
+        <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> range(n <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> i):
+            <span style="color:#66d9ef">if</span> arr[j] <span style="color:#f92672">&gt;</span> arr[j <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>]:
+                arr[j], arr[j <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> arr[j <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>], arr[j]
+                swapped <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> swapped:
+            <span style="color:#66d9ef">break</span>
+</code></pre></div><hr>
 <h2 id="insertion-sort-simple-and-surprising">Insertion Sort: Simple and Surprising</h2>
 <p>Insertion sort works the way you&rsquo;d sort a hand of playing cards. Pick up one card at a time and insert it in the right position among the cards you already hold.</p>
 <p>For an array of $n$ elements, you scan from left to right. For each element, you scan backward to find where it belongs, shifting elements right to make room.</p>
 <p>In the worst case (reverse-sorted input), every element has to travel all the way to the beginning: $n-1 + n-2 + \cdots + 1 = O(n^2)$ total moves. This is slow for large inputs.</p>
 <p>But here&rsquo;s the surprising part: insertion sort is optimal for nearly-sorted arrays. If each element is at most $k$ positions from its final location, insertion sort runs in $O(kn)$. When $k$ is small - say, the array was already sorted and you just added a few elements - insertion sort is actually faster than $O(n \log n)$ algorithms. This is why real sorting implementations use insertion sort for small subarrays.</p>
-<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">insertion_sort</span>(arr):
+    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1</span>, len(arr)):
+        key <span style="color:#f92672">=</span> arr[i]
+        j <span style="color:#f92672">=</span> i <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
+        <span style="color:#66d9ef">while</span> j <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">and</span> arr[j] <span style="color:#f92672">&gt;</span> key:
+            arr[j <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> arr[j]
+            j <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+        arr[j <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> key
+</code></pre></div><hr>
 <h2 id="merge-sort-divide-conquer-combine">Merge Sort: Divide, Conquer, Combine</h2>
 <p>Merge sort is von Neumann&rsquo;s insight. To sort $n$ elements:</p>
 <ol>
@@ -160,7 +178,20 @@ He didn&rsquo;t invent it to solve a puzzle." />
 <p>$$T(n) = \Theta(n \log n)$$</p>
 <p>Merge sort is stable: equal elements maintain their original relative order. This matters when sorting by multiple keys (sort by date, then stably sort by name - you get alphabetical within each date).</p>
 <p>The main cost is space: the merge step needs an auxiliary array of $O(n)$ elements. For large datasets, this matters.</p>
-<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">merge_sort</span>(arr):
+    <span style="color:#66d9ef">if</span> len(arr) <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">1</span>:
+        <span style="color:#66d9ef">return</span> arr
+    mid <span style="color:#f92672">=</span> len(arr) <span style="color:#f92672">//</span> <span style="color:#ae81ff">2</span>
+    left <span style="color:#f92672">=</span> merge_sort(arr[:mid])
+    right <span style="color:#f92672">=</span> merge_sort(arr[mid:])
+    result, i, j <span style="color:#f92672">=</span> [], <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">while</span> i <span style="color:#f92672">&lt;</span> len(left) <span style="color:#f92672">and</span> j <span style="color:#f92672">&lt;</span> len(right):
+        <span style="color:#66d9ef">if</span> left[i] <span style="color:#f92672">&lt;=</span> right[j]:
+            result<span style="color:#f92672">.</span>append(left[i]); i <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+        <span style="color:#66d9ef">else</span>:
+            result<span style="color:#f92672">.</span>append(right[j]); j <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+    <span style="color:#66d9ef">return</span> result <span style="color:#f92672">+</span> left[i:] <span style="color:#f92672">+</span> right[j:]
+</code></pre></div><hr>
 <h2 id="quicksort-why-the-fast-algorithm-isnt-guaranteed-fast">Quicksort: Why the Fast Algorithm Isn&rsquo;t Guaranteed Fast</h2>
 <p>Quicksort is typically the fastest sorting algorithm in practice. It&rsquo;s also the one with the most interesting gap between theory and reality.</p>
 <p>The idea: pick a pivot element. Rearrange the array so everything smaller than the pivot is to its left, everything larger is to its right. Now the pivot is in its final position. Recursively sort each side.</p>
@@ -170,14 +201,29 @@ He didn&rsquo;t invent it to solve a puzzle." />
 <blockquote>
 <p><strong>Discomfort check.</strong> &ldquo;Quicksort is $O(n \log n)$ average but $O(n^2)$ worst - why does everyone use it?&rdquo; Three reasons combine. First, with random pivot selection, the probability of hitting the worst case is negligible in practice. Second, real implementations add a fallback: if the recursion depth exceeds $O(\log n)$ (a sign you&rsquo;re close to the worst case), they switch to heapsort, which guarantees $O(n \log n)$. This hybrid is called introsort. Third, quicksort&rsquo;s cache locality makes it roughly 2-3 times faster than merge sort on random data, and real data is often close to random.</p>
 </blockquote>
-<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> random
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">quicksort</span>(arr):
+    <span style="color:#66d9ef">if</span> len(arr) <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">1</span>:
+        <span style="color:#66d9ef">return</span> arr
+    pivot <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>choice(arr)
+    left  <span style="color:#f92672">=</span> [x <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> arr <span style="color:#66d9ef">if</span> x <span style="color:#f92672">&lt;</span> pivot]
+    mid   <span style="color:#f92672">=</span> [x <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> arr <span style="color:#66d9ef">if</span> x <span style="color:#f92672">==</span> pivot]
+    right <span style="color:#f92672">=</span> [x <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> arr <span style="color:#66d9ef">if</span> x <span style="color:#f92672">&gt;</span> pivot]
+    <span style="color:#66d9ef">return</span> quicksort(left) <span style="color:#f92672">+</span> mid <span style="color:#f92672">+</span> quicksort(right)
+</code></pre></div><hr>
 <h2 id="heap-sort-on-log-n-guaranteed-in-place">Heap Sort: O(n log n) Guaranteed, In-Place</h2>
 <p>Heapsort uses a data structure - the heap - to achieve $O(n \log n)$ in the worst case with $O(1)$ extra space. No randomization required.</p>
 <p>Step one: build a max-heap from the array (the largest element is at the top). This takes $O(n)$ - we&rsquo;ll see why in <a href="/posts/trees-and-heaps/" target="_blank" rel="noopener noreferrer">Trees &amp; Heaps</a>
 . Step two: repeatedly extract the maximum element (swap it to the end of the array and restore the heap property). Each extraction costs $O(\log n)$ and there are $n$ of them, so the total is $O(n \log n)$.</p>
 <p>Heapsort is not stable (elements can move past each other during heap operations), and it has worse cache behavior than quicksort - accessing a heap involves jumping between distant array positions, not scanning sequentially. In practice, heapsort is slower than quicksort despite having the same asymptotic complexity.</p>
 <p>Its main advantage is the worst-case guarantee: $O(n \log n)$ on any input. This is why it appears as the fallback in introsort.</p>
-<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> heapq
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">heap_sort</span>(arr):
+    heapq<span style="color:#f92672">.</span>heapify(arr)
+    <span style="color:#66d9ef">return</span> [heapq<span style="color:#f92672">.</span>heappop(arr) <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(len(arr))]
+</code></pre></div><hr>
 <h2 id="counting-sort-and-radix-sort-beating-the-lower-bound">Counting Sort and Radix Sort: Beating the Lower Bound</h2>
 <p>The $\Omega(n \log n)$ lower bound applies to comparison-based sorting. If you know something about the structure of the keys, you can do better.</p>
 <p><strong>Counting sort</strong> works when all keys are integers in a known range $[0, k)$. Count how many times each value appears, then reconstruct the sorted array from the counts. Total time: $O(n + k)$. When $k = O(n)$, this is linear.</p>
@@ -185,13 +231,32 @@ He didn&rsquo;t invent it to solve a puzzle." />
 <p>$$T(n) = O(d \cdot (n + b))$$</p>
 <p>For 32-bit integers with $b = 256$ (byte-by-byte), $d = 4$ and each pass is $O(n + 256) = O(n)$. Total: $O(4n) = O(n)$.</p>
 <p>The catch: radix sort requires the keys to have a fixed-width digit representation. It doesn&rsquo;t generalize to arbitrary comparison keys (strings of variable length, complex structs). It also isn&rsquo;t in-place - it needs $O(n)$ auxiliary space.</p>
-<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">counting_sort</span>(arr, k):
+    count <span style="color:#f92672">=</span> [<span style="color:#ae81ff">0</span>] <span style="color:#f92672">*</span> k
+    <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> arr:
+        count[x] <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+    <span style="color:#66d9ef">return</span> [x <span style="color:#66d9ef">for</span> x, freq <span style="color:#f92672">in</span> enumerate(count) <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(freq)]
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">radix_sort</span>(arr):
+    max_val <span style="color:#f92672">=</span> max(arr)
+    exp <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+    <span style="color:#66d9ef">while</span> max_val <span style="color:#f92672">//</span> exp <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>:
+        buckets <span style="color:#f92672">=</span> [[] <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>)]
+        <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> arr:
+            buckets[(x <span style="color:#f92672">//</span> exp) <span style="color:#f92672">%</span> <span style="color:#ae81ff">10</span>]<span style="color:#f92672">.</span>append(x)
+        arr <span style="color:#f92672">=</span> [x <span style="color:#66d9ef">for</span> bucket <span style="color:#f92672">in</span> buckets <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> bucket]
+        exp <span style="color:#f92672">*=</span> <span style="color:#ae81ff">10</span>
+    <span style="color:#66d9ef">return</span> arr
+</code></pre></div><hr>
 <h2 id="timsort-what-python-actually-uses">Timsort: What Python Actually Uses</h2>
 <p>Python&rsquo;s built-in sort (and Java&rsquo;s sort for objects) uses Timsort, a hybrid algorithm designed to be fast on the kinds of data that actually appear in practice.</p>
 <p>Real data often has structure: regions that are already sorted, or nearly sorted, or sorted in reverse. Timsort exploits this.</p>
 <p>The algorithm scans the input for natural runs - contiguous subsequences that are already sorted or reverse-sorted. Reverse-sorted runs get flipped. Short runs get extended using insertion sort (which is fast on nearly-sorted data). Then runs are merged together using a strategy that maintains a stack of &ldquo;pending merges&rdquo; with size constraints to guarantee $O(n \log n)$ total work.</p>
 <p>On an already-sorted array, Timsort detects a single run and does no work: $O(n)$. On truly random data, it falls back to $O(n \log n)$ merge sort behavior. In practice, with partially structured data, it frequently beats pure quicksort.</p>
-<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">arr<span style="color:#f92672">.</span>sort()               <span style="color:#75715e"># in-place, uses Timsort</span>
+sorted_arr <span style="color:#f92672">=</span> sorted(arr) <span style="color:#75715e"># returns a new sorted list</span>
+</code></pre></div><hr>
 <h2 id="summary">Summary</h2>
 <table>
 <thead>
