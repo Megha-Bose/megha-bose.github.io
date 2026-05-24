@@ -228,11 +228,31 @@ He didn&rsquo;t invent it to solve a puzzle." />
 . Step two: repeatedly extract the maximum element (swap it to the end of the array and restore the heap property). Each extraction costs $O(\log n)$ and there are $n$ of them, so the total is $O(n \log n)$.</p>
 <p>Heapsort is not stable (elements can move past each other during heap operations), and it has worse cache behavior than quicksort - accessing a heap involves jumping between distant array positions, not scanning sequentially. In practice, heapsort is slower than quicksort despite having the same asymptotic complexity.</p>
 <p>Its main advantage is the worst-case guarantee: $O(n \log n)$ on any input. This is why it appears as the fallback in introsort.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> heapq
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_sift_down</span>(arr, i, n):
+    <span style="color:#75715e"># push node i down until it is larger than both its children</span>
+    largest <span style="color:#f92672">=</span> i
+    left, right <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> i <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> i <span style="color:#f92672">+</span> <span style="color:#ae81ff">2</span>
+    <span style="color:#66d9ef">if</span> left <span style="color:#f92672">&lt;</span> n <span style="color:#f92672">and</span> arr[left] <span style="color:#f92672">&gt;</span> arr[largest]:
+        largest <span style="color:#f92672">=</span> left
+    <span style="color:#66d9ef">if</span> right <span style="color:#f92672">&lt;</span> n <span style="color:#f92672">and</span> arr[right] <span style="color:#f92672">&gt;</span> arr[largest]:
+        largest <span style="color:#f92672">=</span> right
+    <span style="color:#66d9ef">if</span> largest <span style="color:#f92672">!=</span> i:
+        arr[i], arr[largest] <span style="color:#f92672">=</span> arr[largest], arr[i]
+        _sift_down(arr, largest, n)
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">heapify</span>(arr):
+    <span style="color:#75715e"># every leaf is already a valid heap; start from the last</span>
+    <span style="color:#75715e"># non-leaf node and sift each node down into its correct position</span>
+    n <span style="color:#f92672">=</span> len(arr)
+    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(n <span style="color:#f92672">//</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>):
+        _sift_down(arr, i, n)
 
 <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">heap_sort</span>(arr):
-    heapq<span style="color:#f92672">.</span>heapify(arr)
-    <span style="color:#66d9ef">return</span> [heapq<span style="color:#f92672">.</span>heappop(arr) <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(len(arr))]
+    n <span style="color:#f92672">=</span> len(arr)
+    heapify(arr)                          <span style="color:#75715e"># build max-heap in O(n)</span>
+    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(n <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>):
+        arr[<span style="color:#ae81ff">0</span>], arr[i] <span style="color:#f92672">=</span> arr[i], arr[<span style="color:#ae81ff">0</span>]  <span style="color:#75715e"># move current max to end</span>
+        _sift_down(arr, <span style="color:#ae81ff">0</span>, i)            <span style="color:#75715e"># restore heap on remaining elements</span>
 </code></pre></div><hr>
 <h2 id="counting-sort-and-radix-sort-beating-the-lower-bound">Counting Sort and Radix Sort: Beating the Lower Bound</h2>
 <p>The $\Omega(n \log n)$ lower bound applies to comparison-based sorting. If you know something about the structure of the keys, you can do better.</p>
