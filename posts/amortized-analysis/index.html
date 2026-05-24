@@ -160,21 +160,21 @@
 <h2 id="method-3-the-potential-method">Method 3: The Potential Method</h2>
 <p>The potential method is the most general. Think of it like stored energy in a physical system. Define a <strong>potential function</strong> $\Phi$ that maps the current state of the data structure to a non-negative number. The potential captures &ldquo;how much deferred work is waiting.&rdquo;</p>
 <p>The <strong>amortized cost</strong> of operation $i$ is defined as:</p>
-<p>$$\hat{c}<em>i = c_i + \Delta\Phi_i = c_i + \Phi(D_i) - \Phi(D</em>{i-1})$$</p>
+<p>$$\hat c_i = c_i + \Delta\Phi_i = c_i + \Phi(D_i) - \Phi(D_{i-1})$$</p>
 <p>where $c_i$ is the actual cost and $D_i$ is the state after operation $i$.</p>
 <p>Summing over all $n$ operations:</p>
-<p>$$\sum_{i=1}^{n} \hat{c}<em>i = \sum</em>{i=1}^{n} c_i + \Phi(D_n) - \Phi(D_0)$$</p>
-<p>So long as $\Phi(D_n) \geq \Phi(D_0)$ (we start at low potential and end at at least as much potential), the total actual cost is at most the total amortized cost. This means: if you can show $\hat{c}_i = O(f)$ for every operation, the total actual cost is $O(nf)$.</p>
+<p>$$\sum_{i=1}^{n} \hat c_i = \sum_{i=1}^{n} c_i + \Phi(D_n) - \Phi(D_0)$$</p>
+<p>So long as $\Phi(D_n) \geq \Phi(D_0)$ (we start at low potential and end at at least as much potential), the total actual cost is at most the total amortized cost. This means: if you can show $\hat c_i = O(f)$ for every operation, the total actual cost is $O(nf)$.</p>
 <p>The trick is choosing $\Phi$ so that expensive operations see a drop in potential that absorbs their actual cost, while cheap operations see a slight rise in potential (storing &ldquo;energy&rdquo; for later).</p>
 <p><strong>Dynamic array, analyzed by potential.</strong></p>
 <p>Define $\Phi(D) = 2 \cdot \text{size}(D) - \text{capacity}(D)$.</p>
 <p>Right after a resize, size is $k+1$ (the element that triggered it plus all previous) and capacity is $2k$, so $\Phi = 2(k+1) - 2k = 2$. The potential is low, as expected - the array just expanded and has lots of room.</p>
 <p>As elements are added, potential grows: when the array is full ($\text{size} = k$, $\text{capacity} = k$), $\Phi = 2k - k = k$. The potential is high, encoding that a resize is imminent.</p>
 <p><strong>Ordinary append (no resize):</strong> $c_i = 1$, size increases by 1, capacity unchanged, $\Delta\Phi = 2$.</p>
-<p>$$\hat{c}_i = 1 + 2 = 3 = O(1)$$</p>
+<p>$$\hat c_i = 1 + 2 = 3 = O(1)$$</p>
 <p><strong>Resize append:</strong> array is full ($\text{size} = k = \text{capacity}$), doubles to $2k$. Cost: copy $k$ elements and do 1 append, so $c_i = k + 1$. After resize: size $= k+1$, capacity $= 2k$, $\Phi$ goes from $k$ to $2(k+1) - 2k = 2$. So $\Delta\Phi = 2 - k$.</p>
-<p>$$\hat{c}_i = (k+1) + (2-k) = 3 = O(1)$$</p>
-<p>In both cases the amortized cost is $O(1)$. The potential drops sharply during the resize, absorbing the large actual cost and keeping $\hat{c}_i$ small.</p>
+<p>$$\hat c_i = (k+1) + (2-k) = 3 = O(1)$$</p>
+<p>In both cases the amortized cost is $O(1)$. The potential drops sharply during the resize, absorbing the large actual cost and keeping $\hat c_i$ small.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> &ldquo;Why not just say worst-case $O(n)$ for append and be done with it?&rdquo; Because $O(n)$ is catastrophically pessimistic for sequences of appends. If you believe each append costs $O(n)$, you&rsquo;d estimate $n$ appends costs $O(n^2)$. But we just proved the total is $O(n)$. Using the per-operation worst case as if it applies to every operation overcounts by a factor of $n$. Dynamic arrays would look no better than linked lists, which is wrong - they&rsquo;re dramatically faster in practice. Amortized analysis gives you the accurate picture.</p>
 </blockquote>
