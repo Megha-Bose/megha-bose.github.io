@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en-us">
   <head>
-    <title>Greedy Algorithms // Megha Bose</title>
+    <title>Greedy Algorithms - The Art of Never Looking Back // Megha Bose</title>
     <link rel="shortcut icon" href="/favicon.ico" />
     <meta charset="utf-8" />
     <meta name="generator" content="Hugo 0.92.2" />
@@ -13,12 +13,12 @@
 
     
     <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Greedy Algorithms"/>
+<meta name="twitter:title" content="Greedy Algorithms - The Art of Never Looking Back"/>
 <meta name="twitter:description" content="Prerequisites:
  Divide &amp; Conquer - Small Savings That Compound    In 1956, a computer scientist named Joseph Kruskal was thinking about how to wire up a network of cities with the minimum total length of cable. He described his algorithm in one sentence: always add the cheapest edge that doesn&rsquo;t create a cycle.
 That&rsquo;s it. No lookahead. No backtracking. No global view of the emerging solution. Just a local rule, applied repeatedly."/>
 
-    <meta property="og:title" content="Greedy Algorithms" />
+    <meta property="og:title" content="Greedy Algorithms - The Art of Never Looking Back" />
 <meta property="og:description" content="Prerequisites:
  Divide &amp; Conquer - Small Savings That Compound    In 1956, a computer scientist named Joseph Kruskal was thinking about how to wire up a network of cities with the minimum total length of cable. He described his algorithm in one sentence: always add the cheapest edge that doesn&rsquo;t create a cycle.
 That&rsquo;s it. No lookahead. No backtracking. No global view of the emerging solution. Just a local rule, applied repeatedly." />
@@ -91,7 +91,7 @@ That&rsquo;s it. No lookahead. No backtracking. No global view of the emerging s
       
   <article class="post">
     <header class="post-header">
-      <h1 class ="post-title">Greedy Algorithms</h1>
+      <h1 class ="post-title">Greedy Algorithms - The Art of Never Looking Back</h1>
       <div class="post-meta">
         <div>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
@@ -105,7 +105,7 @@ That&rsquo;s it. No lookahead. No backtracking. No global view of the emerging s
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          10 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -146,6 +146,28 @@ while problem not solved:
 <h2 id="activity-selection-a-proof-of-correctness">Activity Selection: A Proof of Correctness</h2>
 <p>You have a set of activities, each with a start time and finish time. You can do at most one activity at a time. Which activities should you schedule to maximize the number you complete?</p>
 <p><strong>Greedy strategy:</strong> always pick the activity with the earliest finish time that doesn&rsquo;t conflict with what you&rsquo;ve already scheduled.</p>
+<p><strong>Complexity: O(n log n)</strong> - sort activities by finish time once, then do a single linear scan. The sort dominates.</p>
+<div class="mermaid">
+gantt
+    title Activity Selection - Six Activities, Three Compatible
+    dateFormat X
+    axisFormat %s
+    section Selected
+    A  : active, 1, 3
+    C  : active, 4, 7
+    F  : active, 8, 11
+    section Rejected
+    B (conflicts with A) : crit, 2, 5
+    D (conflicts with A and C) : crit, 3, 8
+    E (conflicts with C) : crit, 6, 10
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Greedy picks A (earliest finish at 3), then C (next earliest at 7 that doesn&rsquo;t conflict), then F (next at 11). Three activities - the maximum possible.</p>
 <p>Why does this work? Here is the exchange argument.</p>
 <p>Suppose the greedy algorithm picks activity $g$ first (earliest finish time). Consider any other optimal solution $OPT$ that doesn&rsquo;t include $g$. It must start with some other activity $a$ with a later finish time (since $g$ has the earliest).</p>
 <p>Now construct a new solution: take $OPT$, remove $a$, and add $g$. Since $g$ finishes no later than $a$, and everything else in $OPT$ starts after $a$ finishes, they all still start after $g$ finishes. The new solution is still valid - no conflicts - and has the same number of activities. So there&rsquo;s an optimal solution that includes $g$.</p>
@@ -155,9 +177,57 @@ while problem not solved:
 <h2 id="fractional-knapsack-greedy-works">Fractional Knapsack: Greedy Works</h2>
 <p>You&rsquo;re packing a knapsack. You have items with weights and values. The knapsack has a weight limit. You want to maximize total value.</p>
 <p><strong>Fractional knapsack:</strong> you can take a fraction of any item (pour the liquid, cut the gold). The greedy strategy: sort items by value-to-weight ratio, take the most valuable per kilogram first, until the knapsack is full or you&rsquo;ve taken all of something.</p>
+<p><strong>Complexity: O(n log n)</strong> - sort by ratio once, then fill greedily in a single pass.</p>
+<div class="mermaid">
+graph LR
+    subgraph items["Items sorted by value/weight ratio"]
+        direction LR
+        I1["Gold dust\n10 $/kg\n4 kg"]
+        I2["Silver\n6 $/kg\n3 kg"]
+        I3["Bronze\n4 $/kg\n5 kg"]
+    end
+    subgraph knapsack["Knapsack (capacity 6 kg)"]
+        direction LR
+        T1["Gold: 4 kg\n(all of it)"]
+        T2["Silver: 2 kg\n(2/3 of it)"]
+    end
+    I1 -->|"take all"| T1
+    I2 -->|"take fraction"| T2
+    I3 -->|"no room"| X["skipped"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <p>This is correct. Here&rsquo;s why: if you could replace any portion of your current selection with something having a higher value-per-weight ratio, you should. Taking items in decreasing value-per-weight order ensures you can&rsquo;t improve by swapping.</p>
 <p><strong>0/1 knapsack:</strong> you must take an item completely or not at all. Greedy fails here. Consider: weight limit 10, items (weight 6, value 8) and (weight 5, value 7) and (weight 5, value 6). Greedy by value/weight picks the weight-6 item first (ratio 8/6 ≈ 1.33), then can&rsquo;t fit both remaining items. Total value: 8. But taking both weight-5 items gives value 13. Greedy was wrong.</p>
-<p>The 0/1 constraint breaks the greedy choice property. Taking one item can rule out a better combination. You need dynamic programming, which we&rsquo;ll cover in the next post.</p>
+<div class="mermaid">
+graph TD
+    subgraph greedy["Greedy choice (wrong)"]
+        direction LR
+        G1["Item A\nw=6, v=8\nratio≈1.33\n✓ take it"]
+        G2["Item B\nw=5, v=7\nratio=1.40\n✗ no room"]
+        G3["Item C\nw=5, v=6\nratio=1.20\n✗ no room"]
+        G1 --> GR["Total value: 8\n(4 kg wasted)"]
+    end
+    subgraph optimal["Optimal (DP finds it)"]
+        direction LR
+        O1["Item A\nw=6, v=8\n✗ skip"]
+        O2["Item B\nw=5, v=7\n✓ take it"]
+        O3["Item C\nw=5, v=6\n✓ take it"]
+        O2 --> OR["Total value: 13\n(weight limit met)"]
+        O3 --> OR
+    end
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The 0/1 constraint breaks the greedy choice property. Taking one item can rule out a better combination. You need dynamic programming, which we&rsquo;ll cover in the next post. The DP solution runs in <strong>O(nW)</strong> (pseudopolynomial in the weight capacity W).</p>
 <hr>
 <h2 id="huffman-coding-greedy-compression">Huffman Coding: Greedy Compression</h2>
 <p>You&rsquo;re compressing a file. The file contains characters with known frequencies. You want to assign binary codes to each character so that the total encoded length is minimized.</p>
@@ -169,18 +239,64 @@ while problem not solved:
 <li>Repeat until one node remains - this is the root of the Huffman tree.</li>
 <li>Assign 0 to left branches and 1 to right branches. A character&rsquo;s code is its path from root to leaf.</li>
 </ol>
-<p>The greedy choice: always merge the two lowest-frequency nodes first. The correctness proof (due to Huffman) shows that the two characters with the lowest frequencies must be siblings in any optimal tree - they both get the longest codes, and merging them first is always safe.</p>
+<p><strong>Complexity: O(n log n)</strong> - each of the n-1 merge steps extracts two minimums and inserts one node into a min-heap, each costing O(log n).</p>
+<p>The greedy choice: always merge the two lowest-frequency nodes first. Here is a worked example with four characters:</p>
+<div class="mermaid">
+graph TB
+    subgraph step1["Step 1: merge C(1) and B(2)"]
+        S1R["3"] --> S1C["C: 1"]
+        S1R --> S1B["B: 2"]
+    end
+    subgraph step2["Step 2: merge node(3) and D(3)"]
+        S2R["6"] --> S2D["D: 3"]
+        S2R --> S2N["3"]
+        S2N --> S2C["C: 1"]
+        S2N --> S2B["B: 2"]
+    end
+    subgraph step3["Final tree: merge A(5) and node(6)"]
+        ROOT["root: 11"] --> A["A: 5\ncode: 0"]
+        ROOT --> N6["6"]
+        N6 --> D["D: 3\ncode: 10"]
+        N6 --> N3["3"]
+        N3 --> C["C: 1\ncode: 110"]
+        N3 --> B["B: 2\ncode: 111"]
+    end
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>A gets the shortest code (most frequent). C and B get the longest codes (least frequent). The two characters with the lowest frequencies must be siblings in any optimal tree - they both get the longest codes, and merging them first is always safe.</p>
 <p>Huffman coding is used in the DEFLATE compression format (which is inside ZIP, PNG, and HTTP gzip), JPEG, and MP3.</p>
 <hr>
 <h2 id="kruskals-mst-greedy-on-edges">Kruskal&rsquo;s MST: Greedy on Edges</h2>
 <p>A minimum spanning tree (MST) of a graph is a subset of edges that connects all vertices with minimum total weight, using no cycles.</p>
 <p>Kruskal&rsquo;s algorithm: sort all edges by weight. Add the next cheapest edge if and only if it doesn&rsquo;t create a cycle in the current set of edges. Stop when the spanning tree is complete.</p>
+<p><strong>Complexity: O(E log E)</strong> - dominated by sorting edges. The cycle-detection via Union-Find adds nearly O(E) after that.</p>
+<div class="mermaid">
+graph LR
+    A ---|"1 ✓"| B
+    C ---|"2 ✓"| D
+    A ---|"3 ✓"| C
+    B -.-|"4 ✗ cycle"| D
+    B -.-|"5 ✗ cycle"| C
+    D ---|"6 ✓"| E
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Edges are processed in weight order: (A-B, 1) added, (C-D, 2) added, (A-C, 3) added - connecting the two components, (B-D, 4) skipped - would create a cycle through A-B-D-C-A, (B-C, 5) skipped - same reason, (D-E, 6) added. The MST spans all 5 vertices using 4 edges with total weight 12.</p>
 <p>The correctness relies on the cut property: for any cut of the graph (a partition of vertices into two sets), the minimum-weight edge crossing the cut is in some MST. This is the greedy choice property: the cheapest edge that doesn&rsquo;t create a cycle is always &ldquo;crossing some cut,&rdquo; and therefore safe to add.</p>
 <p>The cycle detection uses a Union-Find data structure. We maintain connected components - initially each vertex is its own component. Adding an edge $u$-$v$ is safe if $u$ and $v$ are in different components. If they&rsquo;re in the same component, the edge would create a cycle.</p>
-<p>With Union-Find, Kruskal&rsquo;s algorithm runs in $O(E \log E)$ - dominated by the edge sorting.</p>
 <hr>
 <h2 id="dijkstra-as-a-greedy-algorithm">Dijkstra as a Greedy Algorithm</h2>
 <p>Dijkstra&rsquo;s shortest-path algorithm is secretly greedy. It maintains a set of &ldquo;finalized&rdquo; vertices whose shortest path from the source is known. At each step, it greedily picks the unfinalized vertex with the currently smallest estimated distance, finalizes it, and updates its neighbors.</p>
+<p><strong>Complexity: O((V+E) log V)</strong> with a binary heap - each vertex is finalized once (V extractions at O(log V) each) and each edge triggers at most one heap update (E updates at O(log V) each).</p>
 <p>The greedy choice property here is: when we finalize a vertex $v$ with distance $d$, no future path can produce a shorter route to $v$ (assuming all edge weights are non-negative). This is why Dijkstra fails with negative edge weights - the greedy choice property breaks down.</p>
 <p>We&rsquo;ll cover Dijkstra in full in the shortest paths post.</p>
 <hr>
@@ -206,6 +322,7 @@ while problem not solved:
 <th>Problem</th>
 <th>Greedy strategy</th>
 <th>Correct?</th>
+<th>Complexity</th>
 <th>Why</th>
 </tr>
 </thead>
@@ -214,42 +331,49 @@ while problem not solved:
 <td>Activity selection</td>
 <td>Earliest finish time</td>
 <td>Yes</td>
+<td>O(n log n)</td>
 <td>Exchange argument: earliest-finish always safe</td>
 </tr>
 <tr>
 <td>Fractional knapsack</td>
 <td>Highest value/weight first</td>
 <td>Yes</td>
+<td>O(n log n)</td>
 <td>Fractions allow perfect adjustment</td>
 </tr>
 <tr>
 <td>0/1 knapsack</td>
 <td>Highest value/weight first</td>
 <td>No</td>
+<td>O(nW) via DP</td>
 <td>Integer constraint breaks exchange</td>
 </tr>
 <tr>
 <td>Huffman coding</td>
 <td>Merge lowest-frequency pair</td>
 <td>Yes</td>
+<td>O(n log n)</td>
 <td>Optimal-substructure + exchange argument</td>
 </tr>
 <tr>
 <td>Kruskal MST</td>
 <td>Cheapest edge without cycle</td>
 <td>Yes</td>
+<td>O(E log E)</td>
 <td>Cut property guarantees correctness</td>
 </tr>
 <tr>
 <td>Dijkstra shortest path</td>
 <td>Minimum distance unfinalized</td>
 <td>Yes (non-negative weights only)</td>
+<td>O((V+E) log V)</td>
 <td>Greedy choice property holds without negatives</td>
 </tr>
 <tr>
 <td>Traveling salesman</td>
 <td>Nearest unvisited city</td>
 <td>No</td>
+<td>-</td>
 <td>Early choices lock in suboptimal later ones</td>
 </tr>
 </tbody>
