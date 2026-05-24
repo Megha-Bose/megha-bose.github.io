@@ -107,7 +107,7 @@ Binary search: open to the middle. If the name you want comes before the middle,
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -214,12 +214,12 @@ flowchart LR
 <p><strong>Example: finding a zero.</strong> Given a monotone function $f$ (strictly increasing), find the value $x$ where $f(x) = 0$. Binary search between a known negative value and a known positive value. Each step halves the interval. This is bisection, which engineers use to solve equations that have no closed-form solution.</p>
 <p>The insight is that binary search works on any monotone predicate over any ordered domain - not just sorted arrays. This generalization makes it a fundamental problem-solving tool.</p>
 <h3 id="newtons-method-faster-root-finding">Newton&rsquo;s Method: Faster Root-Finding</h3>
-<p>Bisection is reliable but slow - it always halves the interval, giving $O(\log(1/\varepsilon))$ iterations to reach precision $\varepsilon$. Newton&rsquo;s method converges much faster by using the derivative to extrapolate where $f$ crosses zero.</p>
+<p>Bisection is reliable but slow - it always halves the interval, giving $O(\log(1/\varepsilon))$ iterations to reach precision $\varepsilon$. Newton&rsquo;s method converges much faster by using the slope of the function to make a smarter guess.</p>
+<p>The intuition: you are standing at point $x_n$ on the curve, above the x-axis. You want to know where the curve hits zero. You don&rsquo;t know the full shape of the curve, but you do know two things right where you&rsquo;re standing: the height $f(x_n)$ and the slope $f'(x_n)$. If the curve were a straight line - just a ramp - it would hit zero at exactly $x_n - f(x_n)/f'(x_n)$: you walk horizontally by the amount &ldquo;height divided by slope.&rdquo; The curve is not actually a straight line, but near any smooth point it is approximately straight, so this estimate lands you much closer to the root. You repeat from there.</p>
+<p>Why does this converge so fast? The approximation error - how much the curve deviates from the straight line - is proportional to the square of your distance from the root. So when you are 0.1 away, the error in your tangent-line guess is around 0.01. When you are 0.01 away, the error drops to 0.0001. Each step squares the error - the number of correct decimal digits doubles every iteration. This is called <strong>quadratic convergence</strong>.</p>
 <p>Given a function $f$ and current estimate $x_n$, the tangent line at $(x_n, f(x_n))$ has slope $f'(x_n)$ and crosses zero at:</p>
 <p>$$x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}$$</p>
-<p>Geometrically: you linearize $f$ at the current point and jump to where the linearization hits zero. If $f$ is smooth and the initial guess is close to the root $x^<em>$, the error satisfies $|x_{n+1} - x^</em>| \leq C |x_n - x^*|^2$ - this is <strong>quadratic convergence</strong>. The number of correct decimal digits doubles with every step. Starting 1 digit from the answer, you get 2, then 4, then 8. Newton&rsquo;s method typically converges in 5-10 iterations regardless of required precision.</p>
-<p><strong>Example: compute $\sqrt{2}$.</strong> Let $f(x) = x^2 - 2$, $f'(x) = 2x$. Then $x_{n+1} = x_n - \frac{x_n^2 - 2}{2x_n} = \frac{x_n + 2/x_n}{2}$. Starting from $x_0 = 1$: $x_1 = 1.5$, $x_2 = 1.4167$, $x_3 = 1.41422$, $x_4 = 1.41421356\ldots$ - the correct answer to 8 places in 4 steps.</p>
-<p>The key geometric idea: at each step, draw the tangent line to the curve at your current point, then follow it to where it crosses zero. That crossing becomes your next estimate - which is always closer to the true root than before.</p>
+<p><strong>Example: compute $\sqrt{2}$.</strong> Let $f(x) = x^2 - 2$, $f'(x) = 2x$. Then $x_{n+1} = x_n - \frac{x_n^2 - 2}{2x_n} = \frac{x_n + 2/x_n}{2}$. Starting from $x_0 = 1$: $x_1 = 1.5$, $x_2 = 1.4167$, $x_3 = 1.41422$, $x_4 = 1.41421356\ldots$ - correct to 8 places in 4 steps. Notice how the error roughly squares each time: $0.414 \to 0.086 \to 0.002 \to 0.000001$.</p>
 <div class="mermaid">
 flowchart LR
     A["x₀ = 1.000000\nerror ≈ 0.414"] -->|"tangent at x₀\ncrosses zero at x₁"| B["x₁ = 1.500000\nerror ≈ 0.086"]
