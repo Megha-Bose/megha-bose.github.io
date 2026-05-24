@@ -151,7 +151,7 @@ Binary search: open to the middle. If the name you want comes before the middle,
 <p><strong>The midpoint formula.</strong> We write <code>lo + (hi - lo) / 2</code>, not <code>(lo + hi) / 2</code>. These are mathematically equivalent, but <code>(lo + hi)</code> can overflow when both <code>lo</code> and <code>hi</code> are large integers. In 32-bit arithmetic with <code>lo = hi = 2^30</code>, their sum overflows. The safe form keeps intermediate values bounded by <code>hi</code>. This bug appeared in Java&rsquo;s standard library for nearly a decade before being fixed.</p>
 <p><strong>Off-by-one.</strong> The condition is <code>lo &lt;= hi</code>, not <code>lo &lt; hi</code>. The update to <code>lo</code> is <code>mid + 1</code>, not <code>mid</code>. If you use <code>lo = mid</code> when <code>A[mid] &lt; target</code>, the loop can run forever when <code>lo + 1 == hi</code> and <code>A[lo] &lt; target &lt; A[hi]</code>. Getting binary search exactly right is famously difficult - a 2006 study found that most published implementations contained bugs.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> Binary search is one of the simplest algorithms to describe and one of the hardest to implement correctly. The off-by-one errors are subtle because there are two interacting choices (how to update <code>lo</code> vs <code>hi</code>, and when the loop terminates) that must be mutually consistent. The safest approach: pick a specific invariant and maintain it mechanically. The invariant &ldquo;the target is always in $A[\text{lo}..\text{hi}]$&rdquo; tells you exactly what the updates must be: if <code>A[mid] &lt; target</code>, the target can&rsquo;t be at or left of <code>mid</code>, so set <code>lo = mid + 1</code>. If <code>A[mid] &gt; target</code>, the target can&rsquo;t be at or right of <code>mid</code>, so set <code>hi = mid - 1</code>. The loop terminates when <code>lo &gt; hi</code>, meaning the range is empty and the target is absent.</p>
+<p><strong>Discomfort check.</strong> Binary search is one of the simplest algorithms to describe and one of the hardest to implement correctly. The off-by-one errors are subtle because there are two interacting choices (how to update <code>lo</code> vs <code>hi</code>, and when the loop terminates) that must be mutually consistent. The safest approach: pick a specific invariant and maintain it mechanically. The invariant &ldquo;the target is always in $A[\text{lo} \ldots \text{hi}]$&rdquo; tells you exactly what the updates must be: if <code>A[mid] &lt; target</code>, the target can&rsquo;t be at or left of <code>mid</code>, so set <code>lo = mid + 1</code>. If <code>A[mid] &gt; target</code>, the target can&rsquo;t be at or right of <code>mid</code>, so set <code>hi = mid - 1</code>. The loop terminates when <code>lo &gt; hi</code>, meaning the range is empty and the target is absent.</p>
 </blockquote>
 <p>Each iteration halves the remaining range. After $k$ iterations, the range has size $n / 2^k$. The loop terminates when this is less than 1, i.e., $k = O(\log n)$ iterations. Total comparisons: $O(\log n)$.</p>
 <p>Here is binary search on <code>[2, 5, 8, 12, 16, 23, 38, 56, 72, 91]</code> looking for 23:</p>
@@ -219,6 +219,20 @@ flowchart LR
 <p>$$x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}$$</p>
 <p>Geometrically: you linearize $f$ at the current point and jump to where the linearization hits zero. If $f$ is smooth and the initial guess is close to the root $x^<em>$, the error satisfies $|x_{n+1} - x^</em>| \leq C |x_n - x^*|^2$ - this is <strong>quadratic convergence</strong>. The number of correct decimal digits doubles with every step. Starting 1 digit from the answer, you get 2, then 4, then 8. Newton&rsquo;s method typically converges in 5-10 iterations regardless of required precision.</p>
 <p><strong>Example: compute $\sqrt{2}$.</strong> Let $f(x) = x^2 - 2$, $f'(x) = 2x$. Then $x_{n+1} = x_n - \frac{x_n^2 - 2}{2x_n} = \frac{x_n + 2/x_n}{2}$. Starting from $x_0 = 1$: $x_1 = 1.5$, $x_2 = 1.4167$, $x_3 = 1.41422$, $x_4 = 1.41421356\ldots$ - the correct answer to 8 places in 4 steps.</p>
+<p>The key geometric idea: at each step, draw the tangent line to the curve at your current point, then follow it to where it crosses zero. That crossing becomes your next estimate - which is always closer to the true root than before.</p>
+<div class="mermaid">
+flowchart LR
+    A["x₀ = 1.000000\nerror ≈ 0.414"] -->|"tangent at x₀\ncrosses zero at x₁"| B["x₁ = 1.500000\nerror ≈ 0.086"]
+    B -->|"tangent at x₁\ncrosses zero at x₂"| C["x₂ = 1.416667\nerror ≈ 0.002"]
+    C -->|"tangent at x₂\ncrosses zero at x₃"| D["x₃ = 1.414216\nerror ≈ 0.000001"]
+    D -->|"tangent at x₃\ncrosses zero at x₄"| E["x₄ = 1.41421356\n√2 correct to 8 places"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <p><strong>When Newton&rsquo;s method fails.</strong> Quadratic convergence requires the initial guess to be close to the root, $f'(x^*) \neq 0$ (no horizontal tangent at the root), and $f$ to be twice differentiable near the root. If these fail: the iteration may overshoot and oscillate, or converge to the wrong root. Safeguards: combine bisection (for guaranteed convergence) with Newton steps (for speed) - this is how robust root-finders like Brent&rsquo;s method work.</p>
 <hr>
 <h2 id="interpolation-search-olog-log-n-for-uniform-data">Interpolation Search: O(log log n) for Uniform Data</h2>
