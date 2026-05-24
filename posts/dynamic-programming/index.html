@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -123,7 +123,24 @@
 <hr>
 <h2 id="the-core-observation">The Core Observation</h2>
 <p>Many hard problems share two properties. Once you notice them, you can&rsquo;t unsee them.</p>
-<p><strong>Optimal substructure.</strong> The optimal answer to the problem uses optimal answers to smaller subproblems. This sounds tautological, but it isn&rsquo;t - many problems don&rsquo;t have this property. If you&rsquo;re trying to find the shortest path in a graph with negative cycles, knowing the optimal solution to a smaller subgraph doesn&rsquo;t help you.</p>
+<p><strong>Optimal substructure.</strong> The optimal answer to the problem uses optimal answers to smaller subproblems. This sounds tautological, but it isn&rsquo;t - many problems don&rsquo;t have this property.</p>
+<p>The clearest counterexample is the <strong>longest simple path</strong> (a path that visits no vertex twice). Take this graph:</p>
+<div class="mermaid">
+graph LR
+    q --- r
+    q --- s
+    r --- s
+    r --- t
+    s --- t
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The longest simple path from q to t is q→r→s→t (3 edges). Now suppose optimal substructure held and you tried to decompose through the midpoint r: the longest simple path from q to r is q→s→r (it detours through s to get 2 edges instead of 1), and the longest simple path from r to t is r→s→t (also detours through s). But you can&rsquo;t concatenate them - s appears in both subpaths, so the combined route q→s→r→s→t repeats a vertex. The optimal subpaths interfere with each other.</p>
+<p>Shortest paths don&rsquo;t have this problem: if you split the shortest path from q to t at any intermediate vertex r, both halves are themselves shortest paths and they never share vertices (a repeated vertex would mean a cycle, which only makes the path longer). That no-sharing guarantee is what makes shortest paths decomposable - and longest simple paths lack it entirely.</p>
 <p><strong>Overlapping subproblems.</strong> The recursive approach to solving the problem visits the same subproblems repeatedly. This is what separates DP from divide-and-conquer: in merge sort, the subproblems are disjoint - you never sort the same subarray twice. In DP, you do.</p>
 <p>When both properties hold, you can trade memory for time. Compute each subproblem once, store the result, and look it up whenever you need it again. This transforms exponential algorithms into polynomial ones.</p>
 <hr>
