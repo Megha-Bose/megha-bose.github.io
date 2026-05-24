@@ -105,7 +105,7 @@ That&rsquo;s it. No lookahead. No backtracking. No global view of the emerging s
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          8 min read
+          10 min read
         </div>
       </div>
     </header>
@@ -130,11 +130,17 @@ while problem not solved:
 </code></pre><p>This is incredibly simple. The hard part isn&rsquo;t the algorithm - it&rsquo;s knowing when the algorithm is correct. The naive nearest-neighbor heuristic for the traveling salesman problem looks like a greedy algorithm and is usually wrong. Kruskal&rsquo;s algorithm for minimum spanning trees looks like a greedy algorithm and is always right.</p>
 <p>The difference is structural, and we&rsquo;ll spend most of this post understanding it.</p>
 <hr>
+<h2 id="why-greedy-can-fail">Why Greedy Can Fail</h2>
+<p>Every choice you make in a greedy algorithm is not just a choice for right now - it reshapes the entire landscape of future choices. When you commit to the locally best option, you close doors. Some of those closed doors might have led somewhere better overall.</p>
+<p>The intuition: imagine you&rsquo;re hiking and want to reach the highest point. Greedy says always step uphill. But if you&rsquo;re in a hilly landscape with many peaks, always stepping uphill traps you at whichever peak you started climbing - not necessarily the tallest one. To reach the global maximum you might need to step <em>down</em> first, which greedy will never do.</p>
+<p>This is the core failure mode. The current best choice might require you to make a compromise later that costs more than the gain from being greedy now. You cannot be myopic - just because your current step is locally optimal doesn&rsquo;t mean the overall path is globally optimal. In fact, by choosing optimally at every step, you can end up worse than if you had accepted a suboptimal step somewhere in the middle.</p>
+<p>The 0/1 knapsack is the clearest example: the highest value-per-weight item looks like the obvious first choice. But taking it might fill the knapsack in a way that leaves you stuck with only small items, while a combination of slightly lower-ratio items would have been worth far more total. The greedy choice constrained the future too severely.</p>
 <h2 id="when-greedy-works-two-properties">When Greedy Works: Two Properties</h2>
-<p>A greedy algorithm is correct when the problem has two properties.</p>
-<p><strong>Greedy choice property:</strong> there is always an optimal solution that includes the greedy choice. In other words, you never have to undo your greedy choice later - the locally optimal choice is compatible with some globally optimal solution.</p>
-<p><strong>Optimal substructure:</strong> once you&rsquo;ve made the greedy choice and removed it from the problem, the remaining problem has the same structure, and the optimal solution to the remaining problem combines with the greedy choice to give an optimal solution overall.</p>
-<p>Together these properties mean: pick the locally best thing, then solve the rest optimally, and you&rsquo;ve solved the whole problem optimally.</p>
+<p>Greedy works in exactly two situations.</p>
+<p><strong>The first:</strong> making the greedy choice does not meaningfully constrain your future choices. Whatever you pick now, the remaining options are just as good as if you&rsquo;d picked something else. You&rsquo;re not closing any important doors. Activity selection is like this: picking the earliest-finishing activity leaves the maximum future time open - you haven&rsquo;t sacrificed any future opportunity by being greedy.</p>
+<p><strong>The second:</strong> the greedy choice does constrain future choices, but the optimal solution to whatever remains still combines with your choice to give the global optimum. You&rsquo;ve narrowed the problem, but you haven&rsquo;t broken it. This is a structural property of the problem, not something you can assume - you have to prove it.</p>
+<p>Formally, these are called the <strong>greedy choice property</strong> (the locally optimal choice is always compatible with some globally optimal solution - you never need to undo it) and <strong>optimal substructure</strong> (once you make the greedy choice, the remaining subproblem&rsquo;s optimal solution combines with it to give global optimality).</p>
+<p>Together they mean: pick the locally best thing, solve the rest optimally, and you&rsquo;ve solved the whole problem optimally. The hard part is proving your problem actually has both properties - and when it doesn&rsquo;t, you need dynamic programming instead.</p>
 <p>How do you prove the greedy choice property? Usually with an exchange argument: assume there&rsquo;s an optimal solution that doesn&rsquo;t include the greedy choice. Show that you can swap the greedy choice in (and swap something else out) without making the solution worse. This contradiction shows the greedy choice must be in some optimal solution.</p>
 <hr>
 <h2 id="activity-selection-a-proof-of-correctness">Activity Selection: A Proof of Correctness</h2>
