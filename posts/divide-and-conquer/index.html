@@ -105,7 +105,7 @@ For decades, everyone assumed the only way to multiply two $n \times n$ matrices
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          9 min read
+          10 min read
         </div>
       </div>
     </header>
@@ -328,6 +328,9 @@ flowchart TD
 
     <span style="color:#66d9ef">return</span> combine(C11, C12, C21, C22)
 </code></pre></div><p>In practice, Strassen is only beneficial for $n \gtrsim 500$ on modern hardware - the constant factor from the 18 additions and the overhead of splitting and combining outweigh the savings for small matrices. Real libraries (like NumPy&rsquo;s BLAS backend) use highly tuned naive multiplication for most sizes and fall back to Strassen or its successors only at large $n$.</p>
+<blockquote>
+<p><strong>Trivia.</strong> Strassen is not the theoretical state of the art. The race to minimize the matrix multiplication exponent $\omega$ has continued for decades: Coppersmith and Winograd (1987) reached $O(n^{2.376})$, and a series of refinements brought it to $O(n^{2.371})$ as of 2024. These algorithms use a technique called the laser method and have constant factors so astronomically large that nobody implements them - they are purely theoretical. The conjecture is that $\omega = 2$ (matrix multiplication might be doable in $O(n^2)$) but this is unproven. In practice, Strassen itself is rarely used - highly optimized $O(n^3)$ routines with SIMD vectorization and cache blocking beat it for almost all real sizes. The gap between the best theoretical algorithm and what actually runs fast in production is wider here than almost anywhere else in algorithms.</p>
+</blockquote>
 <blockquote>
 <p><strong>Discomfort check.</strong> The 7 products look like magic - how did Strassen find them? He didn&rsquo;t derive them by hand in the obvious way. He treated the problem algebraically: the entries of a $2 \times 2$ matrix product are bilinear forms in the inputs, and he searched for a decomposition of those forms using fewer rank-1 terms. The &ldquo;7&rdquo; is not obviously optimal - it&rsquo;s the best known for $2 \times 2$ block matrices, but the exact minimum (whether 6 works or 7 is tight) was an open problem for decades. In 2022, DeepMind&rsquo;s AlphaTensor found new algorithms for small matrix sizes using reinforcement learning, rediscovering known results and finding some new ones. The problem is harder than it looks.</p>
 </blockquote>
