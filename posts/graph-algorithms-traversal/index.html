@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          8 min read
+          11 min read
         </div>
       </div>
     </header>
@@ -130,42 +130,111 @@
 <p><strong>Adjacency list.</strong> For each vertex, store only the neighbors that actually exist. Space: $O(V + E)$. Edge lookup is $O(\text{degree}(v))$, but for sparse graphs (where $E \ll V^2$) this is much better. Most real graphs - road networks, social networks, the web - are sparse, so adjacency lists dominate.</p>
 <hr>
 <h2 id="breadth-first-search">Breadth-First Search</h2>
-<p>BFS explores vertices in order of their distance from the source - first the source itself, then all its neighbors, then their neighbors, and so on. It uses a FIFO queue.</p>
-<pre tabindex="0"><code>BFS(G, s):
-    for each v in V: dist[v] = infinity
-    dist[s] = 0
-    Q = new Queue
-    Q.enqueue(s)
-    while Q not empty:
-        u = Q.dequeue()
-        for each neighbor v of u:
-            if dist[v] == infinity:
-                dist[v] = dist[u] + 1
-                parent[v] = u
-                Q.enqueue(v)
-</code></pre><p><strong>Time complexity.</strong> Each vertex is enqueued and dequeued once: $O(V)$. Each edge is examined once: $O(E)$. Total: $O(V + E)$.</p>
+<p>BFS explores vertices in order of their distance from the source - first the source itself, then all its neighbors, then their neighbors, and so on. It uses a FIFO queue. Think of it as ripples spreading outward from a stone dropped in water: every node at distance $k$ is fully processed before any node at distance $k+1$.</p>
+<div class="mermaid">
+graph LR
+    subgraph L0["Distance 0"]
+        S
+    end
+    subgraph L1["Distance 1"]
+        A
+        B
+    end
+    subgraph L2["Distance 2"]
+        C
+        D
+        E
+    end
+    S --- A
+    S --- B
+    A --- C
+    A --- D
+    B --- D
+    B --- E
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bfs</span>(graph, source):
+    dist <span style="color:#f92672">=</span> {source: <span style="color:#ae81ff">0</span>}
+    parent <span style="color:#f92672">=</span> {source: <span style="color:#66d9ef">None</span>}
+    queue <span style="color:#f92672">=</span> deque([source])
+
+    <span style="color:#66d9ef">while</span> queue:
+        u <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+        <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph[u]:
+            <span style="color:#66d9ef">if</span> v <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> dist:
+                dist[v] <span style="color:#f92672">=</span> dist[u] <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+                parent[v] <span style="color:#f92672">=</span> u
+                queue<span style="color:#f92672">.</span>append(v)
+
+    <span style="color:#66d9ef">return</span> dist, parent
+
+<span style="color:#75715e"># Example</span>
+graph <span style="color:#f92672">=</span> {
+    <span style="color:#e6db74">&#39;S&#39;</span>: [<span style="color:#e6db74">&#39;A&#39;</span>, <span style="color:#e6db74">&#39;B&#39;</span>],
+    <span style="color:#e6db74">&#39;A&#39;</span>: [<span style="color:#e6db74">&#39;S&#39;</span>, <span style="color:#e6db74">&#39;C&#39;</span>, <span style="color:#e6db74">&#39;D&#39;</span>],
+    <span style="color:#e6db74">&#39;B&#39;</span>: [<span style="color:#e6db74">&#39;S&#39;</span>, <span style="color:#e6db74">&#39;D&#39;</span>, <span style="color:#e6db74">&#39;E&#39;</span>],
+    <span style="color:#e6db74">&#39;C&#39;</span>: [<span style="color:#e6db74">&#39;A&#39;</span>],
+    <span style="color:#e6db74">&#39;D&#39;</span>: [<span style="color:#e6db74">&#39;A&#39;</span>, <span style="color:#e6db74">&#39;B&#39;</span>],
+    <span style="color:#e6db74">&#39;E&#39;</span>: [<span style="color:#e6db74">&#39;B&#39;</span>],
+}
+dist, parent <span style="color:#f92672">=</span> bfs(graph, <span style="color:#e6db74">&#39;S&#39;</span>)
+<span style="color:#75715e"># dist = {&#39;S&#39;:0, &#39;A&#39;:1, &#39;B&#39;:1, &#39;C&#39;:2, &#39;D&#39;:2, &#39;E&#39;:2}</span>
+</code></pre></div><p><strong>Time complexity.</strong> Each vertex is enqueued and dequeued once: $O(V)$. Each edge is examined once: $O(E)$. Total: $O(V + E)$.</p>
 <p><strong>What it gives you.</strong> After BFS from source $s$, <code>dist[v]</code> is the shortest path (fewest edges) from $s$ to $v$ in an unweighted graph. The <code>parent</code> array encodes the shortest-path tree.</p>
 <p><strong>Why a queue and not a stack?</strong> A queue enforces &ldquo;first discovered, first processed.&rdquo; This maintains the layer structure - you finish processing all vertices at distance $k$ before moving to distance $k+1$. A stack would give DFS instead, and DFS doesn&rsquo;t give shortest paths.</p>
 <p><strong>Bipartiteness testing.</strong> A graph is bipartite if its vertices can be 2-colored so that every edge connects vertices of different colors. BFS tests this in $O(V + E)$: assign alternating colors to each layer. If you ever find an edge between two vertices of the same color, the graph isn&rsquo;t bipartite. This is equivalent to checking that the graph has no odd-length cycles.</p>
 <hr>
 <h2 id="depth-first-search">Depth-First Search</h2>
-<p>DFS dives as deep as possible before backtracking. It uses a stack (or recursion, which implicitly uses the call stack).</p>
-<pre tabindex="0"><code>DFS(G):
-    for each v in V: color[v] = WHITE
-    time = 0
-    for each v in V:
-        if color[v] == WHITE:
-            DFS_Visit(G, v)
+<p>DFS dives as deep as possible before backtracking. It uses recursion (which implicitly uses the call stack). Each node is coloured GRAY while it&rsquo;s being explored (we&rsquo;re somewhere in its subtree) and BLACK once it and all its descendants are done.</p>
+<div class="mermaid">
+graph LR
+    A["A (d=1, f=8)"] -->|"tree"| B["B (d=2, f=7)"]
+    B -->|"tree"| C["C (d=3, f=6)"]
+    C -->|"tree"| D["D (d=4, f=5)"]
+    A -.->|"forward"| D
 
-DFS_Visit(G, u):
-    time += 1; d[u] = time; color[u] = GRAY
-    for each neighbor v of u:
-        if color[v] == WHITE:
-            parent[v] = u
-            DFS_Visit(G, v)
-    color[u] = BLACK
-    time += 1; f[u] = time
-</code></pre><p>The clock stamps <strong>discovery time</strong> $d[u]$ (when we first visit $u$) and <strong>finish time</strong> $f[u]$ (when we&rsquo;ve fully explored $u$ and all descendants).</p>
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>DFS from A visits B, then C, then D. D finishes first (f=5), then C (f=6), B (f=7), A (f=8). The dashed edge A→D is a forward edge - D is already finished when A tries to visit it.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs</span>(graph):
+    WHITE, GRAY, BLACK <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>
+    color <span style="color:#f92672">=</span> {v: WHITE <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph}
+    finish_order <span style="color:#f92672">=</span> []
+    has_cycle <span style="color:#f92672">=</span> [<span style="color:#66d9ef">False</span>]
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs_visit</span>(u):
+        color[u] <span style="color:#f92672">=</span> GRAY             <span style="color:#75715e"># currently being explored</span>
+        <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph[u]:
+            <span style="color:#66d9ef">if</span> color[v] <span style="color:#f92672">==</span> WHITE:
+                dfs_visit(v)
+            <span style="color:#66d9ef">elif</span> color[v] <span style="color:#f92672">==</span> GRAY:
+                has_cycle[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>  <span style="color:#75715e"># back edge: cycle detected</span>
+        color[u] <span style="color:#f92672">=</span> BLACK            <span style="color:#75715e"># fully explored</span>
+        finish_order<span style="color:#f92672">.</span>append(u)
+
+    <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph:
+        <span style="color:#66d9ef">if</span> color[v] <span style="color:#f92672">==</span> WHITE:
+            dfs_visit(v)
+
+    <span style="color:#66d9ef">return</span> finish_order, has_cycle[<span style="color:#ae81ff">0</span>]
+
+<span style="color:#75715e"># Example: directed graph A→B→C→D, A→D</span>
+graph <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;A&#39;</span>: [<span style="color:#e6db74">&#39;B&#39;</span>, <span style="color:#e6db74">&#39;D&#39;</span>], <span style="color:#e6db74">&#39;B&#39;</span>: [<span style="color:#e6db74">&#39;C&#39;</span>], <span style="color:#e6db74">&#39;C&#39;</span>: [<span style="color:#e6db74">&#39;D&#39;</span>], <span style="color:#e6db74">&#39;D&#39;</span>: []}
+finish_order, cycle <span style="color:#f92672">=</span> dfs(graph)
+<span style="color:#75715e"># finish_order = [&#39;D&#39;, &#39;C&#39;, &#39;B&#39;, &#39;A&#39;]  (reversed = topological order)</span>
+<span style="color:#75715e"># cycle = False</span>
+</code></pre></div><p>The <strong>discovery time</strong> $d[u]$ is when we first paint $u$ GRAY; the <strong>finish time</strong> $f[u]$ is when we paint it BLACK.</p>
 <p><strong>Time complexity.</strong> Same as BFS: $O(V + E)$.</p>
 <p><strong>Edge classification.</strong> In a directed graph, each edge $(u, v)$ falls into exactly one category:</p>
 <ul>
@@ -183,7 +252,64 @@ DFS_Visit(G, u):
 <p><strong>Discomfort check.</strong> Why does reversing finish times give topological order? This is genuinely non-obvious. Here&rsquo;s the key fact: if $(u, v)$ is a directed edge in a DAG, then $f[v] &lt; f[u]$. Why? When we start DFS from $u$ and follow the edge to $v$, we explore $v$ completely (finishing it) before we finish $u$. So $v$ finishes before $u$. Reversing finish order puts $u$ before $v$ - exactly what we want. Walk through a small example: a triangle $A \to B \to C$ with no other edges. DFS from $A$ discovers $B$, then $C$. $C$ finishes first (finish time 2), then $B$ (finish time 4), then $A$ (finish time 6). Reverse order: $A, B, C$. Correct: $A$ must come before $B$, $B$ before $C$.</p>
 </blockquote>
 <p>Time: $O(V + E)$.</p>
-<p><strong>Kahn&rsquo;s algorithm (alternative):</strong> Maintain a queue of all vertices with in-degree 0. Repeatedly remove a vertex, add it to the output, and decrement the in-degrees of its neighbors. If any neighbor&rsquo;s in-degree reaches 0, add it to the queue. If the output has fewer than $V$ vertices when the queue empties, a cycle exists.</p>
+<p><strong>Kahn&rsquo;s algorithm (alternative):</strong> Maintain a queue of all vertices with in-degree 0 (nothing depends on them yet). Repeatedly remove a vertex, add it to the output, and decrement the in-degrees of its neighbors. If any neighbor&rsquo;s in-degree reaches 0, add it to the queue. If the output has fewer than $V$ vertices when the queue empties, a cycle exists.</p>
+<p>Here is a concrete dependency graph - think of it as a build system where <code>main</code> imports <code>utils</code> and <code>config</code>, both of which use <code>io</code>, which calls <code>stdlib</code>:</p>
+<div class="mermaid">
+graph LR
+    main --> utils
+    main --> config
+    utils --> io
+    config --> io
+    io --> stdlib
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Topological order (one valid answer): <code>main → config → utils → io → stdlib</code>. Every node appears only after all its prerequisites.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque, defaultdict
+
+<span style="color:#75715e"># --- Method 1: DFS-based (uses finish order from dfs() above) ---</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">topo_sort_dfs</span>(graph):
+    finish_order, has_cycle <span style="color:#f92672">=</span> dfs(graph)
+    <span style="color:#66d9ef">if</span> has_cycle:
+        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;Cycle detected - no topological order exists&#34;</span>)
+    <span style="color:#66d9ef">return</span> finish_order[::<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]  <span style="color:#75715e"># reverse finish order</span>
+
+<span style="color:#75715e"># --- Method 2: Kahn&#39;s algorithm ---</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">topo_sort_kahns</span>(graph):
+    in_degree <span style="color:#f92672">=</span> defaultdict(int)
+    <span style="color:#66d9ef">for</span> u <span style="color:#f92672">in</span> graph:
+        <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph[u]:
+            in_degree[v] <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+
+    queue <span style="color:#f92672">=</span> deque(v <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph <span style="color:#66d9ef">if</span> in_degree[v] <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+    order <span style="color:#f92672">=</span> []
+
+    <span style="color:#66d9ef">while</span> queue:
+        u <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+        order<span style="color:#f92672">.</span>append(u)
+        <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph[u]:
+            in_degree[v] <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+            <span style="color:#66d9ef">if</span> in_degree[v] <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
+                queue<span style="color:#f92672">.</span>append(v)
+
+    <span style="color:#66d9ef">if</span> len(order) <span style="color:#f92672">&lt;</span> len(graph):
+        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;Cycle detected - no topological order exists&#34;</span>)
+    <span style="color:#66d9ef">return</span> order
+
+<span style="color:#75715e"># Example</span>
+build <span style="color:#f92672">=</span> {
+    <span style="color:#e6db74">&#39;main&#39;</span>:   [<span style="color:#e6db74">&#39;utils&#39;</span>, <span style="color:#e6db74">&#39;config&#39;</span>],
+    <span style="color:#e6db74">&#39;utils&#39;</span>:  [<span style="color:#e6db74">&#39;io&#39;</span>],
+    <span style="color:#e6db74">&#39;config&#39;</span>: [<span style="color:#e6db74">&#39;io&#39;</span>],
+    <span style="color:#e6db74">&#39;io&#39;</span>:     [<span style="color:#e6db74">&#39;stdlib&#39;</span>],
+    <span style="color:#e6db74">&#39;stdlib&#39;</span>: [],
+}
+print(topo_sort_kahns(build))  <span style="color:#75715e"># [&#39;main&#39;, &#39;utils&#39;, &#39;config&#39;, &#39;io&#39;, &#39;stdlib&#39;]</span>
+</code></pre></div><p>Both methods are $O(V + E)$. Kahn&rsquo;s has one practical advantage: detecting a cycle is natural (short output) and it processes nodes in a breadth-first wave rather than recursing deeply, avoiding stack overflow on large inputs.</p>
 <hr>
 <h2 id="strongly-connected-components">Strongly Connected Components</h2>
 <p>In a directed graph, a <strong>strongly connected component (SCC)</strong> is a maximal set of vertices where every vertex can reach every other vertex.</p>
@@ -201,6 +327,32 @@ DFS_Visit(G, u):
 <p><strong>Articulation points</strong> (cut vertices). A vertex whose removal disconnects the graph. Found in $O(V + E)$ by a single DFS: vertex $u$ is an articulation point if it has a child $v$ in the DFS tree with no back edge to any proper ancestor of $u$.</p>
 <p><strong>Bridges.</strong> An edge whose removal disconnects the graph. Found simultaneously with articulation points using the same DFS.</p>
 <p>These structures matter for network reliability: articulation points are single points of failure, bridges are critical links.</p>
+<hr>
+<h2 id="when-to-use-which">When to Use Which</h2>
+<p>The choice follows from what question you&rsquo;re actually trying to answer.</p>
+<p><strong>Reach for BFS when distance matters:</strong></p>
+<ul>
+<li>&ldquo;What is the shortest path (fewest hops) from X to Y?&rdquo; - BFS gives shortest paths in unweighted graphs</li>
+<li>&ldquo;What is the nearest node satisfying some property?&rdquo; - BFS finds it in minimum steps</li>
+<li>&ldquo;Is this graph bipartite / 2-colorable?&rdquo; - BFS alternates colors layer by layer; a conflict means odd cycle</li>
+<li>&ldquo;Process nodes level by level&rdquo; - BFS&rsquo;s queue naturally maintains the layer boundary</li>
+</ul>
+<p><strong>Reach for DFS when structure matters:</strong></p>
+<ul>
+<li>&ldquo;Does this graph contain a cycle?&rdquo; - a GRAY neighbor during DFS is a back edge, which means a cycle</li>
+<li>&ldquo;Is this a DAG?&rdquo; - no back edges found = DAG</li>
+<li>&ldquo;Find all paths from X to Y&rdquo; - DFS commits to one path at a time and backtracks</li>
+<li>&ldquo;Topological ordering of a DAG&rdquo; - reverse DFS finish times give it directly</li>
+<li>&ldquo;Find strongly connected components&rdquo; - Kosaraju&rsquo;s and Tarjan&rsquo;s both run DFS</li>
+<li>Maze solving, puzzle solving - any &ldquo;explore a choice, and undo if it fails&rdquo; pattern maps to DFS</li>
+</ul>
+<p><strong>Reach for topological sort when ordering dependencies:</strong></p>
+<ul>
+<li>&ldquo;In what order should I execute these tasks?&rdquo; - build systems, course prerequisites, package installs</li>
+<li>&ldquo;Is there a valid schedule at all?&rdquo; - if Kahn&rsquo;s empties the queue before outputting all nodes, there is a circular dependency and no valid order exists</li>
+<li>&ldquo;What must happen before what?&rdquo; - topological sort makes the implicit dependency chain explicit</li>
+</ul>
+<p>The quick mental test: <strong>do you need to know how far something is?</strong> → BFS. <strong>Do you need to know the full structure or a valid path?</strong> → DFS. <strong>Do you need an ordering that respects dependencies?</strong> → topological sort.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -257,8 +409,6 @@ DFS_Visit(G, u):
 <p><strong>Read next:</strong></p>
 <ul>
 <li><a href="/posts/minimum-spanning-trees-union-find/" target="_blank" rel="noopener noreferrer">Minimum Spanning Trees &amp; Union-Find</a>
-</li>
-<li><a href="/posts/constraint-satisfaction-backtracking/" target="_blank" rel="noopener noreferrer">Constraint Satisfaction &amp; Backtracking</a>
 </li>
 </ul>
 
