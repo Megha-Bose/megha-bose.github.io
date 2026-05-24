@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          13 min read
         </div>
       </div>
     </header>
@@ -306,15 +306,108 @@ print(topo_sort_kahns(build))  <span style="color:#75715e"># [&#39;main&#39;, &#
 </code></pre></div><p>Both methods are $O(V + E)$. Kahn&rsquo;s has one practical advantage: detecting a cycle is natural (short output) and it processes nodes in a breadth-first wave rather than recursing deeply, avoiding stack overflow on large inputs.</p>
 <hr>
 <h2 id="strongly-connected-components">Strongly Connected Components</h2>
-<p>In a directed graph, a <strong>strongly connected component (SCC)</strong> is a maximal set of vertices where every vertex can reach every other vertex.</p>
+<p>In a directed graph, a <strong>strongly connected component (SCC)</strong> is a maximal set of vertices where every vertex can reach every other vertex. Two separate cycles with a one-way bridge between them are two distinct SCCs - you can get from one to the other but not back.</p>
 <p><strong>Kosaraju&rsquo;s algorithm</strong> finds all SCCs in $O(V + E)$ using two DFS passes:</p>
 <ol>
-<li>Run DFS on $G$; record vertices in <code>finish_order</code> (last appended = explored deepest first).</li>
-<li>Compute $G^T$ (the transpose: reverse all edges).</li>
-<li>Run DFS on $G^T$ in the order from step 1. Each DFS tree in this pass is one SCC.</li>
+<li>Run DFS on $G$; record vertices in <code>finish_order</code> (deepest-explored nodes finish first).</li>
+<li>Build $G^T$ - the transpose of $G$, with every edge reversed.</li>
+<li>Process vertices from the end of <code>finish_order</code> backwards. For each unvisited vertex, run DFS on $G^T$ - every vertex reachable in this DFS is one SCC.</li>
 </ol>
-<p><strong>Why does this work?</strong> If $u$ and $v$ are in the same SCC, they&rsquo;re mutually reachable in $G$ and in $G^T$. The last vertex appended to <code>finish_order</code> in the first pass is the &ldquo;root&rdquo; of its SCC - it can reach all other vertices in the SCC in $G$, but in $G^T$, you can reach it from all of them. So starting DFS in $G^T$ from the last-finished vertex collects exactly one SCC before moving to vertices in other SCCs.</p>
-<hr>
+<p><strong>Concrete example.</strong> Two cycles connected by a one-way bridge:</p>
+<div class="mermaid">
+graph LR
+    subgraph SCC1["SCC 1: A, B, C"]
+        A --> B
+        B --> C
+        C --> A
+    end
+    subgraph SCC2["SCC 2: D, E, F"]
+        D --> E
+        E --> F
+        F --> D
+    end
+    C -->|"one-way bridge"| D
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p><strong>Step 1</strong> - DFS on $G$ from A gives <code>finish_order = [F, E, D, C, B, A]</code> (D, E, F finish before C, B, A because they&rsquo;re fully explored first via the bridge).</p>
+<p><strong>Step 2</strong> - Reverse every edge. The bridge C→D becomes D→C in $G^T$:</p>
+<div class="mermaid">
+graph LR
+    subgraph SCC1["SCC 1: A, B, C"]
+        B --> A
+        C --> B
+        A --> C
+    end
+    subgraph SCC2["SCC 2: D, E, F"]
+        E --> D
+        F --> E
+        D --> F
+    end
+    D -->|"reversed bridge"| C
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p><strong>Step 3</strong> - Process <code>finish_order</code> from the back (A first). DFS from A on $G^T$ reaches B and C but hits the reversed bridge D→C going the wrong way - it cannot cross into {D, E, F}. So the first DFS tree collects exactly {A, B, C}. Next unvisited vertex is D: DFS collects {D, E, F}.</p>
+<p>The reversed bridge is the key insight: reversing edges keeps SCCs internally connected (a cycle reversed is still a cycle) but flips the direction of cross-SCC bridges, so DFS stays trapped within one SCC at a time.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> defaultdict
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">kosaraju</span>(graph):
+    <span style="color:#75715e"># Step 1: DFS on original graph to get finish order</span>
+    visited <span style="color:#f92672">=</span> set()
+    finish_order <span style="color:#f92672">=</span> []
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs1</span>(u):
+        visited<span style="color:#f92672">.</span>add(u)
+        <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph[u]:
+            <span style="color:#66d9ef">if</span> v <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> visited:
+                dfs1(v)
+        finish_order<span style="color:#f92672">.</span>append(u)  <span style="color:#75715e"># append after all descendants done</span>
+
+    <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph:
+        <span style="color:#66d9ef">if</span> v <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> visited:
+            dfs1(v)
+
+    <span style="color:#75715e"># Step 2: Build transpose (reverse all edges)</span>
+    transposed <span style="color:#f92672">=</span> defaultdict(list)
+    <span style="color:#66d9ef">for</span> u <span style="color:#f92672">in</span> graph:
+        <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph[u]:
+            transposed[v]<span style="color:#f92672">.</span>append(u)
+
+    <span style="color:#75715e"># Step 3: DFS on transpose in reverse finish order</span>
+    visited<span style="color:#f92672">.</span>clear()
+    sccs <span style="color:#f92672">=</span> []
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs2</span>(u, component):
+        visited<span style="color:#f92672">.</span>add(u)
+        component<span style="color:#f92672">.</span>append(u)
+        <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> transposed[u]:
+            <span style="color:#66d9ef">if</span> v <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> visited:
+                dfs2(v, component)
+
+    <span style="color:#66d9ef">for</span> u <span style="color:#f92672">in</span> reversed(finish_order):
+        <span style="color:#66d9ef">if</span> u <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> visited:
+            component <span style="color:#f92672">=</span> []
+            dfs2(u, component)
+            sccs<span style="color:#f92672">.</span>append(component)
+
+    <span style="color:#66d9ef">return</span> sccs
+
+<span style="color:#75715e"># Example</span>
+graph <span style="color:#f92672">=</span> {
+    <span style="color:#e6db74">&#39;A&#39;</span>: [<span style="color:#e6db74">&#39;B&#39;</span>], <span style="color:#e6db74">&#39;B&#39;</span>: [<span style="color:#e6db74">&#39;C&#39;</span>], <span style="color:#e6db74">&#39;C&#39;</span>: [<span style="color:#e6db74">&#39;A&#39;</span>, <span style="color:#e6db74">&#39;D&#39;</span>],
+    <span style="color:#e6db74">&#39;D&#39;</span>: [<span style="color:#e6db74">&#39;E&#39;</span>], <span style="color:#e6db74">&#39;E&#39;</span>: [<span style="color:#e6db74">&#39;F&#39;</span>], <span style="color:#e6db74">&#39;F&#39;</span>: [<span style="color:#e6db74">&#39;D&#39;</span>],
+}
+print(kosaraju(graph))  <span style="color:#75715e"># [[&#39;A&#39;, &#39;C&#39;, &#39;B&#39;], [&#39;D&#39;, &#39;F&#39;, &#39;E&#39;]]</span>
+</code></pre></div><hr>
 <h2 id="connected-components-bridges-and-articulation-points">Connected Components, Bridges, and Articulation Points</h2>
 <p>In an undirected graph:</p>
 <p><strong>Connected components.</strong> Run BFS or DFS; each new call to <code>DFS_Visit</code> from the outer loop starts a new connected component.</p>
