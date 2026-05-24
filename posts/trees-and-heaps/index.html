@@ -105,7 +105,7 @@ Trees are not an abstract data structure invented by computer scientists. They a
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          8 min read
+          9 min read
         </div>
       </div>
     </header>
@@ -130,10 +130,34 @@ Trees are not an abstract data structure invented by computer scientists. They a
 <li><strong>Full binary tree</strong>: every node has either 0 or 2 children (no nodes with exactly 1 child).</li>
 <li><strong>Perfect binary tree</strong>: all interior nodes have 2 children and all leaves are at the same depth. A perfect binary tree of height $h$ has $2^{h+1} - 1$ nodes.</li>
 </ul>
+<div class="mermaid">
+flowchart TD
+    A["root\n(depth 0)"] --> B["(depth 1)"] & C["(depth 1)"]
+    B --> D["leaf\n(depth 2)"] & E["leaf\n(depth 2)"]
+    C --> F["leaf\n(depth 2)"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <p>A binary tree of height $h$ has at most $2^{h+1} - 1$ nodes. Conversely, a binary tree with $n$ nodes has height at least $\log_2 n$. This logarithmic relationship is the source of $O(\log n)$ performance for tree operations.</p>
 <hr>
 <h2 id="binary-search-trees-olog-n-with-a-condition">Binary Search Trees: O(log n) with a Condition</h2>
 <p>A binary search tree (BST) adds one invariant to the binary tree structure: for every node, all keys in its left subtree are smaller than the node&rsquo;s key, and all keys in its right subtree are larger.</p>
+<div class="mermaid">
+flowchart TD
+    A["8"] --> B["3"] & C["12"]
+    B --> D["1"] & E["6"]
+    C --> F["10"] & G["15"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <p>This invariant makes searching simple. To find key $k$: start at the root. If $k$ equals the root&rsquo;s key, you&rsquo;re done. If $k$ is smaller, recurse into the left subtree. If $k$ is larger, recurse into the right subtree. Each comparison eliminates one subtree entirely.</p>
 <p>The time is $O(h)$ where $h$ is the height of the tree. For a balanced tree, $h = O(\log n)$, giving $O(\log n)$ search. This is binary search, but on a dynamic structure that supports insertion and deletion efficiently.</p>
 <p>Insertion is similar: search for where the key would be, then insert a new leaf there. Deletion is the tricky case. Three scenarios:</p>
@@ -143,6 +167,19 @@ Trees are not an abstract data structure invented by computer scientists. They a
 <li><strong>Node has two children</strong>: find the in-order successor (the smallest key in the right subtree - the leftmost node going right). Copy that key into the current node and delete the in-order successor (which has at most one child, so it&rsquo;s an easier case).</li>
 </ul>
 <p>The problem: the $O(h)$ complexity is only $O(\log n)$ if the tree is balanced. Feed a BST elements in sorted order and it degenerates into a linked list, with every left subtree empty and the tree having height $n - 1$. Searching this takes $O(n)$.</p>
+<div class="mermaid">
+flowchart TD
+    A["1"] --> B["2"]
+    B --> C["3"]
+    C --> D["4"]
+    D --> E["5"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <hr>
 <h2 id="avl-and-red-black-trees-keeping-the-promise">AVL and Red-Black Trees: Keeping the Promise</h2>
 <p>The fix for BST degeneration is balancing: enforce that the height stays $O(\log n)$ through rotations that restructure the tree.</p>
@@ -161,6 +198,18 @@ Trees are not an abstract data structure invented by computer scientists. They a
 <li>Node $i$ has its right child at $2i + 1$</li>
 </ul>
 <p>The root is at index 1. The last element is at index $n$. No pointer traversal needed - just arithmetic.</p>
+<div class="mermaid">
+flowchart TD
+    A["[1] 16"] --> B["[2] 14"] & C["[3] 10"]
+    B --> D["[4] 8"] & E["[5] 7"]
+    C --> F["[6] 9"] & G["[7] 3"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <blockquote>
 <p><strong>Discomfort check.</strong> &ldquo;If a heap is a tree, why represent it as an array?&rdquo; Because the array representation is dramatically faster in practice. Pointer-based trees require one memory allocation per node, and traversing them causes cache misses (jumping between nodes scattered across the heap). An array-based heap stores all nodes contiguously - the parent-child relationships are computed in one instruction, and the data is all nearby in memory. For the same operations, an array heap can be 3-5 times faster than a pointer-based equivalent.</p>
 </blockquote>
@@ -184,6 +233,20 @@ Trees are not an abstract data structure invented by computer scientists. They a
 <p>Not every tree application uses binary trees.</p>
 <p><strong>B-trees</strong> are balanced search trees where each node can have many children (hundreds, not just two). They&rsquo;re designed for disk storage: when data doesn&rsquo;t fit in RAM, you want to minimize the number of disk reads. A B-tree node is sized to fit exactly one disk block. With hundreds of keys per node, the tree height is tiny - a B-tree over a billion records might have height 3 or 4. Every relational database uses B-trees (or the related B+-tree) for indexes.</p>
 <p><strong>Tries</strong> (pronounced &ldquo;tries&rdquo; or &ldquo;trees&rdquo;) are trees optimized for string lookups. Instead of comparing whole keys at each node, a trie branches on individual characters. To look up a string of length $L$, you follow $L$ edges from the root - $O(L)$, independent of how many strings are stored. They&rsquo;re used for autocomplete, spell-checkers, and IP routing tables.</p>
+<div class="mermaid">
+flowchart TD
+    R["root"] --> C["c"]
+    C --> CA["a"]
+    CA --> CAT["t ✓ cat"]
+    CA --> CAR["r ✓ car"]
+    CA --> CAN["n ✓ can"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
