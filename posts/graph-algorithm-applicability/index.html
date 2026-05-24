@@ -15,11 +15,11 @@
     <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Graph Algorithm Applicability - Choosing the Right Tool for the Graph"/>
 <meta name="twitter:description" content="Prerequisites:
- Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Minimum Spanning Trees &amp; Union-Find - Spanning a World on a Budget  Shortest Paths (Dijkstra, Bellman-Ford)  Network Flow &amp; Matching    At this point, a large number of graph algorithms have been covered. The question that naturally arises: for a given problem and a given graph, which algorithm actually applies? The answer depends on the structure of the graph - directed or undirected, weighted or unweighted, DAG or not, negative weights or not."/>
+ Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Minimum Spanning Trees &amp; Union-Find - Spanning a World on a Budget  Shortest Paths (Dijkstra, Bellman-Ford)  Network Flow &amp; Matching    We&rsquo;ve covered a lot of graph algorithms at this point. BFS, DFS, topological sort, Kosaraju&rsquo;s, Kruskal&rsquo;s, Prim&rsquo;s, Dijkstra&rsquo;s, Bellman-Ford, Floyd-Warshall, max flow - the list is long. But knowing an algorithm exists is only half the battle."/>
 
     <meta property="og:title" content="Graph Algorithm Applicability - Choosing the Right Tool for the Graph" />
 <meta property="og:description" content="Prerequisites:
- Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Minimum Spanning Trees &amp; Union-Find - Spanning a World on a Budget  Shortest Paths (Dijkstra, Bellman-Ford)  Network Flow &amp; Matching    At this point, a large number of graph algorithms have been covered. The question that naturally arises: for a given problem and a given graph, which algorithm actually applies? The answer depends on the structure of the graph - directed or undirected, weighted or unweighted, DAG or not, negative weights or not." />
+ Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Minimum Spanning Trees &amp; Union-Find - Spanning a World on a Budget  Shortest Paths (Dijkstra, Bellman-Ford)  Network Flow &amp; Matching    We&rsquo;ve covered a lot of graph algorithms at this point. BFS, DFS, topological sort, Kosaraju&rsquo;s, Kruskal&rsquo;s, Prim&rsquo;s, Dijkstra&rsquo;s, Bellman-Ford, Floyd-Warshall, max flow - the list is long. But knowing an algorithm exists is only half the battle." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://megha-bose.github.io/posts/graph-algorithm-applicability/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          5 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -120,15 +120,16 @@
 </li>
 </ul>
 <hr>
-<p>At this point, a large number of graph algorithms have been covered. The question that naturally arises: for a given problem and a given graph, which algorithm actually applies? The answer depends on the structure of the graph - directed or undirected, weighted or unweighted, DAG or not, negative weights or not. Getting this wrong means applying an algorithm where its assumptions are violated, producing incorrect results or running forever.</p>
-<p>This post is a reference. Return to it whenever facing a graph problem and needing to reason about which tools apply.</p>
+<p>We&rsquo;ve covered a lot of graph algorithms at this point. BFS, DFS, topological sort, Kosaraju&rsquo;s, Kruskal&rsquo;s, Prim&rsquo;s, Dijkstra&rsquo;s, Bellman-Ford, Floyd-Warshall, max flow - the list is long. But knowing an algorithm exists is only half the battle. The harder question is: given a problem and a graph in front of us, which one do we reach for?</p>
+<p>The answer isn&rsquo;t arbitrary. Each algorithm was designed with assumptions about the graph&rsquo;s structure baked in. Use an algorithm on the wrong kind of graph and it either gives wrong answers or runs forever. The good news: the decision tree is fairly short once we know what to look for.</p>
+<p>This post is a reference - come back to it whenever a graph problem needs untangling.</p>
 <hr>
 <h2 id="the-graph-properties-that-matter">The Graph Properties That Matter</h2>
-<p>Before picking an algorithm, pin down four properties of your graph:</p>
-<p><strong>1. Directed or undirected?</strong> In an undirected graph, every edge goes both ways. In a directed graph (digraph), edges are one-way. Many algorithms are defined for one but not the other.</p>
-<p><strong>2. Weighted or unweighted?</strong> Weights on edges represent cost, distance, or capacity. Algorithms designed for weighted graphs can be run on unweighted graphs (set all weights to 1), but not the other way around.</p>
-<p><strong>3. Does it contain cycles?</strong> A directed graph with no cycles is a DAG. Several algorithms only work correctly on DAGs - they rely on processing vertices in topological order, which only exists when there are no cycles.</p>
-<p><strong>4. Are any edge weights negative?</strong> Negative weights are legal in many settings (profit vs. cost, altitude changes) but they break algorithms that assume once a vertex is settled it cannot be improved.</p>
+<p>Before picking an algorithm, we need to pin down four properties of the graph:</p>
+<p><strong>1. Directed or undirected?</strong> In an undirected graph, every edge goes both ways. In a directed graph (digraph), edges are one-way streets. Many algorithms are defined for one but not the other, and applying them to the wrong type is a common source of bugs.</p>
+<p><strong>2. Weighted or unweighted?</strong> Weights on edges represent cost, distance, or capacity. Algorithms designed for weighted graphs can run on unweighted ones (just set all weights to 1), but the reverse doesn&rsquo;t work - you can&rsquo;t feed an unweighted algorithm a graph where the edge costs actually matter.</p>
+<p><strong>3. Does it contain cycles?</strong> A directed graph with no cycles is a DAG. Several algorithms rely on processing vertices in topological order, which only exists when there are no cycles. If the graph has a cycle, those algorithms are off the table.</p>
+<p><strong>4. Are any edge weights negative?</strong> Negative weights are perfectly legal in many real settings - think profit vs. cost, or altitude changes on a map. But they silently break algorithms that assume once a vertex is settled, it can&rsquo;t be improved further.</p>
 <hr>
 <h2 id="the-reference-table">The Reference Table</h2>
 <table>
@@ -230,22 +231,23 @@
 </table>
 <hr>
 <h2 id="why-each-constraint-exists">Why Each Constraint Exists</h2>
+<p>These constraints aren&rsquo;t footnotes - they&rsquo;re the reason the algorithms work at all. Understanding the <em>why</em> is what lets us reason confidently rather than just memorise a table.</p>
 <p><strong>Why do topological sort and DAG-DP require a DAG?</strong></p>
-<p>Both algorithms process vertices in dependency order - each vertex is handled only after all its predecessors. That order only exists when the graph has no cycles. If vertex A depends on B and B depends on A, there is no valid starting point. DFS detects cycles precisely so you can check whether topological sort is applicable before running it.</p>
+<p>Both algorithms process vertices in dependency order - each vertex is handled only after all its predecessors are done. That ordering only exists when the graph has no cycles. If vertex A depends on B and B depends on A, there&rsquo;s no valid place to start. DFS detects cycles precisely for this reason: we run it first to confirm topological sort is even applicable.</p>
 <p><strong>Why does Dijkstra&rsquo;s fail on negative weights?</strong></p>
-<p>Dijkstra&rsquo;s greedy step finalises a vertex the moment it is extracted from the priority queue, assuming no shorter path to it will be discovered later. A negative-weight edge can always produce a shorter path through a vertex that was already finalised, violating that assumption. Consider:</p>
+<p>Dijkstra&rsquo;s greedy step finalises a vertex the moment it&rsquo;s extracted from the priority queue, on the assumption that no cheaper path to it will ever show up. A negative-weight edge breaks that assumption - it can always produce a cheaper path through a vertex we already marked as done. Here&rsquo;s the classic example:</p>
 <pre tabindex="0"><code>A --1--&gt; B --(-3)--&gt; C
 A -------2--------&gt; C
-</code></pre><p>Dijkstra finalises C via A→C (cost 2) before it processes B. But A→B→C costs 1 + (-3) = -2, which is cheaper. The finalised answer is wrong. Bellman-Ford avoids this by relaxing every edge $V-1$ times, without any greedy finalisation, so it can correct earlier answers.</p>
+</code></pre><p>Dijkstra finalises C via A→C (cost 2) before it even processes B. But A→B→C costs 1 + (-3) = -2, which is cheaper. The answer is wrong, and there&rsquo;s no way to detect it from inside the algorithm. Bellman-Ford avoids this by relaxing every edge $V-1$ times with no greedy finalisation, so earlier mistakes get corrected in later rounds.</p>
 <p><strong>Why do MST algorithms require undirected graphs?</strong></p>
-<p>A spanning tree is inherently undirected - it connects all vertices using edges that can be traversed either way. In a directed graph, the analogous problem is a <strong>minimum spanning arborescence</strong> (a directed tree rooted at one vertex, with all edges pointing away from the root). This requires Edmonds' algorithm (also called Chu-Liu/Edmonds'), which is more complex. Kruskal&rsquo;s and Prim&rsquo;s assume you can use each edge in either direction.</p>
+<p>A spanning tree connects all vertices using edges that can be traversed in either direction - that&rsquo;s inherently an undirected concept. In a directed graph, the equivalent problem is a <strong>minimum spanning arborescence</strong> (a directed tree rooted at one vertex, edges pointing away from the root). That requires Edmonds' algorithm (Chu-Liu/Edmonds'), which is significantly more complex. Kruskal&rsquo;s and Prim&rsquo;s simply assume we can use each edge both ways.</p>
 <p><strong>Why does Bellman-Ford require no negative cycles?</strong></p>
-<p>A negative cycle is a cycle whose total edge weight is negative. If a shortest path passes through a negative cycle, you can always reduce the path cost by going around the cycle one more time - there is no finite minimum. Bellman-Ford detects this: after $V-1$ relaxation rounds, if any distance can still be reduced, a negative cycle exists. The shortest path problem is simply undefined when negative cycles are reachable from the source.</p>
+<p>A negative cycle is a cycle whose total edge weight is negative. If a shortest path passes through one, we can always make it cheaper by going around the cycle one more time - there&rsquo;s no finite minimum. Bellman-Ford detects this situation: after $V-1$ relaxation rounds, if any distance can still be reduced, a negative cycle exists. The shortest path problem is simply undefined in that case.</p>
 <p><strong>Why does max flow require a directed graph?</strong></p>
-<p>Flow has a direction - it moves from source to sink. An undirected edge between $u$ and $v$ would mean flow could go either way simultaneously, which needs to be modelled as two directed edges with shared capacity. Network flow algorithms are always stated for directed graphs; undirected flow problems are converted by replacing each undirected edge with two directed edges.</p>
+<p>Flow has a direction - it moves from source to sink. An undirected edge between $u$ and $v$ would mean flow could go either way simultaneously, which doesn&rsquo;t map cleanly to the flow model. Undirected flow problems are converted to directed ones by replacing each undirected edge with two directed edges sharing capacity.</p>
 <hr>
 <h2 id="decision-guide">Decision Guide</h2>
-<p>When you face a graph problem, work through these questions in order:</p>
+<p>When a graph problem comes up, working through these questions in order usually narrows it down quickly:</p>
 <div class="mermaid">
 graph TD
     Q1{"Directed or undirected?"}
@@ -273,11 +275,11 @@ graph TD
 
 <hr>
 <h2 id="summary">Summary</h2>
-<p>The key insight is that graph algorithm constraints are not arbitrary - each one reflects a genuine mathematical assumption the algorithm relies on. Understanding <em>why</em> a constraint exists tells you both when to apply the algorithm and what will go wrong if you don&rsquo;t.</p>
+<p>The constraints in graph algorithms aren&rsquo;t arbitrary restrictions - each one reflects a genuine mathematical assumption the algorithm relies on. Once we understand <em>why</em> a constraint exists, we know both when to apply the algorithm and what will silently go wrong when we don&rsquo;t.</p>
 <table>
 <thead>
 <tr>
-<th>If your graph has&hellip;</th>
+<th>If the graph has&hellip;</th>
 <th>Watch out for&hellip;</th>
 </tr>
 </thead>
