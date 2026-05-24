@@ -105,7 +105,7 @@ For decades, everyone assumed the only way to multiply two $n \times n$ matrices
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -243,6 +243,7 @@ flowchart TD
 </table>
 <p>Notice the pattern: which block of $A$ you use depends only on which half of $i$ you are in (top rows use $A_{11}$/$A_{12}$, bottom rows use $A_{21}$/$A_{22}$). Which block of $B$ you use depends only on which half of $j$ you are in (left columns use $B_{11}$/$B_{21}$, right columns use $B_{12}$/$B_{22}$). The $k$ split always contributes one term from each side.</p>
 <p>You might notice something that looks odd: in the term $A_{12}B_{21}$, the column-block index of $A$ (the 2 in $A_{12}$) matches the row-block index of $B$ (the 2 in $B_{21}$). This is not a coincidence - it is exactly the same contraction that happens at the scalar level. Scalar multiplication is $C[i][j] = \sum_k A[i][k] \cdot B[k][j]$: column index of $A$ contracts with row index of $B$. Block multiplication is $C_{IJ} = \sum_K A_{IK} \cdot B_{KJ}$: the same formula with block indices. $C_{11} = A_{11}B_{11} + A_{12}B_{21}$ is just $K=1$ and $K=2$ in that sum. Blocks behave algebraically like scalars under matrix multiplication - the structure is preserved exactly.</p>
+<p>Since blocks behave like scalars, you could split into $k \times k$ blocks for any $k$, not just 2. The asymptotic complexity would be $O(n^{\log_k m})$ where $m$ is the number of block multiplications needed at that level. The question is whether larger blocks let you save proportionally more multiplications. The answer, so far, is no: for $3 \times 3$ blocks the naive count is 27 multiplications, and the best known algorithm (Laderman, 1976) reduces this to 23, giving $O(n^{\log_3 23}) \approx O(n^{2.854})$ - worse than Strassen&rsquo;s $O(n^{2.807})$. You saved 4 out of 27 multiplications but the block size grew faster than the savings. This is why Strassen&rsquo;s 2×2 decomposition remains a strong baseline despite decades of effort on larger block sizes.</p>
 <p>Computing these directly requires 8 block multiplications. Since each block is $n/2 \times n/2$, the recurrence is $T(n) = 8T(n/2) + O(n^2)$, giving $T(n) = O(n^3)$. No improvement yet.</p>
 <p><strong>Strassen&rsquo;s trick.</strong> Instead of computing each output block directly, compute 7 intermediate products using sums and differences of the blocks - then combine them:</p>
 <div class="mermaid">
