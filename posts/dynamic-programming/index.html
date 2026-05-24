@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          14 min read
+          16 min read
         </div>
       </div>
     </header>
@@ -367,12 +367,172 @@ return dp[n]
 <hr>
 <h2 id="dp-on-trees-and-dags">DP on Trees and DAGs</h2>
 <p>Not all DP problems fit neatly in a 1D or 2D table. Two important generalizations.</p>
-<p><strong>DP on DAGs.</strong> On a directed acyclic graph, define subproblems for each vertex and fill them in reverse topological order. The classic example: longest path in a DAG (which can&rsquo;t be solved greedily).</p>
-<p><strong>DP on trees.</strong> Define $\text{dp}[v]$ in terms of $\text{dp}[\text{children}(v)]$; compute in post-order (children before parents). Example: maximum weight independent set on a tree (choose a subset of vertices with no two adjacent, maximizing total weight).</p>
-<p>Let $\text{dp}[v][0]$ = max weight independent set in the subtree of $v$ when $v$ is excluded; $\text{dp}[v][1]$ when $v$ is included.</p>
+<h3 id="longest-path-in-a-dag">Longest Path in a DAG</h3>
+<p>On a directed acyclic graph (DAG), there are no cycles, so the subproblem dependencies never loop back on themselves. You can therefore fill a DP table in <em>topological order</em> - an ordering where every edge goes from earlier to later in the order, so every subproblem is solved before anything that depends on it.</p>
+<p>The classic problem: given node weights, find the path through the graph with the maximum total weight.</p>
+<p>$$\text{dp}[v] = w_v + \max_{u \to v} \text{dp}[u]$$</p>
+<p>Process nodes in topological order. When you reach $v$, every predecessor $u$ is already solved.</p>
+<p><strong>Concrete example:</strong> five nodes, each with a weight.</p>
+<div class="mermaid">
+graph LR
+    A["A (w=1)"] --> B["B (w=3)"]
+    A --> C["C (w=2)"]
+    B --> D["D (w=4)"]
+    C --> D
+    D --> E["E (w=1)"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Topological order: A, B, C, D, E.</p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>Predecessors</th>
+<th>dp value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>none</td>
+<td>1</td>
+</tr>
+<tr>
+<td>B</td>
+<td>A (dp=1)</td>
+<td>1 + 3 = 4</td>
+</tr>
+<tr>
+<td>C</td>
+<td>A (dp=1)</td>
+<td>1 + 2 = 3</td>
+</tr>
+<tr>
+<td>D</td>
+<td>B (dp=4), C (dp=3)</td>
+<td>max(4, 3) + 4 = 8</td>
+</tr>
+<tr>
+<td>E</td>
+<td>D (dp=8)</td>
+<td>8 + 1 = 9</td>
+</tr>
+</tbody>
+</table>
+<p>The longest path is A → B → D → E with total weight 9.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> defaultdict
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">longest_path</span>(nodes, edges, weight):
+    <span style="color:#75715e"># nodes must be given in topological order</span>
+    children <span style="color:#f92672">=</span> defaultdict(list)
+    <span style="color:#66d9ef">for</span> u, v <span style="color:#f92672">in</span> edges:
+        children[u]<span style="color:#f92672">.</span>append(v)
+
+    dp <span style="color:#f92672">=</span> {v: weight[v] <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> nodes}
+
+    <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> nodes:
+        <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> children[v]:
+            dp[c] <span style="color:#f92672">=</span> max(dp[c], dp[v] <span style="color:#f92672">+</span> weight[c])
+
+    <span style="color:#66d9ef">return</span> max(dp<span style="color:#f92672">.</span>values())
+
+nodes  <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;A&#39;</span>, <span style="color:#e6db74">&#39;B&#39;</span>, <span style="color:#e6db74">&#39;C&#39;</span>, <span style="color:#e6db74">&#39;D&#39;</span>, <span style="color:#e6db74">&#39;E&#39;</span>]
+edges  <span style="color:#f92672">=</span> [(<span style="color:#e6db74">&#39;A&#39;</span>,<span style="color:#e6db74">&#39;B&#39;</span>), (<span style="color:#e6db74">&#39;A&#39;</span>,<span style="color:#e6db74">&#39;C&#39;</span>), (<span style="color:#e6db74">&#39;B&#39;</span>,<span style="color:#e6db74">&#39;D&#39;</span>), (<span style="color:#e6db74">&#39;C&#39;</span>,<span style="color:#e6db74">&#39;D&#39;</span>), (<span style="color:#e6db74">&#39;D&#39;</span>,<span style="color:#e6db74">&#39;E&#39;</span>)]
+weight <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;A&#39;</span>:<span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;B&#39;</span>:<span style="color:#ae81ff">3</span>, <span style="color:#e6db74">&#39;C&#39;</span>:<span style="color:#ae81ff">2</span>, <span style="color:#e6db74">&#39;D&#39;</span>:<span style="color:#ae81ff">4</span>, <span style="color:#e6db74">&#39;E&#39;</span>:<span style="color:#ae81ff">1</span>}
+
+print(longest_path(nodes, edges, weight))  <span style="color:#75715e"># 9</span>
+</code></pre></div><hr>
+<h3 id="maximum-weight-independent-set-on-a-tree">Maximum Weight Independent Set on a Tree</h3>
+<p>A tree is a special case of a DAG: no cycles, and a natural root-to-leaf direction. DP on trees works bottom-up - compute answers for leaves first, then propagate up to the root (post-order traversal).</p>
+<p><strong>Problem:</strong> choose a subset of nodes with no two adjacent (no parent-child pair both selected), maximising total weight.</p>
+<p>For each node $v$, track two values:</p>
+<ul>
+<li>$\text{dp}[v][0]$: best total weight in $v$&rsquo;s subtree when $v$ is <strong>excluded</strong></li>
+<li>$\text{dp}[v][1]$: best total weight in $v$&rsquo;s subtree when $v$ is <strong>included</strong></li>
+</ul>
 <p>$$\text{dp}[v][1] = w_v + \sum_{c \in \text{children}(v)} \text{dp}[c][0]$$
-$$\text{dp}[v][0] = \sum_{c \in \text{children}(v)} \max(\text{dp}[c][0], \text{dp}[c][1])$$</p>
-<p>If $v$ is included, none of its children can be. If $v$ is excluded, each child can be either included or excluded - take the better option. $O(n)$ time.</p>
+$$\text{dp}[v][0] = \sum_{c \in \text{children}(v)} \max\bigl(\text{dp}[c][0],\ \text{dp}[c][1]\bigr)$$</p>
+<p>If $v$ is included, no child can be (add their excluded values). If $v$ is excluded, each child can go either way - take whichever is better.</p>
+<p><strong>Concrete example:</strong></p>
+<div class="mermaid">
+graph TB
+    N1["1 (w=4)"] --> N2["2 (w=3)"]
+    N1 --> N3["3 (w=5)"]
+    N2 --> N4["4 (w=2)"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Fill bottom-up:</p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>dp[v][0]</th>
+<th>dp[v][1]</th>
+<th>Working</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 (leaf)</td>
+<td>0</td>
+<td>2</td>
+<td>no children</td>
+</tr>
+<tr>
+<td>3 (leaf)</td>
+<td>0</td>
+<td>5</td>
+<td>no children</td>
+</tr>
+<tr>
+<td>2</td>
+<td>max(0, 2) = 2</td>
+<td>3 + dp[4][0] = 3</td>
+<td>child is node 4</td>
+</tr>
+<tr>
+<td>1</td>
+<td>max(2,3) + max(0,5) = 8</td>
+<td>4 + dp[2][0] + dp[3][0] = 6</td>
+<td>children are 2 and 3</td>
+</tr>
+</tbody>
+</table>
+<p>Answer = max(dp[1][0], dp[1][1]) = max(8, 6) = <strong>8</strong>, achieved by selecting nodes {2, 3}.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> defaultdict
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">max_independent_set</span>(adj, weights, root):
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs</span>(v, parent):
+        excl, incl <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, weights[v]
+        <span style="color:#66d9ef">for</span> child <span style="color:#f92672">in</span> adj[v]:
+            <span style="color:#66d9ef">if</span> child <span style="color:#f92672">==</span> parent:
+                <span style="color:#66d9ef">continue</span>
+            c_excl, c_incl <span style="color:#f92672">=</span> dfs(child, v)
+            excl <span style="color:#f92672">+=</span> max(c_excl, c_incl)  <span style="color:#75715e"># child can go either way</span>
+            incl <span style="color:#f92672">+=</span> c_excl               <span style="color:#75715e"># v included =&gt; child must be excluded</span>
+        <span style="color:#66d9ef">return</span> excl, incl
+
+    excl, incl <span style="color:#f92672">=</span> dfs(root, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)
+    <span style="color:#66d9ef">return</span> max(excl, incl)
+
+adj <span style="color:#f92672">=</span> defaultdict(list)
+<span style="color:#66d9ef">for</span> u, v <span style="color:#f92672">in</span> [(<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>), (<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">3</span>), (<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">4</span>)]:
+    adj[u]<span style="color:#f92672">.</span>append(v)
+    adj[v]<span style="color:#f92672">.</span>append(u)
+
+weights <span style="color:#f92672">=</span> {<span style="color:#ae81ff">1</span>:<span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">2</span>:<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>:<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">4</span>:<span style="color:#ae81ff">2</span>}
+print(max_independent_set(adj, weights, root<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>))  <span style="color:#75715e"># 8: nodes {2, 3}</span>
+</code></pre></div><p>Both run in $O(n)$ - every node and edge is visited exactly once.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
