@@ -105,7 +105,7 @@ Trees are not an abstract data structure invented by computer scientists. They a
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -272,17 +272,13 @@ flowchart TD
 <p>Build-heap converts the array to a max-heap in $O(n)$. Then: repeatedly swap the root (the current maximum) with the last element of the heap, shrink the heap size by 1, and heapify the root. After $n-1$ such extractions, the array is sorted.</p>
 <p>Total: $O(n)$ for build-heap plus $n \cdot O(\log n)$ for extractions = $O(n \log n)$, in-place, no auxiliary memory. The sort is not stable (heap operations can swap equal elements past each other), and it&rsquo;s slower than quicksort in practice due to poor cache behavior - the heap&rsquo;s jumpy access pattern doesn&rsquo;t benefit from cache prefetching.</p>
 <hr>
-<h2 id="b-trees-and-tries-a-brief-survey">B-Trees and Tries: A Brief Survey</h2>
-<p>Not every tree application uses binary trees.</p>
-<p><strong>B-trees</strong> are balanced search trees where each node can have many children (hundreds, not just two). They&rsquo;re designed for disk storage: when data doesn&rsquo;t fit in RAM, you want to minimize the number of disk reads. A B-tree node is sized to fit exactly one disk block. With hundreds of keys per node, the tree height is tiny - a B-tree over a billion records might have height 3 or 4. Every relational database uses B-trees (or the related B+-tree) for indexes.</p>
-<p><strong>Tries</strong> (pronounced &ldquo;tries&rdquo; or &ldquo;trees&rdquo;) are trees optimized for string lookups. Instead of comparing whole keys at each node, a trie branches on individual characters. To look up a string of length $L$, you follow $L$ edges from the root - $O(L)$, independent of how many strings are stored. They&rsquo;re used for autocomplete, spell-checkers, and IP routing tables.</p>
+<h2 id="b-trees">B-Trees</h2>
+<p>Binary search trees work well when data fits in RAM. But what happens when you have a billion records on disk? Disk reads are roughly 100,000 times slower than RAM reads. Every time you follow a pointer to a new node, you might be paying that cost. A balanced BST with a billion records has height around 30 - meaning 30 disk reads per lookup. That is unacceptably slow.</p>
+<p>The fix is to make each node fat. Instead of holding one key and two children, a B-tree node holds up to $2t - 1$ keys and up to $2t$ children, where $t$ is called the minimum degree. You size the node so that it fits exactly in one disk block (typically 4KB or 16KB). With hundreds of keys per node, the tree height collapses - a B-tree over a billion records might have height 3 or 4, meaning 3-4 disk reads per lookup.</p>
+<p>Every node except the root has between $t - 1$ and $2t - 1$ keys. The keys within a node are sorted. The children of a node interleave with its keys: the $i$-th child subtree contains all keys between the $(i-1)$-th and $i$-th keys of the node. This is the BST property generalized to many children.</p>
 <div class="mermaid">
 flowchart TD
-    R["root"] --> C["c"]
-    C --> CA["a"]
-    CA --> CAT["t ✓ cat"]
-    CA --> CAR["r ✓ car"]
-    CA --> CAN["n ✓ can"]
+    A["10 | 20 | 30"] --> B["3 | 7"] & C["13 | 17"] & D["23 | 27"] & E["35 | 40"]
 
 </div>
 <script type="module">
@@ -290,6 +286,147 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
+<p><strong>Search</strong> works exactly like BST search, generalized: at each node, binary search the sorted keys to find which child to descend into. Each node visit is one disk read. Time: $O(\log_t n)$ disk reads, or $O(t \log_t n)$ key comparisons.</p>
+<p><strong>Insertion</strong> always happens at a leaf. Search down to the correct leaf and insert the key. If the leaf has room (fewer than $2t - 1$ keys), you&rsquo;re done. If it&rsquo;s full, <strong>split</strong> it: push the median key up to the parent and divide the node into two nodes of $t - 1$ keys each. If the parent is also full, split it too. Splits can cascade up to the root. When the root splits, the tree grows taller by one level - the only way a B-tree gains height.</p>
+<p><strong>B+ trees</strong> are a variant used by almost every database. The difference: internal nodes store only keys (no data), and all actual data lives in the leaf nodes. The leaves are also linked together in a sorted linked list. This makes range queries fast - find the start key, then scan the leaf chain without going back up the tree. B+ trees are what PostgreSQL, MySQL, and SQLite use for their indexes.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BTreeNode</span>:
+    <span style="color:#66d9ef">def</span> __init__(self, t, leaf<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>):
+        self<span style="color:#f92672">.</span>t <span style="color:#f92672">=</span> t          <span style="color:#75715e"># minimum degree</span>
+        self<span style="color:#f92672">.</span>leaf <span style="color:#f92672">=</span> leaf
+        self<span style="color:#f92672">.</span>keys <span style="color:#f92672">=</span> []
+        self<span style="color:#f92672">.</span>children <span style="color:#f92672">=</span> []
+
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BTree</span>:
+    <span style="color:#66d9ef">def</span> __init__(self, t):
+        self<span style="color:#f92672">.</span>t <span style="color:#f92672">=</span> t
+        self<span style="color:#f92672">.</span>root <span style="color:#f92672">=</span> BTreeNode(t, leaf<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">search</span>(self, k, node<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>):
+        <span style="color:#66d9ef">if</span> node <span style="color:#f92672">is</span> <span style="color:#66d9ef">None</span>:
+            node <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
+        i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+        <span style="color:#66d9ef">while</span> i <span style="color:#f92672">&lt;</span> len(node<span style="color:#f92672">.</span>keys) <span style="color:#f92672">and</span> k <span style="color:#f92672">&gt;</span> node<span style="color:#f92672">.</span>keys[i]:
+            i <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+        <span style="color:#66d9ef">if</span> i <span style="color:#f92672">&lt;</span> len(node<span style="color:#f92672">.</span>keys) <span style="color:#f92672">and</span> k <span style="color:#f92672">==</span> node<span style="color:#f92672">.</span>keys[i]:
+            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">True</span>
+        <span style="color:#66d9ef">if</span> node<span style="color:#f92672">.</span>leaf:
+            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
+        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>search(k, node<span style="color:#f92672">.</span>children[i])
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">insert</span>(self, k):
+        root <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
+        <span style="color:#66d9ef">if</span> len(root<span style="color:#f92672">.</span>keys) <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>t <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>:
+            <span style="color:#75715e"># root is full - split it and grow the tree</span>
+            new_root <span style="color:#f92672">=</span> BTreeNode(self<span style="color:#f92672">.</span>t)
+            new_root<span style="color:#f92672">.</span>children<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>root)
+            self<span style="color:#f92672">.</span>_split_child(new_root, <span style="color:#ae81ff">0</span>)
+            self<span style="color:#f92672">.</span>root <span style="color:#f92672">=</span> new_root
+        self<span style="color:#f92672">.</span>_insert_non_full(self<span style="color:#f92672">.</span>root, k)
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_insert_non_full</span>(self, node, k):
+        i <span style="color:#f92672">=</span> len(node<span style="color:#f92672">.</span>keys) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
+        <span style="color:#66d9ef">if</span> node<span style="color:#f92672">.</span>leaf:
+            node<span style="color:#f92672">.</span>keys<span style="color:#f92672">.</span>append(<span style="color:#66d9ef">None</span>)
+            <span style="color:#66d9ef">while</span> i <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">and</span> k <span style="color:#f92672">&lt;</span> node<span style="color:#f92672">.</span>keys[i]:
+                node<span style="color:#f92672">.</span>keys[i <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>keys[i]
+                i <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+            node<span style="color:#f92672">.</span>keys[i <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> k
+        <span style="color:#66d9ef">else</span>:
+            <span style="color:#66d9ef">while</span> i <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">and</span> k <span style="color:#f92672">&lt;</span> node<span style="color:#f92672">.</span>keys[i]:
+                i <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+            i <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+            <span style="color:#66d9ef">if</span> len(node<span style="color:#f92672">.</span>children[i]<span style="color:#f92672">.</span>keys) <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>t <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>:
+                self<span style="color:#f92672">.</span>_split_child(node, i)
+                <span style="color:#66d9ef">if</span> k <span style="color:#f92672">&gt;</span> node<span style="color:#f92672">.</span>keys[i]:
+                    i <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+            self<span style="color:#f92672">.</span>_insert_non_full(node<span style="color:#f92672">.</span>children[i], k)
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_split_child</span>(self, parent, i):
+        t <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>t
+        full <span style="color:#f92672">=</span> parent<span style="color:#f92672">.</span>children[i]
+        new_node <span style="color:#f92672">=</span> BTreeNode(t, leaf<span style="color:#f92672">=</span>full<span style="color:#f92672">.</span>leaf)
+        mid <span style="color:#f92672">=</span> t <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
+        <span style="color:#75715e"># push median key up to parent</span>
+        parent<span style="color:#f92672">.</span>keys<span style="color:#f92672">.</span>insert(i, full<span style="color:#f92672">.</span>keys[mid])
+        parent<span style="color:#f92672">.</span>children<span style="color:#f92672">.</span>insert(i <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>, new_node)
+        <span style="color:#75715e"># divide keys and children</span>
+        new_node<span style="color:#f92672">.</span>keys <span style="color:#f92672">=</span> full<span style="color:#f92672">.</span>keys[mid <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>:]
+        full<span style="color:#f92672">.</span>keys <span style="color:#f92672">=</span> full<span style="color:#f92672">.</span>keys[:mid]
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> full<span style="color:#f92672">.</span>leaf:
+            new_node<span style="color:#f92672">.</span>children <span style="color:#f92672">=</span> full<span style="color:#f92672">.</span>children[t:]
+            full<span style="color:#f92672">.</span>children <span style="color:#f92672">=</span> full<span style="color:#f92672">.</span>children[:t]
+</code></pre></div><hr>
+<h2 id="tries">Tries</h2>
+<p>A trie (from &ldquo;re<strong>trie</strong>val&rdquo;, pronounced either &ldquo;try&rdquo; or &ldquo;tree&rdquo;) is a tree built for string lookups. The key idea: instead of storing whole strings at nodes and comparing them, you store one character per edge. Every path from the root to a marked node spells out a stored string.</p>
+<p>This gives you $O(L)$ lookup for a string of length $L$, completely independent of how many strings are in the trie. A hash table also gives $O(L)$ average lookup (since hashing the string takes $O(L)$ time), but a trie also gives you things a hash table cannot: find all strings with a given prefix, find the longest prefix match, enumerate strings in lexicographic order.</p>
+<p>Here is a trie storing &ldquo;cat&rdquo;, &ldquo;car&rdquo;, &ldquo;can&rdquo;, and &ldquo;dog&rdquo;:</p>
+<div class="mermaid">
+flowchart TD
+    R["root"] --> C["c"] & D["d"]
+    C --> CA["a"]
+    CA --> CAT["t ✓"] & CAR["r ✓"] & CAN["n ✓"]
+    D --> DO["o"]
+    DO --> DOG["g ✓"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Notice that &ldquo;cat&rdquo;, &ldquo;car&rdquo;, and &ldquo;can&rdquo; all share the prefix &ldquo;ca&rdquo; - they follow the same path for the first two characters and only diverge at the third. This shared prefix storage is what makes tries memory-efficient for large collections of strings with common prefixes (like all URLs on a website, or all words in a dictionary).</p>
+<p>Each node stores an array (or dictionary) of children indexed by character, and a flag indicating whether that node marks the end of a valid word.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TrieNode</span>:
+    <span style="color:#66d9ef">def</span> __init__(self):
+        self<span style="color:#f92672">.</span>children <span style="color:#f92672">=</span> {}
+        self<span style="color:#f92672">.</span>is_end <span style="color:#f92672">=</span> <span style="color:#66d9ef">False</span>
+
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Trie</span>:
+    <span style="color:#66d9ef">def</span> __init__(self):
+        self<span style="color:#f92672">.</span>root <span style="color:#f92672">=</span> TrieNode()
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">insert</span>(self, word):
+        node <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
+        <span style="color:#66d9ef">for</span> ch <span style="color:#f92672">in</span> word:
+            <span style="color:#66d9ef">if</span> ch <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>children:
+                node<span style="color:#f92672">.</span>children[ch] <span style="color:#f92672">=</span> TrieNode()
+            node <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>children[ch]
+        node<span style="color:#f92672">.</span>is_end <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">search</span>(self, word):
+        node <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
+        <span style="color:#66d9ef">for</span> ch <span style="color:#f92672">in</span> word:
+            <span style="color:#66d9ef">if</span> ch <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>children:
+                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
+            node <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>children[ch]
+        <span style="color:#66d9ef">return</span> node<span style="color:#f92672">.</span>is_end
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">starts_with</span>(self, prefix):
+        <span style="color:#e6db74">&#34;&#34;&#34;Returns True if any stored word starts with this prefix.&#34;&#34;&#34;</span>
+        node <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
+        <span style="color:#66d9ef">for</span> ch <span style="color:#f92672">in</span> prefix:
+            <span style="color:#66d9ef">if</span> ch <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>children:
+                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
+            node <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>children[ch]
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">True</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">all_with_prefix</span>(self, prefix):
+        <span style="color:#e6db74">&#34;&#34;&#34;Returns all stored words that start with the given prefix.&#34;&#34;&#34;</span>
+        node <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
+        <span style="color:#66d9ef">for</span> ch <span style="color:#f92672">in</span> prefix:
+            <span style="color:#66d9ef">if</span> ch <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>children:
+                <span style="color:#66d9ef">return</span> []
+            node <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>children[ch]
+        results <span style="color:#f92672">=</span> []
+        self<span style="color:#f92672">.</span>_collect(node, prefix, results)
+        <span style="color:#66d9ef">return</span> results
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_collect</span>(self, node, current, results):
+        <span style="color:#66d9ef">if</span> node<span style="color:#f92672">.</span>is_end:
+            results<span style="color:#f92672">.</span>append(current)
+        <span style="color:#66d9ef">for</span> ch, child <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>children<span style="color:#f92672">.</span>items():
+            self<span style="color:#f92672">.</span>_collect(child, current <span style="color:#f92672">+</span> ch, results)
+</code></pre></div><p>The <code>all_with_prefix</code> method is what powers autocomplete: given the prefix the user has typed so far, return every word in the dictionary that starts with it. This is $O(L + k)$ where $L$ is the prefix length and $k$ is the number of results returned.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -343,14 +480,14 @@ flowchart TD
 <td>$O(\log_t n)$</td>
 <td>$O(\log_t n)$</td>
 <td>$O(\log_t n)$</td>
-<td>Minimizes disk reads</td>
+<td>Minimizes disk reads; used in databases</td>
 </tr>
 <tr>
 <td>Trie</td>
 <td>$O(L)$</td>
 <td>$O(L)$</td>
 <td>$O(L)$</td>
-<td>$L$ = key length; string lookups</td>
+<td>$L$ = key length; prefix queries in $O(L+k)$</td>
 </tr>
 </tbody>
 </table>
