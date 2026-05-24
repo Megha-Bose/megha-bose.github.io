@@ -105,7 +105,7 @@ For decades, everyone assumed the only way to multiply two $n \times n$ matrices
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          8 min read
+          9 min read
         </div>
       </div>
     </header>
@@ -179,23 +179,18 @@ For decades, everyone assumed the only way to multiply two $n \times n$ matrices
 <hr>
 <h2 id="strassen-matrix-multiplication-the-7-multiply-trick">Strassen Matrix Multiplication: The 7-Multiply Trick</h2>
 <p>The naive way to multiply two $n \times n$ matrices does $n^3$ scalar multiplications - three nested loops. Strassen showed you can do it in $O(n^{2.807})$ using a non-obvious algebraic identity.</p>
-<p><strong>The block decomposition.</strong> Split each matrix into four $n/2 \times n/2$ blocks:</p>
+<p><strong>Why you can split a matrix into blocks at all.</strong></p>
+<p>Start from the definition: every entry of $C$ is a dot product. $C[i][j] = \sum_{k=0}^{n-1} A[i][k] \cdot B[k][j]$ - row $i$ of $A$ dotted with column $j$ of $B$.</p>
+<p>Now split both the row and the column at their midpoints. The sum breaks into two halves:</p>
+<p>$$C[i][j] = \underbrace{\sum_{k=0}^{n/2-1} A[i][k] \cdot B[k][j]}<em>{\text{first half of }k} + \underbrace{\sum</em>{k=n/2}^{n-1} A[i][k] \cdot B[k][j]}_{\text{second half of }k}$$</p>
+<p>This is not a trick - it is always valid to split a sum. The question is just: which block of $A$ and which block of $B$ do those two halves correspond to?</p>
 <div class="mermaid">
-flowchart LR
-    subgraph A["Matrix A"]
-        A11["A₁₁"] --- A12["A₁₂"]
-        A21["A₂₁"] --- A22["A₂₂"]
-    end
-    subgraph B["Matrix B"]
-        B11["B₁₁"] --- B12["B₁₂"]
-        B21["B₂₁"] --- B22["B₂₂"]
-    end
-    subgraph C["Matrix C = AB"]
-        C11["C₁₁"] --- C12["C₁₂"]
-        C21["C₂₁"] --- C22["C₂₂"]
-    end
-    A --> C
-    B --> C
+flowchart TD
+    entry["Computing C[i][j] for i,j in top-left quadrant"]
+    entry --> h1["First half of k\n(k = 0 to n/2-1)\nA[i][k] is in A₁₁\nB[k][j] is in B₁₁"]
+    entry --> h2["Second half of k\n(k = n/2 to n-1)\nA[i][k] is in A₁₂\nB[k][j] is in B₂₁"]
+    h1 --> sum["C₁₁[i][j] = (A₁₁·B₁₁)[i][j] + (A₁₂·B₂₁)[i][j]"]
+    h2 --> sum
 
 </div>
 <script type="module">
@@ -203,10 +198,50 @@ flowchart LR
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p>The product $C = AB$ has blocks:</p>
-<p>$$C_{11} = A_{11}B_{11} + A_{12}B_{21}, \quad C_{12} = A_{11}B_{12} + A_{12}B_{22}$$
-$$C_{21} = A_{21}B_{11} + A_{22}B_{21}, \quad C_{22} = A_{21}B_{12} + A_{22}B_{22}$$</p>
-<p>Computing these directly requires 8 block multiplications. Each block is $n/2 \times n/2$, so the recurrence is $T(n) = 8T(n/2) + O(n^2)$, giving $T(n) = O(n^3)$. No improvement.</p>
+<p>Since this holds for every $(i, j)$ in the top-left quadrant, it holds for the whole block: $C_{11} = A_{11}B_{11} + A_{12}B_{21}$. Not magic - just a sum split. The same argument gives the other three blocks, just with different choices of which half of $i$ and $j$ you&rsquo;re looking at:</p>
+<table>
+<thead>
+<tr>
+<th>Output block</th>
+<th>$i$ in&hellip;</th>
+<th>$j$ in&hellip;</th>
+<th>First half of $k$</th>
+<th>Second half of $k$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$C_{11}$</td>
+<td>top</td>
+<td>left</td>
+<td>$A_{11} \times B_{11}$</td>
+<td>$A_{12} \times B_{21}$</td>
+</tr>
+<tr>
+<td>$C_{12}$</td>
+<td>top</td>
+<td>right</td>
+<td>$A_{11} \times B_{12}$</td>
+<td>$A_{12} \times B_{22}$</td>
+</tr>
+<tr>
+<td>$C_{21}$</td>
+<td>bottom</td>
+<td>left</td>
+<td>$A_{21} \times B_{11}$</td>
+<td>$A_{22} \times B_{21}$</td>
+</tr>
+<tr>
+<td>$C_{22}$</td>
+<td>bottom</td>
+<td>right</td>
+<td>$A_{21} \times B_{12}$</td>
+<td>$A_{22} \times B_{22}$</td>
+</tr>
+</tbody>
+</table>
+<p>Notice the pattern: which block of $A$ you use depends only on which half of $i$ you are in (top rows use $A_{11}$/$A_{12}$, bottom rows use $A_{21}$/$A_{22}$). Which block of $B$ you use depends only on which half of $j$ you are in (left columns use $B_{11}$/$B_{21}$, right columns use $B_{12}$/$B_{22}$). The $k$ split always contributes one term from each side.</p>
+<p>Computing these directly requires 8 block multiplications. Since each block is $n/2 \times n/2$, the recurrence is $T(n) = 8T(n/2) + O(n^2)$, giving $T(n) = O(n^3)$. No improvement yet.</p>
 <p><strong>Strassen&rsquo;s trick.</strong> Instead of computing each output block directly, compute 7 intermediate products using sums and differences of the blocks - then combine them:</p>
 <div class="mermaid">
 flowchart TD
