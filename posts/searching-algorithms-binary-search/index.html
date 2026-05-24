@@ -107,7 +107,7 @@ Binary search: open to the middle. If the name you want comes before the middle,
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          10 min read
+          11 min read
         </div>
       </div>
     </header>
@@ -154,12 +154,36 @@ Binary search: open to the middle. If the name you want comes before the middle,
 <p><strong>Discomfort check.</strong> Binary search is one of the simplest algorithms to describe and one of the hardest to implement correctly. The off-by-one errors are subtle because there are two interacting choices (how to update <code>lo</code> vs <code>hi</code>, and when the loop terminates) that must be mutually consistent. The safest approach: pick a specific invariant and maintain it mechanically. The invariant &ldquo;the target is always in $A[\text{lo}..\text{hi}]$&rdquo; tells you exactly what the updates must be: if <code>A[mid] &lt; target</code>, the target can&rsquo;t be at or left of <code>mid</code>, so set <code>lo = mid + 1</code>. If <code>A[mid] &gt; target</code>, the target can&rsquo;t be at or right of <code>mid</code>, so set <code>hi = mid - 1</code>. The loop terminates when <code>lo &gt; hi</code>, meaning the range is empty and the target is absent.</p>
 </blockquote>
 <p>Each iteration halves the remaining range. After $k$ iterations, the range has size $n / 2^k$. The loop terminates when this is less than 1, i.e., $k = O(\log n)$ iterations. Total comparisons: $O(\log n)$.</p>
+<p>Here is binary search on <code>[2, 5, 8, 12, 16, 23, 38, 56, 72, 91]</code> looking for 23:</p>
+<div class="mermaid">
+flowchart TD
+    A["lo=0, hi=9, mid=4\nA[4]=16 &lt; 23 → move lo right\nlo = 5"]
+    B["lo=5, hi=9, mid=7\nA[7]=56 &gt; 23 → move hi left\nhi = 6"]
+    C["lo=5, hi=6, mid=5\nA[5]=23 = 23 → found at index 5"]
+    A --> B --> C
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <hr>
 <h2 id="variants-lower_bound-and-upper_bound">Variants: lower_bound and upper_bound</h2>
 <p>Sometimes you don&rsquo;t want to find one occurrence of a value - you want all of them, or you want to know where to insert a value to maintain sorted order.</p>
 <p><strong>lower_bound:</strong> the first index where <code>A[i] &gt;= target</code>. (The leftmost position where <code>target</code> could be inserted.)</p>
 <p><strong>upper_bound:</strong> the first index where <code>A[i] &gt; target</code>. (The rightmost position where <code>target</code> could be inserted.)</p>
-<p>The range <code>[lower_bound(target), upper_bound(target))</code> gives all occurrences of <code>target</code> in the sorted array.</p>
+<p>The range <code>[lower_bound(target), upper_bound(target))</code> gives all occurrences of <code>target</code> in the sorted array. For example, searching for 3 in <code>[1, 3, 3, 3, 5, 7]</code>:</p>
+<div class="mermaid">
+flowchart LR
+    A["[0] 1"] --- B["[1] 3\n↑ lower_bound"] --- C["[2] 3"] --- D["[3] 3"] --- E["[4] 5\n↑ upper_bound"] --- F["[5] 7"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <pre tabindex="0"><code>LowerBound(A, target):
     lo = 0
     hi = n          // note: n, not n-1
@@ -213,6 +237,16 @@ Binary search: open to the middle. If the name you want comes before the middle,
         i = i * 2
     return BinarySearch(A, i/2, min(i, n-1), target)
 </code></pre><p>If the target is at index $k$, the doubling phase takes $O(\log k)$ steps to find the right range, and binary search within that range also takes $O(\log k)$. Total: $O(\log k)$, which is $O(\log n)$ in the worst case.</p>
+<div class="mermaid">
+flowchart LR
+    A["i=1\ncheck"] -->|"too small\ndouble"| B["i=2\ncheck"] -->|"too small\ndouble"| C["i=4\ncheck"] -->|"too small\ndouble"| D["i=8\ncheck"] -->|"overshot!\nbinary search [4..8]"| E["found"]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
 <p>This is useful when the target is near the beginning of a large or unbounded sorted sequence - you pay $O(\log k)$ instead of $O(\log n)$.</p>
 <hr>
 <h2 id="search-and-the-lower-bound">Search and the Lower Bound</h2>
