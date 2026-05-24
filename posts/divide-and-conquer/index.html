@@ -105,7 +105,7 @@ For decades, everyone assumed the only way to multiply two $n \times n$ matrices
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          6 min read
+          8 min read
         </div>
       </div>
     </header>
@@ -178,16 +178,122 @@ For decades, everyone assumed the only way to multiply two $n \times n$ matrices
 <p>With the pre-sorting trick, the strip step is $O(n)$ per level (maintain two sorted arrays and merge). The recurrence is $T(n) = 2T(n/2) + O(n)$, giving $T(n) = O(n \log n)$.</p>
 <hr>
 <h2 id="strassen-matrix-multiplication-the-7-multiply-trick">Strassen Matrix Multiplication: The 7-Multiply Trick</h2>
-<p>Two $n \times n$ matrices can be split into four $n/2 \times n/2$ blocks. Multiplying two $2 \times 2$ block matrices naively requires 8 block multiplications and 4 additions.</p>
-<p>Strassen found a rearrangement using only 7 block multiplications (and 18 additions). The seven products involve sums and differences of the input blocks; their combinations recover all four output blocks.</p>
-<p>The recurrence: $a = 7$, $b = 2$, $c = 2$ (combining requires $O(n^2)$ additions).</p>
-<p>$$\log_b a = \log_2 7 \approx 2.807 &gt; 2 = c$$</p>
+<p>The naive way to multiply two $n \times n$ matrices does $n^3$ scalar multiplications - three nested loops. Strassen showed you can do it in $O(n^{2.807})$ using a non-obvious algebraic identity.</p>
+<p><strong>The block decomposition.</strong> Split each matrix into four $n/2 \times n/2$ blocks:</p>
+<div class="mermaid">
+flowchart LR
+    subgraph A["Matrix A"]
+        A11["A₁₁"] --- A12["A₁₂"]
+        A21["A₂₁"] --- A22["A₂₂"]
+    end
+    subgraph B["Matrix B"]
+        B11["B₁₁"] --- B12["B₁₂"]
+        B21["B₂₁"] --- B22["B₂₂"]
+    end
+    subgraph C["Matrix C = AB"]
+        C11["C₁₁"] --- C12["C₁₂"]
+        C21["C₂₁"] --- C22["C₂₂"]
+    end
+    A --> C
+    B --> C
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The product $C = AB$ has blocks:</p>
+<p>$$C_{11} = A_{11}B_{11} + A_{12}B_{21}, \quad C_{12} = A_{11}B_{12} + A_{12}B_{22}$$
+$$C_{21} = A_{21}B_{11} + A_{22}B_{21}, \quad C_{22} = A_{21}B_{12} + A_{22}B_{22}$$</p>
+<p>Computing these directly requires 8 block multiplications. Each block is $n/2 \times n/2$, so the recurrence is $T(n) = 8T(n/2) + O(n^2)$, giving $T(n) = O(n^3)$. No improvement.</p>
+<p><strong>Strassen&rsquo;s trick.</strong> Instead of computing each output block directly, compute 7 intermediate products using sums and differences of the blocks - then combine them:</p>
+<div class="mermaid">
+flowchart TD
+    subgraph inputs["Input blocks"]
+        A11["A₁₁"] 
+        A12["A₁₂"]
+        A21["A₂₁"]
+        A22["A₂₂"]
+        B11["B₁₁"]
+        B12["B₁₂"]
+        B21["B₂₁"]
+        B22["B₂₂"]
+    end
+    subgraph products["7 products (each a recursive multiply)"]
+        M1["M₁ = (A₁₁+A₂₂)(B₁₁+B₂₂)"]
+        M2["M₂ = (A₂₁+A₂₂)·B₁₁"]
+        M3["M₃ = A₁₁·(B₁₂−B₂₂)"]
+        M4["M₄ = A₂₂·(B₂₁−B₁₁)"]
+        M5["M₅ = (A₁₁+A₁₂)·B₂₂"]
+        M6["M₆ = (A₂₁−A₁₁)(B₁₁+B₁₂)"]
+        M7["M₇ = (A₁₂−A₂₂)(B₂₁+B₂₂)"]
+    end
+    subgraph output["Output blocks (additions only)"]
+        C11["C₁₁ = M₁+M₄−M₅+M₇"]
+        C12["C₁₂ = M₃+M₅"]
+        C21["C₂₁ = M₂+M₄"]
+        C22["C₂₂ = M₁−M₂+M₃+M₆"]
+    end
+    inputs --> products --> output
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>You can verify $C_{11}$ by expanding: $M_1$ contributes $A_{11}B_{11} + A_{11}B_{22} + A_{22}B_{11} + A_{22}B_{22}$; $M_4$ adds $A_{22}B_{21} - A_{22}B_{11}$; $-M_5$ subtracts $A_{11}B_{22} + A_{12}B_{22}$; $M_7$ adds $A_{12}B_{21} + A_{12}B_{22} - A_{22}B_{21} - A_{22}B_{22}$. Most terms cancel, leaving $A_{11}B_{11} + A_{12}B_{21}$, which is exactly $C_{11}$. The same algebra works for the other three blocks.</p>
+<p>This uses 7 block multiplications and 18 additions. Since additions cost $O(n^2)$ and multiplications recurse, the recurrence is $T(n) = 7T(n/2) + O(n^2)$.</p>
+<p>$$\log_b a = \log_2 7 \approx 2.807 \gt 2 = c$$</p>
 <p>Case 1 applies:</p>
 <p>$$T(n) = \Theta(n^{2.807})$$</p>
-<p>Compare this to the naive $O(n^3)$. At $n = 10{,}000$: naive takes $10^{12}$ operations; Strassen takes roughly $10^{11.2}$ - about 6 times fewer.</p>
-<p>The constant factor in Strassen is larger than naive matrix multiply because of the additions and the non-trivial algebra. In practice, Strassen is beneficial only for $n \gtrsim 500$ on modern hardware.</p>
+<p>At $n = 10{,}000$: naive takes $10^{12}$ operations; Strassen takes roughly $10^{11.2}$ - about 6 times fewer.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">strassen</span>(A, B):
+    n <span style="color:#f92672">=</span> len(A)
+    <span style="color:#66d9ef">if</span> n <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>:
+        <span style="color:#66d9ef">return</span> [[A[<span style="color:#ae81ff">0</span>][<span style="color:#ae81ff">0</span>] <span style="color:#f92672">*</span> B[<span style="color:#ae81ff">0</span>][<span style="color:#ae81ff">0</span>]]]
+
+    mid <span style="color:#f92672">=</span> n <span style="color:#f92672">//</span> <span style="color:#ae81ff">2</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">split</span>(M):
+        top <span style="color:#f92672">=</span> [row[:mid] <span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> M[:mid]]
+        right <span style="color:#f92672">=</span> [row[mid:] <span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> M[:mid]]
+        bot_left <span style="color:#f92672">=</span> [row[:mid] <span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> M[mid:]]
+        bot_right <span style="color:#f92672">=</span> [row[mid:] <span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> M[mid:]]
+        <span style="color:#66d9ef">return</span> top, right, bot_left, bot_right
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">add</span>(X, Y):
+        <span style="color:#66d9ef">return</span> [[X[i][j] <span style="color:#f92672">+</span> Y[i][j] <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> range(len(X[<span style="color:#ae81ff">0</span>]))] <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(X))]
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sub</span>(X, Y):
+        <span style="color:#66d9ef">return</span> [[X[i][j] <span style="color:#f92672">-</span> Y[i][j] <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> range(len(X[<span style="color:#ae81ff">0</span>]))] <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(X))]
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">combine</span>(C11, C12, C21, C22):
+        top <span style="color:#f92672">=</span> [C11[i] <span style="color:#f92672">+</span> C12[i] <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(mid)]
+        bot <span style="color:#f92672">=</span> [C21[i] <span style="color:#f92672">+</span> C22[i] <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(mid)]
+        <span style="color:#66d9ef">return</span> top <span style="color:#f92672">+</span> bot
+
+    A11, A12, A21, A22 <span style="color:#f92672">=</span> split(A)
+    B11, B12, B21, B22 <span style="color:#f92672">=</span> split(B)
+
+    M1 <span style="color:#f92672">=</span> strassen(add(A11, A22), add(B11, B22))
+    M2 <span style="color:#f92672">=</span> strassen(add(A21, A22), B11)
+    M3 <span style="color:#f92672">=</span> strassen(A11, sub(B12, B22))
+    M4 <span style="color:#f92672">=</span> strassen(A22, sub(B21, B11))
+    M5 <span style="color:#f92672">=</span> strassen(add(A11, A12), B22)
+    M6 <span style="color:#f92672">=</span> strassen(sub(A21, A11), add(B11, B12))
+    M7 <span style="color:#f92672">=</span> strassen(sub(A12, A22), add(B21, B22))
+
+    C11 <span style="color:#f92672">=</span> add(sub(add(M1, M4), M5), M7)
+    C12 <span style="color:#f92672">=</span> add(M3, M5)
+    C21 <span style="color:#f92672">=</span> add(M2, M4)
+    C22 <span style="color:#f92672">=</span> add(sub(add(M1, M3), M2), M6)
+
+    <span style="color:#66d9ef">return</span> combine(C11, C12, C21, C22)
+</code></pre></div><p>In practice, Strassen is only beneficial for $n \gtrsim 500$ on modern hardware - the constant factor from the 18 additions and the overhead of splitting and combining outweigh the savings for small matrices. Real libraries (like NumPy&rsquo;s BLAS backend) use highly tuned naive multiplication for most sizes and fall back to Strassen or its successors only at large $n$.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> Divide and conquer only works well when the combine step is cheap relative to the savings at the sub-problem level. In Strassen, the combine step is $O(n^2)$ additions - that&rsquo;s significant. But we saved one out of eight multiplications at every level, and matrix multiplication on large matrices dominates additions (multiplications are more expensive). The key is that Case 1 of the Master Theorem applies: $n^{\log_2 7} \approx n^{2.807}$ grows faster than $n^2$, so the leaf work dominates the combine work. If the combine step were $O(n^3)$, no savings at the sub-problem level could help - the combine would dominate by Case 3 and we&rsquo;d still get $O(n^3)$.</p>
+<p><strong>Discomfort check.</strong> The 7 products look like magic - how did Strassen find them? He didn&rsquo;t derive them by hand in the obvious way. He treated the problem algebraically: the entries of a $2 \times 2$ matrix product are bilinear forms in the inputs, and he searched for a decomposition of those forms using fewer rank-1 terms. The &ldquo;7&rdquo; is not obviously optimal - it&rsquo;s the best known for $2 \times 2$ block matrices, but the exact minimum (whether 6 works or 7 is tight) was an open problem for decades. In 2022, DeepMind&rsquo;s AlphaTensor found new algorithms for small matrix sizes using reinforcement learning, rediscovering known results and finding some new ones. The problem is harder than it looks.</p>
 </blockquote>
 <hr>
 <h2 id="summary">Summary</h2>
