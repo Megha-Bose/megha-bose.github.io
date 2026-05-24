@@ -105,7 +105,7 @@ They didn&rsquo;t buy faster computers. They changed the algorithm." />
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          10 min read
+          11 min read
         </div>
       </div>
     </header>
@@ -196,7 +196,22 @@ They didn&rsquo;t buy faster computers. They changed the algorithm." />
 <p><strong>Case 3 - Root dominates:</strong> if $c &gt; \log_b a$ (and a technical regularity condition holds), the root level does the most work:</p>
 <p>$$T(n) = \Theta(n^c)$$</p>
 <p>Example: a hypothetical algorithm with $a = 2$, $b = 4$, $c = 1$. Since $\log_4 2 = 0.5 &lt; 1$, we&rsquo;re in Case 3: $T(n) = \Theta(n)$.</p>
-<p>The Master Theorem is a tool, not magic. The intuition is: ask whether the work is concentrated at the leaves (many small subproblems), spread evenly across all levels, or concentrated at the root (large per-level work that dominates). We&rsquo;ll use this repeatedly through the series.</p>
+<p><strong>Why the Master Theorem is true.</strong> Think about the recursion tree for $T(n) = aT(n/b) + O(n^c)$.</p>
+<p>At the root you do $n^c$ work. You then branch into $a$ subproblems each of size $n/b$. At depth $k$, there are $a^k$ subproblems each of size $n/b^k$, so the work at that level is:</p>
+<p>$$a^k \cdot \left(\frac{n}{b^k}\right)^c = n^c \cdot \left(\frac{a}{b^c}\right)^k$$</p>
+<p>Let $r = a / b^c$. As you go deeper, the work per level scales by $r$ at each step.</p>
+<ul>
+<li>
+<p>If $r &lt; 1$ (equivalently, $c &gt; \log_b a$): the per-level work shrinks geometrically as you go deeper. The root level dominates. The total is a converging geometric series, giving $\Theta(n^c)$.</p>
+</li>
+<li>
+<p>If $r = 1$ (equivalently, $c = \log_b a$): every level does the same amount of work. There are $\log_b n$ levels, so the total is $\Theta(n^c \log n)$.</p>
+</li>
+<li>
+<p>If $r &gt; 1$ (equivalently, $c &lt; \log_b a$): the per-level work grows as you go deeper. The leaf level dominates. The number of leaves is $a^{\log_b n} = n^{\log_b a}$, so the total is $\Theta(n^{\log_b a})$.</p>
+</li>
+</ul>
+<p>The critical exponent $\log_b a$ is just asking: how fast does the number of subproblems grow (captured by $a$) versus how fast does each subproblem shrink in cost (captured by $b^c$)? Whichever side wins determines where the work concentrates.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
