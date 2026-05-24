@@ -192,7 +192,7 @@ dist, parent <span style="color:#f92672">=</span> bfs(graph, <span style="color:
 <p><strong>Bipartiteness testing.</strong> A graph is bipartite if its vertices can be 2-colored so that every edge connects vertices of different colors. BFS tests this in $O(V + E)$: assign alternating colors to each layer. If you ever find an edge between two vertices of the same color, the graph isn&rsquo;t bipartite. This is equivalent to checking that the graph has no odd-length cycles.</p>
 <hr>
 <h2 id="depth-first-search">Depth-First Search</h2>
-<p>DFS dives as deep as possible before backtracking. It uses recursion (which implicitly uses the call stack). Each node is coloured GRAY while it&rsquo;s being explored (we&rsquo;re somewhere in its subtree) and BLACK once it and all its descendants are done.</p>
+<p>DFS dives as deep as possible before backtracking. It uses recursion (which implicitly uses the call stack).</p>
 <div class="mermaid">
 graph LR
     A["A (d=1, f=8)"] -->|"tree"| B["B (d=2, f=7)"]
@@ -206,25 +206,26 @@ graph LR
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p>DFS from A visits B, then C, then D. D finishes first (f=5), then C (f=6), B (f=7), A (f=8). The dashed edge A→D is a forward edge - D is already finished when A tries to visit it.</p>
+<p>DFS from A visits B, then C, then D. D finishes first (f=5), then C (f=6), B (f=7), A (f=8). The dashed edge A→D is a forward edge - D is already fully explored when A tries to visit it.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs</span>(graph):
-    WHITE, GRAY, BLACK <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>
-    color <span style="color:#f92672">=</span> {v: WHITE <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph}
+    visited <span style="color:#f92672">=</span> set()
+    in_stack <span style="color:#f92672">=</span> set()   <span style="color:#75715e"># nodes on the current recursion path</span>
     finish_order <span style="color:#f92672">=</span> []
     has_cycle <span style="color:#f92672">=</span> [<span style="color:#66d9ef">False</span>]
 
     <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs_visit</span>(u):
-        color[u] <span style="color:#f92672">=</span> GRAY             <span style="color:#75715e"># currently being explored</span>
+        visited<span style="color:#f92672">.</span>add(u)
+        in_stack<span style="color:#f92672">.</span>add(u)
         <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph[u]:
-            <span style="color:#66d9ef">if</span> color[v] <span style="color:#f92672">==</span> WHITE:
+            <span style="color:#66d9ef">if</span> v <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> visited:
                 dfs_visit(v)
-            <span style="color:#66d9ef">elif</span> color[v] <span style="color:#f92672">==</span> GRAY:
-                has_cycle[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>  <span style="color:#75715e"># back edge: cycle detected</span>
-        color[u] <span style="color:#f92672">=</span> BLACK            <span style="color:#75715e"># fully explored</span>
-        finish_order<span style="color:#f92672">.</span>append(u)
+            <span style="color:#66d9ef">elif</span> v <span style="color:#f92672">in</span> in_stack:
+                has_cycle[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>  <span style="color:#75715e"># v is an ancestor: cycle found</span>
+        in_stack<span style="color:#f92672">.</span>discard(u)
+        finish_order<span style="color:#f92672">.</span>append(u)       <span style="color:#75715e"># appended after all descendants finish</span>
 
     <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph:
-        <span style="color:#66d9ef">if</span> color[v] <span style="color:#f92672">==</span> WHITE:
+        <span style="color:#66d9ef">if</span> v <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> visited:
             dfs_visit(v)
 
     <span style="color:#66d9ef">return</span> finish_order, has_cycle[<span style="color:#ae81ff">0</span>]
@@ -234,7 +235,7 @@ graph <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;A&#
 finish_order, cycle <span style="color:#f92672">=</span> dfs(graph)
 <span style="color:#75715e"># finish_order = [&#39;D&#39;, &#39;C&#39;, &#39;B&#39;, &#39;A&#39;]  (reversed = topological order)</span>
 <span style="color:#75715e"># cycle = False</span>
-</code></pre></div><p>The <strong>discovery time</strong> $d[u]$ is when we first paint $u$ GRAY; the <strong>finish time</strong> $f[u]$ is when we paint it BLACK.</p>
+</code></pre></div><p>The <strong>discovery time</strong> $d[u]$ marks when DFS first enters $u$; the <strong>finish time</strong> $f[u]$ marks when it returns from $u$ having fully explored all descendants. <code>finish_order</code> captures this: nodes appended last are those that finished first.</p>
 <p><strong>Time complexity.</strong> Same as BFS: $O(V + E)$.</p>
 <p><strong>Edge classification.</strong> In a directed graph, each edge $(u, v)$ falls into exactly one category:</p>
 <ul>
