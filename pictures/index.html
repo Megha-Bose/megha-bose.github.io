@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="author" content="Megha Bose" />
     <meta name="robots" content="noindex, nofollow" />
-    <link rel="stylesheet" href="/css/main.min.ae244fed355844cbf85ca75341c0ac1b7eced8e633c5ae7a1c92aec52a6ac10d.css" />
+    <link rel="stylesheet" href="/css/main.min.0a913b3d5c9a01fbe831ca6853c483f2bdf281b855ff98dcd0ccc242b136394e.css" />
     <script>
       (function() {
         var saved = localStorage.getItem('theme');
@@ -73,69 +73,71 @@
     <main class="app-container">
       
 <div class="pictures-page">
-  <h1 class="pictures-heading">Frames</h1>
+  <div class="frames-header">
+    <h1 class="pictures-heading">Frames</h1>
+    
+  </div>
 
   
-  
-  <section class="photo-category">
-    <h2 class="category-heading">The 00s</h2>
-
-    
-    <p class="no-photos">Coming soon.</p>
-    
-  </section>
-  
-  
-  <section class="photo-category">
-    <h2 class="category-heading">The 10s</h2>
-
-    
-    <p class="no-photos">Coming soon.</p>
-    
-  </section>
-  
-  
-  <section class="photo-category">
-    <h2 class="category-heading">The 20s</h2>
-
-    
-    <p class="no-photos">Coming soon.</p>
-    
-  </section>
+  <p class="no-photos">Coming soon.</p>
   
 </div>
 
 <script>
-document.querySelectorAll('.carousel').forEach(function(carousel) {
+(function() {
+  var carousel = document.getElementById('main-carousel');
+  if (!carousel) return;
+
   var slides = Array.from(carousel.querySelectorAll('.carousel-slide'));
   var dots   = Array.from(carousel.querySelectorAll('.dot'));
   var prev   = carousel.querySelector('.carousel-prev');
   var next   = carousel.querySelector('.carousel-next');
-  var current = 0;
+  var toggleBtn = document.getElementById('order-toggle');
 
-  function show(n) {
-    slides[current].classList.remove('active');
+  var order   = slides.map(function(_, i) { return i; }); 
+  var current = 0;
+  var reversed = false;
+
+  function getActive() { return order[current]; }
+
+  function showIndex(n) {
+    slides[getActive()].classList.remove('active');
     if (dots[current]) dots[current].classList.remove('active');
     current = ((n % slides.length) + slides.length) % slides.length;
-    slides[current].classList.add('active');
+    slides[getActive()].classList.add('active');
     if (dots[current]) dots[current].classList.add('active');
   }
 
-  if (prev) prev.addEventListener('click', function() { show(current - 1); });
-  if (next) next.addEventListener('click', function() { show(current + 1); });
+  prev.addEventListener('click', function() { showIndex(current - 1); });
+  next.addEventListener('click', function() { showIndex(current + 1); });
   dots.forEach(function(dot, i) {
-    dot.addEventListener('click', function() { show(i); });
+    dot.addEventListener('click', function() { showIndex(i); });
   });
 
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      order.reverse();
+      reversed = !reversed;
+      
+      slides.forEach(function(s) { s.classList.remove('active'); });
+      dots.forEach(function(d) { d.classList.remove('active'); });
+      current = 0;
+      slides[getActive()].classList.add('active');
+      if (dots[0]) dots[0].classList.add('active');
+      toggleBtn.textContent = reversed ? 'newest first' : 'oldest first';
+    });
+  }
+
+  
   var touchStartX = 0;
   carousel.addEventListener('touchstart', function(e) {
     touchStartX = e.touches[0].clientX;
   }, { passive: true });
   carousel.addEventListener('touchend', function(e) {
     var diff = touchStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) show(current + (diff > 0 ? 1 : -1));
+    if (Math.abs(diff) > 50) showIndex(current + (diff > 0 ? 1 : -1));
   });
-});
+})();
 </script>
 
     </main>
