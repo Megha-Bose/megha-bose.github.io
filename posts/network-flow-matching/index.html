@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          7 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -118,7 +118,7 @@
 <hr>
 <p>During World War II, the Soviet Union moved supplies - ammunition, food, fuel - along railroad lines from central cities to the front. US military planners, thinking about how to disrupt the supply chain, wanted to answer a precise question: what is the maximum tonnage of material that can move from the interior to the front per day?</p>
 <p>And they noticed something: that number is exactly equal to a completely different quantity - the minimum number of rail lines you&rsquo;d need to cut to halt all supply movement entirely.</p>
-<p>These two problems, which seem unrelated at first, have the same answer. In 1956, L. R. Ford Jr. and D. R. Fulkerson proved this rigorously. Their <strong>max-flow min-cut theorem</strong> is one of the most elegant results in combinatorial optimization - and it has applications far beyond military logistics.</p>
+<p>These two problems, which seem unrelated at first, have the same answer. In 1956, L. R. Ford Jr. and D. R. Fulkerson proved this rigorously. Their <strong>max-flow min-cut theorem</strong> is one of the most elegant results in combinatorial optimization - and it has applications far beyond military logistics. It also turns out to be a special case of something much deeper: <strong>LP duality</strong>.</p>
 <hr>
 <h2 id="flow-networks">Flow Networks</h2>
 <p>A <strong>flow network</strong> is a directed graph $G = (V, E)$ with:</p>
@@ -134,6 +134,22 @@ $$\sum_u f(u, v) = \sum_w f(v, w)$$</p>
 <p>The <strong>value</strong> of the flow is the total amount leaving the source:
 $$|f| = \sum_v f(s, v) - \sum_v f(v, s)$$</p>
 <p><strong>The max-flow problem:</strong> Find a feasible flow of maximum value.</p>
+<p><strong>Example.</strong> Consider the following network with edge capacities labeled.</p>
+<div class="mermaid">
+flowchart LR
+    s(["s"]) -->|4| A(["A"])
+    s -->|2| B(["B"])
+    A -->|3| t(["t"])
+    A -->|1| B
+    B -->|2| t
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The network can carry at most 5 units from $s$ to $t$: route 3 units along $s \to A \to t$ (saturating $A \to t$) and 2 units along $s \to B \to t$ (saturating both $s \to B$ and $B \to t$). One unit of capacity remains on $s \to A$, but every path continuing from $A$ toward $t$ is blocked. Maximum flow is 5. We will see this confirmed by the min-cut shortly.</p>
 <hr>
 <h2 id="the-residual-graph">The Residual Graph</h2>
 <p>To reason about how to improve a flow, we use the <strong>residual graph</strong> $G_f$. For each edge $(u, v)$ with capacity $c$ and current flow $f$:</p>
@@ -142,6 +158,24 @@ $$|f| = \sum_v f(s, v) - \sum_v f(v, s)$$</p>
 <li>Add a <strong>backward edge</strong> $(v, u)$ with residual capacity $f$ (room to cancel existing flow)</li>
 </ul>
 <p>An <strong>augmenting path</strong> is any path from $s$ to $t$ in the residual graph. The <strong>bottleneck</strong> of the path is the minimum residual capacity along it. Pushing flow along an augmenting path increases the total flow by the bottleneck amount.</p>
+<p>After routing 3 units $s \to A \to t$ and 2 units $s \to B \to t$, the residual graph (showing only edges with nonzero residual capacity) is:</p>
+<div class="mermaid">
+flowchart LR
+    s(["s"]) -->|"1"| A(["A"])
+    A -->|"3"| s
+    B -->|"2"| s
+    A -->|"1"| B(["B"])
+    t(["t"]) -->|"3"| A
+    t -->|"2"| B
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>From $s$ we can reach $A$ (1 unit of forward capacity), and from $A$ we can reach $B$ (1 unit). But $A \to t$ and $B \to t$ are both saturated: $t$ is unreachable from $s$. No augmenting path exists - the flow is optimal.</p>
+<p>The backward edges (like $A \to s$ with capacity 3) encode how much previously routed flow could be &ldquo;undone&rdquo; if a future path needed to reroute it.</p>
 <hr>
 <h2 id="ford-fulkerson-augmenting-paths">Ford-Fulkerson: Augmenting Paths</h2>
 <p>The Ford-Fulkerson method repeatedly finds augmenting paths and pushes flow along them until no augmenting path remains:</p>
@@ -152,15 +186,95 @@ $$|f| = \sum_v f(s, v) - \sum_v f(v, s)$$</p>
         push bottleneck units of flow along p
         update residual graph
     return f
-</code></pre><p>When no augmenting path exists from $s$ to $t$ in the residual graph, we&rsquo;ve found a maximum flow.</p>
+</code></pre><p>When no augmenting path exists from $s$ to $t$ in the residual graph, we have found a maximum flow.</p>
 <p><strong>But why?</strong> This is the content of the max-flow min-cut theorem.</p>
+<hr>
+<h2 id="max-flow-min-cut">Max-Flow Min-Cut</h2>
 <p><strong>Max-flow min-cut theorem.</strong> The value of a maximum flow equals the capacity of a minimum $s$-$t$ cut.</p>
-<p>An <strong>$s$-$t$ cut</strong> $(S, T)$ partitions $V$ into $S$ (containing $s$) and $T$ (containing $t$). Its capacity is $\sum_{u \in S, v \in T} c(u, v)$ - the total capacity of edges going from $S$ to $T$.</p>
-<p>Any flow value is bounded above by any cut capacity (you can&rsquo;t push more flow than the capacity of the bottleneck separating $s$ from $t$). When Ford-Fulkerson terminates, let $S$ = vertices reachable from $s$ in the residual graph, $T = V \setminus S$. Every edge $(u, v)$ with $u \in S$, $v \in T$ must be saturated ($f(u, v) = c(u, v)$), otherwise $(u, v)$ would be in the residual graph and $v$ would be reachable. Every edge $(v, u)$ with $v \in T$, $u \in S$ carries zero flow. Therefore the flow value equals this cut&rsquo;s capacity - and since no flow exceeds any cut, this cut is minimum and the flow is maximum.</p>
+<p>An <strong>$s$-$t$ cut</strong> $(S, T)$ partitions $V$ into $S$ (containing $s$) and $T$ (containing $t$). Its capacity is the total capacity of edges directed from $S$ to $T$:</p>
+<p>$$\text{cap}(S, T) = \sum_{\substack{u \in S,, v \in T \ (u,v) \in E}} c(u, v)$$</p>
+<p><strong>Flow is always $\leq$ cut capacity.</strong> Any unit of flow traveling from $s$ to $t$ must cross the cut boundary at least once - it starts in $S$ and ends in $T$, so at some point it uses an edge from $S$ to $T$. Since every such crossing uses edge capacity, the total flow is bounded by the total capacity of edges crossing the cut. This holds for every cut: the max flow is a lower bound, every cut is an upper bound.</p>
+<p><strong>At the optimum they meet.</strong> When Ford-Fulkerson terminates, let $S$ = vertices reachable from $s$ in the residual graph, $T = V \setminus S$. Since $t$ is not reachable, $(S, T)$ is a valid cut. Every forward edge from $S$ to $T$ must be saturated - if any residual capacity remained, its endpoint would be in $S$. Every backward edge from $T$ to $S$ carries zero flow - otherwise the residual graph would contain a corresponding forward arc from $S$ reaching further into $T$. Therefore: the current flow value equals this cut&rsquo;s capacity. Since flow $\leq$ any cut and this flow equals this cut, both are optimal simultaneously.</p>
+<p>In the example, $S = {s, A, B}$, $T = {t}$:</p>
+<div class="mermaid">
+flowchart LR
+    subgraph S ["S = {s, A, B}"]
+        s(["s"])
+        A(["A"])
+        B(["B"])
+    end
+    subgraph T ["T = {t}"]
+        t(["t"])
+    end
+    s -->|4| A
+    s -->|2| B
+    A -.->|"3 - saturated"| t
+    A -->|1| B
+    B -.->|"2 - saturated"| t
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The cut capacity is $c(A, t) + c(B, t) = 3 + 2 = 5$, matching the max flow exactly. The dashed edges are the ones crossing the cut - both saturated, as expected.</p>
 <p><strong>Complexity.</strong> With integer capacities and maximum flow $F$: each augmentation increases the flow by at least 1, so at most $F$ augmentations, each taking $O(E)$ to find a path. Total: $O(EF)$. This is pseudopolynomial - if $F$ is large, this is slow.</p>
 <hr>
+<h2 id="the-lp-view-why-max-equals-min">The LP View: Why Max Equals Min</h2>
+<p>The max-flow min-cut theorem is often presented as a clever combinatorial argument. But it is actually a consequence of <strong>LP duality</strong> - a general theorem about linear programs. Seeing the connection reveals why the equality is structurally inevitable rather than a happy coincidence.</p>
+<h3 id="max-flow-as-a-linear-program">Max-Flow as a Linear Program</h3>
+<p>The max-flow problem has a natural LP formulation. Variables are the edge flows $f(u, v)$; the objective is to maximize the net flow out of $s$:</p>
+<p>$$\textbf{Maximize} \quad \sum_{v} f(s, v)$$</p>
+<p>$$\textbf{subject to} \quad f(u, v) \leq c(u, v) \quad \text{for all } (u, v) \in E \tag{capacity}$$</p>
+<p>$$\sum_{u} f(u, v) = \sum_{w} f(v, w) \quad \text{for all } v \neq s, t \tag{conservation}$$</p>
+<p>$$f(u, v) \geq 0$$</p>
+<p>Every constraint is linear in the flow variables. This is a valid LP with $|E|$ variables.</p>
+<h3 id="the-dual-lp-is-min-cut">The Dual LP Is Min-Cut</h3>
+<p>Every LP has a companion called its <strong>dual</strong>: a new optimization problem whose variables correspond to the constraints of the original. LP strong duality says the optimal values of primal and dual always agree (when both are feasible and bounded, which they are here).</p>
+<p>To build the dual of max-flow, assign a multiplier to each constraint:</p>
+<ul>
+<li>$\alpha(u, v) \geq 0$ for each capacity constraint - think of this as &ldquo;how much of edge $(u, v)$ is in the cut&rdquo;</li>
+<li>$d(v)$ free for each conservation constraint - a &ldquo;potential&rdquo; at vertex $v$, normalized so $d(s) = 1$ and $d(t) = 0$</li>
+</ul>
+<p>Working through the standard dual construction, the dual LP is:</p>
+<p>$$\textbf{Minimize} \quad \sum_{(u,v) \in E} c(u, v) \cdot \alpha(u, v)$$</p>
+<p>$$\textbf{subject to} \quad \alpha(u, v) \geq d(u) - d(v) \quad \text{for all } (u, v) \in E$$</p>
+<p>$$d(s) = 1, \quad d(t) = 0, \quad \alpha(u, v) \geq 0, \quad d(v) \geq 0$$</p>
+<p><strong>Interpreting the dual variables.</strong> Think of $d(v)$ as measuring how firmly $v$ belongs to the source side: $d(s) = 1$ is fully source-side, $d(t) = 0$ is fully sink-side. The constraint $\alpha(u, v) \geq d(u) - d(v)$ says: if edge $(u, v)$ drops in potential (crosses from the source side toward the sink side), you must &ldquo;pay&rdquo; at least the potential drop. The objective minimizes total payment, weighted by capacity.</p>
+<p>In the integer case: $d(v) \in {0, 1}$ indicates which side of a cut $v$ belongs to, and $\alpha(u, v) = 1$ for each edge going from $S$ (where $d = 1$) to $T$ (where $d = 0$). The dual objective then equals the cut capacity exactly. So the dual LP is a <strong>fractional relaxation of the min-cut problem</strong>.</p>
+<p>The two programs are:</p>
+<ul>
+<li>Primal: fractional max-flow</li>
+<li>Dual: fractional min-cut</li>
+</ul>
+<p>Strong LP duality immediately gives: <strong>fractional max flow = fractional min cut</strong>.</p>
+<h3 id="integrality-via-total-unimodularity">Integrality via Total Unimodularity</h3>
+<p>LP duality gives the result for fractional solutions, but we want integer flows and integer cuts. This is resolved by total unimodularity.</p>
+<p>The constraint matrix of the max-flow LP is the edge-vertex incidence matrix of a directed graph. It is <strong>totally unimodular (TU)</strong>: every square submatrix has determinant $0$, $+1$, or $-1$. By a classical theorem of LP, when the constraint matrix is TU and all right-hand sides are integers, every extreme point of the feasible polyhedron is an integer vector. Since LP optima occur at extreme points:</p>
+<p>$$\text{LP max flow} = \text{integer max flow}, \qquad \text{LP min cut} = \text{integer min cut}$$</p>
+<p>Combined with LP strong duality:</p>
+<p>$$\text{integer max flow} = \text{integer min cut capacity}$$</p>
+<p>This is the max-flow min-cut theorem - derived entirely from LP structure, with no combinatorial cleverness required.</p>
+<h3 id="complementary-slackness-the-ford-fulkerson-certificate">Complementary Slackness: The Ford-Fulkerson Certificate</h3>
+<p>LP duality comes with an optimality certificate: <strong>complementary slackness</strong>. A primal-dual pair $(f,, (d, \alpha))$ is simultaneously optimal if and only if:</p>
+<p><strong>Primal CS:</strong> $\alpha(u, v) &gt; 0 \Rightarrow f(u, v) = c(u, v)$.
+If an edge is &ldquo;in the cut&rdquo; (positive dual weight), it must be saturated.</p>
+<p><strong>Dual CS:</strong> $f(u, v) &gt; 0 \Rightarrow \alpha(u, v) = d(u) - d(v)$.
+If an edge carries flow, the dual constraint must be tight.</p>
+<p>Ford-Fulkerson terminates when $t$ is unreachable from $s$ in the residual. At that moment, define $S$ = reachable vertices from $s$, $T = V \setminus S$, and set $d(v) = 1$ for $v \in S$, $d(v) = 0$ for $v \in T$, $\alpha(u, v) = 1$ for edges from $S$ to $T$.</p>
+<ul>
+<li>Every edge from $S$ to $T$ is saturated (otherwise it would have residual capacity and its endpoint would be reachable into $S$). Primal CS holds.</li>
+<li>Every edge from $T$ to $S$ carries zero flow (otherwise the corresponding backward arc in the residual graph would make that vertex reachable from $s$). Dual CS holds.</li>
+</ul>
+<p>Both conditions are met simultaneously - the current flow and the induced cut are both optimal. Ford-Fulkerson does not merely produce a maximum flow by luck; it terminates precisely when the LP optimality conditions are satisfied.</p>
+<h3 id="the-primal-dual-view-of-augmenting-paths">The Primal-Dual View of Augmenting Paths</h3>
+<p>The <strong>primal-dual method</strong> is a general LP algorithm framework: maintain dual feasibility; find augmenting directions in the &ldquo;tight subgraph&rdquo; (edges where the dual constraint holds with equality); augment the primal; repeat.</p>
+<p>Ford-Fulkerson is exactly this framework applied to flow. The dual solution is the cut potential $d(v)$. Tight edges are those with remaining residual capacity. Augmenting paths are the primal improving directions. When no augmenting path exists, the dual solution certifies optimality through complementary slackness.</p>
+<p>The same primal-dual structure underlies Dijkstra&rsquo;s algorithm (dual variables are shortest-path distances), bipartite matching (dual variables are vertex covers), and many other combinatorial algorithms. What looks like a clever graph trick is, in each case, an instance of one mathematical principle.</p>
+<hr>
 <h2 id="edmonds-karp-polynomial-guarantee">Edmonds-Karp: Polynomial Guarantee</h2>
-<p>Edmonds and Karp fixed the inefficiency by always finding augmenting paths using <strong>BFS</strong> (shortest path in terms of number of edges):</p>
+<p>Edmonds and Karp fixed the inefficiency of Ford-Fulkerson by always finding augmenting paths using <strong>BFS</strong> (shortest path in terms of number of edges):</p>
 <p><strong>Edmonds-Karp</strong> runs in $O(VE^2)$ time, independent of flow values.</p>
 <p>The key insight: BFS finds the shortest augmenting path. Under BFS, the distance from $s$ to any vertex in the residual graph never decreases across augmentations. Each edge can become a bottleneck at most $O(V)$ times before the $s$-to-$t$ distance strictly increases. Since distances are bounded by $V$, at most $O(VE)$ total augmentations occur. Each takes $O(E)$. Total: $O(VE^2)$.</p>
 <p>This is a polynomial bound, making Edmonds-Karp practical for problems where flow values are large.</p>
@@ -171,7 +285,7 @@ $$|f| = \sum_v f(s, v) - \sum_v f(v, s)$$</p>
 <p>Why does this work? Each unit of flow from $s$ to $t$ represents one matching edge: a unit flows from $s$ into $u$, then along a matching edge to some $w$, then to $t$. The capacity-1 constraints ensure no vertex is used twice.</p>
 <p><strong>König&rsquo;s theorem.</strong> In a bipartite graph:
 $$\text{maximum matching size} = \text{minimum vertex cover size}$$</p>
-<p>A <strong>vertex cover</strong> is a set of vertices touching every edge. This is a direct corollary of max-flow min-cut: a minimum cut in the flow network corresponds exactly to a minimum vertex cover in the bipartite graph.</p>
+<p>A <strong>vertex cover</strong> is a set of vertices touching every edge. This is a direct corollary of max-flow min-cut: a minimum cut in the flow network corresponds exactly to a minimum vertex cover in the bipartite graph. Through the LP lens, König&rsquo;s theorem is LP duality applied to the bipartite matching LP - the same duality principle, a different combinatorial surface.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> Why do we need backward edges in the residual graph? They feel artificial - why would we ever &ldquo;un-route&rdquo; flow? Without backward edges, the greedy choice of the first augmenting path might be irreversible. Suppose you send flow along path $s \to A \to B \to t$, but the optimal solution needed flow along $s \to A \to C \to t$ and $s \to D \to B \to t$. After routing through $A \to B$, the greedy path has committed that edge. Backward edges let you &ldquo;undo&rdquo; that commitment: a later augmentation can route $s \to D \to B \to A \to C \to t$, where the $B \to A$ backward edge effectively cancels the earlier $A \to B$ routing. The residual graph is not artificial - it encodes all possible ways to reroute existing flow.</p>
 </blockquote>
@@ -181,6 +295,7 @@ $$\text{maximum matching size} = \text{minimum vertex cover size}$$</p>
 <p><strong>Image segmentation.</strong> Model each pixel as a vertex; add edges to source $s$ (foreground) and sink $t$ (background) with capacities encoding how likely each pixel belongs to each class. Add edges between adjacent pixels with capacities encoding color similarity. A minimum $s$-$t$ cut partitions pixels into foreground and background - minimizing the &ldquo;cost&rdquo; of separation while respecting how similar neighboring pixels are. This is the GrabCut algorithm.</p>
 <p><strong>Kidney exchange.</strong> Patients need kidney transplants but their willing donors are incompatible with them. Model donors and patients as vertices; add an edge if donor $D_i$&rsquo;s kidney is compatible with patient $P_j$. Maximum bipartite matching finds the maximum number of transplants that can happen via compatible donor swaps.</p>
 <p><strong>Sports elimination.</strong> Team $i$ is mathematically eliminated if no combination of remaining game outcomes can get them to first place. This reduces to a max-flow problem: if the max flow is less than the total remaining games among a relevant subset of teams, elimination is confirmed.</p>
+<p><strong>Currency arbitrage.</strong> Model currencies as vertices and exchange rates as edge weights $-\log(\text{rate})$. A negative cycle in this graph means a profit-generating sequence of conversions. The same LP duality that underlies max-flow min-cut appears here too: Bellman-Ford&rsquo;s dual variables are exactly the negative-cycle certificates.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -188,14 +303,14 @@ $$\text{maximum matching size} = \text{minimum vertex cover size}$$</p>
 <tr>
 <th>Concept</th>
 <th>Definition</th>
-<th>Key theorem</th>
+<th>Key result</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Flow value</td>
-<td>Total flow leaving source</td>
-<td>Bounded by every cut capacity</td>
+<td>Net flow leaving source</td>
+<td>Bounded above by every cut capacity</td>
 </tr>
 <tr>
 <td>Residual graph</td>
@@ -205,12 +320,12 @@ $$\text{maximum matching size} = \text{minimum vertex cover size}$$</p>
 <tr>
 <td>Augmenting path</td>
 <td>$s$-$t$ path in residual graph</td>
-<td>Flow is maximum iff none exist</td>
+<td>Flow is max iff none exist</td>
 </tr>
 <tr>
 <td>Max-flow min-cut</td>
 <td>Max flow = min cut capacity</td>
-<td>Proven by Ford-Fulkerson termination condition</td>
+<td>Follows from LP strong duality + TU</td>
 </tr>
 <tr>
 <td>Ford-Fulkerson</td>
@@ -224,17 +339,27 @@ $$\text{maximum matching size} = \text{minimum vertex cover size}$$</p>
 </tr>
 <tr>
 <td>Bipartite matching</td>
-<td>Reduce to max-flow</td>
-<td>Equals max-flow in unit-capacity network</td>
+<td>Reduce to unit-capacity max-flow</td>
+<td>Max matching = max flow</td>
 </tr>
 <tr>
 <td>König&rsquo;s theorem</td>
 <td>Max matching = min vertex cover</td>
-<td>Follows from max-flow min-cut</td>
+<td>LP duality on bipartite matching LP</td>
+</tr>
+<tr>
+<td>Total unimodularity</td>
+<td>Incidence matrix has det $\in {-1, 0, 1}$</td>
+<td>Integer LP optima always achieved</td>
+</tr>
+<tr>
+<td>Complementary slackness</td>
+<td>Optimality condition for primal-dual pairs</td>
+<td>Explains Ford-Fulkerson termination</td>
 </tr>
 </tbody>
 </table>
-<p>Ford and Fulkerson proved their theorem thinking about Soviet supply chains. The same framework now runs in image segmentation software, organ transplant coordination systems, and airline scheduling tools. The reason it appears in all of these places is the same: they all involve routing something through a network with capacity constraints, and max-flow captures exactly that structure.</p>
+<p>Ford and Fulkerson proved their theorem thinking about Soviet supply chains. The same framework now runs in image segmentation software, organ transplant systems, and airline scheduling tools. The reason it appears everywhere is the same: they all involve routing something through a constrained network. What makes it remarkable is that the theorem is not just a combinatorial insight - it is a consequence of LP duality, and LP duality applies wherever there is a linear objective and linear constraints. The supply chain problem in 1956 was really a question about the geometry of linear programs, and the answer - max equals min - is one of the deepest structural facts in optimization.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
