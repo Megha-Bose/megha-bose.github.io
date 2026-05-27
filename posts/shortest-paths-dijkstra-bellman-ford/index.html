@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          7 min read
+          8 min read
         </div>
       </div>
     </header>
@@ -132,22 +132,48 @@
 <hr>
 <h2 id="dijkstras-algorithm-greedy-non-negative-weights">Dijkstra&rsquo;s Algorithm: Greedy, Non-Negative Weights</h2>
 <p>Dijkstra&rsquo;s algorithm is a greedy approach that works when all edge weights are non-negative. It maintains a priority queue of tentative distances and finalizes vertices in order of increasing distance.</p>
-<pre tabindex="0"><code>Dijkstra(G, s):
-    for each v in V: dist[v] = infinity
-    dist[s] = 0
-    Q = min-priority queue of all v, keyed by dist[v]
-    while Q not empty:
-        u = Q.extract_min()
-        for each edge (u, v) with weight w:
-            if dist[u] + w &lt; dist[v]:
-                dist[v] = dist[u] + w
-                parent[v] = u
-                Q.decrease_key(v, dist[v])
-</code></pre><p>The key operation is <strong>relaxation</strong>: if we find a shorter path to $v$ through $u$, update <code>dist[v]</code>.</p>
-<p><strong>Correctness invariant:</strong> When vertex $u$ is extracted from $Q$, <code>dist[u]</code> equals the true shortest-path distance $\delta(s, u)$.</p>
-<p><strong>Proof.</strong> By induction on the order of extraction. Base case: $s$ is extracted first with <code>dist[s] = 0</code>. For the inductive step: suppose all previously extracted vertices have correct distances. Let $u$ be next, with <code>dist[u] = d</code>. Suppose for contradiction that $\delta(s, u) &lt; d$. Then some path $s \leadsto u$ has weight less than $d$. Let $(x, y)$ be the first edge where $y$ hasn&rsquo;t been extracted yet. Since $x$ was already extracted, $\text{dist}[x] = \delta(s, x)$. Since edge weights are non-negative:</p>
-<p>$$\text{dist}[y] \leq \delta(s, x) + w(x, y) \leq \delta(s, u) &lt; d = \text{dist}[u]$$</p>
-<p>But then $y$ would have been extracted before $u$ - contradiction. So <code>dist[u] = delta(s, u)</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> heapq
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dijkstra</span>(graph, s):
+    <span style="color:#75715e"># graph[u] = list of (v, weight) pairs</span>
+    dist <span style="color:#f92672">=</span> {v: float(<span style="color:#e6db74">&#39;inf&#39;</span>) <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph}
+    parent <span style="color:#f92672">=</span> {v: <span style="color:#66d9ef">None</span> <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph}
+    dist[s] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+    pq <span style="color:#f92672">=</span> [(<span style="color:#ae81ff">0</span>, s)]  <span style="color:#75715e"># (distance, vertex)</span>
+
+    <span style="color:#66d9ef">while</span> pq:
+        d, u <span style="color:#f92672">=</span> heapq<span style="color:#f92672">.</span>heappop(pq)
+        <span style="color:#66d9ef">if</span> d <span style="color:#f92672">&gt;</span> dist[u]:
+            <span style="color:#66d9ef">continue</span>  <span style="color:#75715e"># stale entry; skip</span>
+        <span style="color:#66d9ef">for</span> v, w <span style="color:#f92672">in</span> graph[u]:
+            <span style="color:#66d9ef">if</span> dist[u] <span style="color:#f92672">+</span> w <span style="color:#f92672">&lt;</span> dist[v]:
+                dist[v] <span style="color:#f92672">=</span> dist[u] <span style="color:#f92672">+</span> w
+                parent[v] <span style="color:#f92672">=</span> u
+                heapq<span style="color:#f92672">.</span>heappush(pq, (dist[v], v))
+
+    <span style="color:#66d9ef">return</span> dist, parent
+</code></pre></div><p>The key operation is <strong>relaxation</strong>: if we find a shorter path to $v$ through $u$, update <code>dist[v]</code>.</p>
+<p><strong>Correctness invariant:</strong> When vertex $u$ is extracted from the priority queue, <code>dist[u]</code> equals the true shortest-path distance $\delta(s, u)$.</p>
+<p><strong>Proof.</strong> By induction on the order of extraction.</p>
+<p><em>Base case:</em> $s$ is extracted first with <code>dist[s] = 0 =</code> $\delta(s, s)$. ✓</p>
+<p><em>Inductive step:</em> Assume every vertex extracted before $u$ has a correct <code>dist</code> value. Let <code>dist[u] = d</code>. Suppose for contradiction that $\delta(s, u) &lt; d$. Then there exists a shortest path $P: s \leadsto u$ with total weight $\delta(s, u) &lt; d$.</p>
+<p>Since $s$ is extracted and $u$ is not yet correctly finalized, somewhere along $P$ there must be a transition from an extracted vertex to an unexplored one. Define:</p>
+<ul>
+<li>$x$ = the <strong>last extracted</strong> vertex on path $P$</li>
+<li>$y$ = the <strong>immediate successor</strong> of $x$ on $P$ (so $y$ has not yet been extracted)</li>
+</ul>
+<pre tabindex="0"><code>s ——→ ··· ——→ x ——→ y ——→ ··· ——→ u
+|←— extracted ——→|   |←— unexplored —→|
+      dist[x] = δ(s,x)   y not yet extracted
+</code></pre><p>Since $x$ was extracted before $u$, the inductive hypothesis gives $\text{dist}[x] = \delta(s, x)$. When $x$ was extracted, we relaxed all edges out of $x$, so:</p>
+<p>$$\text{dist}[y] \leq \text{dist}[x] + w(x, y) = \delta(s, x) + w(x, y)$$</p>
+<p>Since $P$ is a shortest path, optimal substructure holds: the sub-path $s \leadsto x \leadsto y$ along $P$ is itself a shortest path from $s$ to $y$, so:</p>
+<p>$$\delta(s, x) + w(x, y) = \delta(s, y)$$</p>
+<p>Since $y$ lies on $P$ and all remaining edges to $u$ have non-negative weight:</p>
+<p>$$\delta(s, y) \leq \delta(s, u)$$</p>
+<p>Chaining all three:</p>
+<p>$$\text{dist}[y] \leq \delta(s, x) + w(x, y) = \delta(s, y) \leq \delta(s, u) &lt; d = \text{dist}[u]$$</p>
+<p>So $\text{dist}[y] &lt; \text{dist}[u]$, which means $y$ would have been extracted from the priority queue <strong>before</strong> $u$ — contradicting our assumption that $y$ is unexplored when $u$ is extracted. Therefore $\delta(s, u) = d$. $\blacksquare$</p>
 <p><strong>Time complexity.</strong> With a binary heap: $V$ <code>extract_min</code> operations at $O(\log V)$ each, plus at most $E$ <code>decrease_key</code> operations at $O(\log V)$ each. Total: $O((V + E) \log V)$.</p>
 <p>With a Fibonacci heap: <code>decrease_key</code> becomes $O(1)$ amortized. Total: $O(E + V \log V)$.</p>
 <p>For dense graphs ($E = \Theta(V^2)$) with an adjacency matrix: scan all vertices to find the minimum, giving $O(V^2)$ - better than the heap version in this regime.</p>
@@ -163,18 +189,23 @@
 <p>Recurrence:</p>
 <p>$$\text{dp}[v][k] = \min!\left(\text{dp}[v][k-1],\ \min_{(u,v) \in E} \text{dp}[u][k-1] + w(u,v)\right)$$</p>
 <p>In practice, we run $V - 1$ rounds of edge relaxation over all edges:</p>
-<pre tabindex="0"><code>BellmanFord(G, s):
-    for each v: dist[v] = infinity
-    dist[s] = 0
-    repeat V-1 times:
-        for each edge (u, v, w) in E:
-            if dist[u] + w &lt; dist[v]:
-                dist[v] = dist[u] + w
-    // Detect negative cycles
-    for each edge (u, v, w) in E:
-        if dist[u] + w &lt; dist[v]:
-            report negative cycle
-</code></pre><p><strong>Why $V - 1$ rounds?</strong> Any simple path (no repeated vertices) uses at most $V - 1$ edges. After $k$ rounds, <code>dist[v]</code> is the shortest path using at most $k$ edges. After $V - 1$ rounds, all shortest paths are found - if the graph has no negative cycles.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bellman_ford</span>(vertices, edges, s):
+    <span style="color:#75715e"># edges: list of (u, v, weight)</span>
+    dist <span style="color:#f92672">=</span> {v: float(<span style="color:#e6db74">&#39;inf&#39;</span>) <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vertices}
+    dist[s] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+
+    <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(len(vertices) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>):
+        <span style="color:#66d9ef">for</span> u, v, w <span style="color:#f92672">in</span> edges:
+            <span style="color:#66d9ef">if</span> dist[u] <span style="color:#f92672">+</span> w <span style="color:#f92672">&lt;</span> dist[v]:
+                dist[v] <span style="color:#f92672">=</span> dist[u] <span style="color:#f92672">+</span> w
+
+    <span style="color:#75715e"># Detect negative cycles</span>
+    <span style="color:#66d9ef">for</span> u, v, w <span style="color:#f92672">in</span> edges:
+        <span style="color:#66d9ef">if</span> dist[u] <span style="color:#f92672">+</span> w <span style="color:#f92672">&lt;</span> dist[v]:
+            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;Negative cycle detected&#34;</span>)
+
+    <span style="color:#66d9ef">return</span> dist
+</code></pre></div><p><strong>Why $V - 1$ rounds?</strong> Any simple path (no repeated vertices) uses at most $V - 1$ edges. After $k$ rounds, <code>dist[v]</code> is the shortest path using at most $k$ edges. After $V - 1$ rounds, all shortest paths are found - if the graph has no negative cycles.</p>
 <p><strong>Negative cycle detection.</strong> After $V - 1$ rounds, run one more round. If any edge can still be relaxed, a negative-weight cycle is reachable from $s$.</p>
 <p><strong>Time complexity.</strong> $V - 1$ rounds, each scanning all $E$ edges: $O(VE)$.</p>
 <hr>
@@ -184,14 +215,22 @@
 <p>$$\text{dp}[i][j][k] = \min!\left(\text{dp}[i][j][k-1],\ \text{dp}[i][k][k-1] + \text{dp}[k][j][k-1]\right)$$</p>
 <p>Either the shortest path doesn&rsquo;t use vertex $k$ as an intermediate, or it routes through $k$. Base case: $\text{dp}[i][j][0] = w(i,j)$ if $(i, j) \in E$, else $\infty$ (and $0$ if $i = j$).</p>
 <p>In practice, the $k$ dimension is eliminated by updating in-place:</p>
-<pre tabindex="0"><code>FloydWarshall(G):
-    dist = adjacency matrix (w(i,j) or infinity)
-    for i: dist[i][i] = 0
-    for k from 1 to V:
-        for i from 1 to V:
-            for j from 1 to V:
-                dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])
-</code></pre><p>Negative cycles: if any <code>dist[i][i]</code> becomes negative, vertex $i$ lies on a negative cycle.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">floyd_warshall</span>(vertices, edges):
+    <span style="color:#75715e"># edges: list of (u, v, weight)</span>
+    dist <span style="color:#f92672">=</span> {u: {v: float(<span style="color:#e6db74">&#39;inf&#39;</span>) <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vertices} <span style="color:#66d9ef">for</span> u <span style="color:#f92672">in</span> vertices}
+    <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vertices:
+        dist[v][v] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">for</span> u, v, w <span style="color:#f92672">in</span> edges:
+        dist[u][v] <span style="color:#f92672">=</span> w
+
+    <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> vertices:
+        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> vertices:
+            <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> vertices:
+                <span style="color:#66d9ef">if</span> dist[i][k] <span style="color:#f92672">+</span> dist[k][j] <span style="color:#f92672">&lt;</span> dist[i][j]:
+                    dist[i][j] <span style="color:#f92672">=</span> dist[i][k] <span style="color:#f92672">+</span> dist[k][j]
+
+    <span style="color:#66d9ef">return</span> dist
+</code></pre></div><p>Negative cycles: if any <code>dist[i][i]</code> becomes negative, vertex $i$ lies on a negative cycle.</p>
 <p>Floyd-Warshall works with negative edges as long as there are no negative cycles. Time: $O(V^3)$. Space: $O(V^2)$.</p>
 <hr>
 <h2 id="a-search-dijkstra-with-direction">A* Search: Dijkstra with Direction</h2>
