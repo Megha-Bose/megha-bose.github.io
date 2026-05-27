@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          10 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -260,10 +260,35 @@ flowchart LR
 <hr>
 <h2 id="floyd-warshall-all-pairs-shortest-paths">Floyd-Warshall: All-Pairs Shortest Paths</h2>
 <p>Need shortest paths between all pairs of vertices? Floyd-Warshall does it in $O(V^3)$.</p>
-<p>Define $\text{dp}[i][j][k]$ = shortest path from $i$ to $j$ using only vertices ${1, \ldots, k}$ as intermediaries:</p>
-<p>$$\text{dp}[i][j][k] = \min\left(\text{dp}[i][j][k-1],\ \text{dp}[i][k][k-1] + \text{dp}[k][j][k-1]\right)$$</p>
-<p>Either the shortest path doesn&rsquo;t use vertex $k$ as an intermediate, or it routes through $k$. Base case: $\text{dp}[i][j][0] = w(i,j)$ if $(i, j) \in E$, else $\infty$ (and $0$ if $i = j$).</p>
-<p>In practice, the $k$ dimension is eliminated by updating in-place:</p>
+<p><strong>Intuition: grow the set of allowed intermediaries.</strong></p>
+<p>Label the vertices $1, 2, \ldots, V$. Run through them one by one and ask at each step:</p>
+<blockquote>
+<p>For each pair $(i, j)$: what is the shortest path from $i$ to $j$ if only vertices ${1, 2, \ldots, k}$ may be used as intermediate stops?</p>
+</blockquote>
+<p>When $k = 0$, no intermediaries are allowed - only direct edges. When $k = V$, all vertices are available: these are the true shortest paths.</p>
+<p>At each step, adding vertex $k$ to the allowed set introduces exactly one new option for every pair $(i, j)$: route through $k$. The shortest path either does not use $k$ (answer unchanged from step $k - 1$) or uses $k$ exactly once, splitting into two sub-paths - $i \leadsto k$ and $k \leadsto j$ - both of which use only intermediaries ${1, \ldots, k-1}$.</p>
+<p>A concrete example:</p>
+<div class="mermaid">
+flowchart LR
+    A(["A"]) -->|3| B(["B"])
+    B -->|2| C(["C"])
+    A -->|10| C
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>With no intermediaries ($k = 0$): the only known path from A to C is the direct edge, cost 10. When B enters the allowed set: check $A \to B \to C = 3 + 2 = 5 &lt; 10$. Update. The direct edge is beaten by the two-hop path.</p>
+<p><strong>The recurrence.</strong> Define:</p>
+<p>$$\text{dp}[i][j][k] = \text{shortest distance from } i \text{ to } j \text{ using only vertices } {1, \ldots, k} \text{ as intermediaries}$$</p>
+<p>Base case: $\text{dp}[i][j][0] = w(i,j)$ if edge $(i, j)$ exists, else $\infty$; and $\text{dp}[i][i][0] = 0$.</p>
+<p>For $k \geq 1$:</p>
+<p>$$\text{dp}[i][j][k] = \min!\Bigl(\underbrace{\text{dp}[i][j][k-1]}<em>{\text{skip } k},\quad \underbrace{\text{dp}[i][k][k-1] + \text{dp}[k][j][k-1]}</em>{\text{route through } k}\Bigr)$$</p>
+<p><strong>Why does this decomposition work?</strong> If the shortest path from $i$ to $j$ routes through $k$, it splits as $i \leadsto k \leadsto j$. Could either sub-path loop back through $k$? In a graph without negative cycles, shortest paths are simple - they visit each vertex at most once. So both sub-paths use only intermediaries from ${1, \ldots, k-1}$, and $\text{dp}[\cdot][\cdot][k-1]$ gives their lengths correctly by the inductive hypothesis.</p>
+<p><strong>Correctness.</strong> By induction on $k$. The base case holds by definition. Assuming $\text{dp}[\cdot][\cdot][k-1]$ is correct, the recurrence considers both cases (use $k$ or not) and takes the minimum - which is correct by hypothesis. After $V$ iterations, $\text{dp}[i][j][V] = \delta(i, j)$ for all pairs. $\blacksquare$</p>
+<p>In practice, the $k$ dimension is eliminated by updating in-place. This is safe because $\text{dp}[k][k] = 0$ throughout: routing through $k$ to reach $k$ itself adds nothing, so the values $\text{dp}[i][k]$ and $\text{dp}[k][j]$ used on the right-hand side are already their correct $k - 1$ values.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">floyd_warshall</span>(vertices, edges):
     <span style="color:#75715e"># edges: list of (u, v, weight)</span>
     dist <span style="color:#f92672">=</span> {u: {v: float(<span style="color:#e6db74">&#39;inf&#39;</span>) <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vertices} <span style="color:#66d9ef">for</span> u <span style="color:#f92672">in</span> vertices}
@@ -279,18 +304,107 @@ flowchart LR
                     dist[i][j] <span style="color:#f92672">=</span> dist[i][k] <span style="color:#f92672">+</span> dist[k][j]
 
     <span style="color:#66d9ef">return</span> dist
-</code></pre></div><p>Negative cycles: if any <code>dist[i][i]</code> becomes negative, vertex $i$ lies on a negative cycle.</p>
+</code></pre></div><p><strong>Negative cycles:</strong> if <code>dist[i][i]</code> becomes negative, vertex $i$ lies on a negative-weight cycle.</p>
 <p>Floyd-Warshall works with negative edges as long as there are no negative cycles. Time: $O(V^3)$. Space: $O(V^2)$.</p>
 <hr>
-<h2 id="a-search-dijkstra-with-direction">A* Search: Dijkstra with Direction</h2>
-<p>Dijkstra finds the shortest path to all vertices. When you only care about one destination $t$, you can stop early and focus the search using a <strong>heuristic</strong>.</p>
-<p>A* prioritizes vertices by $f(v) = g(v) + h(v)$, where:</p>
-<ul>
-<li>$g(v)$ = known shortest distance from $s$ to $v$</li>
-<li>$h(v)$ = heuristic estimate of the remaining distance from $v$ to $t$</li>
-</ul>
-<p>An <strong>admissible</strong> heuristic never overestimates: $h(v) \leq \delta(v, t)$ for all $v$. Under admissibility, A* finds the optimal path. For GPS routing, Euclidean straight-line distance is a natural admissible heuristic - it never overestimates road distance.</p>
-<p>A* is Dijkstra plus a heuristic. With $h(v) = 0$ for all $v$, A* reduces to Dijkstra. With a perfect heuristic ($h(v) = \delta(v, t)$), A* finds the path without exploring any wrong vertices at all. In practice, a good heuristic can reduce the number of vertices explored by orders of magnitude.</p>
+<h2 id="a-dijkstra-with-direction">A*: Dijkstra with Direction</h2>
+<p>Dijkstra finds the shortest path to all vertices. When you only care about one destination $t$, you can stop early and guide the search using a <strong>heuristic</strong> - a function $h(v)$ estimating the remaining cost from $v$ to $t$.</p>
+<p>A* assigns each vertex a priority $f(v) = g(v) + h(v)$, where $g(v)$ is the best known distance from $s$ to $v$. Vertices with low $f$-value get explored first: cheap to reach from $s$ and estimated to be close to $t$.</p>
+<p><strong>Admissibility.</strong> A heuristic is <strong>admissible</strong> if it never overestimates: $h(v) \leq \delta(v, t)$ for all $v$. An admissible heuristic is optimistic - it may underestimate, but never inflates the true remaining cost. This is what guarantees A* finds the optimal path.</p>
+<p><strong>Intuition.</strong> Dijkstra expands outward from $s$ uniformly in all directions - it has no information about where $t$ is. A* biases the expansion toward $t$: a vertex that is cheap to reach but far from $t$ (high $h$) gets deprioritized; a vertex pointing toward $t$ (low $h$) gets promoted to the front of the queue.</p>
+<h3 id="example">Example</h3>
+<div class="mermaid">
+flowchart LR
+    S(["S<br/>h = 4"]) -->|2| A(["A<br/>h = 5"])
+    S -->|3| B(["B<br/>h = 2"])
+    A -->|6| T(["T<br/>h = 0"])
+    B -->|2| T
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The $h$ values are admissible: $h(S) = 4 \leq 5$, $h(A) = 5 \leq 6$, $h(B) = 2 \leq 2$, $h(T) = 0$. The optimal path is $S \to B \to T$ with cost 5.</p>
+<p><strong>Dijkstra</strong> (priority by $g$):</p>
+<table>
+<thead>
+<tr>
+<th>Extracted</th>
+<th>$g$</th>
+<th>Open set after</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S</td>
+<td>0</td>
+<td>A $(g=2)$, B $(g=3)$</td>
+</tr>
+<tr>
+<td>A</td>
+<td>2</td>
+<td>B $(g=3)$, T $(g=8)$</td>
+</tr>
+<tr>
+<td>B</td>
+<td>3</td>
+<td>T $(g=5)$</td>
+</tr>
+<tr>
+<td>T</td>
+<td>5</td>
+<td>done</td>
+</tr>
+</tbody>
+</table>
+<p>Dijkstra extracts A even though it leads to a suboptimal path - it has no way to know A is a dead end.</p>
+<p><strong>A</strong>* (priority by $f = g + h$):</p>
+<table>
+<thead>
+<tr>
+<th>Extracted</th>
+<th>$f = g + h$</th>
+<th>Open set after</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S</td>
+<td>$0 + 4 = 4$</td>
+<td>A $(f=7)$, B $(f=5)$</td>
+</tr>
+<tr>
+<td>B</td>
+<td>$3 + 2 = 5$</td>
+<td>A $(f=7)$, T $(f=5)$</td>
+</tr>
+<tr>
+<td>T</td>
+<td>$5 + 0 = 5$</td>
+<td>done</td>
+</tr>
+</tbody>
+</table>
+<p>A* never extracts A. The heuristic recognized that A, despite being cheaply reachable ($g = 2$), is estimated to be far from T ($h = 5$), giving total estimated cost 7. B costs a bit more to reach ($g = 3$) but sits close to T ($h = 2$), giving estimated total 5 - matching the true optimal. A* finds the answer with one fewer node explored.</p>
+<h3 id="consistency">Consistency</h3>
+<p>A heuristic is <strong>consistent</strong> (or monotone) if for every edge $(u, v, w)$:</p>
+<p>$$h(u) \leq w + h(v)$$</p>
+<p>This is the triangle inequality on heuristic estimates: the estimated cost to $t$ should not improve by taking a detour through $v$. Consistency implies admissibility. With a consistent heuristic, $f$-values are non-decreasing along any explored path, so A* never needs to re-expand a vertex - it behaves exactly like Dijkstra with modified priorities.</p>
+<p>Euclidean distance satisfies both properties: it never overestimates road distance, and it obeys the geometric triangle inequality.</p>
+<h3 id="proof-of-correctness">Proof of Correctness</h3>
+<p><strong>Claim.</strong> If $h$ is admissible and $h(t) = 0$, then when A* first extracts $t$, $g(t) = \delta(s, t)$.</p>
+<p><em>Proof.</em> Let $P^\star$ be a shortest $s$-$t$ path of cost $\delta(s, t)$.</p>
+<p>At the moment A* is about to extract $t$, consider the vertices of $P^\star$ from $s$ toward $t$. Either all predecessors of $t$ on $P^\star$ have been extracted - in which case the progressive relaxations along $P^\star$ gave $g(t) \leq \delta(s, t)$ already - or there is a first vertex $v$ on $P^\star$ still in the open set.</p>
+<p>In the second case, let $u$ be $v$&rsquo;s predecessor on $P^\star$ (already extracted). By the same inductive argument as Dijkstra&rsquo;s correctness proof, restricted to the extracted prefix of $P^\star$: $g(u) = \delta(s, u)$ when $u$ is extracted. The edge $u \to v$ is then relaxed, giving:</p>
+<p>$$g(v) \leq g(u) + w(u, v) = \delta(s, u) + w(u, v) = \delta(s, v)$$</p>
+<p>where the last equality uses the fact that $u \to v$ is a segment of the optimal path $P^\star$. Applying admissibility:</p>
+<p>$$f(v) = g(v) + h(v) \leq \delta(s, v) + \delta(v, t) = \delta(s, t)$$</p>
+<p>Since A* extracted $t$ before $v$, we have $f(t) \leq f(v) \leq \delta(s, t)$. Since $h(t) = 0$, this gives $g(t) \leq \delta(s, t)$.</p>
+<p>In both cases, $g(t) \leq \delta(s, t)$. Since $g(t)$ is always the weight of some actual path, $g(t) \geq \delta(s, t)$. Therefore $g(t) = \delta(s, t)$. $\blacksquare$</p>
+<h3 id="connection-to-dijkstra">Connection to Dijkstra</h3>
+<p>With $h(v) = 0$ for all $v$, A* reduces to Dijkstra exactly. With the perfect heuristic $h(v) = \delta(v, t)$, the $f$-value of every vertex on an optimal path equals $\delta(s, t)$ - they all share the same priority - and A* reaches $t$ without expanding a single off-path vertex. In practice, a good heuristic can reduce exploration by orders of magnitude on large graphs like road networks.</p>
 <hr>
 <h2 id="applications">Applications</h2>
 <p><strong>GPS navigation.</strong> Google Maps and similar apps use bidirectional Dijkstra or A* on road networks with hundreds of millions of nodes. Contraction hierarchies - a preprocessing technique that &ldquo;shortcutts&rdquo; the graph - allow queries to answer in milliseconds.</p>
