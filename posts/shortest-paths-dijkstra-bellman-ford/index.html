@@ -234,20 +234,27 @@ flowchart LR
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p><strong>Formal claim.</strong> Let $\delta_k(s, v)$ denote the minimum weight of any path from $s$ to $v$ using <strong>at most $k$ edges</strong> ($\infty$ if none exists). After round $k$, $\text{dist}[v] \leq \delta_k(s, v)$ for every vertex $v$.</p>
+<p><strong>Formal claim.</strong> Let $\delta_k(s, v)$ denote the minimum weight of any path from $s$ to $v$ using <strong>at most $k$ edges</strong> ($\infty$ if none exists). After round $k$, for every vertex $v$:</p>
+<p>$$\text{dist}[v] \leq \delta_k(s, v)$$</p>
 <p><strong>Proof by induction on $k$.</strong></p>
 <p><em>Base case ($k = 0$):</em> After initialisation, $\text{dist}[s] = 0 = \delta_0(s, s)$, and $\text{dist}[v] = \infty = \delta_0(s, v)$ for all $v \neq s$, since no 0-edge path to any other vertex exists.</p>
-<p><em>Inductive step:</em> Assume after round $k - 1$, $\text{dist}[v] \leq \delta_{k-1}(s, v)$ for all $v$. Fix any vertex $v$ and let $P^*$ be an optimal path from $s$ to $v$ using at most $k$ edges. Two cases:</p>
+<p><em>Inductive step:</em> Assume after round $k - 1$, for all $v$:</p>
+<p>$$\text{dist}[v] \leq \delta_{k-1}(s, v)$$</p>
+<p>Fix any vertex $v$ and let $P^\star$ be an optimal path from $s$ to $v$ using at most $k$ edges. Two cases:</p>
 <ul>
 <li>
-<p><strong>$P^*$ uses at most $k - 1$ edges.</strong> Then $\delta_k(s, v) = \delta_{k-1}(s, v)$. By the inductive hypothesis $\text{dist}[v] \leq \delta_{k-1}(s, v) = \delta_k(s, v)$, and relaxation only decreases <code>dist</code>, so this still holds after round $k$.</p>
+<p><strong>Case 1: $P^\star$ uses at most $k - 1$ edges.</strong> The shortest path using at most $k$ edges equals the shortest path using at most $k - 1$ edges, so the inductive hypothesis directly gives $\text{dist}[v] \leq \delta_k(s, v)$ after round $k$.</p>
 </li>
 <li>
-<p><strong>$P^*$ uses exactly $k$ edges.</strong> Let $u$ be the second-to-last vertex on $P^<em>$, so $P^</em> = s \leadsto u \to v$. The prefix $s \leadsto u$ uses $k - 1$ edges and, by optimal substructure, is itself a shortest $(k-1)$-edge path to $u$, so its weight equals $\delta_{k-1}(s, u)$. By the inductive hypothesis, $\text{dist}[u] \leq \delta_{k-1}(s, u)$ after round $k - 1$. In round $k$ we relax edge $(u, v, w)$:</p>
+<p><strong>Case 2: $P^\star$ uses exactly $k$ edges.</strong> Let $u$ be the second-to-last vertex on $P^\star$, so $P^\star = s \leadsto u \to v$. The prefix $s \leadsto u$ uses $k - 1$ edges and, by optimal substructure, is itself a shortest $(k-1)$-edge path to $u$. By the inductive hypothesis, after round $k - 1$:</p>
 </li>
 </ul>
+<p>$$\text{dist}[u] \leq \delta_{k-1}(s, u)$$</p>
+<p>In round $k$ we relax edge $(u, v, w)$:</p>
 <p>$$\text{dist}[v] \leq \text{dist}[u] + w \leq \delta_{k-1}(s, u) + w = \delta_k(s, v)$$</p>
-<p><strong>Why $V - 1$ rounds suffice.</strong> In a graph with no negative cycles, every shortest path is simple — it never repeats a vertex, because repeating a vertex would mean traversing a cycle, and any non-negative cycle only adds weight. A simple path on at most $V$ vertices uses at most $V - 1$ edges, so $\delta_{V-1}(s, v) = \delta(s, v)$. After $V - 1$ rounds the claim gives $\text{dist}[v] \leq \delta(s, v)$. Since <code>dist[v]</code> is always the weight of some actual path, $\text{dist}[v] \geq \delta(s, v)$. Together: $\text{dist}[v] = \delta(s, v)$. $\blacksquare$</p>
+<p><strong>Why $V - 1$ rounds suffice.</strong> In a graph with no negative cycles, every shortest path is simple — it never repeats a vertex, because repeating a vertex would mean traversing a cycle, and any non-negative cycle only adds weight. A simple path on at most $V$ vertices uses at most $V - 1$ edges, so:</p>
+<p>$$\delta_{V-1}(s, v) = \delta(s, v)$$</p>
+<p>After $V - 1$ rounds the claim gives $\text{dist}[v] \leq \delta(s, v)$. Since <code>dist[v]</code> is always the weight of some actual path, $\text{dist}[v] \geq \delta(s, v)$. Together: $\text{dist}[v] = \delta(s, v)$. $\blacksquare$</p>
 <p><strong>Negative cycle detection.</strong> After $V - 1$ rounds we have the best possible simple-path distances. If any edge $(u, v, w)$ can still be relaxed — i.e. $\text{dist}[u] + w &lt; \text{dist}[v]$ — then the only way to improve beyond a simple path is to traverse a cycle. Since non-negative cycles never help, this cycle must be negative. Hence a negative-weight cycle is reachable from $s$.</p>
 <p><strong>Time complexity.</strong> $V - 1$ rounds, each scanning all $E$ edges: $O(VE)$.</p>
 <hr>
