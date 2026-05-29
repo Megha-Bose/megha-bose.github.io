@@ -12,10 +12,10 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Data Compression - Throwing Away What You Can Reconstruct">
 <meta name="twitter:description" content="Helpful context:
- Entropy & Information Theory  Huffman Coding    Shannon&rsquo;s source coding theorem gives you the floor: no lossless code can compress a source $X$ below $H(X)$ bits per symbol on average. But knowing the floor exists is different from knowing how to build a ladder that reaches it. In 1948, the proof was existential - there are codes that get close, but the construction was not practical.">
+ Entropy & Information Theory - The Mathematics of Surprise  Huffman Coding - Shorter Codes for More Frequent Symbols    Shannon&rsquo;s source coding theorem gives you the floor: no lossless code can compress a source $X$ below $H(X)$ bits per symbol on average. But knowing the floor exists is different from knowing how to build a ladder that reaches it. In 1948, the proof was existential - there are codes that get close, but the construction was not practical.">
 <meta property="og:title" content="Data Compression - Throwing Away What You Can Reconstruct">
 <meta property="og:description" content="Helpful context:
- Entropy & Information Theory  Huffman Coding    Shannon&rsquo;s source coding theorem gives you the floor: no lossless code can compress a source $X$ below $H(X)$ bits per symbol on average. But knowing the floor exists is different from knowing how to build a ladder that reaches it. In 1948, the proof was existential - there are codes that get close, but the construction was not practical.">
+ Entropy & Information Theory - The Mathematics of Surprise  Huffman Coding - Shorter Codes for More Frequent Symbols    Shannon&rsquo;s source coding theorem gives you the floor: no lossless code can compress a source $X$ below $H(X)$ bits per symbol on average. But knowing the floor exists is different from knowing how to build a ladder that reaches it. In 1948, the proof was existential - there are codes that get close, but the construction was not practical.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="http://megha-bose.github.io/posts/data-compression/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
@@ -58,16 +58,16 @@
 Jun 1, 2024
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-9 min read
+3 min read
 </div>
 </div>
 </header>
 <div class="post-content">
 <p><strong>Helpful context:</strong></p>
 <ul>
-<li><a href="/posts/entropy-information/" target="_blank" rel="noopener noreferrer">Entropy & Information Theory</a>
+<li><a href="/posts/entropy-information/" target="_blank" rel="noopener noreferrer">Entropy & Information Theory - The Mathematics of Surprise</a>
 </li>
-<li><a href="/posts/huffman-coding/" target="_blank" rel="noopener noreferrer">Huffman Coding</a>
+<li><a href="/posts/huffman-coding/" target="_blank" rel="noopener noreferrer">Huffman Coding - Shorter Codes for More Frequent Symbols</a>
 </li>
 </ul>
 <hr>
@@ -83,119 +83,10 @@ Jun 1, 2024
 <p>The fix is to code blocks. If you encode $n$ symbols at a time, treating sequences of $n$ symbols as a single &ldquo;super-symbol,&rdquo; the overhead per symbol drops to less than $1/n$ bits. In the limit $n \to \infty$, Huffman codes on blocks approach $H(X)$. But the alphabet of $n$-symbol blocks has size $|\mathcal{X}|^n$, so the table size explodes. Arithmetic coding avoids this by working directly on infinite-length sequences.</p>
 <hr>
 <h2 id="arithmetic-coding-approaching-the-limit">Arithmetic Coding: Approaching the Limit</h2>
-<p>Arithmetic coding encodes an entire message as a single number in $[0, 1)$. The algorithm maintains an interval $[l, r)$ that narrows as symbols are processed. For each new symbol $x$ with probability $p(x)$, the interval is split proportionally, and the sub-interval corresponding to $x$ is retained.</p>
-<p>After processing a sequence $x_1, x_2, \ldots, x_n$ with probability $P(x_1, \ldots, x_n)$, the interval has width $P(x_1, \ldots, x_n)$. Any number in this interval serves as a codeword; it takes $\lceil -\log_2 P(x_1, \ldots, x_n) \rceil + 1$ bits to specify it. For a sequence of $n$ i.i.d. symbols, this is approximately $\sum_i -\log_2 p(x_i) + 1$ bits total - getting within 1 bit of the optimal for the entire message, not per symbol.</p>
-<p>The expected length per symbol is</p>
-<p>$$H(X) \leq \frac{L_{\text{arithmetic}}}{n} &lt; H(X) + \frac{1}{n}.$$</p>
-<p>As $n \to \infty$, this overhead vanishes. Arithmetic coding effectively achieves $H(X)$ bits per symbol for long messages. It is the practical standard when you want to get close to Shannon&rsquo;s limit: JPEG2000, H.265 (HEVC), and CABAC in H.264 all use arithmetic coding internally.</p>
-<p><strong>Implementation note.</strong> Multiplying probabilities causes underflow quickly. Real implementations use integer arithmetic with renormalization (range coding), updating the interval with integer arithmetic and emitting bits as the interval is determined. The result is efficient enough for hardware video encoders.</p>
-<hr>
-<h2 id="prefix-free-codes-and-the-kraft-inequality">Prefix-Free Codes and the Kraft Inequality</h2>
-<p>Both Huffman and arithmetic coding produce <strong>prefix-free codes</strong>: no codeword is a prefix of another. This property is what allows unambiguous decoding: you can read bits from a stream and know exactly when a codeword ends without any delimiter.</p>
-<p>The fundamental constraint on prefix-free codes is the <strong>Kraft inequality</strong>:</p>
-<p>$$\sum_{x} 2^{-\ell(x)} \leq 1,$$</p>
-<p>where $\ell(x)$ is the codeword length for symbol $x$. Conversely, any set of lengths satisfying this inequality can be realized by a prefix-free code. The inequality is tight for Huffman codes (equality holds).</p>
-<p>The Kraft inequality connects code design to probability: assign probability $2^{-\ell(x)}$ to each codeword, and the sum is at most 1. Optimal code design is equivalent to optimal probability assignment, which is why entropy (the expected value of $-\log p(x)$) bounds the expected code length from below.</p>
-<hr>
-<h2 id="lz77-and-lz78-universal-compression">LZ77 and LZ78: Universal Compression</h2>
-<p>Huffman and arithmetic coding require knowledge of the source probabilities. Lempel and Ziv showed in 1977 and 1978 that you can compress without knowing the distribution, and still achieve the entropy rate asymptotically.</p>
-<p><strong>LZ77</strong> (used in gzip, deflate, PNG, HTTP compression): maintains a sliding window of recently seen data. When encoding the next piece of data, search the window for the longest match. Output a triple (offset, length, next character): &ldquo;copy $\ell$ characters starting from position $-d$ in the window, then output character $c$.&rdquo; If the source has any statistical regularity - repeated words in text, repeated patterns in code - the matches will be long and the output will be short.</p>
-<p><strong>LZ78</strong> and its variant LZW (used in GIF, early Unix compress): builds a dictionary incrementally. Start with single-character entries. When encoding, find the longest prefix that is already in the dictionary, output its index, then add the current match extended by one character as a new entry. LZW omits the new character from the output (the decoder can infer it), reducing overhead further.</p>
-<p><strong>Why they work.</strong> Lempel and Ziv proved that both algorithms achieve the entropy rate $H$ of any stationary ergodic source as the message length $n \to \infty$. The dictionary learns the source statistics on the fly - the compression ratio for an English text file will converge to the entropy rate of English, estimated around 1 to 1.5 bits per character, even though the algorithm never sees a probability table.</p>
-<p><strong>Modern descendant: Zstandard (zstd).</strong> Developed at Facebook (now Meta), zstd combines LZ77-style dictionary matching with finite state entropy (FSE), a fast arithmetic coder based on asymmetric numeral systems (Jarek Duda, 2013). It achieves compression ratios close to gzip with 5-10 times faster decompression. Used by the Linux kernel, web servers, database engines, and cloud storage systems.</p>
-<hr>
-<h2 id="jpeg-lossy-compression-in-practice">JPEG: Lossy Compression in Practice</h2>
-<p>JPEG compression illustrates the principle of exploiting perceptual irrelevance:</p>
-<ol>
-<li>
-<p><strong>Color space conversion.</strong> Convert RGB to YCbCr (luminance and chrominance). Human eyes are more sensitive to luminance detail than color detail, so chrominance channels are downsampled.</p>
-</li>
-<li>
-<p><strong>Block DCT.</strong> Divide the image into $8 \times 8$ pixel blocks. Apply the discrete cosine transform to each block. The result is 64 frequency coefficients per block, from low-frequency (large-scale structure) to high-frequency (fine detail).</p>
-</li>
-<li>
-<p><strong>Quantization.</strong> Divide each frequency coefficient by a quantization step size (larger for high frequencies) and round to the nearest integer. This step is lossy - it throws away high-frequency detail that the eye barely perceives. The quality parameter in JPEG controls these quantization step sizes.</p>
-</li>
-<li>
-<p><strong>Entropy coding.</strong> The quantized coefficients are run-length encoded (exploiting the many zeros in high-frequency components) and Huffman-coded.</p>
-</li>
-</ol>
-<p>The quality - distortion tradeoff is entirely in step 3. A larger quantization step means more coefficients round to zero, fewer bits are needed, and more detail is lost. The optimal quantization step for a given bit budget is what rate-distortion theory analyzes formally.</p>
-<hr>
-<h2 id="h265hevc-exploiting-temporal-redundancy">H.265/HEVC: Exploiting Temporal Redundancy</h2>
-<p>Video compression extends the JPEG idea to sequences of frames. Most of a video frame is nearly identical to the previous frame (the background does not move), and this temporal redundancy is the main opportunity.</p>
-<p><strong>H.265 (HEVC)</strong> uses four stages:</p>
-<ol>
-<li><strong>Prediction.</strong> For each block, find a similar block in a previous (or future) reference frame (inter prediction) or predict from neighboring blocks in the same frame (intra prediction). Output the prediction error (residual).</li>
-<li><strong>Transform.</strong> Apply a DCT-like transform to the residual. The residual is small (since prediction is good), so most coefficients will be small or zero.</li>
-<li><strong>Quantization.</strong> Same principle as JPEG - round to reduce bit cost.</li>
-<li><strong>Entropy coding (CABAC).</strong> Context-adaptive binary arithmetic coding, adapting the probability model to local statistics.</li>
-</ol>
-<p>H.265 achieves roughly the same visual quality as H.264 at half the bit rate. This improvement came from larger and more flexible block sizes (up to $64 \times 64$ vs $16 \times 16$), better motion compensation, and improved entropy coding. The mathematical structure - predict, transform, quantize, entropy code - is the same as JPEG.</p>
-<hr>
-<h2 id="the-incompressibility-argument">The Incompressibility Argument</h2>
-<p>A compression algorithm maps $n$-bit strings to shorter strings. But there are $2^n$ strings of length $n$ and only $\sum_{k=0}^{n-1} 2^k = 2^n - 1$ strings of length less than $n$. By pigeonhole, at least one $n$-bit string cannot be compressed to fewer than $n$ bits. In fact, almost all strings cannot be compressed:</p>
-<p><strong>Claim.</strong> At most $2^{n-k}$ strings of length $n$ can be compressed to fewer than $n - k + 1$ bits.</p>
-<p><strong>Proof.</strong> There are only $2^{n-k}$ binary strings of length less than $n - k + 1$. $\square$</p>
-<p>So a uniformly random $n$-bit string can be compressed by more than $k$ bits with probability at most $2^{-k}$. Most bit strings are incompressible. The strings that do compress are exactly those with low entropy - statistical regularities that the compressor can exploit.</p>
-<p><strong>Practical corollary.</strong> Do not compress already-compressed data. ZIP files, JPEGs, and encrypted data are approximately uniformly random. Running gzip on a JPEG file will produce a file the same size or larger, because there is no redundancy left to exploit. Compression exploits structure; random-looking data has none.</p>
-<hr>
-<h2 id="summary">Summary</h2>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Type</th>
-<th>Achieves</th>
-<th>Used in</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Huffman coding</td>
-<td>Lossless, symbol code</td>
-<td>$H(X)$ to $H(X)+1$ bits/symbol</td>
-<td>HTTP, older formats</td>
-</tr>
-<tr>
-<td>Arithmetic coding</td>
-<td>Lossless, sequence</td>
-<td>$H(X)$ + $O(1/n)$ bits/symbol</td>
-<td>JPEG2000, HEVC/CABAC</td>
-</tr>
-<tr>
-<td>LZ77</td>
-<td>Lossless, universal</td>
-<td>Entropy rate (no prior needed)</td>
-<td>gzip, deflate, PNG, zstd</td>
-</tr>
-<tr>
-<td>LZ78 / LZW</td>
-<td>Lossless, universal</td>
-<td>Entropy rate</td>
-<td>GIF, early compress</td>
-</tr>
-<tr>
-<td>JPEG</td>
-<td>Lossy</td>
-<td>Determined by quantization step</td>
-<td>Images everywhere</td>
-</tr>
-<tr>
-<td>H.265/HEVC</td>
-<td>Lossy</td>
-<td>Determined by quantization + motion</td>
-<td>Video streaming</td>
-</tr>
-</tbody>
-</table>
-<p>Shannon&rsquo;s source coding theorem sets the floor. Huffman gets close for symbols. Arithmetic coding and LZ methods get essentially all the way there for sequences. The gap between theoretical entropy and practical compression ratio has shrunk to near zero for lossless formats; for lossy compression, the remaining question is how much distortion you are willing to accept.</p>
-<hr>
-<p><strong>Read next:</strong></p>
+<p>Arithmetic coding encodes an entire message as a single number in $<a href="/posts/mutual-information-capacity/" target="_blank" rel="noopener noreferrer">Mutual Information & Capacity - What One Variable Tells You About Another</a>
+</p>
 <ul>
-<li><a href="/posts/mutual-information-capacity/" target="_blank" rel="noopener noreferrer">Mutual Information & Channel Capacity</a>
-</li>
-<li><a href="/posts/rate-distortion-theory/" target="_blank" rel="noopener noreferrer">Rate-Distortion Theory</a>
+<li><a href="/posts/rate-distortion-theory/" target="_blank" rel="noopener noreferrer">Rate-Distortion Theory - The Fundamental Tradeoff Between Size and Fidelity</a>
 </li>
 </ul>
 </div>

@@ -56,7 +56,7 @@
 Feb 10, 2024
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-16 min read
+11 min read
 </div>
 </div>
 </header>
@@ -229,134 +229,14 @@ $$= 0.4 + 0.4 + 0.3 + 0.3 + 0.8 = 2.2 \text{ bits}$$</p>
 <p>This is the Kullback-Leibler divergence $D_{\mathrm{KL}}(p | q)$ where $q_i = 2^{-\ell_i} / Z$ and $Z = \sum_i 2^{-\ell_i} \leq 1$. The KL divergence is always non-negative (by Jensen&rsquo;s inequality applied to $-\log$), with equality iff $p_i = q_i$ for all $i$. Therefore $L \geq H(X)$.</p>
 <p><strong>Upper bound.</strong> Choose $\ell_i = \lceil -\log_2 p_i \rceil$. These lengths satisfy the Kraft inequality (since $\lceil -\log_2 p_i \rceil \leq -\log_2 p_i + 1$, so $\sum_i 2^{-\ell_i} \leq \sum_i p_i = 1$), and define a valid prefix-free code. The average length is:</p>
 <p>$$L = \sum_i p_i \ell_i = \sum_i p_i \lceil -\log_2 p_i \rceil &lt; \sum_i p_i (-\log_2 p_i + 1) = H(X) + 1$$</p>
-<p>So there always exists a prefix-free code with $L &lt; H(X) + 1$. Huffman coding achieves the minimum $L$ over all prefix-free codes - this is proved by the exchange argument given in the Greedy Insight section, applied inductively. Therefore Huffman coding is optimal among prefix-free codes, and its average length lies in $[H(X), H(X) + 1)$.</p>
-<p><strong>A subtlety.</strong> The bound $L &lt; H(X) + 1$ applies to the per-symbol length when encoding one symbol at a time. If we encode blocks of $k$ symbols together and then Huffman-code the blocks, the per-symbol overhead shrinks to less than $\frac{1}{k}$ bits. In the limit $k \to \infty$, block Huffman approaches entropy. Arithmetic coding achieves close to entropy directly without blocking.</p>
-<hr>
-<h2 id="canonical-huffman-codes">Canonical Huffman Codes</h2>
-<p>In practice, the decoder needs to know the code. Transmitting the full tree requires storing, for each of $n$ symbols, its codeword (variable length) or its position in the tree. For large alphabets this overhead can be significant.</p>
-<p><strong>Canonical Huffman codes</strong> solve this elegantly. Instead of transmitting the tree, transmit only the <strong>code lengths</strong>: a list $\ell_1, \ell_2, \ldots, \ell_n$ giving the length assigned to each symbol. The canonical code is then reconstructed deterministically from these lengths by the following procedure:</p>
-<ol>
-<li>Sort symbols by code length (breaking ties alphabetically or by symbol index).</li>
-<li>Assign codewords in order: the first symbol in the sorted list gets the all-zeros code of the appropriate length. Each subsequent symbol gets the next integer in binary, right-padded with zeros if its length is greater than the previous symbol&rsquo;s length.</li>
-</ol>
-<p>More precisely, if symbols sorted by length are $s_{\pi(1)}, s_{\pi(2)}, \ldots$ with lengths $\ell_{\pi(1)} \leq \ell_{\pi(2)} \leq \cdots$, define:</p>
-<p>$$\text{code}(\pi(1)) = 0\cdots0 \quad (\ell_{\pi(1)} \text{ zeros})$$
-$$\text{code}(\pi(i)) = \left(\text{code}(\pi(i-1)) + 1\right) \ll (\ell_{\pi(i)} - \ell_{\pi(i-1)})$$</p>
-<p>where $\ll k$ means left-shift by $k$ bits (append $k$ zeros). This guarantees the prefix-free property because codewords at the same length are consecutive integers, and shifting left when length increases always produces strings that cannot be prefixes of shorter strings.</p>
-<p>The key point: the decoder needs only the lengths $\ell_1, \ldots, \ell_n$ - a list of $n$ small integers - to reconstruct the entire canonical code. This is how DEFLATE, JPEG, and most practical Huffman implementations transmit the code.</p>
-<p><strong>Example.</strong> From our five-symbol code: lengths are A:2, B:2, C:2, D:3, E:3. Sorted by length then alphabetically: A(2), B(2), C(2), D(3), E(3). Canonical assignment:</p>
-<table>
-<thead>
-<tr>
-<th>Symbol</th>
-<th>Length</th>
-<th>Canonical code</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>A</td>
-<td>2</td>
-<td>00</td>
-</tr>
-<tr>
-<td>B</td>
-<td>2</td>
-<td>01</td>
-</tr>
-<tr>
-<td>C</td>
-<td>2</td>
-<td>10</td>
-</tr>
-<tr>
-<td>D</td>
-<td>3</td>
-<td>110</td>
-</tr>
-<tr>
-<td>E</td>
-<td>3</td>
-<td>111</td>
-</tr>
-</tbody>
-</table>
-<p>Different codewords from the original, but same lengths and same average code length $L = 2.2$ bits. The canonical form is unique given the lengths.</p>
-<hr>
-<h2 id="connection-to-priority-queues">Connection to Priority Queues</h2>
-<p>Huffman coding is a textbook application of the min-heap for a reason that goes beyond pedagogy. The algorithm&rsquo;s correctness depends on always having access to the two smallest elements in the current collection. The collection changes at every step - two elements are removed and one is added - so a static sorted array would require $O(n)$ re-sorting per step, giving $O(n^2)$ total. The min-heap provides exactly the operations needed:</p>
+<p>So there always exists a prefix-free code with $L &lt; H(X) + 1$. Huffman coding achieves the minimum $L$ over all prefix-free codes - this is proved by the exchange argument given in the Greedy Insight section, applied inductively. Therefore Huffman coding is optimal among prefix-free codes, and its average length lies in $<a href="/posts/sorting-algorithms/" target="_blank" rel="noopener noreferrer">Sorting Algorithms - How Order Turns Hard Problems Easy</a>
+</p>
 <ul>
-<li><strong>Build-heap:</strong> $O(n)$ to initialize.</li>
-<li><strong>Extract-min:</strong> $O(\log n)$ per call. Called $2(n-1)$ times total.</li>
-<li><strong>Insert:</strong> $O(\log n)$ per call. Called $n-1$ times total.</li>
-</ul>
-<p>Total: $O(n \log n)$. No other data structure gives a better asymptotic bound for this problem (a Fibonacci heap would not help because we also need insert, not just decrease-key).</p>
-<p>The pattern - extract two minima, combine, reinsert - appears in other algorithms too. Prim&rsquo;s and Kruskal&rsquo;s algorithms for minimum spanning trees use priority queues in closely analogous ways. The difference is that Huffman builds a new object (a code tree) by combining the two cheapest things, while Prim&rsquo;s grows a single spanning tree by adding the cheapest edge. The greedy correctness arguments also rhyme: both rely on an exchange argument showing that the greedy choice can always be extended to an optimal solution.</p>
-<hr>
-<h2 id="applications">Applications</h2>
-<p><strong>DEFLATE.</strong> The compression format used in gzip, zlib, PNG images, and HTTP content-encoding combines two ideas: LZ77, which replaces repeated substrings with back-references, and Huffman coding, which encodes the resulting symbols and lengths. The Huffman codes in DEFLATE are transmitted as canonical codes - only the lengths are stored in the compressed file header. DEFLATE has been the dominant general-purpose compression algorithm since the early 1990s.</p>
-<p><strong>JPEG.</strong> After the discrete cosine transform and quantization steps reduce an image to a sparse array of frequency coefficients, JPEG uses Huffman coding to encode the non-zero coefficients. Because most coefficients cluster near zero after quantization, the symbol distribution is highly skewed - exactly the situation where Huffman coding provides the largest gains over fixed-length encoding. JPEG encoders compute the Huffman code from the coefficient distribution of the specific image.</p>
-<p><strong>H.264 and H.265 (video).</strong> Video codecs use a variant called CABAC (context-adaptive binary arithmetic coding) in their most efficient modes, but earlier profiles use CAVLC (context-adaptive variable-length coding) which is a form of adaptive Huffman coding. The &ldquo;context-adaptive&rdquo; part means the code is updated based on what has been encoded recently.</p>
-<p><strong>Arithmetic coding.</strong> Arithmetic coding is the natural competitor to Huffman coding. Instead of assigning each symbol a distinct codeword, it encodes an entire sequence as a single fraction in $[0, 1)$, narrowing the interval multiplicatively for each symbol. This can achieve arbitrarily close to entropy (within $O(1/n)$ per symbol for a sequence of length $n$), unlike Huffman which can lose up to one bit per symbol. The tradeoff is computational cost and sensitivity to model errors. Huffman remains preferred when speed matters or when the probability model is simple.</p>
-<hr>
-<h2 id="summary">Summary</h2>
-<table>
-<thead>
-<tr>
-<th>Concept</th>
-<th>Key Point</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Prefix-free code</td>
-<td>No codeword is a prefix of another; enables separator-free decoding</td>
-</tr>
-<tr>
-<td>Kraft inequality</td>
-<td>$\sum_i 2^{-\ell_i} \leq 1$; necessary and sufficient for prefix-free lengths</td>
-</tr>
-<tr>
-<td>Shannon entropy</td>
-<td>$H(X) = -\sum_i p_i \log_2 p_i$; lower bound on average code length</td>
-</tr>
-<tr>
-<td>Greedy insight</td>
-<td>Two rarest symbols should be deepest siblings; proved by exchange argument</td>
-</tr>
-<tr>
-<td>Algorithm</td>
-<td>Min-heap + $n-1$ merge steps; $O(n \log n)$ total</td>
-</tr>
-<tr>
-<td>Optimality</td>
-<td>$H(X) \leq L &lt; H(X) + 1$; optimal among all prefix-free codes</td>
-</tr>
-<tr>
-<td>Canonical codes</td>
-<td>Transmit only code lengths; receiver reconstructs codewords deterministically</td>
-</tr>
-<tr>
-<td>Decoding</td>
-<td>Walk tree bit by bit; $O(m)$ for message of length $m$</td>
-</tr>
-<tr>
-<td>Applications</td>
-<td>DEFLATE (gzip/PNG/HTTP), JPEG, video codecs</td>
-</tr>
-</tbody>
-</table>
-<p>Huffman coding occupies a rare position in algorithms: it is optimal by a precise theorem, efficient by a clean analysis, and ubiquitous in practice. The algorithm is a direct translation of a mathematical proof - the greedy choice is justified by an exchange argument, and the exchange argument is the algorithm. Very few ideas in computer science are this tight.</p>
-<hr>
-<p><strong>Read next:</strong></p>
-<ul>
-<li><a href="/posts/sorting-algorithms/" target="_blank" rel="noopener noreferrer">Sorting Algorithms - How Order Turns Hard Problems Easy</a>
-</li>
 <li><a href="/posts/trees-and-heaps/" target="_blank" rel="noopener noreferrer">Trees & Heaps - When Flat Structures Hit Their Limit</a>
 </li>
 <li><a href="/posts/minimum-spanning-trees-union-find/" target="_blank" rel="noopener noreferrer">Minimum Spanning Trees & Union-Find - Spanning a World on a Budget</a>
 </li>
-<li><a href="/posts/data-compression/" target="_blank" rel="noopener noreferrer">Data Compression</a>
+<li><a href="/posts/data-compression/" target="_blank" rel="noopener noreferrer">Data Compression - Throwing Away What You Can Reconstruct</a>
 </li>
 </ul>
 </div>
