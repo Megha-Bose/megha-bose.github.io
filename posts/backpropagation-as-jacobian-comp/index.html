@@ -1,6 +1,6 @@
 <!doctype html><html lang="en-us">
 <head>
-<title>Backpropagation - The Chain Rule, Applied at Scale // Megha Bose</title>
+<title>Backpropagation - The Circuit That Runs Gradients Backward // Megha Bose</title>
 <link rel="shortcut icon" href="/favicon.ico">
 <meta charset="utf-8">
 <meta name="generator" content="Hugo 0.92.2">
@@ -10,10 +10,10 @@
 <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Backpropagation - The Chain Rule, Applied at Scale">
+<meta name="twitter:title" content="Backpropagation - The Circuit That Runs Gradients Backward">
 <meta name="twitter:description" content="Helpful context:
  The Chain Rule & Backpropagation  Vector Calculus for ML  Gradients & Partial Derivatives    You have trained neural networks using backpropagation, or you have heard that backpropagation is how neural networks learn. But what is it, exactly? Most descriptions fall into one of two failure modes. The high-level version says something like &ldquo;errors propagate backward through the network&rdquo; - true but not mathematical. The code-focused version gives you pseudocode with arrays and loops - useful for implementation, but it conceals what is actually happening.">
-<meta property="og:title" content="Backpropagation - The Chain Rule, Applied at Scale">
+<meta property="og:title" content="Backpropagation - The Circuit That Runs Gradients Backward">
 <meta property="og:description" content="Helpful context:
  The Chain Rule & Backpropagation  Vector Calculus for ML  Gradients & Partial Derivatives    You have trained neural networks using backpropagation, or you have heard that backpropagation is how neural networks learn. But what is it, exactly? Most descriptions fall into one of two failure modes. The high-level version says something like &ldquo;errors propagate backward through the network&rdquo; - true but not mathematical. The code-focused version gives you pseudocode with arrays and loops - useful for implementation, but it conceals what is actually happening.">
 <meta property="og:type" content="article">
@@ -52,13 +52,13 @@
 <main class="app-container">
 <article class="post">
 <header class="post-header">
-<h1 class="post-title">Backpropagation - The Chain Rule, Applied at Scale</h1>
+<h1 class="post-title">Backpropagation - The Circuit That Runs Gradients Backward</h1>
 <div class="post-meta">
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 Dec 11, 2020
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-26 min read
+31 min read
 </div>
 </div>
 </header>
@@ -200,7 +200,68 @@ Dec 11, 2020
 <p><strong>Discomfort check.</strong> The upstream gradient arrives as a row vector (because $L$ is a scalar, so $\partial L / \partial (\text{anything})$ is a row vector by convention). The local Jacobian is a matrix. Multiplying a row vector by a matrix gives another row vector. This row vector is then passed to the next layer. The shapes propagate consistently if you keep track.</p>
 </blockquote>
 <hr>
-<h2 id="section-7-why-backward-and-not-forward">Section 7: Why Backward and Not Forward?</h2>
+<h2 id="section-7-gradient-flow---what-each-gate-does">Section 7: Gradient Flow - What Each Gate Does</h2>
+<p>The chain rule tells you <em>how</em> to compute gradients. There is a separate question worth sitting with: what are the gradients <em>doing</em> as they flow backward?</p>
+<p>Andrej Karpathy, in his essay &ldquo;Yes You Should Understand Backprop,&rdquo; argues that treating backpropagation as an automatic black box is a leaky abstraction - it hides the consequences you need to reason about when debugging and designing networks. His framing: think of the computation graph not as a function to differentiate but as a <em>circuit</em> through which a signal flows forward (activations) and backward (gradients). Each operation is a gate. Each gate has a distinct personality - a characteristic way of routing and transforming the upstream gradient. Once you internalize the four basic gate behaviors, you can predict gradient pathologies without computing anything.</p>
+<p><strong>The add gate: gradient distributor.</strong></p>
+<p>Forward: $z = x + y$. Local gradients $\partial z / \partial x = 1$ and $\partial z / \partial y = 1$. Backward:</p>
+<p>$$ rac{\partial L}{\partial x} = g, \quad rac{\partial L}{\partial y} = g$$</p>
+<p>The add gate copies the upstream gradient $g$ to both inputs unchanged. Neither input value affects how much gradient the other receives. The add gate cannot weaken a gradient.</p>
+<p>This is the complete explanation of why residual connections preserve gradient flow. A residual block computes $h = x + f(x)$. In the backward pass, the add gate copies the upstream gradient to both branches: one copy flows into $f(x)$, one flows directly into $x$ with no modification whatsoever. No matter how deep the network, the skip path carries the upstream gradient back to earlier layers at full strength. Skip connections do not &ldquo;help gradients flow&rdquo; in some vague sense - the add gate is incapable of reducing the gradient that passes through it.</p>
+<p><strong>The multiply gate: gradient swapper.</strong></p>
+<p>Forward: $z = xy$. Backward:</p>
+<p>$$ rac{\partial L}{\partial x} = g \cdot y, \quad rac{\partial L}{\partial y} = g \cdot x$$</p>
+<p>The multiply gate switches: to find the gradient flowing into $x$, scale the upstream gradient by $y$ (the <em>other</em> input), and vice versa. The two inputs swap roles.</p>
+<p>In a linear layer $z = wx$, the gradient with respect to the weight $w$ is $g \cdot x$ - the upstream error scaled by the input. This means each weight&rsquo;s gradient is proportional to the value of the input feeding into it. If input features have wildly different scales - say one feature is always near $0.001$ and another near $1000$ - the corresponding weight gradients differ by a factor of $10^6$. Both weights update in every gradient step, but at completely different effective learning rates. This is not a subtle effect: it is the multiply gate making the gradient literally proportional to the input value. Input normalization corrects for this by ensuring all inputs have comparable magnitudes, so all weight gradients are on the same scale.</p>
+<p><strong>The max gate: gradient router.</strong></p>
+<p>Forward: $z = \max(x, y)$. Backward: gradient goes entirely to the winner, zero to the loser.</p>
+<p>$$ rac{\partial L}{\partial x} = g \cdot \mathbf{1}[x \geq y], \quad rac{\partial L}{\partial y} = g \cdot \mathbf{1}[y > x]$$</p>
+<p>The max gate is a binary switch that routes the full gradient to whichever input won the competition, and sends exactly zero to the other. $ ext{ReLU}(x) = \max(0, x)$ is this gate applied to one input against a fixed threshold of zero. When $x > 0$, the gradient passes through at full strength. When $x \leq 0$, the gate shuts completely.</p>
+<p>This is the precise explanation of <strong>dead ReLU neurons</strong>. If a neuron&rsquo;s pre-activation is negative on every training example - due to a bad initialization or an unlucky large update early in training - the max gate always routes zero gradient backward. Every weight feeding that neuron receives zero gradient. They never update. The neuron is permanently silent: not because the network decided to suppress it, but because the gate mechanically blocked every signal that might have corrected it.</p>
+<p><strong>The sigmoid gate: gradient squasher.</strong></p>
+<p>Forward: $\sigma(x) = 1/(1 + e^{-x})$. Backward:</p>
+<p>$$ rac{\partial L}{\partial x} = g \cdot \sigma(x)(1 - \sigma(x))$$</p>
+<p>The local gradient $\sigma(x)(1-\sigma(x))$ has a maximum of $ rac{1}{4}$ at $x = 0$ and falls toward zero at both extremes. Every gradient that passes through a sigmoid is multiplied by at most $0.25$.</p>
+<p>This is not a probabilistic tendency. It is a hard ceiling. In a ten-layer network with sigmoid activations, the gradient at the first layer is at most $(0.25)^{10} pprox 10^{-6}$ of the loss gradient - already below double-precision floating-point significance and no information whatsoever about the loss can propagate to the earliest layers. Vanishing gradients in deep sigmoid networks are not a statistical artifact of poor initialization. They are the inevitable consequence of passing through ten consecutive gates that each cut the signal by at least 75%.</p>
+<p>ReLU is the solution precisely because it has no squashing behavior for positive inputs: its local gradient is exactly 1 when active, so gradients pass through it at full strength. The max gate either passes the gradient unchanged or blocks it entirely - it cannot attenuate it.</p>
+<p><strong>The practical upshot.</strong></p>
+<p>Every gradient pathology in deep learning has a gate-level diagnosis:</p>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Gate</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanishing gradients (deep sigmoid)</td>
+<td>Sigmoid squasher</td>
+<td>Each gate multiplies by $\leq 0.25$</td>
+</tr>
+<tr>
+<td>Dead neurons (ReLU)</td>
+<td>Max router</td>
+<td>Gate stuck routing zero</td>
+</tr>
+<tr>
+<td>Uneven weight updates</td>
+<td>Multiply swapper</td>
+<td>Input feature scales differ</td>
+</tr>
+<tr>
+<td>Gradient flows through residuals</td>
+<td>Add distributor</td>
+<td>Gate copies gradient unchanged</td>
+</tr>
+</tbody>
+</table>
+<p>You do not need to compute eigenvalues to diagnose a dead neuron. You need to know what the max gate does. The chain rule is the mechanism; gate intuition is the diagnostic language. Both matter, and neither is sufficient alone.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Karpathy&rsquo;s essay &ldquo;Yes You Should Understand Backprop&rdquo; argues that even though frameworks compute gradients automatically, the developer who does not understand the gate-level behavior will encounter situations where the training fails silently - a dead neuron, a saturated sigmoid, a gradient that is off by the batch size because the loss averaging was forgotten. The bugs are invisible unless you can picture what the gradient circuit is doing. This is not a call to hand-compute gradients for every network. It is a call to read the circuit, not just trust the machinery.</p>
+</blockquote>
+<h2 id="section-8-why-backward-and-not-forward">Section 8: Why Backward and Not Forward?</h2>
 <p>There are two orders in which you can multiply a chain of matrices. Suppose the chain is:</p>
 <p>$$\frac{\partial L}{\partial x} = \underbrace{\frac{\partial L}{\partial \hat{y}}}<em>{1 \times k} \cdot \underbrace{\frac{\partial \hat{y}}{\partial h}}</em>{k \times m} \cdot \underbrace{\frac{\partial h}{\partial z}}<em>{m \times m} \cdot \underbrace{\frac{\partial z}{\partial x}}</em>{m \times d}$$</p>
 <p>Matrix multiplication is associative, so you can choose the order. There are two natural choices:</p>
@@ -214,7 +275,7 @@ Dec 11, 2020
 <p>So one backward pass gives you $\partial L / \partial W_l$ for every layer $l$ simultaneously. The cost is one backward pass, comparable in expense to one forward pass. To get all the same information with forward mode, you would need one pass per parameter group - potentially millions.</p>
 <p><strong>The formal argument.</strong> For a function $L: \mathbb{R}^N \to \mathbb{R}$ with $N$ inputs and 1 output, backward mode computes all $N$ partial derivatives in 1 pass. Forward mode computes all $N$ partial derivatives in $N$ passes (one per input direction). For neural networks, $N$ is enormous and outputs are scalar. Backward mode wins by a factor of $N$.</p>
 <hr>
-<h2 id="section-8-the-computational-graph">Section 8: The Computational Graph</h2>
+<h2 id="section-9-the-computational-graph">Section 9: The Computational Graph</h2>
 <p>Any computation can be represented as a directed acyclic graph (DAG), where each node is an operation and each edge carries a value. The forward pass evaluates nodes in topological order, and the backward pass does the same in reverse.</p>
 <p>For our two-layer network, the nodes are: multiply by $W_1$, add $b_1$, apply $\sigma$, multiply by $W_2$, add $b_2$, compute $|\cdot - y|^2$. Each has:</p>
 <ul>
@@ -235,7 +296,7 @@ Dec 11, 2020
 <p>At the end, $\bar{v}_i = \partial L / \partial v_i$ for every node $i$. In particular, $\bar{w}_k = \partial L / \partial w_k$ for every weight node $w_k$.</p>
 <p>This is backpropagation. It is a dynamic programming algorithm that computes all partial derivatives simultaneously by traversing the graph once backward.</p>
 <hr>
-<h2 id="section-9-deriving-the-jacobian-of-a-linear-layer-from-scratch">Section 9: Deriving the Jacobian of a Linear Layer from Scratch</h2>
+<h2 id="section-10-deriving-the-jacobian-of-a-linear-layer-from-scratch">Section 10: Deriving the Jacobian of a Linear Layer from Scratch</h2>
 <p>The backward rules for a linear layer are used in every network, so they are worth deriving carefully rather than just stating.</p>
 <p>Forward: $y = Wx$ where $W \in \mathbb{R}^{m \times n}$ and $x \in \mathbb{R}^n$. Output $y \in \mathbb{R}^m$.</p>
 <p><strong>Gradient with respect to $x$.</strong> We want $\partial L / \partial x$ given upstream gradient $g = \partial L / \partial y$ (a row vector of length $m$).</p>
@@ -254,7 +315,7 @@ Dec 11, 2020
 <p>$$\frac{\partial L}{\partial W} = g^T x^T \quad \text{(shape } m \times n \text{, same as } W \text{)}$$</p>
 <p>This derivation uses only the definition of a partial derivative and the chain rule. No tricks, no formulas memorized without understanding.</p>
 <hr>
-<h2 id="section-10-gradients-of-common-operations">Section 10: Gradients of Common Operations</h2>
+<h2 id="section-11-gradients-of-common-operations">Section 11: Gradients of Common Operations</h2>
 <p>Every layer you will encounter in practice has a backward rule derivable from the chain rule. The linear layer was worked out from scratch in Section 9. Here are the other essential ones.</p>
 <p>Every layer you will encounter in practice has a backward rule derivable from the chain rule. Here are the most important ones.</p>
 <p><strong>Elementwise nonlinearity: $y = \sigma(x)$, so $y_i = \sigma(x_i)$.</strong></p>
@@ -270,7 +331,7 @@ Dec 11, 2020
 <p><strong>Discomfort check.</strong> Why does the gradient $\hat{p} - y$ not involve the derivative of the softmax? It does - it is just hidden. The softmax Jacobian has a specific form that, when combined with the cross-entropy gradient, telescopes to $\hat{p} - y$. If you work through the full chain rule for softmax and cross-entropy separately, and then multiply, you will recover this formula. The simplification is a consequence of the special structure of the exponential function and the logarithm being inverses.</p>
 </blockquote>
 <hr>
-<h2 id="section-11-what-vanishing-gradients-actually-are">Section 11: What Vanishing Gradients Actually Are</h2>
+<h2 id="section-12-what-vanishing-gradients-actually-are">Section 12: What Vanishing Gradients Actually Are</h2>
 <p>You have probably heard that deep networks suffer from vanishing gradients. Now you can see exactly why.</p>
 <p>The gradient flowing back to layer $l$ is a product of local Jacobians from layers $l+1$ through $L$:</p>
 <p>$$\frac{\partial L}{\partial h_l} = \frac{\partial L}{\partial \hat{y}} \cdot J_{f_L} \cdot J_{f_{L-1}} \cdots J_{f_{l+1}}$$</p>
@@ -286,7 +347,7 @@ Dec 11, 2020
 </ul>
 <p>Both are derived by requiring the variance of the output of each layer to equal the variance of its input, so the activation scale is preserved as the signal passes forward and the gradient scale is preserved as the gradient passes backward. Both are consequences of the Jacobian analysis above.</p>
 <hr>
-<h2 id="section-12-backpropagation-is-not-optional">Section 12: Backpropagation Is Not Optional</h2>
+<h2 id="section-13-backpropagation-is-not-optional">Section 13: Backpropagation Is Not Optional</h2>
 <p>A question sometimes asked: why can we not just compute $\partial L / \partial w_k$ by finite differences - perturb $w_k$ slightly, measure how $L$ changes, divide?</p>
 <p>The numerical derivative $\partial L / \partial w_k \approx (L(w_k + \epsilon) - L(w_k)) / \epsilon$ is correct in principle. But it requires one full forward pass per weight. A network with one million weights requires one million forward passes. At typical network sizes, this is computationally impossible.</p>
 <p>Backpropagation computes all $N$ partial derivatives in the cost of roughly two forward passes (one for the forward pass, one for the backward pass). This is not an approximation - it is exact (up to floating-point precision). The efficiency gain is a factor of $N/2$, which for large models is tens of millions.</p>
@@ -298,7 +359,7 @@ Dec 11, 2020
 <p><strong>Memory and the backward pass.</strong> One practical constraint: the backward pass must access the activations computed during the forward pass (you need $h$ to compute $\partial L / \partial W_2$, you need $z$ to evaluate $\sigma'(z)$, etc.). For deep networks, storing all intermediate activations requires memory proportional to the number of layers times the batch size times the layer width.</p>
 <p>For very deep networks or large batches, this can exceed GPU memory. The solution is gradient checkpointing: recompute activations on demand during the backward pass instead of storing them all. You store only activations at checkpointed layers (every $\sqrt{L}$ layers, say), and recompute intermediate activations when needed. This reduces memory from $O(L)$ to $O(\sqrt{L})$ at the cost of one additional forward pass per segment - a factor-of-2 increase in computation in exchange for a square-root reduction in memory.</p>
 <hr>
-<h2 id="section-13-beyond-feedforward-networks">Section 13: Beyond Feedforward Networks</h2>
+<h2 id="section-14-beyond-feedforward-networks">Section 14: Beyond Feedforward Networks</h2>
 <p>The same principles apply to any computation that can be expressed as a graph of differentiable operations. Here are two important cases.</p>
 <p><strong>Recurrent neural networks.</strong> A recurrent network processes a sequence $x_1, x_2, \ldots, x_T$ by maintaining a hidden state $h_t$ that is updated at each step:</p>
 <p>$$h_t = \sigma(W_h h_{t-1} + W_x x_t + b)$$</p>
@@ -310,7 +371,7 @@ Dec 11, 2020
 <p>where $Q, K, V$ are matrices. This is a composition of matrix multiplication, scaling, softmax (applied rowwise), and another matrix multiplication. Each operation has a backward rule - the chain rule applies exactly as before. The backward rule for attention is derivable from the rules in Section 10, though the resulting formulas involve matrix products rather than simple elementwise operations.</p>
 <p>The practical point: no special mathematical treatment is required for attention. It is a differentiable computation, and its gradients are computed by backpropagation through its computational graph, just as for any other operation.</p>
 <hr>
-<h2 id="section-14-the-complete-picture">Section 14: The Complete Picture</h2>
+<h2 id="section-15-the-complete-picture">Section 15: The Complete Picture</h2>
 <p>Let us return to the one-sentence summary: backpropagation computes the partial derivative of the loss with respect to every weight in the network, using the chain rule of calculus, evaluated in reverse order through the computation.</p>
 <p>Each word now has a precise meaning:</p>
 <ul>
@@ -322,7 +383,7 @@ Dec 11, 2020
 <p>The word &ldquo;backpropagation&rdquo; names the algorithm. The mathematics is: reverse-mode automatic differentiation applied to a composition of functions representing a neural network.</p>
 <p>Any other neural network computation you encounter - attention, convolution, normalization layers, residual connections - has a backward rule derivable by the same principles. The local Jacobian changes. The pattern does not.</p>
 <hr>
-<h2 id="section-15-batch-training-and-the-gradient-sum">Section 15: Batch Training and the Gradient Sum</h2>
+<h2 id="section-16-batch-training-and-the-gradient-sum">Section 16: Batch Training and the Gradient Sum</h2>
 <p>In practice, you do not compute the gradient on a single example. You compute it over a minibatch of $B$ examples ${(x_i, y_i)}_{i=1}^B$ and average:</p>
 <p>$$L_{\text{batch}} = \frac{1}{B} \sum_{i=1}^B L_i$$</p>
 <p>where $L_i$ is the loss on the $i$-th example.</p>
@@ -332,7 +393,7 @@ Dec 11, 2020
 <p>where $\Delta \in \mathbb{R}^{B \times m}$ stacks the $\delta_i$ as rows and $X \in \mathbb{R}^{B \times d}$ stacks the $x_i$ as rows. This is a single matrix multiplication: the entire batch is processed simultaneously.</p>
 <p>This is why GPUs are effective for deep learning. A GPU performs many matrix multiplications in parallel. By organizing the batch as a matrix, the forward pass (and backward pass) become sequences of matrix multiplications over the entire batch, which GPUs can execute at maximum hardware utilization.</p>
 <hr>
-<h2 id="section-16-gradient-formulas-reference">Section 16: Gradient Formulas Reference</h2>
+<h2 id="section-17-gradient-formulas-reference">Section 17: Gradient Formulas Reference</h2>
 <p>For any layer with upstream gradient $g = \partial L / \partial y$ (treat as a row vector):</p>
 <table>
 <thead>
