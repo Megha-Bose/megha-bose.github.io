@@ -87,7 +87,7 @@ Dec 11, 2020
 <li>Each inequality constraint function $f_i$ is convex. (Convex functions satisfy $f_i(x) \leq 0$ on convex sets - the feasible region for each constraint is convex.)</li>
 <li>The equality constraints $Ax = b$ are affine. (Affine functions are simultaneously convex and concave.)</li>
 </ol>
-<p>The feasible set $\mathcal{F} = {x : f_i(x) \leq 0 \text{ for all } i, Ax = b}$ is the intersection of convex sets, hence convex. Combined with the convex objective: any local minimum is a global minimum.</p>
+<p>The feasible set $\mathcal{F} = \{x : f_i(x) \leq 0 \text{ for all } i, Ax = b\}$ is the intersection of convex sets, hence convex. Combined with the convex objective: any local minimum is a global minimum.</p>
 <p>This may seem too restrictive. What problems actually fit this template? A large and important class.</p>
 <hr>
 <h2 id="section-2-a-hierarchy-of-problem-classes">Section 2: A Hierarchy of Problem Classes</h2>
@@ -154,8 +154,8 @@ Dec 11, 2020
 <p>$$f(y) \geq f(x) + g \cdot (y - x).$$</p>
 <p>The subgradient condition says: $g$ gives a supporting hyperplane at $x$ that lies everywhere below the graph of $f$. This is the first-order convexity condition for smooth functions, but extended to non-differentiable points.</p>
 <p>The set of all subgradients at $x$ is the <strong>subdifferential</strong> $\partial f(x)$.</p>
-<p><strong>Example: $f(x) = |x|$.</strong> At $x > 0$: $f$ is differentiable with $f'(x) = 1$, so $\partial f(x) = {1}$.</p>
-<p>At $x &lt; 0$: $f'(x) = -1$, so $\partial f(x) = {-1}$.</p>
+<p><strong>Example: $f(x) = |x|$.</strong> At $x > 0$: $f$ is differentiable with $f'(x) = 1$, so $\partial f(x) = \{1\}$.</p>
+<p>At $x &lt; 0$: $f'(x) = -1$, so $\partial f(x) = \{-1\}$.</p>
 <p>At $x = 0$: any $g \in [-1, 1]$ satisfies $|y| \geq 0 + g \cdot (y - 0) = gy$ for all $y$ (since $|y| \geq |g||y| \geq gy$ when $|g| \leq 1$). So $\partial f(0) = [-1, 1]$ - the entire interval.</p>
 <p><strong>The optimality condition.</strong> For a convex function, $x^\ast$ is a global minimum if and only if $0 \in \partial f(x^\ast)$. At smooth points, this is $\nabla f(x^\ast) = 0$. At non-smooth points, the zero vector must be in the subdifferential.</p>
 <p>For $f(x) = |x|$: $0 \in \partial f(0) = [-1, 1]$. Yes - so $x^\ast = 0$ is the global minimum. Correct.</p>
@@ -167,21 +167,21 @@ Dec 11, 2020
 <h2 id="section-6-proximal-methods">Section 6: Proximal Methods</h2>
 <p>For objectives of the form $h(x) = f(x) + g(x)$, where $f$ is smooth and convex but $g$ is convex and non-smooth, neither pure gradient descent (does not handle non-smoothness) nor the subgradient method (ignores the smooth structure of $f$) is ideal. Proximal gradient methods split the problem and handle each part differently.</p>
 <p>The central operation is the <strong>proximal operator</strong> of $g$:</p>
-<p>$$\text{prox}_{g}(v) = \underset{x}{\arg\min} \left{ \frac{1}{2}|x - v|^2 + g(x) \right}.$$</p>
+<p>$$\text{prox}_{g}(v) = \underset{x}{\arg\min} \left\{ \frac{1}{2}|x - v|^2 + g(x) \right\}.$$</p>
 <p>The proximal operator finds the point minimizing a tradeoff: stay close to $v$ (the quadratic penalty) while also keeping $g$ small. It is a &ldquo;soft projection&rdquo; - like projecting $v$ onto a lower level set of $g$, but softly rather than hard.</p>
 <p>The proximal gradient step is:</p>
 <ol>
 <li>Gradient step on $f$: $v = x_t - \eta \nabla f(x_t)$.</li>
 <li>Proximal step on $g$: $x_{t+1} = \text{prox}_{\eta g}(v)$.</li>
 </ol>
-<p>The proximal step is applied with a scaled version of $g$: $\text{prox}_{\eta g}(v) = \arg\min_x { \frac{1}{2}|x-v|^2 + \eta g(x) }$.</p>
+<p>The proximal step is applied with a scaled version of $g$: $\text{prox}_{\eta g}(v) = \arg\min_x \{ \frac{1}{2}|x-v|^2 + \eta g(x) \}$.</p>
 <p>The key insight: step 2 solves a small optimization problem exactly (in closed form, for many important choices of $g$). Non-smooth objectives with structure can be handled exactly rather than approximately.</p>
 <p><strong>Convergence.</strong> For convex $f$ (smooth, $L$-smooth) and convex $g$ (possibly non-smooth), proximal gradient with step size $1/L$ converges at $O(1/t)$ - the same rate as gradient descent on smooth objectives. The non-smooth part does not slow things down, because the proximal operator resolves it exactly at each step.</p>
 <hr>
 <h2 id="section-7-soft-thresholding-and-lasso">Section 7: Soft Thresholding and LASSO</h2>
 <p>The most important proximal operator in machine learning is the proximal operator of the L1 norm: $g(x) = \lambda|x|_1$.</p>
 <p>For a scalar $v$, the proximal problem is:</p>
-<p>$$\text{prox}_{\eta\lambda|x|}(v) = \underset{x}{\arg\min} \left{ \frac{1}{2}(x - v)^2 + \eta\lambda|x| \right}.$$</p>
+<p>$$\text{prox}_{\eta\lambda|x|}(v) = \underset{x}{\arg\min} \left\{ \frac{1}{2}(x - v)^2 + \eta\lambda|x| \right\}.$$</p>
 <p>The objective is: pay $(x-v)^2/2$ to move away from $v$, and pay $\eta\lambda|x|$ for the size of $x$. The optimal tradeoff has a closed form.</p>
 <p>For $v > 0$: the minimum is at $x = v - \eta\lambda$ if $v > \eta\lambda$, and at $x = 0$ if $v \leq \eta\lambda$.
 For $v &lt; 0$: by symmetry, $x = v + \eta\lambda$ if $|v| > \eta\lambda$, and $x = 0$ if $|v| \leq \eta\lambda$.
@@ -201,9 +201,9 @@ For $v = 0$: $x = 0$.</p>
 <h2 id="section-8-why-l1-promotes-sparsity">Section 8: Why L1 Promotes Sparsity</h2>
 <p>L1 and L2 regularization are both convex. Both shrink coefficients toward zero. But the L1 penalty produces exact zeros (sparse solutions) while L2 does not. Understanding why requires looking at the geometry.</p>
 <p><strong>The constraint form.</strong> The regularized problem $\min_w \ell(w) + \lambda R(w)$ is equivalent to $\min_w \ell(w)$ subject to $R(w) \leq t$ (for appropriate $t$ depending on $\lambda$). The regularizer acts as a constraint on the norm of $w$.</p>
-<p>For L2: the feasible set ${w : |w|^2 \leq t}$ is a ball. Level curves of a generic loss function $\ell$ are smooth ellipsoids. The point where the loss is minimized on the ball boundary is generically a smooth point on the sphere, not on any coordinate axis. The optimal $w$ has all nonzero components.</p>
-<p>For L1: the feasible set ${w : |w|_1 \leq t}$ is a diamond (in 2D) or a cross-polytope (in higher dimensions). This set has corners on the coordinate axes - points like $(t, 0, \ldots, 0)$ and permutations. When you minimize a generic smooth loss on this set, the minimum generically occurs at a corner, because the loss gradient can be &ldquo;parallel&rdquo; to the flat faces of the diamond (which forces the minimum to the adjacent corner). Corners have many coordinates equal to zero. The solution is sparse.</p>
-<p>Algebraically: the subdifferential of $|w_j|$ at $w_j = 0$ is the entire interval $[-1, 1]$. The optimality condition $0 \in \partial h$ allows the gradient of the loss with respect to $w_j$ to be any value in $[-\lambda, \lambda]$ while still giving $w_j^\ast = 0$. A whole range of loss gradients is compatible with exact zeros. For L2, the subdifferential at $0$ is just ${0}$, so only exactly zero loss gradient produces $w_j^\ast = 0$, which generically does not happen.</p>
+<p>For L2: the feasible set $\{w : |w|^2 \leq t\}$ is a ball. Level curves of a generic loss function $\ell$ are smooth ellipsoids. The point where the loss is minimized on the ball boundary is generically a smooth point on the sphere, not on any coordinate axis. The optimal $w$ has all nonzero components.</p>
+<p>For L1: the feasible set $\{w : |w|_1 \leq t\}$ is a diamond (in 2D) or a cross-polytope (in higher dimensions). This set has corners on the coordinate axes - points like $(t, 0, \ldots, 0)$ and permutations. When you minimize a generic smooth loss on this set, the minimum generically occurs at a corner, because the loss gradient can be &ldquo;parallel&rdquo; to the flat faces of the diamond (which forces the minimum to the adjacent corner). Corners have many coordinates equal to zero. The solution is sparse.</p>
+<p>Algebraically: the subdifferential of $|w_j|$ at $w_j = 0$ is the entire interval $[-1, 1]$. The optimality condition $0 \in \partial h$ allows the gradient of the loss with respect to $w_j$ to be any value in $[-\lambda, \lambda]$ while still giving $w_j^\ast = 0$. A whole range of loss gradients is compatible with exact zeros. For L2, the subdifferential at $0$ is just $\{0\}$, so only exactly zero loss gradient produces $w_j^\ast = 0$, which generically does not happen.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> If L1 produces sparse solutions, should you always prefer L1 over L2?</p>
 <p>No. The right choice depends on your beliefs about the true model:</p>
@@ -296,7 +296,7 @@ For $v = 0$: $x = 0$.</p>
 <p><strong>Step 2: What class is it?</strong> Identify the problem as LP, QP, SOCP, or SDP. Use a modeling framework (CVX, CVXPY, JuMP) that automatically selects the right solver.</p>
 <p><strong>Step 3: What is the scale?</strong> Small ($n &lt; 1000$): use interior-point methods. Interior-point solvers converge to machine precision in around 50 iterations using Newton steps. Large ($n > 10^6$): use first-order methods. Slower per unit accuracy but cheap per iteration.</p>
 <p><strong>Step 4: Is there special structure?</strong> Composite objective ($f + g$)? Use proximal methods. Separable structure? Use coordinate descent. Sparsity in data ($X$ is sparse)? Exploit this in gradient and proximal computations.</p>
-<p><strong>Step 5: If non-convex:</strong> Name the non-convexity. Is there a convex relaxation (replace rank constraint with nuclear norm, replace ${0,1}$ with $[0,1]$)? Is the problem &ldquo;almost convex&rdquo; (nearly tight in strong duality)? Can you initialize well enough that a local method finds a good solution?</p>
+<p><strong>Step 5: If non-convex:</strong> Name the non-convexity. Is there a convex relaxation (replace rank constraint with nuclear norm, replace $\{0,1\}$ with $[0,1]$)? Is the problem &ldquo;almost convex&rdquo; (nearly tight in strong duality)? Can you initialize well enough that a local method finds a good solution?</p>
 <p>Convex optimization is both a theoretical framework and an engineering discipline. The theory tells you which problems are tractable and what guarantees are available. The engineering tells you which algorithms, implemented how, with which solver, will actually solve your problem in reasonable time. Mastery requires both.</p>
 <hr>
 <p><strong>Read Next:</strong></p>

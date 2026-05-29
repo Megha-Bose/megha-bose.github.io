@@ -77,7 +77,7 @@ Jun 1, 2024
 <hr>
 <h2 id="the-message-passing-framework">The Message Passing Framework</h2>
 <p>The general message passing update for layer $l$ at node $i$ is:</p>
-<p>$$h_i^{(l+1)} = \text{UPDATE}!\left(h_i^{(l)},; \text{AGGREGATE}!\left(\left{h_j^{(l)} : j \in \mathcal{N}(i)\right}\right)\right)$$</p>
+<p>$$h_i^{(l+1)} = \text{UPDATE}!\left(h_i^{(l)},; \text{AGGREGATE}!\left(\left\{h_j^{(l)} : j \in \mathcal{N}(i)\right\}\right)\right)$$</p>
 <p>where $\mathcal{N}(i)$ is the set of neighbors of node $i$, AGGREGATE is some permutation-invariant function (sum, mean, max), and UPDATE combines the node&rsquo;s own representation with the aggregated neighborhood message.</p>
 <p>This is the template. Different GNN architectures are different instantiations of AGGREGATE and UPDATE. The key property is that after $k$ layers, each node&rsquo;s representation $h_i^{(k)}$ encodes information from every node within $k$ hops - the $k$-hop neighborhood. With enough layers and sufficient representational capacity, this can in principle capture any structural information reachable from node $i$.</p>
 <p>Why does permutation invariance follow? Because AGGREGATE is applied to an unordered set, not an ordered sequence. Sum, mean, and max are all invariant to the order in which their inputs are presented. The UPDATE function operates on the fixed-dimensional outputs of AGGREGATE, so it also does not depend on node ordering. The entire computation graph is defined by adjacency, not by index.</p>
@@ -90,14 +90,14 @@ Jun 1, 2024
 <p>where $H^{(l)} \in \mathbb{R}^{n \times d_l}$ is the matrix of all node representations at layer $l$, $W^{(l)} \in \mathbb{R}^{d_l \times d_{l+1}}$ is a learnable weight matrix, and $\sigma$ is a pointwise nonlinearity (typically ReLU).</p>
 <p>Why the symmetric normalization? Without it, summing over all neighbors gives a value proportional to the neighbor&rsquo;s degree - a high-degree hub would dominate aggregation, and activations would scale differently for high-degree and low-degree nodes, destabilizing training. The factor $\tilde{D}^{-1/2}$ on each side normalizes both the sending and receiving node by the square root of their degree. This is analogous to the normalization in the spectral view of graph convolution and keeps the operator&rsquo;s spectral radius bounded by 1.</p>
 <p>Written out for a single node $i$:</p>
-<p>$$h_i^{(l+1)} = \sigma!\left(W^{(l)\top}\sum_{j \in \mathcal{N}(i) \cup {i}} \frac{h_j^{(l)}}{\sqrt{\tilde{d}_i \tilde{d}_j}}\right)$$</p>
+<p>$$h_i^{(l+1)} = \sigma!\left(W^{(l)\top}\sum_{j \in \mathcal{N}(i) \cup \{i\}} \frac{h_j^{(l)}}{\sqrt{\tilde{d}_i \tilde{d}_j}}\right)$$</p>
 <p>where $\tilde{d}_i = 1 + \deg(i)$. Each neighbor&rsquo;s contribution is downweighted by the geometric mean of the two nodes' (augmented) degrees.</p>
 <p>The spectral motivation: $\hat{A}$ is a normalized Laplacian-adjacent operator whose eigenvalues lie in $[-1, 1]$. Applying $\hat{A}$ repeatedly performs a smoothing operation on node features, analogous to low-pass filtering on a graph signal. GCN can be understood as applying a fixed graph filter and then learning a linear map - a highly regularized spectral graph convolution.</p>
 <hr>
 <h2 id="graphsage-inductive-learning">GraphSAGE: Inductive Learning</h2>
 <p>GCN is transductive: it operates on a fixed graph and cannot generalize to nodes or graphs not seen during training. If you train on a citation network and a new paper is added, you must retrain. GraphSAGE (Hamilton et al., 2017) makes GNNs inductive by learning an aggregation function that can be applied to any neighborhood.</p>
 <p>The key change: rather than using all neighbors, GraphSAGE samples a fixed-size subset $\mathcal{S}_i^{(l)} \subset \mathcal{N}(i)$ at each layer. The aggregation is:</p>
-<p>$$h_{\mathcal{N}(i)}^{(l)} = \text{AGG}!\left(\left{h_j^{(l)} : j \in \mathcal{S}_i^{(l)}\right}\right)$$</p>
+<p>$$h_{\mathcal{N}(i)}^{(l)} = \text{AGG}!\left(\left\{h_j^{(l)} : j \in \mathcal{S}_i^{(l)}\right\}\right)$$</p>
 <p>$$h_i^{(l+1)} = \sigma!\left(W^{(l)} \cdot \left[h_i^{(l)} ;|; h_{\mathcal{N}(i)}^{(l)}\right]\right)$$</p>
 <p>where $|$ denotes concatenation. Three choices for AGG are standard:</p>
 <ul>
@@ -122,7 +122,7 @@ Jun 1, 2024
 <h2 id="expressive-power-the-weisfeiler-leman-test">Expressive Power: The Weisfeiler-Leman Test</h2>
 <p>How powerful are GNNs? Can they distinguish any two non-isomorphic graphs? The answer is no - and the precise characterization involves the Weisfeiler-Leman (WL) graph isomorphism test.</p>
 <p>The 1-WL test works by iteratively assigning colors to nodes based on their current color and the multiset of neighbors' colors:</p>
-<p>$$c_i^{(t+1)} = \text{HASH}!\left(c_i^{(t)},; \left{!\left{ c_j^{(t)} : j \in \mathcal{N}(i) \right}!\right}\right).$$</p>
+<p>$$c_i^{(t+1)} = \text{HASH}!\left(c_i^{(t)},; \left\{!\left\{ c_j^{(t)} : j \in \mathcal{N}(i) \right\}!\right\}\right).$$</p>
 <p>If two graphs are isomorphic, 1-WL assigns identical color sequences. If 1-WL produces different color histograms, the graphs are definitely non-isomorphic. But 1-WL can fail: there exist non-isomorphic pairs of graphs that 1-WL cannot distinguish.</p>
 <p>The key theorem (Xu et al., 2019): any message-passing GNN is at most as powerful as the 1-WL test. A GNN can distinguish two graphs only if 1-WL can. Equality is achieved when the aggregation is injective on multisets - specifically, when AGG uses summation (not mean or max) and the UPDATE is also injective. This is the GIN (Graph Isomorphism Network) architecture:</p>
 <p>$$h_i^{(l+1)} = \text{MLP}^{(l)}!\left((1 + \epsilon^{(l)}), h_i^{(l)} + \sum_{j \in \mathcal{N}(i)} h_j^{(l)}\right)$$</p>
@@ -142,7 +142,7 @@ Jun 1, 2024
 <p><strong>Node-level tasks.</strong> After $L$ layers of message passing, each node $i$ has a representation $h_i^{(L)} \in \mathbb{R}^d$. Apply a classifier or regressor to each $h_i^{(L)}$ independently. Example: predict whether each node in a citation graph belongs to a research topic (transductive node classification). Because the GNN aggregates neighborhood information, the prediction for node $i$ is informed by its local context, not just its own features.</p>
 <p><strong>Edge-level tasks.</strong> Predict whether an edge exists (link prediction) or its properties. A common approach: for each pair of nodes, form a pair representation $[h_i^{(L)} | h_j^{(L)}]$ or compute their dot product $h_i^{(L)} \cdot h_j^{(L)}$, then apply a classifier. In knowledge graphs, this is entity-relation-entity triple completion.</p>
 <p><strong>Graph-level tasks.</strong> To predict a property of the whole graph (e.g., predict the solubility of a molecule), the per-node representations must be aggregated into a single graph representation:</p>
-<p>$$h_G = \text{READOUT}!\left(\left{h_i^{(L)} : i \in V\right}\right).$$</p>
+<p>$$h_G = \text{READOUT}!\left(\left\{h_i^{(L)} : i \in V\right\}\right).$$</p>
 <p>Simple choices: mean pooling $h_G = \frac{1}{n}\sum_i h_i^{(L)}$ or max pooling. These are permutation invariant by construction. Differentiable pooling (DiffPool, Ying et al., 2018) learns a soft clustering of nodes into a coarser graph at each pooling step, progressively reducing the number of nodes while preserving hierarchical structure. Sort pooling (SortPool) concatenates the top-$k$ node representations sorted by their last feature dimension.</p>
 <hr>
 <h2 id="applications">Applications</h2>
@@ -236,7 +236,7 @@ Jun 1, 2024
 </tr>
 <tr>
 <td>Graph-level readout</td>
-<td>READOUT$({h_i^{(L)}})$ - permutation-invariant pooling to obtain a graph representation</td>
+<td>READOUT$(\{h_i^{(L)}\})$ - permutation-invariant pooling to obtain a graph representation</td>
 </tr>
 <tr>
 <td>Inductive vs. transductive</td>

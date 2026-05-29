@@ -214,10 +214,10 @@ C -->|"round 3"| E(["v₅"])
 <p><strong>Intuition: grow the set of allowed intermediaries.</strong></p>
 <p>Label the vertices $1, 2, \ldots, V$. Run through them one by one and ask at each step:</p>
 <blockquote>
-<p>For each pair $(i, j)$: what is the shortest path from $i$ to $j$ if only vertices ${1, 2, \ldots, k}$ may be used as intermediate stops?</p>
+<p>For each pair $(i, j)$: what is the shortest path from $i$ to $j$ if only vertices $\{1, 2, \ldots, k\}$ may be used as intermediate stops?</p>
 </blockquote>
 <p>When $k = 0$, no intermediaries are allowed - only direct edges. When $k = V$, all vertices are available: these are the true shortest paths.</p>
-<p>At each step, adding vertex $k$ to the allowed set introduces exactly one new option for every pair $(i, j)$: route through $k$. The shortest path either does not use $k$ (answer unchanged from step $k - 1$) or uses $k$ exactly once, splitting into two sub-paths - $i \leadsto k$ and $k \leadsto j$ - both of which use only intermediaries ${1, \ldots, k-1}$.</p>
+<p>At each step, adding vertex $k$ to the allowed set introduces exactly one new option for every pair $(i, j)$: route through $k$. The shortest path either does not use $k$ (answer unchanged from step $k - 1$) or uses $k$ exactly once, splitting into two sub-paths - $i \leadsto k$ and $k \leadsto j$ - both of which use only intermediaries $\{1, \ldots, k-1\}$.</p>
 <p>A concrete example:</p>
 <div class="mermaid">
 flowchart LR
@@ -231,11 +231,11 @@ A -->|10| C
 </script>
 <p>With no intermediaries ($k = 0$): the only known path from A to C is the direct edge, cost 10. When B enters the allowed set: check $A \to B \to C = 3 + 2 = 5 &lt; 10$. Update. The direct edge is beaten by the two-hop path.</p>
 <p><strong>The recurrence.</strong> Define:</p>
-<p>$$\text{dp}[i][j][k] = \text{shortest distance from } i \text{ to } j \text{ using only vertices } {1, \ldots, k} \text{ as intermediaries}$$</p>
+<p>$$\text{dp}[i][j][k] = \text{shortest distance from } i \text{ to } j \text{ using only vertices } \{1, \ldots, k\} \text{ as intermediaries}$$</p>
 <p>Base case: $\text{dp}[i][j][0] = w(i,j)$ if edge $(i, j)$ exists, else $\infty$; and $\text{dp}[i][i][0] = 0$.</p>
 <p>For $k \geq 1$:</p>
 <p>$$\text{dp}[i][j][k] = \min!\Bigl(\underbrace{\text{dp}[i][j][k-1]}<em>{\text{skip } k},\quad \underbrace{\text{dp}[i][k][k-1] + \text{dp}[k][j][k-1]}</em>{\text{route through } k}\Bigr)$$</p>
-<p><strong>Why does this decomposition work?</strong> If the shortest path from $i$ to $j$ routes through $k$, it splits as $i \leadsto k \leadsto j$. Could either sub-path loop back through $k$? In a graph without negative cycles, shortest paths are simple - they visit each vertex at most once. So both sub-paths use only intermediaries from ${1, \ldots, k-1}$, and $\text{dp}[\cdot][\cdot][k-1]$ gives their lengths correctly by the inductive hypothesis.</p>
+<p><strong>Why does this decomposition work?</strong> If the shortest path from $i$ to $j$ routes through $k$, it splits as $i \leadsto k \leadsto j$. Could either sub-path loop back through $k$? In a graph without negative cycles, shortest paths are simple - they visit each vertex at most once. So both sub-paths use only intermediaries from $\{1, \ldots, k-1\}$, and $\text{dp}[\cdot][\cdot][k-1]$ gives their lengths correctly by the inductive hypothesis.</p>
 <p><strong>Correctness.</strong> By induction on $k$. The base case holds by definition. Assuming $\text{dp}[\cdot][\cdot][k-1]$ is correct, the recurrence considers both cases (use $k$ or not) and takes the minimum - which is correct by hypothesis. After $V$ iterations, $\text{dp}[i][j][V] = \delta(i, j)$ for all pairs. $\blacksquare$</p>
 <p>In practice, the $k$ dimension is eliminated by updating in-place. This is safe because $\text{dp}[k][k] = 0$ throughout: routing through $k$ to reach $k$ itself adds nothing, so the values $\text{dp}[i][k]$ and $\text{dp}[k][j]$ used on the right-hand side are already their correct $k - 1$ values.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">floyd_warshall</span>(vertices, edges):

@@ -77,12 +77,12 @@ Jul 10, 2024
 <p><strong>Definition (EAV security / semantic security).</strong> A private-key encryption scheme is EAV-secure if for all PPT adversaries $A$, the advantage in the following experiment is negligible:</p>
 <ol>
 <li>$A$ outputs two equal-length messages $m_0, m_1$.</li>
-<li>A bit $b \leftarrow {0,1}$ is chosen; $c \leftarrow \text{Enc}_k(m_b)$ is given to $A$.</li>
+<li>A bit $b \leftarrow \{0,1\}$ is chosen; $c \leftarrow \text{Enc}_k(m_b)$ is given to $A$.</li>
 <li>$A$ outputs $b'$. $A$ wins if $b' = b$.</li>
 </ol>
 <p>$\text{Adv}_{\text{EAV}}(A) = |\Pr[b' = b] - 1/2|$ must be negligible.</p>
 <p>EAV security is equivalent to semantic security: no PPT adversary can compute any partial information about the message from the ciphertext.</p>
-<p><strong>Stream ciphers.</strong> A stream cipher uses a PRG $G: {0,1}^n \to {0,1}^{\ell}$ to produce a pseudorandom stream: $\text{Enc}_k(m) = G(k) \oplus m$. This is EAV-secure - the output of $G$ is computationally indistinguishable from a one-time pad. But it fails badly under the next definition.</p>
+<p><strong>Stream ciphers.</strong> A stream cipher uses a PRG $G: \{0,1\}^n \to \{0,1\}^{\ell}$ to produce a pseudorandom stream: $\text{Enc}_k(m) = G(k) \oplus m$. This is EAV-secure - the output of $G$ is computationally indistinguishable from a one-time pad. But it fails badly under the next definition.</p>
 <hr>
 <h2 id="cpa-attack-on-deterministic-encryption">CPA Attack on Deterministic Encryption</h2>
 <p>EAV security assumes the adversary sees only one ciphertext. The moment an adversary can make multiple encryption queries - a realistic model since Alice may send many messages - deterministic encryption breaks.</p>
@@ -97,19 +97,19 @@ Jul 10, 2024
 <p><strong>Fix: randomized encryption.</strong> $\text{Enc}$ must be randomized - using fresh randomness each call. The same message encrypts to different ciphertexts on different calls.</p>
 <hr>
 <h2 id="pseudorandom-functions-and-permutations">Pseudorandom Functions and Permutations</h2>
-<p><strong>Pseudorandom function (PRF).</strong> A keyed function $F: {0,1}^n \times {0,1}^n \to {0,1}^n$ is a PRF if it is computationally indistinguishable from a truly random function: for all PPT $D$:
+<p><strong>Pseudorandom function (PRF).</strong> A keyed function $F: \{0,1\}^n \times \{0,1\}^n \to \{0,1\}^n$ is a PRF if it is computationally indistinguishable from a truly random function: for all PPT $D$:
 $$|\Pr[D^{F_k(\cdot)}(1^n) = 1] - \Pr[D^{f(\cdot)}(1^n) = 1]| \leq \varepsilon(n)$$
-where $k \leftarrow {0,1}^n$ and $f$ is a uniformly random function. The distinguisher has oracle access but cannot distinguish $F_k$ from a random function.</p>
+where $k \leftarrow \{0,1\}^n$ and $f$ is a uniformly random function. The distinguisher has oracle access but cannot distinguish $F_k$ from a random function.</p>
 <p><strong>Pseudorandom permutation (PRP).</strong> Same as PRF but $F_k$ must be a bijection, and the distinguisher also gets access to an inversion oracle $F_k^{-1}(\cdot)$ in the &ldquo;strong PRP&rdquo; variant. Block ciphers (AES, DES) are modeled as PRPs.</p>
 <p>PRFs exist if OWFs exist (via the Goldreich-Goldwasser-Micali construction). PRPs exist if PRFs exist - Luby-Rackoff: a 3-round Feistel network with PRF round functions gives a PRP.</p>
 <hr>
 <h2 id="modes-of-operation">Modes of Operation</h2>
-<p>A block cipher $F_k: {0,1}^n \to {0,1}^n$ encrypts one $n$-bit block. To encrypt a variable-length message $m = m_1 | m_2 | \cdots | m_\ell$, choose a mode of operation.</p>
+<p>A block cipher $F_k: \{0,1\}^n \to \{0,1\}^n$ encrypts one $n$-bit block. To encrypt a variable-length message $m = m_1 | m_2 | \cdots | m_\ell$, choose a mode of operation.</p>
 <h3 id="ecb-electronic-codebook---broken">ECB (Electronic Codebook) - Broken</h3>
 <p>$c_i = F_k(m_i)$. Each block encrypted independently with the same key.</p>
 <p><strong>Why it fails:</strong> Deterministic. Identical plaintext blocks produce identical ciphertext blocks. The famous ECB penguin: an image encrypted block-by-block in ECB retains its visual structure because pixel blocks with the same values encrypt identically. Never use ECB for more than one block.</p>
 <h3 id="cbc-cipher-block-chaining">CBC (Cipher Block Chaining)</h3>
-<p>Choose a random initialization vector $\text{IV} \leftarrow {0,1}^n$.
+<p>Choose a random initialization vector $\text{IV} \leftarrow \{0,1\}^n$.
 $$c_0 = \text{IV}, \quad c_i = F_k(m_i \oplus c_{i-1})$$
 Decryption: $m_i = F_k^{-1}(c_i) \oplus c_{i-1}$.</p>
 <p>The IV must be fresh and uniform for each encryption (it is sent as part of the ciphertext). With a uniform IV, CBC is CPA-secure. The chaining means each block depends on all previous blocks - identical plaintext blocks produce different ciphertext. Weakness: requires sequential processing; IV predictability breaks CPA security.</p>

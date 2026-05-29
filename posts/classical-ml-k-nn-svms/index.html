@@ -70,7 +70,7 @@ Oct 1, 2024
 <hr>
 <h2 id="feature-space-and-classifier-design">Feature Space and Classifier Design</h2>
 <p>A <strong>feature vector</strong> $\mathbf{x} \in \mathbb{R}^d$ represents a data point. Each of the $d$ coordinates is a measured property - pixel intensity, word frequency, sensor reading. The <strong>feature space</strong> $\mathbb{R}^d$ contains all possible inputs.</p>
-<p>A <strong>classifier</strong> is a function $f: \mathbb{R}^d \to {1, \ldots, K}$ mapping each input to one of $K$ class labels. The goal is to learn $f$ from training data ${(\mathbf{x}<em>i, y_i)}</em>{i=1}^n$ where $\mathbf{x}_i \in \mathbb{R}^d$ and $y_i \in {1, \ldots, K}$.</p>
+<p>A <strong>classifier</strong> is a function $f: \mathbb{R}^d \to \{1, \ldots, K\}$ mapping each input to one of $K$ class labels. The goal is to learn $f$ from training data $\{(\mathbf{x}<em>i, y_i)\}</em>{i=1}^n$ where $\mathbf{x}_i \in \mathbb{R}^d$ and $y_i \in \{1, \ldots, K\}$.</p>
 <p>Every classifier partitions the feature space into $K$ <strong>decision regions</strong> - the set of points mapped to each class. The boundaries between regions are the <strong>decision boundaries</strong>. The classifier&rsquo;s inductive bias determines the shape of these boundaries: KNN produces boundaries that are piecewise-linear (Voronoi cells), linear classifiers produce boundaries that are hyperplanes (half-spaces).</p>
 <p>The fundamental tension in learning a classifier is the <strong>bias-variance tradeoff</strong>. A classifier with too much flexibility perfectly separates training points but fails on new data - it has memorized noise rather than pattern. A classifier with too little flexibility imposes structure that the data does not support - it misses real patterns. Choosing the right class of functions $f$ is most of the work.</p>
 <hr>
@@ -107,7 +107,7 @@ Oct 1, 2024
 <h2 id="linear-classifiers-and-discriminant-functions">Linear Classifiers and Discriminant Functions</h2>
 <p>A <strong>linear classifier</strong> partitions the feature space using a hyperplane. In binary classification (classes $+1$ and $-1$), the classifier is:</p>
 <p>$$f(\mathbf{x}) = \text{sign}(\mathbf{w} \cdot \mathbf{x} + b)$$</p>
-<p>where $\mathbf{w} \in \mathbb{R}^d$ is the <strong>weight vector</strong> (normal to the hyperplane) and $b \in \mathbb{R}$ is the <strong>bias</strong>. The decision boundary is the hyperplane ${\mathbf{x} : \mathbf{w} \cdot \mathbf{x} + b = 0}$.</p>
+<p>where $\mathbf{w} \in \mathbb{R}^d$ is the <strong>weight vector</strong> (normal to the hyperplane) and $b \in \mathbb{R}$ is the <strong>bias</strong>. The decision boundary is the hyperplane $\{\mathbf{x} : \mathbf{w} \cdot \mathbf{x} + b = 0\}$.</p>
 <p>The <strong>signed distance</strong> from a point $\mathbf{x}$ to the hyperplane is:</p>
 <p>$$\text{dist}(\mathbf{x}) = \frac{\mathbf{w} \cdot \mathbf{x} + b}{|\mathbf{w}|}$$</p>
 <p>Points with $\mathbf{w} \cdot \mathbf{x} + b > 0$ are classified as $+1$; those with $\mathbf{w} \cdot \mathbf{x} + b &lt; 0$ as $-1$. The magnitude of $\mathbf{w} \cdot \mathbf{x} + b$ measures how far the point is from the boundary - a natural confidence score.</p>
@@ -158,11 +158,11 @@ Oct 1, 2024
 <p><strong>Polynomial kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = (\mathbf{x} \cdot \mathbf{z} + 1)^p$. Corresponds to all monomials of degree up to $p$ in the input features. For $d = 2$ and $p = 2$, the feature map is $\phi(x_1, x_2) = (1, \sqrt{2}x_1, \sqrt{2}x_2, x_1^2, \sqrt{2}x_1 x_2, x_2^2)$ - six dimensions from two, computed via a single inner product.</p>
 <p><strong>Radial basis function (RBF) / Gaussian kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = \exp!\left(-\frac{|\mathbf{x} - \mathbf{z}|^2}{2\sigma^2}\right)$. This corresponds to an infinite-dimensional feature map. The bandwidth $\sigma$ controls locality: small $\sigma$ makes the kernel sensitive only to very nearby points (risk of overfitting), large $\sigma$ makes it broad (risk of underfitting). The RBF kernel is by far the most widely used in practice.</p>
 <h3 id="mercers-condition">Mercer&rsquo;s Condition</h3>
-<p>Not every function $K$ is a valid kernel. For $K$ to correspond to an inner product in some Hilbert space, the <strong>kernel matrix</strong> $K_{ij} = K(\mathbf{x}_i, \mathbf{x}_j)$ must be <strong>positive semidefinite</strong> for any finite set of points ${\mathbf{x}_1, \ldots, \mathbf{x}_n}$. This is <strong>Mercer&rsquo;s condition</strong>.</p>
+<p>Not every function $K$ is a valid kernel. For $K$ to correspond to an inner product in some Hilbert space, the <strong>kernel matrix</strong> $K_{ij} = K(\mathbf{x}_i, \mathbf{x}_j)$ must be <strong>positive semidefinite</strong> for any finite set of points $\{\mathbf{x}_1, \ldots, \mathbf{x}_n\}$. This is <strong>Mercer&rsquo;s condition</strong>.</p>
 <p>A positive semidefinite kernel guarantees that the dual optimization problem is convex and has a unique solution. Constructing new kernels from existing ones is safe using these facts: sums of valid kernels are valid, products of valid kernels are valid, and a positive constant multiple of a valid kernel is valid.</p>
 <h3 id="why-kernels-enable-non-linear-separation">Why Kernels Enable Non-Linear Separation</h3>
 <p>A dataset that is not linearly separable in $\mathbb{R}^d$ may become linearly separable in $\mathcal{H}$. The kernel SVM finds a linear boundary in $\mathcal{H}$, which corresponds to a non-linear boundary in the original input space. The decision boundary in $\mathbb{R}^d$ is:</p>
-<p>$$\left{\mathbf{x} : \sum_{i:,\alpha_i > 0} \alpha_i y_i, K(\mathbf{x}_i, \mathbf{x}) + b = 0\right}$$</p>
+<p>$$\left\{\mathbf{x} : \sum_{i:,\alpha_i > 0} \alpha_i y_i, K(\mathbf{x}_i, \mathbf{x}) + b = 0\right\}$$</p>
 <p>For the RBF kernel, this is a sum of Gaussians centered at support vectors. The boundary can be any shape that can be expressed as a weighted combination of such bumps - enormously flexible.</p>
 <hr>
 <h2 id="multi-class-strategies">Multi-Class Strategies</h2>

@@ -85,7 +85,7 @@ Jun 1, 2024
 <p><strong>Composing flows.</strong> A single bijection may not be expressive enough. A normalizing flow stacks $K$ bijections: $z = f_K \circ f_{K-1} \circ \cdots \circ f_1(x)$. By the chain rule for determinants:</p>
 <p>$$\log p_X(x) = \log p_Z(z) + \sum_{k=1}^K \log \left|\det J_{f_k}(x_k)\right|,$$</p>
 <p>where $x_k = f_k \circ \cdots \circ f_1(x)$. Each $f_k$ must be invertible with tractable Jacobian; the composition inherits both properties. By stacking enough simple bijections, a normalizing flow can approximate arbitrarily complex distributions.</p>
-<p><strong>Training.</strong> Given a dataset ${x^{(1)}, \ldots, x^{(n)}}$, maximize the exact log-likelihood:</p>
+<p><strong>Training.</strong> Given a dataset $\{x^{(1)}, \ldots, x^{(n)}\}$, maximize the exact log-likelihood:</p>
 <p>$$\mathcal{L}(\theta) = \frac{1}{n}\sum_{i=1}^n \left[\log p_Z(f_\theta(x^{(i)})) + \log \left|\det J_{f_\theta}(x^{(i)})\right|\right].$$</p>
 <p>This is maximum likelihood estimation with an exact density - no variational approximation, no adversarial training.</p>
 <hr>
@@ -98,7 +98,7 @@ Jun 1, 2024
 <p>$$x_a = z_a, \qquad x_b = (z_b - t_\theta(z_a)) \odot \exp(-s_\theta(z_a)).$$</p>
 <p>The inversion is exact and does not require solving any equations - just a forward pass of $s_\theta$ and $t_\theta$. Importantly, $s_\theta$ and $t_\theta$ never need to be inverted; they can be arbitrarily complex neural networks.</p>
 <p><strong>Why the Jacobian is triangular.</strong> The Jacobian of the coupling layer has the structure:</p>
-<p>$$J_f = \begin{pmatrix} I & 0 \ \partial z_b / \partial x_a & \text{diag}(\exp(s_\theta(x_a))) \end{pmatrix}.$$</p>
+<p>$$J_f = \begin{pmatrix} I & 0 \\ \partial z_b / \partial x_a & \text{diag}(\exp(s_\theta(x_a))) \end{pmatrix}.$$</p>
 <p>The top-left block is the identity (since $z_a = x_a$). The bottom-right block is diagonal (since $z_{b,i}$ depends on $x_{b,i}$ only through the elementwise scale). The off-diagonal blocks are zero (top-right) or unconstrained (bottom-left, which does not contribute to the determinant). The determinant of a lower-triangular matrix is the product of its diagonal entries:</p>
 <p>$$\log \left|\det J_f(x)\right| = \sum_{i=1}^{d/2} s_\theta(x_a)_i.$$</p>
 <p>This is $O(d)$ to compute - a single forward pass through $s_\theta$. The entire log-likelihood computation is $O(d)$ per layer, regardless of the complexity of $s_\theta$.</p>

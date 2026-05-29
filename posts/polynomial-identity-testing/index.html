@@ -110,12 +110,12 @@ Aug 3, 2021
 <hr>
 <h2 id="freivalds-algorithm-matrix-multiplication-verification">Freivalds' Algorithm: Matrix Multiplication Verification</h2>
 <p><strong>Problem.</strong> Given $n \times n$ matrices $A$, $B$, $C$ over a field $F$, verify whether $AB = C$. Computing $AB$ directly costs $O(n^3)$ (or $O(n^\omega)$ with fast matrix multiplication, where $\omega &lt; 2.373$). Can we verify the identity faster?</p>
-<p><strong>Algorithm (Freivalds 1979).</strong> Choose a vector $r \in {0, 1}^n$ uniformly at random. Compute $A(Br)$ and $Cr$ separately, each costing $O(n^2)$. Accept if $A(Br) = Cr$.</p>
+<p><strong>Algorithm (Freivalds 1979).</strong> Choose a vector $r \in \{0, 1\}^n$ uniformly at random. Compute $A(Br)$ and $Cr$ separately, each costing $O(n^2)$. Accept if $A(Br) = Cr$.</p>
 <p><strong>Correctness when $AB = C$.</strong> If $AB = C$, then $A(Br) = (AB)r = Cr$ for every $r$. The algorithm always accepts.</p>
-<p><strong>Error probability when $AB \neq C$.</strong> Let $D = AB - C$. Since $AB \neq C$, $D$ is a nonzero matrix. We need to bound $\Pr[Dr = 0]$ when $r$ is uniform over ${0, 1}^n$.</p>
+<p><strong>Error probability when $AB \neq C$.</strong> Let $D = AB - C$. Since $AB \neq C$, $D$ is a nonzero matrix. We need to bound $\Pr[Dr = 0]$ when $r$ is uniform over $\{0, 1\}^n$.</p>
 <p>Since $D \neq 0$, there exists a row $i$ and a column $j$ such that $D_{ij} \neq 0$. The $i$-th component of $Dr$ is:</p>
 <p>$$(Dr)<em>i = \sum</em>{k=1}^{n} D_{ik} r_k = D_{ij} r_j + \sum_{k \neq j} D_{ik} r_k$$</p>
-<p>View this as a linear polynomial in $r_j$ alone, with all other $r_k$ fixed. The coefficient of $r_j$ is $D_{ij} \neq 0$. Over the domain ${0, 1}$ for $r_j$, a nonzero degree-1 polynomial has at most 1 root, so:</p>
+<p>View this as a linear polynomial in $r_j$ alone, with all other $r_k$ fixed. The coefficient of $r_j$ is $D_{ij} \neq 0$. Over the domain $\{0, 1\}$ for $r_j$, a nonzero degree-1 polynomial has at most 1 root, so:</p>
 <p>$$\Pr[(Dr)<em>i = 0 \mid r_1, \ldots, r</em>{j-1}, r_{j+1}, \ldots, r_n] \leq \frac{1}{2}$$</p>
 <p>by Schwartz-Zippel with $d = 1$, $|S| = 2$. Since this holds for every fixed choice of the other coordinates:</p>
 <p>$$\Pr[Dr = 0] \leq \Pr[(Dr)_i = 0] \leq \frac{1}{2}$$</p>
@@ -125,20 +125,20 @@ Aug 3, 2021
 <h2 id="the-isolation-lemma">The Isolation Lemma</h2>
 <p><strong>Context.</strong> Many combinatorial optimization problems - shortest paths, minimum spanning trees, bipartite matching - are easy sequentially but hard to parallelize because the optimal solution may not be unique. If many optimal solutions exist, it is unclear which one to commit to, and parallel algorithms that explore many candidates can end up with conflicts.</p>
 <p>The Isolation Lemma of Mulmuley, Vazirani, and Vazirani (1987) resolves this by randomly making the optimal solution unique.</p>
-<p><strong>Setting.</strong> Let $U = {1, \ldots, n}$ be a universe of elements, and let $\mathcal{F}$ be a family of subsets of $U$ (not given explicitly; accessed via an oracle). Assign each element $i \in U$ an integer weight $w_i$ chosen independently and uniformly at random from ${1, \ldots, 2n}$. The weight of a set $S \in \mathcal{F}$ is $w(S) = \sum_{i \in S} w_i$.</p>
+<p><strong>Setting.</strong> Let $U = \{1, \ldots, n\}$ be a universe of elements, and let $\mathcal{F}$ be a family of subsets of $U$ (not given explicitly; accessed via an oracle). Assign each element $i \in U$ an integer weight $w_i$ chosen independently and uniformly at random from $\{1, \ldots, 2n\}$. The weight of a set $S \in \mathcal{F}$ is $w(S) = \sum_{i \in S} w_i$.</p>
 <p><strong>Lemma (MVV Isolation Lemma).</strong> With probability at least $1/2$, there is a unique minimum-weight set in $\mathcal{F}$.</p>
 <p><strong>Proof.</strong> For each element $i \in U$, define:</p>
-<p>$$W_i^+ = \min{w(S) : S \in \mathcal{F}, i \in S} \quad \text{(minimum weight of sets containing } i\text{)}$$
-$$W_i^- = \min{w(S) : S \in \mathcal{F}, i \notin S} \quad \text{(minimum weight of sets not containing } i\text{)}$$</p>
+<p>$$W_i^+ = \min\{w(S) : S \in \mathcal{F}, i \in S\} \quad \text{(minimum weight of sets containing } i\text{)}$$
+$$W_i^- = \min\{w(S) : S \in \mathcal{F}, i \notin S\} \quad \text{(minimum weight of sets not containing } i\text{)}$$</p>
 <p>(If no set in $\mathcal{F}$ contains $i$, set $W_i^+ = \infty$, and similarly for $W_i^-$.)</p>
 <p>Call element $i$ <strong>bad</strong> if there exist two minimum-weight sets in $\mathcal{F}$ that differ on whether they contain $i$ - formally, if $W_i^+ - w_i = W_i^-$ (the minimum-weight sets containing $i$, after removing $i$&rsquo;s contribution, tie with the minimum-weight sets not containing $i$).</p>
-<p>Observe that $W_i^-$ does not depend on $w_i$, while $W_i^+ = w_i + \min{w(S \setminus {i}) : S \in \mathcal{F}, i \in S}$ depends on $w_i$ linearly with coefficient 1. Therefore, for any fixed values of all weights except $w_i$, the quantity $W_i^+ - W_i^-$ is a function of $w_i$ that is strictly increasing in $w_i$ (it changes by exactly 1 for each unit change in $w_i$). The event ${W_i^+ - w_i = W_i^-}$ holds for at most one value of $w_i$ in ${1, \ldots, 2n}$. Thus:</p>
+<p>Observe that $W_i^-$ does not depend on $w_i$, while $W_i^+ = w_i + \min\{w(S \setminus \{i\}) : S \in \mathcal{F}, i \in S\}$ depends on $w_i$ linearly with coefficient 1. Therefore, for any fixed values of all weights except $w_i$, the quantity $W_i^+ - W_i^-$ is a function of $w_i$ that is strictly increasing in $w_i$ (it changes by exactly 1 for each unit change in $w_i$). The event $\{W_i^+ - w_i = W_i^-\}$ holds for at most one value of $w_i$ in $\{1, \ldots, 2n\}$. Thus:</p>
 <p>$$\Pr[i \text{ is bad}] \leq \frac{1}{2n}$$</p>
 <p>By the union bound over all $n$ elements:</p>
 <p>$$\Pr[\text{some element is bad}] \leq \sum_{i=1}^{n} \frac{1}{2n} = \frac{1}{2}$$</p>
 <p>So with probability at least $1/2$, no element is bad, meaning the minimum-weight set in $\mathcal{F}$ is unique.</p>
 <p><strong>Application: bipartite perfect matching in NC.</strong> The MVV algorithm uses the Isolation Lemma to obtain an NC algorithm (highly parallel, polylogarithmic depth) for bipartite perfect matching.</p>
-<p>Given a bipartite graph $G = (L \cup R, E)$ with $|L| = |R| = n$, assign each edge $e_{ij}$ an independent random weight $w_{ij} \in {1, \ldots, 2m}$ where $m = |E|$.</p>
+<p>Given a bipartite graph $G = (L \cup R, E)$ with $|L| = |R| = n$, assign each edge $e_{ij}$ an independent random weight $w_{ij} \in \{1, \ldots, 2m\}$ where $m = |E|$.</p>
 <p>Construct the <strong>weighted Tutte matrix</strong> $T$ where $T_{ij} = x_{ij} \cdot 2^{w_{ij}}$ if edge $(i, j) \in E$, and $T_{ij} = 0$ otherwise. Work over a finite field $\mathbb{F}_p$ for a suitably chosen prime $p$.</p>
 <p>The determinant of $T$ expands as:</p>
 <p>$$\det(T) = \sum_{\sigma \in S_n} \text{sgn}(\sigma) \prod_{i=1}^{n} T_{i,\sigma(i)}$$</p>
@@ -179,14 +179,14 @@ $$W_i^- = \min{w(S) : S \in \mathcal{F}, i \notin S} \quad \text{(minimum weight
 <tr>
 <td>Freivalds</td>
 <td>Is $AB = C$?</td>
-<td>Random vector $r \in {0,1}^n$</td>
+<td>Random vector $r \in \{0,1\}^n$</td>
 <td>$\leq 1/2$ per round</td>
 <td>$O(n^2)$ per round</td>
 </tr>
 <tr>
 <td>MVV via Isolation Lemma</td>
 <td>Unique min-weight set isolation</td>
-<td>Random edge weights in ${1, \ldots, 2n}$</td>
+<td>Random edge weights in $\{1, \ldots, 2n\}$</td>
 <td>$\leq 1/2$ failure</td>
 <td>Enables $RNC^2$ matching</td>
 </tr>

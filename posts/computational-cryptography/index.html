@@ -102,11 +102,11 @@ It shrinks faster than any inverse polynomial. Examples:</p>
 <p>The security parameter $n$ is the key length (or the input length to Gen). All security guarantees are stated asymptotically in $n$.</p>
 <hr>
 <h2 id="one-way-functions">One-Way Functions</h2>
-<p>A function $f: {0,1}^* \to {0,1}^*$ is a <strong>one-way function (OWF)</strong> if:</p>
+<p>A function $f: \{0,1\}^* \to \{0,1\}^*$ is a <strong>one-way function (OWF)</strong> if:</p>
 <ol>
 <li><strong>Easy to compute:</strong> there is a polynomial-time algorithm computing $f(x)$.</li>
 <li><strong>Hard to invert:</strong> for every PPT algorithm $A$ and all polynomials $p$, for large enough $n$:
-$$\Pr_{x \leftarrow {0,1}^n}[A(f(x)) \in f^{-1}(f(x))] &lt; \frac{1}{p(n)}$$
+$$\Pr_{x \leftarrow \{0,1\}^n}[A(f(x)) \in f^{-1}(f(x))] &lt; \frac{1}{p(n)}$$
 Any PPT inverter succeeds with negligible probability over a random input.</li>
 </ol>
 <p><strong>Candidate OWFs.</strong> No function is proven to be one-way (this would imply P $\neq$ NP), but strong candidates exist:</p>
@@ -131,8 +131,8 @@ for negligible $\varepsilon$. Even knowing $f(x)$, no efficient algorithm can pr
 <p>These results mean that the DLP function hides individual bits completely - you cannot learn even a single bit of $x$ from $g^x$ more easily than solving the whole discrete log.</p>
 <hr>
 <h2 id="pseudorandom-generators">Pseudorandom Generators</h2>
-<p>A <strong>pseudorandom generator (PRG)</strong> is a deterministic, polynomial-time computable function $G: {0,1}^n \to {0,1}^{\ell(n)}$ with $\ell(n) > n$ (it <em>stretches</em> the input) such that:
-$${G(U_n)} \approx_c {U_{\ell(n)}}$$
+<p>A <strong>pseudorandom generator (PRG)</strong> is a deterministic, polynomial-time computable function $G: \{0,1\}^n \to \{0,1\}^{\ell(n)}$ with $\ell(n) > n$ (it <em>stretches</em> the input) such that:
+$$\{G(U_n)\} \approx_c \{U_{\ell(n)}\}$$
 The output of $G$ on a uniform $n$-bit seed is computationally indistinguishable from a uniform $\ell(n)$-bit string. No PPT distinguisher can tell $G$&rsquo;s output apart from true randomness.</p>
 <p><strong>Why we need this.</strong> A PRG lets us expand a short secret key (the seed) into a long pseudorandom string, which can be XOR&rsquo;d with a message like a OTP - but with a short key. This gives computationally secure stream encryption.</p>
 <hr>
@@ -143,7 +143,7 @@ $$G(s) = b(s) | b(f(s)) | b(f^2(s)) | \cdots | b(f^{n-1}(s)), \quad f^i(s) = f(f
 Output one bit per application of $f$, using the hardcore predicate. Security: if any prefix of the output is distinguishable from random, we can recover the hardcore predicate of $f$ at some step - contradicting the HCP assumption.</p>
 <hr>
 <h2 id="extending-prgs">Extending PRGs</h2>
-<p><strong>From $n$ to $n+1$ bits.</strong> If $G: {0,1}^n \to {0,1}^{n+1}$ is a PRG, it is secure because any distinguisher for the $n+1$-bit output could be used to recover the seed or violate pseudorandomness.</p>
+<p><strong>From $n$ to $n+1$ bits.</strong> If $G: \{0,1\}^n \to \{0,1\}^{n+1}$ is a PRG, it is secure because any distinguisher for the $n+1$-bit output could be used to recover the seed or violate pseudorandomness.</p>
 <p><strong>From $n$ to $\ell(n)$ bits (arbitrary polynomial stretch).</strong> Apply the $n$-to-$n+1$ PRG repeatedly: use the first $n$ output bits as the new seed, output the last 1 bit. After $\ell(n)$ steps, we have $\ell(n)$ pseudorandom bits from an $n$-bit seed. Security reduces: a distinguisher for the $\ell(n)$-bit output implies a distinguisher for the $n+1$-bit output (by a hybrid argument - the distinguisher must succeed on some consecutive pair of hybrid distributions).</p>
 <p>The <strong>hybrid argument</strong> is the key technique: define $\ell(n)+1$ hybrid distributions $H_0, H_1, \ldots, H_{\ell(n)}$ where $H_i$ has $i$ truly random bits followed by $\ell(n)-i$ PRG-generated bits. $H_0$ is the PRG output; $H_{\ell(n)}$ is truly random. If a distinguisher tells $H_0$ from $H_{\ell(n)}$ with non-negligible probability, by averaging it must distinguish some adjacent $H_i$ from $H_{i+1}$ with non-negligible probability - but that adjacent pair differs only in one step of the $n$-to-$n+1$ PRG.</p>
 <hr>
