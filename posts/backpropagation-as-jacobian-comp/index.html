@@ -1,75 +1,120 @@
-<!doctype html><html lang="en-us">
-<head>
-<title>Backpropagation - The Circuit That Runs Gradients Backward // Megha Bose</title>
-<link rel="shortcut icon" href="/favicon.ico">
-<meta charset="utf-8">
-<meta name="generator" content="Hugo 0.92.2">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="author" content="Megha Bose">
-<meta name="description" content>
-<link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Backpropagation - The Circuit That Runs Gradients Backward">
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Backpropagation - The Circuit That Runs Gradients Backward // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Backpropagation - The Circuit That Runs Gradients Backward"/>
 <meta name="twitter:description" content="Helpful context:
- The Chain Rule - How Derivatives Compose Through Layers  Vector Calculus for ML - Derivatives in Every Direction at Once  Gradients & Partial Derivatives - Slopes in Every Direction at Once    You have trained neural networks using backpropagation, or you have heard that backpropagation is how neural networks learn. But what is it, exactly? Most descriptions fall into one of two failure modes.">
-<meta property="og:title" content="Backpropagation - The Circuit That Runs Gradients Backward">
+ The Chain Rule - How Derivatives Compose Through Layers  Vector Calculus for ML - Derivatives in Every Direction at Once  Gradients &amp; Partial Derivatives - Slopes in Every Direction at Once    You have trained neural networks using backpropagation, or you have heard that backpropagation is how neural networks learn. But what is it, exactly? Most descriptions fall into one of two failure modes."/>
+
+    <meta property="og:title" content="Backpropagation - The Circuit That Runs Gradients Backward" />
 <meta property="og:description" content="Helpful context:
- The Chain Rule - How Derivatives Compose Through Layers  Vector Calculus for ML - Derivatives in Every Direction at Once  Gradients & Partial Derivatives - Slopes in Every Direction at Once    You have trained neural networks using backpropagation, or you have heard that backpropagation is how neural networks learn. But what is it, exactly? Most descriptions fall into one of two failure modes.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://megha-bose.github.io/posts/backpropagation-as-jacobian-comp/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2020-12-11T00:00:00+00:00">
-<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00">
-<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
-</head>
-<body>
-<header class="app-header">
-<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
-<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-<nav class="app-header-menu">
-<a class="app-header-menu-item" href="/about/">About Me</a>
-<br>
-<a class="app-header-menu-item" href="/resume/"> Resume</a>
-<br>
-<a class="app-header-menu-item" href="/categories/">Topics</a>
-<br>
-<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-</nav>
-<div class="app-header-social">
-<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
-</a>
-<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</a>
-<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-</a>
-<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-</a>
-</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-<span class="theme-toggle-icon"></span>
-</button>
-</header>
-<main class="app-container">
-<article class="post">
-<header class="post-header">
-<h1 class="post-title">Backpropagation - The Circuit That Runs Gradients Backward</h1>
-<div class="post-meta">
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-Dec 11, 2020
-</div>
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-31 min read
-</div>
-</div>
-</header>
-<div class="post-content">
-<p><strong>Helpful context:</strong></p>
+ The Chain Rule - How Derivatives Compose Through Layers  Vector Calculus for ML - Derivatives in Every Direction at Once  Gradients &amp; Partial Derivatives - Slopes in Every Direction at Once    You have trained neural networks using backpropagation, or you have heard that backpropagation is how neural networks learn. But what is it, exactly? Most descriptions fall into one of two failure modes." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/backpropagation-as-jacobian-comp/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00" />
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Backpropagation - The Circuit That Runs Gradients Backward</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Dec 11, 2020
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          31 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
 <ul>
 <li><a href="/posts/the-chain-rule-backpropagation/" target="_blank" rel="noopener noreferrer">The Chain Rule - How Derivatives Compose Through Layers</a>
 </li>
 <li><a href="/posts/vector-calculus-for-ml/" target="_blank" rel="noopener noreferrer">Vector Calculus for ML - Derivatives in Every Direction at Once</a>
 </li>
-<li><a href="/posts/gradients-partial-derivatives/" target="_blank" rel="noopener noreferrer">Gradients & Partial Derivatives - Slopes in Every Direction at Once</a>
+<li><a href="/posts/gradients-partial-derivatives/" target="_blank" rel="noopener noreferrer">Gradients &amp; Partial Derivatives - Slopes in Every Direction at Once</a>
 </li>
 </ul>
 <hr>
@@ -82,7 +127,7 @@ Dec 11, 2020
 <p>Suppose you have a neural network with weights $w_1, w_2, \ldots, w_N$ - maybe millions of them. You have a loss function $L$ that measures how wrong the network&rsquo;s predictions are. Training means finding weights that make $L$ small.</p>
 <p>The method is gradient descent: repeatedly move the weights in the direction that decreases the loss. For weight $w_k$, the update is:</p>
 <p>$$w_k \leftarrow w_k - \eta \frac{\partial L}{\partial w_k}$$</p>
-<p>where $\eta > 0$ is the learning rate. To apply this update to every weight, you need $\partial L / \partial w_k$ for every $k$. That is the computation. Every other question about backpropagation is a question about how to compute these partial derivatives efficiently.</p>
+<p>where $\eta &gt; 0$ is the learning rate. To apply this update to every weight, you need $\partial L / \partial w_k$ for every $k$. That is the computation. Every other question about backpropagation is a question about how to compute these partial derivatives efficiently.</p>
 <p>The network computes its output as a composition of functions. Each layer applies a function to the previous layer&rsquo;s output. So the loss $L$ is a function of the weights, but it is not a direct function - it is a function of a function of a function, stacked as many times as there are layers. Computing $\partial L / \partial w_k$ requires differentiating through all those layers. That requires the chain rule.</p>
 <hr>
 <h2 id="section-2-the-single-variable-chain-rule">Section 2: The Single-Variable Chain Rule</h2>
@@ -110,7 +155,7 @@ Dec 11, 2020
 <p>A real neural network layer does not map a number to a number. It maps a vector to a vector. A layer $f: \mathbb{R}^n \to \mathbb{R}^m$ takes an $n$-dimensional input and produces an $m$-dimensional output.</p>
 <p>For such a function, the derivative is not a single number. It is a matrix: the <strong>Jacobian</strong>.</p>
 <p><strong>Definition.</strong> For a differentiable function $f: \mathbb{R}^n \to \mathbb{R}^m$, the Jacobian at a point $x$ is the $m \times n$ matrix:</p>
-<p>$$J_f(x) = \begin{pmatrix} \frac{\partial f_1}{\partial x_1} & \frac{\partial f_1}{\partial x_2} & \cdots & \frac{\partial f_1}{\partial x_n} \\ \frac{\partial f_2}{\partial x_1} & \frac{\partial f_2}{\partial x_2} & \cdots & \frac{\partial f_2}{\partial x_n} \\ \vdots & \vdots & \ddots & \vdots \\ \frac{\partial f_m}{\partial x_1} & \frac{\partial f_m}{\partial x_2} & \cdots & \frac{\partial f_m}{\partial x_n} \end{pmatrix}$$</p>
+<p>$$J_f(x) = \begin{pmatrix} \frac{\partial f_1}{\partial x_1} &amp; \frac{\partial f_1}{\partial x_2} &amp; \cdots &amp; \frac{\partial f_1}{\partial x_n} \\ \frac{\partial f_2}{\partial x_1} &amp; \frac{\partial f_2}{\partial x_2} &amp; \cdots &amp; \frac{\partial f_2}{\partial x_n} \\ \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\ \frac{\partial f_m}{\partial x_1} &amp; \frac{\partial f_m}{\partial x_2} &amp; \cdots &amp; \frac{\partial f_m}{\partial x_n} \end{pmatrix}$$</p>
 <p>The entry $(J_f)_{ij} = \partial f_i / \partial x_j$ tells you how much the $i$-th output changes when the $j$-th input changes, with everything else held fixed.</p>
 <p>Before getting lost in indices, internalize the three special cases you will encounter constantly:</p>
 <ul>
@@ -152,7 +197,7 @@ Dec 11, 2020
 <p>This is the matrix $W_2$ itself, which has shape $k \times m$.</p>
 <p><strong>Step 3: derivative of the nonlinearity.</strong></p>
 <p>The nonlinearity is $h = \sigma(z)$ applied elementwise: $h_i = \sigma(z_i)$. Output $i$ depends only on input $i$. So:</p>
-<p>$$\frac{\partial h_i}{\partial z_j} = \begin{cases} \sigma'(z_i) & i = j \\ 0 & i \neq j \end{cases}$$</p>
+<p>$$\frac{\partial h_i}{\partial z_j} = \begin{cases} \sigma'(z_i) &amp; i = j \\ 0 &amp; i \neq j \end{cases}$$</p>
 <p>The Jacobian is a diagonal matrix:</p>
 <p>$$\frac{\partial h}{\partial z} = \text{diag}(\sigma'(z_1), \sigma'(z_2), \ldots, \sigma'(z_m))$$</p>
 <p>This has shape $m \times m$. Most of it is zero, which is why elementwise activations are computationally convenient.</p>
@@ -205,23 +250,23 @@ Dec 11, 2020
 <p>Andrej Karpathy, in his essay &ldquo;Yes You Should Understand Backprop,&rdquo; argues that treating backpropagation as an automatic black box is a leaky abstraction - it hides the consequences you need to reason about when debugging and designing networks. His framing: think of the computation graph not as a function to differentiate but as a <em>circuit</em> through which a signal flows forward (activations) and backward (gradients). Each operation is a gate. Each gate has a distinct personality - a characteristic way of routing and transforming the upstream gradient. Once you internalize the four basic gate behaviors, you can predict gradient pathologies without computing anything.</p>
 <p><strong>The add gate: gradient distributor.</strong></p>
 <p>Forward: $z = x + y$. Local gradients $\partial z / \partial x = 1$ and $\partial z / \partial y = 1$. Backward:</p>
-<p>$$ rac{\partial L}{\partial x} = g, \quad rac{\partial L}{\partial y} = g$$</p>
+<p>$$rac{\partial L}{\partial x} = g, \quad rac{\partial L}{\partial y} = g$$</p>
 <p>The add gate copies the upstream gradient $g$ to both inputs unchanged. Neither input value affects how much gradient the other receives. The add gate cannot weaken a gradient.</p>
 <p>This is the complete explanation of why residual connections preserve gradient flow. A residual block computes $h = x + f(x)$. In the backward pass, the add gate copies the upstream gradient to both branches: one copy flows into $f(x)$, one flows directly into $x$ with no modification whatsoever. No matter how deep the network, the skip path carries the upstream gradient back to earlier layers at full strength. Skip connections do not &ldquo;help gradients flow&rdquo; in some vague sense - the add gate is incapable of reducing the gradient that passes through it.</p>
 <p><strong>The multiply gate: gradient swapper.</strong></p>
 <p>Forward: $z = xy$. Backward:</p>
-<p>$$ rac{\partial L}{\partial x} = g \cdot y, \quad rac{\partial L}{\partial y} = g \cdot x$$</p>
+<p>$$rac{\partial L}{\partial x} = g \cdot y, \quad rac{\partial L}{\partial y} = g \cdot x$$</p>
 <p>The multiply gate switches: to find the gradient flowing into $x$, scale the upstream gradient by $y$ (the <em>other</em> input), and vice versa. The two inputs swap roles.</p>
 <p>In a linear layer $z = wx$, the gradient with respect to the weight $w$ is $g \cdot x$ - the upstream error scaled by the input. This means each weight&rsquo;s gradient is proportional to the value of the input feeding into it. If input features have wildly different scales - say one feature is always near $0.001$ and another near $1000$ - the corresponding weight gradients differ by a factor of $10^6$. Both weights update in every gradient step, but at completely different effective learning rates. This is not a subtle effect: it is the multiply gate making the gradient literally proportional to the input value. Input normalization corrects for this by ensuring all inputs have comparable magnitudes, so all weight gradients are on the same scale.</p>
 <p><strong>The max gate: gradient router.</strong></p>
 <p>Forward: $z = \max(x, y)$. Backward: gradient goes entirely to the winner, zero to the loser.</p>
-<p>$$ rac{\partial L}{\partial x} = g \cdot \mathbf{1}[x \geq y], \quad rac{\partial L}{\partial y} = g \cdot \mathbf{1}[y > x]$$</p>
-<p>The max gate is a binary switch that routes the full gradient to whichever input won the competition, and sends exactly zero to the other. $ ext{ReLU}(x) = \max(0, x)$ is this gate applied to one input against a fixed threshold of zero. When $x > 0$, the gradient passes through at full strength. When $x \leq 0$, the gate shuts completely.</p>
+<p>$$rac{\partial L}{\partial x} = g \cdot \mathbf{1}[x \geq y], \quad rac{\partial L}{\partial y} = g \cdot \mathbf{1}[y &gt; x]$$</p>
+<p>The max gate is a binary switch that routes the full gradient to whichever input won the competition, and sends exactly zero to the other. $	ext{ReLU}(x) = \max(0, x)$ is this gate applied to one input against a fixed threshold of zero. When $x &gt; 0$, the gradient passes through at full strength. When $x \leq 0$, the gate shuts completely.</p>
 <p>This is the precise explanation of <strong>dead ReLU neurons</strong>. If a neuron&rsquo;s pre-activation is negative on every training example - due to a bad initialization or an unlucky large update early in training - the max gate always routes zero gradient backward. Every weight feeding that neuron receives zero gradient. They never update. The neuron is permanently silent: not because the network decided to suppress it, but because the gate mechanically blocked every signal that might have corrected it.</p>
 <p><strong>The sigmoid gate: gradient squasher.</strong></p>
 <p>Forward: $\sigma(x) = 1/(1 + e^{-x})$. Backward:</p>
-<p>$$ rac{\partial L}{\partial x} = g \cdot \sigma(x)(1 - \sigma(x))$$</p>
-<p>The local gradient $\sigma(x)(1-\sigma(x))$ has a maximum of $ rac{1}{4}$ at $x = 0$ and falls toward zero at both extremes. Every gradient that passes through a sigmoid is multiplied by at most $0.25$.</p>
+<p>$$rac{\partial L}{\partial x} = g \cdot \sigma(x)(1 - \sigma(x))$$</p>
+<p>The local gradient $\sigma(x)(1-\sigma(x))$ has a maximum of $rac{1}{4}$ at $x = 0$ and falls toward zero at both extremes. Every gradient that passes through a sigmoid is multiplied by at most $0.25$.</p>
 <p>This is not a probabilistic tendency. It is a hard ceiling. In a ten-layer network with sigmoid activations, the gradient at the first layer is at most $(0.25)^{10} pprox 10^{-6}$ of the loss gradient - already below double-precision floating-point significance and no information whatsoever about the loss can propagate to the earliest layers. Vanishing gradients in deep sigmoid networks are not a statistical artifact of poor initialization. They are the inevitable consequence of passing through ten consecutive gates that each cut the signal by at least 75%.</p>
 <p>ReLU is the solution precisely because it has no squashing behavior for positive inputs: its local gradient is exactly 1 when active, so gradients pass through it at full strength. The max gate either passes the gradient unchanged or blocks it entirely - it cannot attenuate it.</p>
 <p><strong>The practical upshot.</strong></p>
@@ -337,7 +382,7 @@ Dec 11, 2020
 <p>$$\frac{\partial L}{\partial h_l} = \frac{\partial L}{\partial \hat{y}} \cdot J_{f_L} \cdot J_{f_{L-1}} \cdots J_{f_{l+1}}$$</p>
 <p>For a network with sigmoid activations: the Jacobian of the nonlinearity at layer $l$ is $\text{diag}(\sigma'(z_l))$, where $\sigma'(z) = \sigma(z)(1 - \sigma(z))$. The maximum value of $\sigma'$ is $1/4$ (achieved at $z = 0$). At every other point it is smaller.</p>
 <p>If you multiply 50 Jacobians, each with largest singular value at most $1/4$, the product has singular values at most $(1/4)^{50} \approx 10^{-30}$. The gradient is numerically zero. The first layers receive no gradient signal and stop learning.</p>
-<p>ReLU solves this for the nonlinearity: $\text{ReLU}'(z) = 1$ for $z > 0$ and $0$ for $z &lt; 0$. Gradients pass through unchanged (or not at all, but not diminished). This is the primary reason ReLU replaced sigmoid in deep networks - not a vague notion of &ldquo;better gradients&rdquo; but a precise statement about the singular values of the Jacobian chain.</p>
+<p>ReLU solves this for the nonlinearity: $\text{ReLU}'(z) = 1$ for $z &gt; 0$ and $0$ for $z &lt; 0$. Gradients pass through unchanged (or not at all, but not diminished). This is the primary reason ReLU replaced sigmoid in deep networks - not a vague notion of &ldquo;better gradients&rdquo; but a precise statement about the singular values of the Jacobian chain.</p>
 <p>Residual connections (as in ResNets) provide another solution. A residual layer computes $h = x + f(x)$ instead of $h = f(x)$. The Jacobian is $I + J_f$ instead of $J_f$. The identity term guarantees the Jacobian always has eigenvalues of at least 1, so gradients cannot vanish along the skip path.</p>
 <p>The problem of exploding gradients is the opposite. If the weight matrices are initialized large, the Jacobian of each linear layer has singular values greater than 1. Multiplying 50 such Jacobians amplifies the gradient exponentially. The gradient at the first layer is enormous, causing wildly large updates that destabilize training.</p>
 <p><strong>Weight initialization.</strong> The standard solutions - Xavier initialization and He initialization - choose the scale of the initial weight entries based on the dimensions of each layer, so that the Jacobian of each layer has singular values close to 1 at initialization. Specifically:</p>
@@ -454,13 +499,44 @@ Dec 11, 2020
 <li><a href="/posts/vc-dimension/" target="_blank" rel="noopener noreferrer">VC Dimension - How Complex a Hypothesis Class Can Be</a>
 </li>
 </ul>
-</div>
-<div class="post-footer">
-</div>
-</article>
-</main>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
-<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
-</body>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>
