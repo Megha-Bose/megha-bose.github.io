@@ -101,7 +101,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          25 min read
+          28 min read
         </div>
       </div>
     </header>
@@ -549,6 +549,79 @@ company<span style="color:#f92672">::</span>project<span style="color:#f92672">:
 </span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyClass</span> { <span style="color:#75715e">/* ... */</span> };
 </code></pre></div><p><strong>The compilation pipeline</strong> has four stages. First, the <strong>preprocessor</strong> processes all directives - resolving includes, expanding macros, handling conditionals - and produces a single translation unit of pure C++ source. Second, the <strong>compiler</strong> parses this source, checks types, and generates assembly code. Third, the <strong>assembler</strong> converts assembly into machine code, producing an object file (<code>.o</code> or <code>.obj</code>). Fourth, the <strong>linker</strong> combines all object files and resolves references between them (when function <code>foo()</code> in one file calls <code>bar()</code> defined in another file, the linker connects them) to produce the final executable.</p>
 <p>Understanding this pipeline explains why you need header files (declarations tell the compiler what exists in other translation units so it can type-check your calls), why link errors look different from compile errors, and why <code>#include</code> in many files does not duplicate code at runtime (the linker merges definitions).</p>
+<hr>
+<h2 id="from-source-to-executable-a-concrete-walkthrough">From Source to Executable: A Concrete Walkthrough</h2>
+<p>Take the simplest possible program:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;iostream&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Hello, world!</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>;
+    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+}
+</code></pre></div><p>Five lines of source. Here is what each stage does to it.</p>
+<p><strong>Stage 1 - Preprocessor</strong></p>
+<p>The preprocessor handles all directives before the compiler sees anything. The single line <code>#include &lt;iostream&gt;</code> is replaced by the entire contents of that header - on a typical system, roughly 30,000 lines of template declarations, <code>extern</code> declarations, and inline definitions pulled in from every header that <code>&lt;iostream&gt;</code> itself includes. Vastly simplified, the output looks like:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#75715e">// ... ~30,000 lines from &lt;iostream&gt; and its dependencies ...
+</span><span style="color:#75715e">// Including declarations like:
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">namespace</span> std {
+    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">_CharT</span>, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">_Traits</span> <span style="color:#f92672">=</span> char_traits<span style="color:#f92672">&lt;</span>_CharT<span style="color:#f92672">&gt;&gt;</span>
+    <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">basic_ostream</span> { <span style="color:#75715e">/* ... */</span> };
+
+    <span style="color:#66d9ef">extern</span> basic_ostream<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">char</span><span style="color:#f92672">&gt;</span> cout;
+
+    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">_CharT</span>, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">_Traits</span><span style="color:#f92672">&gt;</span>
+    basic_ostream<span style="color:#f92672">&lt;</span>_CharT, _Traits<span style="color:#f92672">&gt;&amp;</span> endl(basic_ostream<span style="color:#f92672">&lt;</span>_CharT, _Traits<span style="color:#f92672">&gt;&amp;</span>);
+}
+
+<span style="color:#75715e">// Then, finally, your code:
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Hello, world!</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>;
+    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+}
+</code></pre></div><p>There are no <code>#include</code> directives in this output - just pure C++. The preprocessor&rsquo;s job is done.</p>
+<p><strong>Stage 2 - Compiler</strong></p>
+<p>The compiler takes the translation unit above, type-checks it, and generates assembly. On x86-64 with <code>g++ -O0</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-asm" data-lang="asm"><span style="color:#a6e22e">.section</span> <span style="color:#66d9ef">.rodata</span>
+.LC0:
+    <span style="color:#a6e22e">.string</span> <span style="color:#e6db74">&#34;Hello, world!&#34;</span>          <span style="color:#75715e">; string literal in read-only data
+</span><span style="color:#75715e"></span>
+<span style="color:#a6e22e">.text</span>
+<span style="color:#a6e22e">.globl</span> <span style="color:#66d9ef">main</span>
+main:
+    <span style="color:#a6e22e">push</span>    <span style="color:#66d9ef">rbp</span>
+    <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rbp</span>, <span style="color:#66d9ef">rsp</span>
+    <span style="color:#a6e22e">lea</span>     <span style="color:#66d9ef">rsi</span>, <span style="color:#66d9ef">.LC0</span>[<span style="color:#66d9ef">rip</span>]           <span style="color:#75715e">; arg 2: pointer to the string
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">mov</span>     <span style="color:#66d9ef">edi</span>, <span style="color:#66d9ef">OFFSET</span> <span style="color:#66d9ef">FLAT</span>:<span style="color:#66d9ef">_ZSt4cout</span>  <span style="color:#75715e">; arg 1: std::cout object
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">call</span>    <span style="color:#66d9ef">_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc</span>
+                                     <span style="color:#75715e">; ^ mangled name for: std::operator&lt;&lt;(ostream&amp;, const char*)
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rdi</span>, <span style="color:#66d9ef">rax</span>
+    <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rsi</span>, <span style="color:#66d9ef">OFFSET</span> <span style="color:#66d9ef">FLAT</span>:<span style="color:#66d9ef">_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_</span>
+    <span style="color:#a6e22e">call</span>    <span style="color:#66d9ef">_ZNSo9_M_insertIPFRSoS_EEERSoT_</span>
+                                     <span style="color:#75715e">; ^ calls endl, which flushes the buffer
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">eax</span>, <span style="color:#ae81ff">0</span>
+    <span style="color:#a6e22e">pop</span>     <span style="color:#66d9ef">rbp</span>
+    <span style="color:#a6e22e">ret</span>
+</code></pre></div><p>Two things are worth noticing. First, <code>std::cout &lt;&lt; &quot;Hello, world!&quot;</code> compiles to a call to <code>operator&lt;&lt;</code> - the C++ name <code>std::operator&lt;&lt;(std::ostream&amp;, const char*)</code> becomes the mangled symbol starting with <code>_ZStls</code>. Name mangling encodes the full type signature into the symbol name so the linker can distinguish overloaded functions. Second, the string literal is placed in <code>.rodata</code> (read-only data segment) and the code holds only a pointer to it - the string itself is not embedded in the instruction stream.</p>
+<p><strong>Stage 3 - Assembler</strong></p>
+<p>The assembler converts the text above into binary machine code, producing an object file (<code>hello.o</code>). The function body becomes raw bytes:</p>
+<pre tabindex="0"><code>55                    ; push rbp
+48 89 e5              ; mov rbp, rsp
+48 8d 35 00 00 00 00  ; lea rsi, .LC0[rip]     -- address unknown, left as 0
+bf 00 00 00 00        ; mov edi, cout           -- address unknown, left as 0
+e8 00 00 00 00        ; call operator&lt;&lt;         -- address unknown, left as 0
+...
+b8 00 00 00 00        ; mov eax, 0
+5d                    ; pop rbp
+c3                    ; ret
+</code></pre><p>The zeros marked &ldquo;address unknown&rdquo; are the key detail. The object file knows that <code>std::cout</code> and <code>operator&lt;&lt;</code> exist - it saw their declarations during preprocessing - but it does not know where in memory they will end up. Those blanks are <strong>relocations</strong>: a table of slots the linker will fill.</p>
+<p><strong>Stage 4 - Linker</strong></p>
+<p>The linker takes <code>hello.o</code> plus the C++ standard library (<code>libstdc++.so</code>) and resolves every relocation. It finds the compiled definition of <code>operator&lt;&lt;</code>, learns its final address, and patches the zero bytes in the call instruction with that address. The same happens for <code>std::cout</code> and <code>std::endl</code>. What comes out is a self-contained executable where every address is concrete.</p>
+<p>The full pipeline in one picture:</p>
+<pre tabindex="0"><code>hello.cpp         --[preprocessor]--&gt;  hello.i   (pure C++, ~30k lines)
+hello.i           --[compiler]-------&gt;  hello.s   (x86-64 assembly)
+hello.s           --[assembler]-------&gt;  hello.o   (machine code with unfilled relocations)
+hello.o + stdlib  --[linker]----------&gt;  hello     (complete executable, all addresses resolved)
+</code></pre><p>This explains several things that puzzle beginners. Why does <code>#include</code> exist at all? The compiler needs to see declarations (types, function signatures) from other files to type-check your code - the linker handles combining the actual compiled code later. Why are there both &ldquo;compile errors&rdquo; and &ldquo;link errors&rdquo;? They happen at different stages: the compiler reports type mismatches, the linker reports missing definitions. Why can two <code>.cpp</code> files both <code>#include</code> the same header without duplicating code in the final binary? Because the compiler generates code only for definitions, not declarations, and the linker merges them.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
