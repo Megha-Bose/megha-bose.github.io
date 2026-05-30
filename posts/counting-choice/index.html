@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          10 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -335,7 +335,10 @@
 <h2 id="the-pigeonhole-principle">The Pigeonhole Principle</h2>
 <p><strong>Theorem (Pigeonhole).</strong> If $n$ items are placed into $m$ containers with $n &gt; m$, then at least one container holds at least $\lceil n/m \rceil$ items.</p>
 <p><em>Proof.</em> If every container held at most $\lfloor n/m \rfloor &lt; n/m$ items, the total would be less than $n$, contradicting that all $n$ items are placed.</p>
-<p>The pigeonhole principle is surprisingly powerful. Among any 13 people, two share a birth month. Among any $n+1$ integers from $\{1, \ldots, 2n\}$, two must be consecutive.</p>
+<p>The theorem sounds trivial. Its power is not in the mechanics - it is that it proves <em>existence</em> without constructing anything. You never find the pair; you prove one must exist.</p>
+<p><strong>Example: you cannot compress all files.</strong> Any lossless compression algorithm takes a file and produces a shorter one. But there are $2^{8n}$ possible files of size $n$ bytes. All files shorter than $n$ bytes total fewer than $2^{8n}$ possible values. By pigeonhole, at least two different input files must map to the same compressed output - meaning decompression cannot tell them apart and the algorithm fails on at least one input. No lossless algorithm compresses everything. Pigeonhole proves this in one sentence, without naming a specific algorithm or a specific file.</p>
+<p><strong>Example: two New Yorkers with the same number of hairs.</strong> The human scalp has at most around 200,000 hairs. New York City has over 8 million people. Even though we have no idea who the two people are, we can guarantee that at least $\lceil 8{,}000{,}000 / 200{,}001 \rceil = 40$ people in the city have exactly the same hair count - simply because there are far more people than there are possible hair counts.</p>
+<p><strong>Example: sequence number reuse in networking.</strong> TCP uses 32-bit sequence numbers - about 4 billion distinct values. On a fast link sending small packets, you exhaust all sequence numbers and must reuse them. A receiver cannot tell a delayed duplicate packet from a new one. Pigeonhole tells you this collision is <em>inevitable</em>, not merely possible - no matter how cleverly you design the protocol, finite sequence numbers on an infinite stream force reuse.</p>
 <hr>
 <h2 id="inclusion-exclusion-a-preview">Inclusion-Exclusion: A Preview</h2>
 <p>When events are not disjoint, the addition principle overcounts. The fix is <strong>inclusion-exclusion</strong>:</p>
@@ -345,12 +348,17 @@
 <p>The general formula is developed in the <a href="/posts/inclusion-exclusion-principle/" target="_blank" rel="noopener noreferrer">Inclusion-Exclusion - Overcounting Your Way to the Right Answer</a>
  post.</p>
 <hr>
-<h2 id="cs-perspective">CS Perspective</h2>
-<p><strong>Hash collisions and the birthday paradox.</strong> Suppose we insert $m$ keys into a hash table of size $n$. The probability of no collision after $m$ insertions is:</p>
-<p>$$P(\text{no collision}) = 1 \cdot \frac{n-1}{n} \cdot \frac{n-2}{n} \cdots \frac{n-m+1}{n}$$</p>
-<p>Using the approximation $\prod_{i=0}^{m-1}(1 - i/n) \approx e^{-m(m-1)/2n}$, the probability of collision exceeds $1/2$ when $m \approx \sqrt{2n \ln 2} \approx 1.177\sqrt{n}$.</p>
-<p>With a 32-bit hash ($n = 2^{32} \approx 4 \times 10^9$), collisions become likely after only about $\sqrt{4 \times 10^9} \approx 65{,}000$ insertions - far sooner than intuition suggests. This matters for hash function security and data structure design.</p>
-<p><strong>Combinatorial explosion.</strong> The number of possible inputs of length $n$ over a binary alphabet is $2^n$. Exhaustive search is feasible only for very small $n$; combinatorics quantifies exactly how quickly the search space grows.</p>
+<h2 id="the-birthday-paradox">The Birthday Paradox</h2>
+<p>How many people need to be in a room before it is more likely than not that two of them share a birthday? Most people guess somewhere in the hundreds. The answer is 23.</p>
+<p><strong>Why the intuition fails.</strong> The naive thinking goes: there are 365 days, 23 people - each person covers roughly 23/365 ≈ 6% of the year, so a match seems unlikely. But this asks the wrong question. You are not asking whether <em>one specific person</em> matches someone else. You are asking whether <em>any pair</em> shares a birthday. With 23 people there are $\binom{23}{2} = 253$ pairs - each an independent chance for a match. The opportunities are far more numerous than they appear.</p>
+<p><strong>The calculation.</strong> It is easier to compute $P(\text{no match})$ and subtract. Person 1 picks any day. Person 2 must avoid that day: probability $364/365$. Person 3 must avoid both previous days: $363/365$. Continuing:</p>
+<p>$$P(\text{no match among } k \text{ people}) = \frac{365}{365} \cdot \frac{364}{365} \cdot \frac{363}{365} \cdots \frac{365-k+1}{365}$$</p>
+<p>At $k = 23$ this product falls just below $0.5$, so a shared birthday is more likely than not. At $k = 57$ the probability of a match exceeds 99%.</p>
+<blockquote>
+<p><strong>Intuition for the threshold.</strong> In a group of $k$ people there are $\binom{k}{2} \approx k^2/2$ pairs. For a match to be unlikely, every pair must &ldquo;miss&rdquo; - each pair misses with probability roughly $364/365$. For all $k^2/2$ pairs to miss simultaneously, you need $(364/365)^{k^2/2} \approx e^{-k^2/730}$ to remain large. This drops below $1/2$ when $k^2 \approx 730 \ln 2 \approx 506$, giving $k \approx 22.5$. The key insight: matches scale with the <em>number of pairs</em>, which grows as $k^2$, not with $k$ itself.</p>
+</blockquote>
+<p><strong>The birthday attack in cryptography.</strong> This same mathematics threatens hash functions. A cryptographic hash produces an $n$-bit digest. A collision means two different inputs hash to the same value. Naively you might think finding a collision requires trying $2^n$ inputs - the full space. But the birthday bound says collisions become likely after only $\approx \sqrt{2^n} = 2^{n/2}$ attempts. For a 128-bit hash, that is $2^{64}$ operations - not $2^{128}$. This is why modern hash functions like SHA-256 use 256 bits: to keep the birthday-attack cost at $2^{128}$, which remains infeasible.</p>
+<p>The same argument applies to hash tables. If you insert $m$ keys into a table of size $n$, collisions become likely once $m \approx \sqrt{n}$ - far sooner than filling the table. A table that is only 0.1% full can already have a 50% chance of containing a collision if that 0.1% is roughly $\sqrt{n}$ entries.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
