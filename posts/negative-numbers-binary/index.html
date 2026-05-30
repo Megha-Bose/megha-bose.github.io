@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Negative Numbers in Binary - Two&#39;s Complement and Why It&#39;s Clever // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Negative Numbers in Binary - Two&#39;s Complement and Why It&#39;s Clever"/>
+<meta name="twitter:description" content="Helpful context:
+ Binary &amp; Number Systems - How Computers Count    Binary as introduced so far only handles non-negative integers. But real programs subtract, go into debt, measure temperatures below zero. The question is not whether computers represent negative numbers - obviously they do - but how, and why the particular method chosen is so much cleverer than the obvious alternatives.
+There are three natural approaches. Two of them have subtle bugs."/>
+
+    <meta property="og:title" content="Negative Numbers in Binary - Two&#39;s Complement and Why It&#39;s Clever" />
+<meta property="og:description" content="Helpful context:
+ Binary &amp; Number Systems - How Computers Count    Binary as introduced so far only handles non-negative integers. But real programs subtract, go into debt, measure temperatures below zero. The question is not whether computers represent negative numbers - obviously they do - but how, and why the particular method chosen is so much cleverer than the obvious alternatives.
+There are three natural approaches. Two of them have subtle bugs." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/negative-numbers-binary/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-03-08T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-03-08T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Negative Numbers in Binary - Two&#39;s Complement and Why It&#39;s Clever</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Mar 8, 2022
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          5 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/binary-number-systems/" target="_blank" rel="noopener noreferrer">Binary &amp; Number Systems - How Computers Count</a>
+</li>
+</ul>
+<hr>
+<p>Binary as introduced so far only handles non-negative integers. But real programs subtract, go into debt, measure temperatures below zero. The question is not <em>whether</em> computers represent negative numbers - obviously they do - but <em>how</em>, and why the particular method chosen is so much cleverer than the obvious alternatives.</p>
+<p>There are three natural approaches. Two of them have subtle bugs. The third is the one every modern processor uses.</p>
+<hr>
+<h2 id="the-obvious-idea-sign-magnitude">The Obvious Idea: Sign-Magnitude</h2>
+<p>The simplest idea: dedicate the leftmost bit as a sign flag. 0 means positive, 1 means negative. The remaining bits hold the magnitude as usual.</p>
+<p>In 8-bit sign-magnitude:</p>
+<ul>
+<li>$+5$ is $0\ 0000101$</li>
+<li>$-5$ is $1\ 0000101$</li>
+</ul>
+<p><strong>Problem 1: Two zeros.</strong> $0\ 0000000$ is $+0$ and $1\ 0000000$ is $-0$. These represent the same value but have different bit patterns. Any comparison with zero requires checking both patterns. Software and hardware both get more complicated.</p>
+<p><strong>Problem 2: Addition breaks.</strong> Try $5 + (-3)$ hoping for $2$:</p>
+<p>$0\ 0000101 + 1\ 0000011 = 1\ 1000000$ which sign-magnitude reads as $-64$. Wrong. Signed addition requires completely different circuitry from unsigned addition. You cannot reuse your adder hardware.</p>
+<hr>
+<h2 id="better-ones-complement">Better: One&rsquo;s Complement</h2>
+<p>One&rsquo;s complement negates a number by flipping every bit. $+5 = 0000\ 0101$, so $-5 = 1111\ 1010$.</p>
+<p>Addition works better now, but there is a catch - when there is a carry out of the MSB, you must add it back to the result (the &ldquo;end-around carry&rdquo;).</p>
+<p>$5 + (-3)$: $0000\ 0101 + 1111\ 1100 = 1\ 0000\ 0001$. The carry out gives $0000\ 0001$, add it back: $0000\ 0010 = 2$. Correct, but requires special-casing the carry.</p>
+<p>One&rsquo;s complement still has two zeros: $0000\ 0000 = +0$ and $1111\ 1111 = -0$. The two-zeros problem persists.</p>
+<hr>
+<h2 id="the-right-idea-twos-complement">The Right Idea: Two&rsquo;s Complement</h2>
+<p>Two&rsquo;s complement negates a number by flipping all bits <em>and then adding 1</em>.</p>
+<p>$+5 = 0000\ 0101$
+Flip: $1111\ 1010$
+Add 1: $1111\ 1011 = -5$ in two&rsquo;s complement</p>
+<p><strong>Only one zero.</strong> $0000\ 0000$ flipped and incremented: $1111\ 1111 + 1 = 1\ 0000\ 0000$. The carry out is discarded (we only have 8 bits), leaving $0000\ 0000$. Zero is unique.</p>
+<p><strong>Addition requires no special cases.</strong> Try $5 + (-3)$:</p>
+<p>$$0000\ 0101 + 1111\ 1101 = 1\ 0000\ 0010$$</p>
+<p>Discard the carry out, read the result: $0000\ 0010 = 2$. Correct - and the carry was discarded automatically by the fixed bit-width. No end-around carry, no sign logic. The same adder circuit works for all integers.</p>
+<blockquote>
+<p><strong>Why does it work?</strong> In 8-bit arithmetic, $256 \equiv 0$. Two&rsquo;s complement represents $-x$ as $256 - x$. So $5 + (-3) = 5 + (256 - 3) = 258 = 256 + 2 \equiv 2 \pmod{256}$. The &ldquo;negative&rdquo; numbers are just large positive numbers that, when added to positive numbers, produce results in the right range. The hardware does not know or care about signs - it just adds and discards overflow.</p>
+</blockquote>
+<hr>
+<h2 id="reading-twos-complement">Reading Two&rsquo;s Complement</h2>
+<p>The MSB still acts as a sign indicator: 0 means non-negative, 1 means negative. But the magnitude is not simply the remaining bits.</p>
+<p><strong>Positive numbers</strong> (MSB = 0): read normally.</p>
+<p><strong>Negative numbers</strong> (MSB = 1): to find the magnitude, flip all bits and add 1.</p>
+<p>$1111\ 1011$: flip to get $0000\ 0100$, add 1: $0000\ 0101 = 5$. So $1111\ 1011 = -5$.</p>
+<p>Alternatively: the value of an $n$-bit two&rsquo;s complement number with bits $b_{n-1} \ldots b_1 b_0$ is:</p>
+<p>$$-b_{n-1} \cdot 2^{n-1} + b_{n-2} \cdot 2^{n-2} + \cdots + b_0 \cdot 2^0$$</p>
+<p>The MSB has a <em>negative</em> weight. Everything else works as unsigned. $1111\ 1011$: $-128 + 64 + 32 + 16 + 8 + 0 + 2 + 1 = -128 + 123 = -5$. ✓</p>
+<hr>
+<h2 id="range-and-overflow">Range and Overflow</h2>
+<p>For $n$ bits, two&rsquo;s complement represents:</p>
+<p>$$-2^{n-1} \text{ to } 2^{n-1} - 1$$</p>
+<p>For 8 bits: $-128$ to $127$. The range is asymmetric because there is one zero (not two), and the negative side gets the extra slot: $1000\ 0000 = -128$ has no positive counterpart (trying to negate it gives $-128$ again).</p>
+<table>
+<thead>
+<tr>
+<th>Bits</th>
+<th>Unsigned range</th>
+<th>Two&rsquo;s complement range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8</td>
+<td>0 to 255</td>
+<td>-128 to 127</td>
+</tr>
+<tr>
+<td>16</td>
+<td>0 to 65,535</td>
+<td>-32,768 to 32,767</td>
+</tr>
+<tr>
+<td>32</td>
+<td>0 to ~4.3 billion</td>
+<td>~-2.1 billion to ~2.1 billion</td>
+</tr>
+<tr>
+<td>64</td>
+<td>0 to ~18.4 × $10^{18}$</td>
+<td>~-9.2 × $10^{18}$ to ~9.2 × $10^{18}$</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Overflow</strong> happens when a result exceeds this range. Adding $127 + 1$ in 8-bit two&rsquo;s complement gives $-128$ - the value wraps around. This is not a hardware error; it is the defined behavior of fixed-width arithmetic. C and many languages leave signed overflow undefined precisely because detecting it requires extra hardware or instructions.</p>
+<hr>
+<h2 id="subtraction-for-free">Subtraction for Free</h2>
+<p>Two&rsquo;s complement makes subtraction identical to addition: to compute $a - b$, compute $a + (-b)$ where $-b$ is the two&rsquo;s complement of $b$.</p>
+<p>This is enormously valuable. It means a processor needs only one addition circuit to handle both addition and subtraction. No separate subtraction logic. The ALU computes $a + \text{NOT}(b) + 1$ (NOT flips all bits; adding 1 completes the two&rsquo;s complement negation) with a single unified path.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If two&rsquo;s complement is just modular arithmetic, how does the CPU know whether $1111\ 1011$ is $-5$ or $251$? It does not. The bit pattern is the same either way. The <em>interpretation</em> - signed or unsigned - is a matter of which instruction you use. <code>ADD</code> and <code>ADDS</code> (signed add) on ARM, <code>imul</code> vs <code>mul</code> on x86: these produce identical bit patterns but set different overflow flags and are used in different contexts. The hardware manipulates bits; your code decides what they mean.</p>
+</blockquote>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Representation</th>
+<th>Negation</th>
+<th>Two zeros?</th>
+<th>Hardware addition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sign-magnitude</td>
+<td>Flip MSB</td>
+<td>Yes</td>
+<td>Requires separate logic</td>
+</tr>
+<tr>
+<td>One&rsquo;s complement</td>
+<td>Flip all bits</td>
+<td>Yes</td>
+<td>Needs end-around carry</td>
+</tr>
+<tr>
+<td>Two&rsquo;s complement</td>
+<td>Flip all bits + 1</td>
+<td>No</td>
+<td>Standard addition, discard carry</td>
+</tr>
+</tbody>
+</table>
+<p>Two&rsquo;s complement wins because it requires no special cases - the same adder handles all arithmetic, and zero has a unique representation. Every modern CPU uses it.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/logic-gates/" target="_blank" rel="noopener noreferrer">Logic Gates - The Basic Building Blocks of All Computation</a>
+</li>
+<li><a href="/posts/combinational-circuits/" target="_blank" rel="noopener noreferrer">Combinational Circuits - Building an ALU from Logic Gates</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
