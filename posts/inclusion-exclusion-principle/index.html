@@ -107,7 +107,7 @@ Check against the actual list: 2, 3, 4, 6, 8, 9, 10. That is 7, not 8." />
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          7 min read
+          9 min read
         </div>
       </div>
     </header>
@@ -200,9 +200,27 @@ Check against the actual list: 2, 3, 4, 6, 8, 9, 10. That is 7, not 8." />
 <p>$|A_2| = 500$, $|A_3| = 333$, $|A_5| = 200$, $|A_2 \cap A_3| = 166$, $|A_2 \cap A_5| = 100$, $|A_3 \cap A_5| = 66$, $|A_2 \cap A_3 \cap A_5| = 33$.</p>
 <p>$$500 + 333 + 200 - 166 - 100 - 66 + 33 = 734$$</p>
 <p>Numbers coprime to 30 (divisible by none of 2, 3, 5): $1000 - 734 = 266$.</p>
-<p><strong>Euler&rsquo;s totient.</strong> $\phi(n)$ counts integers from 1 to $n$ that are coprime to $n$ - not divisible by any prime factor of $n$. The divisibility argument above generalizes: apply inclusion-exclusion over the prime divisors of $n$. If $n = p_1^{a_1} \cdots p_r^{a_r}$, the cancellation telescopes to:</p>
+<p><strong>Euler&rsquo;s totient.</strong> $\phi(n)$ counts integers from 1 to $n$ that are coprime to $n$ - sharing no prime factor with $n$. This is exactly the divisibility argument above, but carried to its logical end.</p>
+<p>Let $n = p_1^{a_1} p_2^{a_2} \cdots p_r^{a_r}$. An integer $k \in [1, n]$ is NOT coprime to $n$ if and only if it is divisible by at least one of the primes $p_1, \ldots, p_r$. So define:</p>
+<p>$$A_i = \text{integers in } [1, n] \text{ divisible by } p_i$$</p>
+<p>Then $\phi(n) = n - |A_1 \cup A_2 \cup \cdots \cup A_r|$.</p>
+<p><strong>Computing the intersection sizes.</strong> Since each $p_i$ is a prime factor of $n$, we have $p_i \mid n$, so the count of multiples of $p_i$ in $[1, n]$ is exactly $n/p_i$. For two distinct primes $p_i$ and $p_j$, a number is divisible by both iff it is divisible by $p_i p_j$ (distinct primes have no shared factors), giving $n/(p_i p_j)$ numbers. In general, any intersection of $k$ distinct prime conditions gives $n/(p_{i_1} \cdots p_{i_k})$ numbers.</p>
+<p><strong>Applying inclusion-exclusion.</strong> The union size is:</p>
+<p>$$|A_1 \cup \cdots \cup A_r| = \sum_i \frac{n}{p_i} - \sum_{i &lt; j} \frac{n}{p_i p_j} + \sum_{i &lt; j &lt; k} \frac{n}{p_i p_j p_k} - \cdots$$</p>
+<p>Factor out $n$:</p>
+<p>$$= n\left(\sum_i \frac{1}{p_i} - \sum_{i&lt;j} \frac{1}{p_i p_j} + \sum_{i&lt;j&lt;k} \frac{1}{p_i p_j p_k} - \cdots\right)$$</p>
+<p>So $\phi(n) = n - n(\ldots) = n \left(1 - \sum_i \frac{1}{p_i} + \sum_{i&lt;j} \frac{1}{p_i p_j} - \cdots\right)$.</p>
+<p><strong>The product step.</strong> The expression in the parentheses is exactly the expansion of a product. Expanding $(1 - 1/p_1)(1 - 1/p_2)$ gives $1 - 1/p_1 - 1/p_2 + 1/(p_1 p_2)$. Multiplying by $(1 - 1/p_3)$ adds $-1/p_3 + 1/(p_1 p_3) + 1/(p_2 p_3) - 1/(p_1 p_2 p_3)$ to that. Each new factor contributes exactly the next level of inclusion-exclusion terms, with the alternating sign coming from the minus in $(1 - 1/p_i)$. After all $r$ factors:</p>
+<p>$$1 - \sum_i \frac{1}{p_i} + \sum_{i&lt;j} \frac{1}{p_i p_j} - \cdots = \prod_{i=1}^{r}\left(1 - \frac{1}{p_i}\right)$$</p>
+<p>Therefore:</p>
 <p>$$\phi(n) = n \prod_{p \mid n}\left(1 - \frac{1}{p}\right)$$</p>
-<p>For $n = 30$: $\phi(30) = 30 \cdot \frac{1}{2} \cdot \frac{2}{3} \cdot \frac{4}{5} = 8$.</p>
+<p><strong>Worked example: $n = 30 = 2 \cdot 3 \cdot 5$.</strong></p>
+<p>The three prime conditions: divisible by 2, 3, or 5. The inclusion-exclusion sum written out:</p>
+<p>$$30 - 15 - 10 - 6 + 5 + 3 + 2 - 1 = 8$$</p>
+<p>The same calculation via the product formula:</p>
+<p>$$\phi(30) = 30 \cdot \left(1 - \frac{1}{2}\right)\left(1 - \frac{1}{3}\right)\left(1 - \frac{1}{5}\right) = 30 \cdot \frac{1}{2} \cdot \frac{2}{3} \cdot \frac{4}{5} = 8$$</p>
+<p>The eight integers from 1 to 30 coprime to 30 are: 1, 7, 11, 13, 17, 19, 23, 29. These are exactly the numbers sharing no factor with $2 \cdot 3 \cdot 5$.</p>
+<p>Note that the prime <em>powers</em> $p_i^{a_i}$ in $n$ do not appear in the formula - only the prime bases $p_i$ matter. Whether $n = 30$ or $n = 2^3 \cdot 3^2 \cdot 5 = 360$, the formula uses the same three factors $(1 - 1/2)(1 - 1/3)(1 - 1/5)$. The reason: divisibility by $p_i^2$ implies divisibility by $p_i$, so the higher powers add no new forbidden conditions beyond what $p_i$ already captures.</p>
 <p><strong>Passwords.</strong> How many 8-character passwords over $\{a\text{-}z, 0\text{-}9\}$ (36 characters total) contain at least one digit and at least one letter?</p>
 <p>The complement: passwords missing digits or missing letters. Let $A$ = passwords with no digits ($26^8$ possibilities), $B$ = passwords with no letters ($10^8$ possibilities), $A \cap B = \emptyset$ (impossible to have neither).</p>
 <p>Passwords missing at least one type: $26^8 + 10^8$. Passwords with both: $36^8 - 26^8 - 10^8 \approx 2.82 \times 10^{12}$.</p>
