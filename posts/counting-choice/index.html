@@ -14,12 +14,12 @@
     
     <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Counting &amp; Choice - How to Count Without Counting Everything"/>
-<meta name="twitter:description" content="Counting is deceptively hard. The question &ldquo;how many ways can you do X?&rdquo; sounds elementary, but answering it precisely requires a small but powerful toolkit. This post builds that toolkit from first principles, with an eye toward both combinatorics and algorithm analysis.
-The Two Fundamental Principles Multiplication Principle. If a procedure consists of $k$ sequential steps, where step $i$ can be performed in $n_i$ ways regardless of how earlier steps were performed, then the total number of ways to complete the procedure is $n_1 \cdot n_2 \cdots n_k$."/>
+<meta name="twitter:description" content="Counting is deceptively hard. The question &ldquo;how many ways can you do X?&rdquo; sounds elementary, but answering it precisely requires a small but powerful toolkit. This post builds that toolkit from first principles.
+ The Two Fundamental Principles Multiplication Principle. If a procedure consists of $k$ sequential steps, where step $i$ can be performed in $n_i$ ways regardless of how earlier steps were performed, then the total number of ways is $n_1 \cdot n_2 \cdots n_k$."/>
 
     <meta property="og:title" content="Counting &amp; Choice - How to Count Without Counting Everything" />
-<meta property="og:description" content="Counting is deceptively hard. The question &ldquo;how many ways can you do X?&rdquo; sounds elementary, but answering it precisely requires a small but powerful toolkit. This post builds that toolkit from first principles, with an eye toward both combinatorics and algorithm analysis.
-The Two Fundamental Principles Multiplication Principle. If a procedure consists of $k$ sequential steps, where step $i$ can be performed in $n_i$ ways regardless of how earlier steps were performed, then the total number of ways to complete the procedure is $n_1 \cdot n_2 \cdots n_k$." />
+<meta property="og:description" content="Counting is deceptively hard. The question &ldquo;how many ways can you do X?&rdquo; sounds elementary, but answering it precisely requires a small but powerful toolkit. This post builds that toolkit from first principles.
+ The Two Fundamental Principles Multiplication Principle. If a procedure consists of $k$ sequential steps, where step $i$ can be performed in $n_i$ ways regardless of how earlier steps were performed, then the total number of ways is $n_1 \cdot n_2 \cdots n_k$." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://megha-bose.github.io/posts/counting-choice/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2022-03-06T00:00:00+00:00" />
@@ -103,70 +103,248 @@ The Two Fundamental Principles Multiplication Principle. If a procedure consists
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          5 min read
+          9 min read
         </div>
       </div>
     </header>
     <div class="post-content">
-      <p>Counting is deceptively hard. The question &ldquo;how many ways can you do X?&rdquo; sounds elementary, but answering it precisely requires a small but powerful toolkit. This post builds that toolkit from first principles, with an eye toward both combinatorics and algorithm analysis.</p>
+      <p>Counting is deceptively hard. The question &ldquo;how many ways can you do X?&rdquo; sounds elementary, but answering it precisely requires a small but powerful toolkit. This post builds that toolkit from first principles.</p>
+<hr>
 <h2 id="the-two-fundamental-principles">The Two Fundamental Principles</h2>
-<p><strong>Multiplication Principle.</strong> If a procedure consists of $k$ sequential steps, where step $i$ can be performed in $n_i$ ways regardless of how earlier steps were performed, then the total number of ways to complete the procedure is $n_1 \cdot n_2 \cdots n_k$.</p>
+<p><strong>Multiplication Principle.</strong> If a procedure consists of $k$ sequential steps, where step $i$ can be performed in $n_i$ ways regardless of how earlier steps were performed, then the total number of ways is $n_1 \cdot n_2 \cdots n_k$.</p>
 <p><em>Example.</em> A password of length 3 using lowercase letters: $26 \cdot 26 \cdot 26 = 26^3 = 17{,}576$ possibilities.</p>
-<p><strong>Addition Principle.</strong> If a procedure can be performed in mutually exclusive ways $A_1, A_2, \ldots, A_k$ (with $|A_i|$ choices for way $i$), then the total number of ways is $|A_1| + |A_2| + \cdots + |A_k|$.</p>
-<p>The addition principle is really just set union for disjoint sets: $|A_1 \cup A_2 \cup \cdots \cup A_k| = \sum_{i=1}^k |A_i|$ when $A_i \cap A_j = \emptyset$ for $i \neq j$.</p>
-<h2 id="permutations-ordered-selection-without-replacement">Permutations: Ordered Selection Without Replacement</h2>
+<p><strong>Addition Principle.</strong> If a procedure can be performed in mutually exclusive ways $A_1, A_2, \ldots, A_k$, then the total is $|A_1| + |A_2| + \cdots + |A_k|$.</p>
+<p>This is just set union for disjoint sets: $|A_1 \cup \cdots \cup A_k| = \sum_{i=1}^k |A_i|$ when the $A_i$ are pairwise disjoint.</p>
+<hr>
+<h2 id="ordered-selection-without-replacement-permutations">Ordered Selection Without Replacement: Permutations</h2>
 <p>A <strong>permutation</strong> of $k$ items chosen from $n$ distinct items is an ordered arrangement. The count is:</p>
 <p>$$P(n, k) = \frac{n!}{(n-k)!} = n(n-1)(n-2)\cdots(n-k+1)$$</p>
-<p><em>Proof.</em> The first position can be filled in $n$ ways, the second in $n-1$ ways (one item used), the $k$-th in $n-k+1$ ways. The multiplication principle gives the product.</p>
-<p>Special case: $P(n, n) = n!$, the number of ways to arrange all $n$ items.</p>
-<h2 id="combinations-unordered-selection-without-replacement">Combinations: Unordered Selection Without Replacement</h2>
-<p>A <strong>combination</strong> of $k$ items from $n$ is an unordered subset. Each subset of size $k$ gives rise to exactly $k!$ ordered permutations (one for each ordering of that subset), so:</p>
+<p><em>Why.</em> First position: $n$ choices. Second: $n-1$ (one item used). Third: $n-2$. Continuing, the $k$-th position has $n-k+1$ choices. Multiplying these together and writing compactly gives $n!/(n-k)!$.</p>
+<p><em>Example.</em> 10 athletes; gold, silver, bronze to three different people. Podium arrangements: $P(10, 3) = 10 \times 9 \times 8 = 720$.</p>
+<p>Special case: $P(n, n) = n!$ - arranging all $n$ items.</p>
+<hr>
+<h2 id="unordered-selection-without-replacement-combinations">Unordered Selection Without Replacement: Combinations</h2>
+<p>A <strong>combination</strong> of $k$ items from $n$ is an unordered subset - a group where the internal order does not matter.</p>
+<p><strong>Why is the formula $\binom{n}{k} = \frac{n!}{k!,(n-k)!}$? And why divide by $k!$ specifically?</strong></p>
+<p>Suppose you want to choose a 3-person committee from 10 people. No roles - just membership. How many committees exist?</p>
+<p>If order mattered (say, picking president then VP then secretary), the answer would be $P(10, 3) = 10 \times 9 \times 8 = 720$.</p>
+<p>But the committee $\{$Alice, Bob, Carol$\}$ is the same group regardless of the order you list them. How many times does a single committee appear in those 720 ordered arrangements? Exactly once for each way to order its 3 members:</p>
+<table>
+<thead>
+<tr>
+<th>Ordering</th>
+<th>Sequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Alice, Bob, Carol</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Alice, Carol, Bob</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Bob, Alice, Carol</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Bob, Carol, Alice</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Carol, Alice, Bob</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Carol, Bob, Alice</td>
+</tr>
+</tbody>
+</table>
+<p>That is $3! = 6$ orderings - not 5, not 7. Why exactly 6? Because picking an ordering of 3 people means: 3 choices for first slot, 2 for second, 1 for third, giving $3 \times 2 \times 1 = 3! = 6$. This holds for <em>any</em> group of 3 distinct people.</p>
+<p>So the 720 ordered arrangements count each committee exactly 6 times. The number of committees is $720 / 6 = 120$.</p>
+<p>Generalizing: $P(n,k)$ counts every $k$-element subset exactly $k!$ times (once per ordering of that subset). Dividing removes the overcounting:</p>
 <p>$$\binom{n}{k} = \frac{P(n,k)}{k!} = \frac{n!}{k!(n-k)!}$$</p>
-<p><strong>Theorem.</strong> $\binom{n}{k} = \binom{n}{n-k}$.</p>
-<p><em>Proof.</em> Choosing $k$ items to include is equivalent to choosing $n-k$ items to exclude:
-$$\frac{n!}{k!(n-k)!} = \frac{n!}{(n-k)!k!}.$$</p>
-<h2 id="the-four-cases-of-selection">The Four Cases of Selection</h2>
-<p>The two binary choices - ordered vs. unordered, with vs. without replacement - give four cases:</p>
-<pre tabindex="0"><code>+------------------+----------------------------+----------------------------+
-|                  |   WITHOUT REPLACEMENT      |    WITH REPLACEMENT        |
-+------------------+----------------------------+----------------------------+
-|   ORDERED        |   P(n,k) = n!/(n-k)!       |   n^k                      |
-|   (permutation)  |   arrange 3 from {A,B,C,D} |   3-char string over {A..Z}|
-+------------------+----------------------------+----------------------------+
-|   UNORDERED      |   C(n,k) = n!/k!(n-k)!     |   C(n+k-1, k)              |
-|   (combination)  |   choose 3 from {A,B,C,D}  |   buy 3 items from 4 types |
-+------------------+----------------------------+----------------------------+
-</code></pre><p>The bottom-right case (unordered, with replacement) is the most subtle. It counts <strong>multisets</strong>.</p>
-<h2 id="stars-and-bars-the-multiset-coefficient">Stars and Bars: The Multiset Coefficient</h2>
-<p><strong>Theorem.</strong> The number of ways to choose $k$ items from $n$ types with repetition allowed (order does not matter) is:</p>
+<blockquote>
+<p><strong>Why dividing by $k!$ works perfectly.</strong> The key is that every subset of size $k$ has <em>exactly</em> the same number of internal orderings: $k!$. Not approximately - exactly. So dividing $P(n,k)$ by $k!$ removes the same factor from every subset simultaneously, leaving each counted exactly once.</p>
+</blockquote>
+<p><strong>Symmetry.</strong> $\binom{n}{k} = \binom{n}{n-k}$. Choosing which $k$ items to <em>include</em> is the same as choosing which $n-k$ items to <em>exclude</em>. The algebra confirms it: $\frac{n!}{k!(n-k)!} = \frac{n!}{(n-k)!k!}$.</p>
+<hr>
+<h2 id="the-four-selection-cases">The Four Selection Cases</h2>
+<p>Two binary choices - ordered vs. unordered, with vs. without replacement - give four cases:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Without replacement</th>
+<th>With replacement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ordered</strong></td>
+<td>$P(n,k) = \dfrac{n!}{(n-k)!}$</td>
+<td>$n^k$</td>
+</tr>
+<tr>
+<td><strong>Unordered</strong></td>
+<td>$\dbinom{n}{k} = \dfrac{n!}{k!(n-k)!}$</td>
+<td>$\dbinom{n+k-1}{k}$</td>
+</tr>
+</tbody>
+</table>
+<p>Each cell has a different character and requires a different intuition. The bottom-right (unordered with replacement) is the most subtle.</p>
+<hr>
+<h2 id="ordered-selection-with-replacement-nk">Ordered Selection With Replacement: $n^k$</h2>
+<p>At each of $k$ steps, pick any of $n$ options freely (the item goes back, so it remains available next time). The multiplication principle gives $n^k$ total sequences.</p>
+<p><em>Example.</em> A 4-digit PIN over digits 0-9: $10^4 = 10{,}000$ possibilities.</p>
+<p><em>Example.</em> Tossing a coin 8 times: $2^8 = 256$ possible outcome sequences.</p>
+<p>This formula appears whenever: items can repeat, and the order of choices matters. It is also the answer to &ldquo;how many functions are there from a $k$-element set to an $n$-element set?&rdquo; - each function assigns one of $n$ values to each of $k$ inputs, independently.</p>
+<hr>
+<h2 id="unordered-selection-with-replacement-stars-and-bars">Unordered Selection With Replacement: Stars and Bars</h2>
+<p>Suppose you choose $k$ items from $n$ types, repetition allowed, and you care only about <em>how many of each type</em> you get - not the order. This counts <strong>multisets</strong>.</p>
+<p><em>Example.</em> An ice cream shop has 4 flavors. You want 3 scoops; the same flavor can appear multiple times; you don&rsquo;t care about scoop order. How many distinct selections exist?</p>
+<p><strong>The bijection.</strong> Represent a selection as a string of $k$ stars (items chosen) and $n-1$ bars (dividers between types). Stars to the left of the first bar count toward type 1, stars between bar 1 and bar 2 count toward type 2, and so on.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 310" width="580" height="310" style="display:block;margin:1.5em auto;font-family:inherit">
+  <text x="290" y="22" text-anchor="middle" font-size="13" fill="#555" font-style="italic">n = 4 types (A, B, C, D),  k = 3 items — arrange 3 stars and 3 bars in 6 positions</text>
+  <text x="20" y="55" font-size="12" fill="#777">Arrangement</text>
+  <text x="370" y="55" font-size="12" fill="#777">Count per type</text>
+  <line x1="10" y1="62" x2="570" y2="62" stroke="#ddd" stroke-width="1"/>
+  <!-- Row 1: ★★★ | | | → A:3 B:0 C:0 D:0 -->
+  <circle cx="48" cy="90" r="15" fill="#f5a623"/>
+  <text x="48" y="95" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <circle cx="103" cy="90" r="15" fill="#f5a623"/>
+  <text x="103" y="95" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <circle cx="158" cy="90" r="15" fill="#f5a623"/>
+  <text x="158" y="95" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <rect x="210" y="72" width="5" height="36" fill="#999"/>
+  <rect x="265" y="72" width="5" height="36" fill="#999"/>
+  <rect x="320" y="72" width="5" height="36" fill="#999"/>
+  <text x="370" y="95" font-size="13" fill="#333">A: 3,  B: 0,  C: 0,  D: 0</text>
+  <!-- Row 2: ★★ | ★ | | → A:2 B:1 C:0 D:0 -->
+  <circle cx="48" cy="150" r="15" fill="#f5a623"/>
+  <text x="48" y="155" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <circle cx="103" cy="150" r="15" fill="#f5a623"/>
+  <text x="103" y="155" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <rect x="155" y="132" width="5" height="36" fill="#999"/>
+  <circle cx="213" cy="150" r="15" fill="#f5a623"/>
+  <text x="213" y="155" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <rect x="265" y="132" width="5" height="36" fill="#999"/>
+  <rect x="320" y="132" width="5" height="36" fill="#999"/>
+  <text x="370" y="155" font-size="13" fill="#333">A: 2,  B: 1,  C: 0,  D: 0</text>
+  <!-- Row 3: ★ | | ★★ | → A:1 B:0 C:2 D:0 -->
+  <circle cx="48" cy="210" r="15" fill="#f5a623"/>
+  <text x="48" y="215" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <rect x="100" y="192" width="5" height="36" fill="#999"/>
+  <rect x="155" y="192" width="5" height="36" fill="#999"/>
+  <circle cx="213" cy="210" r="15" fill="#f5a623"/>
+  <text x="213" y="215" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <circle cx="268" cy="210" r="15" fill="#f5a623"/>
+  <text x="268" y="215" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <rect x="320" y="192" width="5" height="36" fill="#999"/>
+  <text x="370" y="215" font-size="13" fill="#333">A: 1,  B: 0,  C: 2,  D: 0</text>
+  <!-- Row 4: | | | ★★★ → A:0 B:0 C:0 D:3 -->
+  <rect x="45" y="252" width="5" height="36" fill="#999"/>
+  <rect x="100" y="252" width="5" height="36" fill="#999"/>
+  <rect x="155" y="252" width="5" height="36" fill="#999"/>
+  <circle cx="213" cy="270" r="15" fill="#f5a623"/>
+  <text x="213" y="275" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <circle cx="268" cy="270" r="15" fill="#f5a623"/>
+  <text x="268" y="275" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <circle cx="323" cy="270" r="15" fill="#f5a623"/>
+  <text x="323" y="275" text-anchor="middle" font-size="15" fill="white" font-weight="bold">★</text>
+  <text x="370" y="275" font-size="13" fill="#333">A: 0,  B: 0,  C: 0,  D: 3</text>
+</svg>
+<p>The full string has $k + (n-1) = n+k-1$ positions. We choose which $k$ positions are stars (or equivalently which $n-1$ are bars). The number of arrangements is:</p>
 <p>$$\binom{n+k-1}{k}$$</p>
-<p><em>Proof.</em> Model a selection as a string of $k$ stars (items) and $n-1$ bars (dividers between types). The stars and bars together form a string of length $n+k-1$, and we choose which $k$ positions are stars:</p>
-<pre tabindex="0"><code>Types: [A | B | C | D]
-
-Example with n=4 types, k=3 items:
-  A,A,C  -&gt;  **|  |* |   -&gt;  ** | * |
-  B,C,D  -&gt;    | *|* |*  -&gt;  | * | * | *
-</code></pre><p>Formally, a sequence $(x_1, x_2, \ldots, x_n)$ with each $x_i \geq 0$ and $\sum x_i = k$ (where $x_i$ is the count of type $i$) bijects with placing $n-1$ bars among $k$ stars, giving $\binom{n-1+k}{k}$ arrangements. $\square$</p>
+<p>For 4 flavors and 3 scoops: $\binom{6}{3} = 20$ distinct selections.</p>
+<blockquote>
+<p><strong>Why $n-1$ bars, not $n$ bars?</strong> With $n$ types, you need $n-1$ dividers to create $n$ sections - just as 3 fences create 4 paddocks. The first section needs no left-fence (it starts at the beginning), and the last section needs no right-fence.</p>
+</blockquote>
+<hr>
+<h2 id="a-panorama-of-equivalent-problems">A Panorama of Equivalent Problems</h2>
+<p>The four formulas appear under many different names and problem descriptions. The table below shows the most important equivalences.</p>
+<table>
+<thead>
+<tr>
+<th>Formula</th>
+<th>Counting problem</th>
+<th>Integer solutions equivalent</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$n^k$</td>
+<td>Ordered sequences of length $k$, $n$ options each step</td>
+<td>—</td>
+<td>4-digit PIN over 0-9: $10^4$</td>
+</tr>
+<tr>
+<td>$P(n,k)$</td>
+<td>Ordered selection of $k$ from $n$ distinct items, no repeat</td>
+<td>—</td>
+<td>Podium (gold/silver/bronze) from 10: $10 \times 9 \times 8$</td>
+</tr>
+<tr>
+<td>$\dbinom{n}{k}$</td>
+<td>Unordered selection of $k$ from $n$, no repeat</td>
+<td>Ways to choose $k$ elements of a set</td>
+<td>5-card hand from 52: $\binom{52}{5}$</td>
+</tr>
+<tr>
+<td>$\dbinom{n+k-1}{k}$</td>
+<td>Unordered selection of $k$ from $n$ types, repetition ok</td>
+<td>Non-negative solutions to $x_1 + \cdots + x_n = k$</td>
+<td>3 scoops from 4 flavors: $\binom{6}{3}$</td>
+</tr>
+<tr>
+<td>$\dbinom{k-1}{n-1}$</td>
+<td>Distribute $k$ identical items into $n$ non-empty bins</td>
+<td>Positive solutions to $x_1 + \cdots + x_n = k$</td>
+<td>Split 8 cookies among 3 kids, each gets $\geq 1$: $\binom{7}{2}$</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-integer-solutions-perspective">The integer-solutions perspective</h3>
+<p>The last two rows are especially useful because they connect to a type of problem that looks completely different on the surface: <em>counting integer solutions to an equation</em>.</p>
+<p><strong>Non-negative solutions: $\binom{n+k-1}{k}$.</strong> How many ways can you write $k$ as an ordered sum of $n$ non-negative integers?</p>
+<p>$$x_1 + x_2 + \cdots + x_n = k, \quad x_i \geq 0$$</p>
+<p><em>Example.</em> How many ways can you score a total of 5 in 3 rounds of a game where each round score is a non-negative integer? This is the same as distributing 5 identical points among 3 rounds: $\binom{5+3-1}{5} = \binom{7}{5} = 21$.</p>
+<p><strong>Positive solutions: $\binom{k-1}{n-1}$.</strong> How many ways can you write $k$ as an ordered sum of $n$ <em>positive</em> integers?</p>
+<p>$$x_1 + x_2 + \cdots + x_n = k, \quad x_i \geq 1$$</p>
+<p>Pre-place one item in each bin (satisfying the $x_i \geq 1$ constraint), leaving $k-n$ items to distribute freely among $n$ bins. Those $k-n$ items can go anywhere, giving a non-negative problem with total $k-n$ and $n$ bins - but there is a cleaner direct argument: line up $k$ stars; the $n$ parts are created by choosing $n-1$ of the $k-1$ <em>gaps between consecutive stars</em> to insert a bar. This gives $\binom{k-1}{n-1}$.</p>
+<p><em>Example.</em> How many ways can you split 8 identical cookies among 3 children so each child gets at least 1? $\binom{8-1}{3-1} = \binom{7}{2} = 21$.</p>
+<blockquote>
+<p><strong>How to tell which formula to use.</strong> Ask two questions in order:</p>
+<ol>
+<li>Does order matter? If yes: are repeats allowed? Yes → $n^k$. No → $P(n,k)$.</li>
+<li>If order does not matter: are repeats allowed? No → $\binom{n}{k}$. Yes → $\binom{n+k-1}{k}$.</li>
+<li>If the problem involves distributing identical objects into non-empty bins (or positive integer sums): $\binom{k-1}{n-1}$.</li>
+</ol>
+</blockquote>
+<hr>
 <h2 id="the-pigeonhole-principle">The Pigeonhole Principle</h2>
 <p><strong>Theorem (Pigeonhole).</strong> If $n$ items are placed into $m$ containers with $n &gt; m$, then at least one container holds at least $\lceil n/m \rceil$ items.</p>
-<p><em>Proof.</em> If every container held at most $\lfloor n/m \rfloor &lt; n/m$ items, the total would be at most $m \cdot \lfloor n/m \rfloor &lt; n$, contradicting that all $n$ items are placed.</p>
+<p><em>Proof.</em> If every container held at most $\lfloor n/m \rfloor &lt; n/m$ items, the total would be less than $n$, contradicting that all $n$ items are placed.</p>
 <p>The pigeonhole principle is surprisingly powerful. Among any 13 people, two share a birth month. Among any $n+1$ integers from $\{1, \ldots, 2n\}$, two must be consecutive.</p>
+<hr>
 <h2 id="inclusion-exclusion-a-preview">Inclusion-Exclusion: A Preview</h2>
 <p>When events are not disjoint, the addition principle overcounts. The fix is <strong>inclusion-exclusion</strong>:</p>
 <p>$$|A \cup B| = |A| + |B| - |A \cap B|$$</p>
 <p>More generally for three sets:</p>
 <p>$$|A \cup B \cup C| = |A| + |B| + |C| - |A \cap B| - |A \cap C| - |B \cap C| + |A \cap B \cap C|$$</p>
-<p>The general formula will be developed fully in the <a href="/posts/inclusion-exclusion-principle/" target="_blank" rel="noopener noreferrer">Inclusion-Exclusion - Overcounting Your Way to the Right Answer</a>
+<p>The general formula is developed in the <a href="/posts/inclusion-exclusion-principle/" target="_blank" rel="noopener noreferrer">Inclusion-Exclusion - Overcounting Your Way to the Right Answer</a>
  post.</p>
-<h2 id="cs-perspective-counting-complexity-and-the-birthday-paradox">CS Perspective: Counting Complexity and the Birthday Paradox</h2>
-<p><strong>Algorithm complexity.</strong> Counting is the foundation of complexity analysis. An algorithm that tries all $k$-subsets of an $n$-element set runs in $O\binom{n}{k}$ time - exponential for $k = \Theta(n)$, polynomial for constant $k$.</p>
-<p><strong>Hash collisions and the birthday paradox.</strong> Suppose we insert $m$ keys into a hash table of size $n$. The probability of <em>no</em> collision after $m$ insertions is:</p>
-<p>$$P(\text{no collision}) = 1 \cdot \frac{n-1}{n} \cdot \frac{n-2}{n} \cdots \frac{n-m+1}{n} = \frac{n!}{n^m(n-m)!}$$</p>
-<p>Using the approximation $\prod_{i=0}^{m-1}(1 - i/n) \approx e^{-m(m-1)/2n}$, the probability of collision exceeds $1/2$ when $m \approx \sqrt{2n \ln 2} \approx 1.177\sqrt{n}$.</p>
-<p>With a 32-bit hash ($n = 2^{32} \approx 4 \times 10^9$), collisions become likely after only about $\sqrt{4 \times 10^9} \approx 65{,}000$ insertions. This is the <strong>birthday paradox</strong> - collisions arrive far sooner than intuition suggests, with consequences for hash function security (hash collisions in cryptographic contexts) and data structure design.</p>
-<p><strong>Combinatorial explosion.</strong> The number of possible inputs of length $n$ over a binary alphabet is $2^n$. Exhaustive search is feasible only for very small $n$; combinatorics quantifies exactly how quickly the search space grows, motivating smarter algorithms.</p>
 <hr>
-<p>The next post develops permutations and combinations further: circular arrangements, derangements, Pascal&rsquo;s identity, and the binomial theorem.</p>
+<h2 id="cs-perspective">CS Perspective</h2>
+<p><strong>Hash collisions and the birthday paradox.</strong> Suppose we insert $m$ keys into a hash table of size $n$. The probability of no collision after $m$ insertions is:</p>
+<p>$$P(\text{no collision}) = 1 \cdot \frac{n-1}{n} \cdot \frac{n-2}{n} \cdots \frac{n-m+1}{n}$$</p>
+<p>Using the approximation $\prod_{i=0}^{m-1}(1 - i/n) \approx e^{-m(m-1)/2n}$, the probability of collision exceeds $1/2$ when $m \approx \sqrt{2n \ln 2} \approx 1.177\sqrt{n}$.</p>
+<p>With a 32-bit hash ($n = 2^{32} \approx 4 \times 10^9$), collisions become likely after only about $\sqrt{4 \times 10^9} \approx 65{,}000$ insertions - far sooner than intuition suggests. This matters for hash function security and data structure design.</p>
+<p><strong>Combinatorial explosion.</strong> The number of possible inputs of length $n$ over a binary alphabet is $2^n$. Exhaustive search is feasible only for very small $n$; combinatorics quantifies exactly how quickly the search space grows.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
