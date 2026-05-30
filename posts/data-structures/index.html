@@ -105,7 +105,7 @@ Today your phone has roughly 6 billion times more memory. And yet the question h
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -137,7 +137,13 @@ flowchart LR
 
 <p>Contiguous memory also means excellent cache behavior. Modern CPUs don&rsquo;t load one byte at a time from memory - they load a whole &ldquo;cache line&rdquo; (typically 64 bytes). When you read element $i$, you automatically get elements $i+1$, $i+2$, and a few more for free, because they&rsquo;re all in the same cache line. Sequential array traversal is one of the most cache-friendly things you can do on modern hardware.</p>
 <p>The cost is rigidity. Inserting an element in the middle requires shifting every subsequent element one position right: $O(n)$ in the worst case. Same for deletion. If you need to insert and delete frequently, you&rsquo;re paying for that rigidity every time.</p>
-<p><strong>Under the hood:</strong> Arrays are the primitive - they map directly to a contiguous region of raw memory. There is no simpler structure beneath them. Everything else in this post is built on top of arrays, either directly or indirectly.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">nums <span style="color:#f92672">=</span> [<span style="color:#ae81ff">12</span>, <span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">9</span>]
+
+print(nums[<span style="color:#ae81ff">2</span>])        <span style="color:#75715e"># O(1): 8 - direct address computation</span>
+nums<span style="color:#f92672">.</span>insert(<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">99</span>)    <span style="color:#75715e"># O(n): shifts elements 2..end right</span>
+nums<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>)           <span style="color:#75715e"># O(n): shifts everything left</span>
+nums<span style="color:#f92672">.</span>append(<span style="color:#ae81ff">7</span>)        <span style="color:#75715e"># O(1) amortized: add to end</span>
+</code></pre></div><p><strong>Under the hood:</strong> Arrays are the primitive - they map directly to a contiguous region of raw memory. There is no simpler structure beneath them. Everything else in this post is built on top of arrays, either directly or indirectly.</p>
 <hr>
 <h2 id="dynamic-arrays-getting-amortized-o1-appends">Dynamic Arrays: Getting Amortized O(1) Appends</h2>
 <p>A fixed-size array has to know its size upfront. Real programs often don&rsquo;t. The solution is a dynamic array - Python&rsquo;s <code>list</code>, Java&rsquo;s <code>ArrayList</code>, C++&rsquo;s <code>std::vector</code>.</p>
@@ -145,7 +151,7 @@ flowchart LR
 <p>The doubling strategy is the key. You might think: &ldquo;occasionally this costs $O(n)$ to copy, so appends are $O(n)$ in the worst case.&rdquo; That&rsquo;s true per individual append - but it misses the picture.</p>
 <p>Ask instead: how much total copying happens across $n$ appends? The copies happen at sizes $1, 2, 4, 8, \cdots, n/2$. The total copying is:</p>
 <p>$$1 + 2 + 4 + \cdots + \frac{n}{2} = n - 1 &lt; n$$</p>
-<p>So $n$ appends causes less than $n$ total copy operations, on top of $n$ regular insertions. Total work: $O(n)$ for $n$ appends. Average work per append: $O(1)$. We call this $O(1)$ amortized - the occasional expensive operation gets spread across the many cheap ones. (We&rsquo;ll formalize this in <a href="/posts/amortized-analysis/" target="_blank" rel="noopener noreferrer">Amortized Analysis - The True Cost of a Sequence</a>
+<p>So $n$ appends causes less than $n$ total copy operations, on top of $n$ regular insertions. Total work: $O(n)$ for $n$ appends. Average work per append: $O(1)$. We call this $O(1)$ amortized - the occasional expensive operation gets spread across the many cheap ones. Think of it like a bank account: one large deposit doesn&rsquo;t mean every transaction is expensive. (We&rsquo;ll formalize this in <a href="/posts/amortized-analysis/" target="_blank" rel="noopener noreferrer">Amortized Analysis - The True Cost of a Sequence</a>
 .)</p>
 <p><strong>Under the hood:</strong> A dynamic array wraps a fixed-size array. Internally it stores three things: a pointer to that underlying array, the current number of elements, and the allocated capacity. When capacity is exceeded, a new array is allocated, everything is copied over, and the old array is freed.</p>
 <hr>
@@ -166,14 +172,103 @@ flowchart LR
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Node</span>:
+    <span style="color:#66d9ef">def</span> __init__(self, val):
+        self<span style="color:#f92672">.</span>val <span style="color:#f92672">=</span> val
+        self<span style="color:#f92672">.</span>next <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LinkedList</span>:
+    <span style="color:#66d9ef">def</span> __init__(self):
+        self<span style="color:#f92672">.</span>head <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">prepend</span>(self, val):       <span style="color:#75715e"># O(1): just update head pointer</span>
+        node <span style="color:#f92672">=</span> Node(val)
+        node<span style="color:#f92672">.</span>next <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>head
+        self<span style="color:#f92672">.</span>head <span style="color:#f92672">=</span> node
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">find</span>(self, val):          <span style="color:#75715e"># O(n): must walk the chain</span>
+        cur <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>head
+        <span style="color:#66d9ef">while</span> cur:
+            <span style="color:#66d9ef">if</span> cur<span style="color:#f92672">.</span>val <span style="color:#f92672">==</span> val:
+                <span style="color:#66d9ef">return</span> cur
+            cur <span style="color:#f92672">=</span> cur<span style="color:#f92672">.</span>next
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">None</span>
+</code></pre></div><p><strong>In Python, linked lists are rarely the right answer.</strong> Python nodes carry object overhead (reference counts, type pointer, GC fields) - a single integer node takes ~60 bytes, not 8. For the use case where you need $O(1)$ front insertion and deletion, reach for <code>collections.deque</code> instead. It is a doubly-linked list of fixed-size memory blocks, giving you the flexibility without the per-node allocation overhead.</p>
 <p><strong>Under the hood:</strong> Each node is a small struct with two fields - a value and a pointer (a memory address). The nodes are allocated individually anywhere on the heap. The &ldquo;list&rdquo; is nothing more than these structs chained together by following pointers. There is no array involved.</p>
+<hr>
+<h2 id="cache-locality-why-arrays-win-in-practice">Cache Locality: Why Arrays Win in Practice</h2>
+<p>Despite linked lists' theoretical advantages in insertion and deletion, arrays dominate in practice for almost all workloads on modern hardware. The reason is cache locality.</p>
+<p>When you access <code>array[i]</code>, the CPU loads not just that element but an entire cache line - typically 64 bytes, or 8 to 16 adjacent elements. If you then access <code>array[i+1]</code>, it is already in cache. The CPU&rsquo;s hardware prefetcher also detects sequential access patterns and loads ahead. Array traversal is extraordinarily cache-friendly.</p>
+<p>Linked list traversal follows a pointer to a node that could be anywhere in the virtual address space. Each node access is likely a cache miss. Even though both traversals are $O(n)$ in theory, on modern hardware iterating a million-element array is routinely 5-10x faster than iterating a million-element linked list. The constant factor hidden inside Big-O is not hiding a small difference - it is hiding an order-of-magnitude difference.</p>
+<p>This is why production systems in Rust, C++, and Go push toward array-backed structures by default, and why you should reach for <code>list</code> or <code>deque</code> in Python before ever building a custom linked list.</p>
 <hr>
 <h2 id="stacks-and-queues-disciplined-access">Stacks and Queues: Disciplined Access</h2>
 <p>Some problems only need to access data in a specific order. Restricting access to enforce discipline is often a feature, not a limitation.</p>
-<p><strong>A stack</strong> gives you LIFO: last in, first out. You can only push to the top and pop from the top. The call stack in your programming language is literally this - when you call a function, its frame gets pushed; when it returns, it gets popped. Undo systems, expression parsing, and DFS traversal all use stacks naturally.</p>
-<p><strong>A queue</strong> gives you FIFO: first in, first out. Elements are added at the back and removed from the front. Print queues, message buffers, and BFS traversal are all queues.</p>
-<p>Both can be implemented on top of arrays or linked lists with all operations in $O(1)$. Array-backed implementations tend to win on performance due to better cache behavior.</p>
-<p><strong>Under the hood:</strong> A stack is an array with a single integer tracking the top index - push increments it and writes, pop reads and decrements. A queue is typically a circular array with two integers (front and back) that wrap around when they reach the end, avoiding the need to shift elements.</p>
+<p><strong>A stack</strong> gives you LIFO: last in, first out. You can only push to the top and pop from the top. Python lists work perfectly as stacks because <code>.append()</code> and <code>.pop()</code> are both $O(1)$:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">stack <span style="color:#f92672">=</span> []
+stack<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;first&#34;</span>)
+stack<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;second&#34;</span>)
+stack<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;third&#34;</span>)
+
+top <span style="color:#f92672">=</span> stack<span style="color:#f92672">.</span>pop()   <span style="color:#75715e"># &#34;third&#34; - O(1)</span>
+print(stack)        <span style="color:#75715e"># [&#34;first&#34;, &#34;second&#34;]</span>
+</code></pre></div><p>The most important stack in your computer is the <strong>call stack</strong>. Every function call pushes a frame (local variables, return address); every return pops one. This is why infinite recursion raises <code>RecursionError</code> - it overflows the stack. Other places stacks appear: undo/redo, expression parsing, DFS traversal, browser history.</p>
+<p><strong>A queue</strong> gives you FIFO: first in, first out. Elements are added at the back and removed from the front. The critical mistake is using a plain Python list as a queue - <code>list.pop(0)</code> is $O(n)$ because Python shifts every element left. Use <code>collections.deque</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque
+
+queue <span style="color:#f92672">=</span> deque()
+queue<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;first&#34;</span>)
+queue<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;second&#34;</span>)
+queue<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;third&#34;</span>)
+
+front <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()   <span style="color:#75715e"># &#34;first&#34; - O(1)</span>
+</code></pre></div><p>Queues appear everywhere in real systems: event loops (Node.js and Python asyncio process events from a queue), message brokers (Kafka, RabbitMQ, SQS), print spoolers, and BFS traversal.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bfs</span>(graph: dict, start: str) <span style="color:#f92672">-&gt;</span> list:
+    visited <span style="color:#f92672">=</span> set()
+    queue <span style="color:#f92672">=</span> deque([start])
+    order <span style="color:#f92672">=</span> []
+    <span style="color:#66d9ef">while</span> queue:
+        node <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+        <span style="color:#66d9ef">if</span> node <span style="color:#f92672">in</span> visited:
+            <span style="color:#66d9ef">continue</span>
+        visited<span style="color:#f92672">.</span>add(node)
+        order<span style="color:#f92672">.</span>append(node)
+        <span style="color:#66d9ef">for</span> neighbor <span style="color:#f92672">in</span> graph<span style="color:#f92672">.</span>get(node, []):
+            queue<span style="color:#f92672">.</span>append(neighbor)
+    <span style="color:#66d9ef">return</span> order
+
+graph <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;A&#34;</span>: [<span style="color:#e6db74">&#34;B&#34;</span>, <span style="color:#e6db74">&#34;C&#34;</span>], <span style="color:#e6db74">&#34;B&#34;</span>: [<span style="color:#e6db74">&#34;D&#34;</span>], <span style="color:#e6db74">&#34;C&#34;</span>: [<span style="color:#e6db74">&#34;D&#34;</span>], <span style="color:#e6db74">&#34;D&#34;</span>: []}
+print(bfs(graph, <span style="color:#e6db74">&#34;A&#34;</span>))   <span style="color:#75715e"># [&#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;]</span>
+</code></pre></div><p>The queue is what makes BFS traverse level by level rather than depth-first. The structure determines the algorithm&rsquo;s behavior.</p>
+<p><strong><code>collections.deque</code> supports $O(1)$ operations on both ends.</strong> This makes it the right tool for any problem where you need efficient access to both the front and back - not just queues. The sliding window maximum is a classic example: given an array and a window size $k$, find the maximum in each window as it slides across. Naively $O(nk)$; with a deque, $O(n)$:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sliding_window_max</span>(nums: list[int], k: int) <span style="color:#f92672">-&gt;</span> list[int]:
+    dq <span style="color:#f92672">=</span> deque()   <span style="color:#75715e"># stores indices, front always holds index of current max</span>
+    result <span style="color:#f92672">=</span> []
+    <span style="color:#66d9ef">for</span> i, num <span style="color:#f92672">in</span> enumerate(nums):
+        <span style="color:#66d9ef">while</span> dq <span style="color:#f92672">and</span> dq[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&lt;</span> i <span style="color:#f92672">-</span> k <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>:   <span style="color:#75715e"># remove indices outside window</span>
+            dq<span style="color:#f92672">.</span>popleft()
+        <span style="color:#66d9ef">while</span> dq <span style="color:#f92672">and</span> nums[dq[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]] <span style="color:#f92672">&lt;</span> num:   <span style="color:#75715e"># remove smaller elements</span>
+            dq<span style="color:#f92672">.</span>pop()
+        dq<span style="color:#f92672">.</span>append(i)
+        <span style="color:#66d9ef">if</span> i <span style="color:#f92672">&gt;=</span> k <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>:
+            result<span style="color:#f92672">.</span>append(nums[dq[<span style="color:#ae81ff">0</span>]])
+    <span style="color:#66d9ef">return</span> result
+</code></pre></div><p><strong>The balanced parentheses problem</strong> is the canonical stack application - it appears in almost every compiler and interview:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">is_balanced</span>(s: str) <span style="color:#f92672">-&gt;</span> bool:
+    stack <span style="color:#f92672">=</span> []
+    pairs <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;)&#34;</span>: <span style="color:#e6db74">&#34;(&#34;</span>, <span style="color:#e6db74">&#34;]&#34;</span>: <span style="color:#e6db74">&#34;[&#34;</span>, <span style="color:#e6db74">&#34;}&#34;</span>: <span style="color:#e6db74">&#34;{&#34;</span>}
+    <span style="color:#66d9ef">for</span> char <span style="color:#f92672">in</span> s:
+        <span style="color:#66d9ef">if</span> char <span style="color:#f92672">in</span> <span style="color:#e6db74">&#34;([{&#34;</span>:
+            stack<span style="color:#f92672">.</span>append(char)
+        <span style="color:#66d9ef">elif</span> char <span style="color:#f92672">in</span> <span style="color:#e6db74">&#34;)]}&#34;</span>:
+            <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> stack <span style="color:#f92672">or</span> stack[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">!=</span> pairs[char]:
+                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
+            stack<span style="color:#f92672">.</span>pop()
+    <span style="color:#66d9ef">return</span> len(stack) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>
+
+print(is_balanced(<span style="color:#e6db74">&#34;({[]})&#34;</span>))   <span style="color:#75715e"># True</span>
+print(is_balanced(<span style="color:#e6db74">&#34;({[)&#34;</span>))     <span style="color:#75715e"># False</span>
+</code></pre></div><p><strong>Under the hood:</strong> A stack is an array with a single integer tracking the top index. A queue is typically a circular array with two integers (front and back) that wrap around when they reach the end, avoiding the need to shift elements. <code>collections.deque</code> is implemented in C as a doubly-linked list of fixed-size memory blocks - it avoids per-node allocation overhead while still getting $O(1)$ on both ends.</p>
 <hr>
 <h2 id="hash-tables-o1-by-design">Hash Tables: O(1) by Design</h2>
 <p>A hash table solves the problem of finding things by key in expected $O(1)$ time - for both lookup and insertion. This is one of the most used guarantees in practical programming.</p>
@@ -222,7 +317,7 @@ flowchart TD
 <li>Do you need fast lookup by key? Use a hash table.</li>
 <li>Do you need to always access the &ldquo;best&rdquo; element? Use a priority queue.</li>
 <li>Do you need ordered iteration or range queries? Use a balanced BST - a tree where each node&rsquo;s left subtree holds smaller values and right subtree holds larger ones, kept roughly equal in height so no operation takes more than $O(\log n)$.</li>
-<li>Do you need LIFO discipline? Stack. FIFO? Queue.</li>
+<li>Do you need LIFO discipline? Stack. FIFO? Queue. Both ends? Deque.</li>
 </ul>
 <p>The worst situation is choosing based on intuition alone. Think about access patterns first.</p>
 <hr>
@@ -271,7 +366,14 @@ flowchart TD
 <td>$O(1)$ enqueue</td>
 <td>$O(1)$ dequeue</td>
 <td>$O(1)$ peek</td>
-<td>FIFO only</td>
+<td>FIFO only; use <code>deque</code> in Python</td>
+</tr>
+<tr>
+<td>Deque</td>
+<td>$O(1)$ either end</td>
+<td>$O(1)$ either end</td>
+<td>$O(1)$ peek</td>
+<td>Both ends; sliding window, BFS</td>
 </tr>
 <tr>
 <td>Hash table</td>
@@ -292,7 +394,7 @@ flowchart TD
 <td>$O(\log n)$</td>
 <td>$O(\log n)$</td>
 <td>$O(\log n)$</td>
-<td>Ordered; supports range queries (find all elements between two values)</td>
+<td>Ordered; supports range queries</td>
 </tr>
 </tbody>
 </table>
