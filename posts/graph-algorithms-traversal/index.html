@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          13 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -407,7 +407,20 @@ graph <span style="color:#f92672">=</span> {
     <span style="color:#e6db74">&#39;D&#39;</span>: [<span style="color:#e6db74">&#39;E&#39;</span>], <span style="color:#e6db74">&#39;E&#39;</span>: [<span style="color:#e6db74">&#39;F&#39;</span>], <span style="color:#e6db74">&#39;F&#39;</span>: [<span style="color:#e6db74">&#39;D&#39;</span>],
 }
 print(kosaraju(graph))  <span style="color:#75715e"># [[&#39;A&#39;, &#39;C&#39;, &#39;B&#39;], [&#39;D&#39;, &#39;F&#39;, &#39;E&#39;]]</span>
-</code></pre></div><hr>
+</code></pre></div><p><strong>Proof of correctness.</strong> The claim is: each DFS call in step 3 outputs exactly one SCC.</p>
+<p>To see why, think about the <strong>condensation</strong> of $G$ - the DAG formed by collapsing each SCC to a single node and keeping one edge between pairs of SCCs. The condensation is always a DAG (if it had a cycle, all the SCCs in that cycle would merge into one).</p>
+<p><strong>Key Lemma.</strong> If there is an edge from SCC $C$ to SCC $C'$ in the condensation (some path from $C$ to $C'$ in $G$ but not back), then the last vertex of $C$ to finish has a higher finish time than the last vertex of $C'$ to finish. More precisely, $f(C) &gt; f(C')$ where $f(C) = \max_{v \in C} f(v)$.</p>
+<p><em>Proof.</em> Let $u$ be the first vertex discovered by DFS in either $C$ or $C'$.</p>
+<ul>
+<li>If $u \in C$: at the moment $u$ is discovered, all vertices of $C'$ are unvisited. Since there is a path from $u$ (in $C$) to $C'$, the DFS subtree rooted at $u$ will eventually reach and fully explore $C'$ before $u$ finishes. Therefore every vertex in $C'$ finishes before $u$ finishes, so $f(C') &lt; f(u) \leq f(C)$.</li>
+<li>If $u \in C'$: there is no path from $C'$ back to $C$ (different SCCs, edge only goes $C \to C'$). So the DFS subtree rooted at $u$ explores all of $C'$ and never reaches $C$. All of $C'$ finishes before DFS ever visits $C$, giving $f(C') &lt; f(C)$.</li>
+</ul>
+<p>In both cases, $f(C) &gt; f(C')$. $\square$</p>
+<p><strong>Consequence: the source is processed first.</strong> The vertex $u$ with the globally maximum finish time belongs to some SCC $C_1$. If $C_1$ had any incoming edge $C' \to C_1$ in the condensation, the Key Lemma would require $f(C') &gt; f(C_1)$, contradicting $u$ being the global maximum. So $C_1$ has <strong>no incoming edges</strong> in the condensation of $G$ - it is a source.</p>
+<p><strong>Step 3 stays within one SCC.</strong> In $G^T$ (all edges reversed), the condensation is also reversed. Since $C_1$ was a source in $G$&rsquo;s condensation, it becomes a <strong>sink</strong> in $G^T$&rsquo;s condensation - no outgoing edges leave $C_1$ in $G^T$. DFS from $u \in C_1$ in $G^T$ can only travel along $G^T$ edges and is therefore confined to $C_1$.</p>
+<p>Meanwhile, every vertex in $C_1$ is reachable from $u$ in $G^T$: since $u$ and $v$ are in the same SCC, there is a path from $v$ to $u$ in $G$, and reversing it gives a path from $u$ to $v$ in $G^T$. So DFS from $u$ collects exactly $C_1$.</p>
+<p><strong>Induction.</strong> After marking $C_1$ as visited, the remaining unvisited vertices form a subgraph. The next unvisited vertex with the highest finish time belongs to the source SCC of that subgraph&rsquo;s condensation, and the same argument applies. Each DFS call in step 3 identifies exactly one SCC, peeling the condensation from source to sink one layer at a time. $\square$</p>
+<hr>
 <h2 id="connected-components-bridges-and-articulation-points">Connected Components, Bridges, and Articulation Points</h2>
 <p>In an undirected graph:</p>
 <p><strong>Connected components.</strong> Run BFS or DFS; each new call to <code>DFS_Visit</code> from the outer loop starts a new connected component.</p>
