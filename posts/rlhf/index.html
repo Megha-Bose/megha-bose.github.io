@@ -155,10 +155,10 @@ Ask it a question and it will produce text that looks like it might follow that 
 <p>Now we train a separate model to predict human preferences.</p>
 <p>Sample pairs of responses $(y_1, y_2)$ to the same prompt $x$ from the SFT model. Have human raters compare them and indicate which is better: &ldquo;$y_1$ is preferred over $y_2$&rdquo; or vice versa. Collect a large dataset of such comparisons.</p>
 <p>The <strong>reward model</strong> $R_\phi(x, y) \to \mathbb{R}$ takes a prompt $x$ and response $y$ and outputs a scalar quality score. We train it using the <strong>Bradley-Terry preference model</strong>:</p>
-<p>$$P(y_w \succ y_l \mid x) = \sigma!\left(R_\phi(x, y_w) - R_\phi(x, y_l)\right),$$</p>
+<p>$$P(y_w \succ y_l \mid x) = \sigma\left(R_\phi(x, y_w) - R_\phi(x, y_l)\right),$$</p>
 <p>where $y_w$ is the preferred (&ldquo;won&rdquo;) response, $y_l$ is the rejected (&ldquo;lost&rdquo;) response, and $\sigma$ is the sigmoid function. The reward model should assign higher scores to preferred responses.</p>
 <p>The training loss is:</p>
-<p>$$\mathcal{L}<em>{\text{RM}} = -\mathbb{E}</em>{(x, y_w, y_l) \sim \mathcal{D}}!\left[\log \sigma!\left(R_\phi(x, y_w) - R_\phi(x, y_l)\right)\right].$$</p>
+<p>$$\mathcal{L}<em>{\text{RM}} = -\mathbb{E}</em>{(x, y_w, y_l) \sim \mathcal{D}}\left[\log \sigma\left(R_\phi(x, y_w) - R_\phi(x, y_l)\right)\right].$$</p>
 <p>This is just binary cross-entropy: we want the model to correctly predict which response was preferred. The Bradley-Terry model is a classic way to convert pairwise comparisons into scalar scores - the same approach used in chess rating systems (Elo) and tournament ranking.</p>
 <p>The reward model is typically initialized from the SFT model (same architecture, extra linear head for the scalar output). After training, it acts as a proxy for human judgment: given any (prompt, response) pair, it estimates how much a human would prefer it.</p>
 <h3 id="stage-3-rl-fine-tuning-with-ppo">Stage 3: RL Fine-Tuning with PPO</h3>
@@ -171,10 +171,10 @@ Ask it a question and it will produce text that looks like it might follow that 
 <li><strong>Reward:</strong> $R_\phi(x, y)$ minus a KL penalty term</li>
 </ul>
 <p>The objective the RL training maximizes:</p>
-<p>$$\mathcal{J}(\theta) = \mathbb{E}<em>{x \sim \mathcal{D},, y \sim \pi</em>\theta(\cdot | x)}!\left[R_\phi(x, y) - \beta \cdot \text{KL}!\left(\pi_\theta(\cdot | x),|,\pi_{\text{SFT}}(\cdot | x)\right)\right].$$</p>
+<p>$$\mathcal{J}(\theta) = \mathbb{E}<em>{x \sim \mathcal{D}, y \sim \pi</em>\theta(\cdot | x)}\left[R_\phi(x, y) - \beta \cdot \text{KL}\left(\pi_\theta(\cdot | x)|\pi_{\text{SFT}}(\cdot | x)\right)\right].$$</p>
 <p>The KL penalty term is critical. Without it, the policy quickly finds degenerate responses that fool the reward model - long repetitive strings, sycophantic phrases, or technically correct but useless outputs that the RM happens to rate highly. The KL penalty anchors the RL-trained model close to the SFT model, preventing it from drifting too far from coherent language.</p>
 <p>The algorithm used for optimization is <strong>PPO (Proximal Policy Optimization)</strong>. PPO clips the policy update at each step to prevent the kind of large destabilizing updates that simpler policy gradient methods suffer from:</p>
-<p>$$\mathcal{L}_{\text{PPO}}(\theta) = \mathbb{E}!\left[\min!\left(r_t(\theta)\hat{A}_t,; \text{clip}(r_t(\theta), 1 - \epsilon, 1 + \epsilon)\hat{A}_t\right)\right],$$</p>
+<p>$$\mathcal{L}_{\text{PPO}}(\theta) = \mathbb{E}\left[\min\left(r_t(\theta)\hat{A}_t,; \text{clip}(r_t(\theta), 1 - \epsilon, 1 + \epsilon)\hat{A}_t\right)\right],$$</p>
 <p>where $r_t(\theta) = \pi_\theta(a_t | s_t) / \pi_{\theta_{\text{old}}}(a_t | s_t)$ is the probability ratio between new and old policies, $\hat{A}_t$ is the estimated advantage, and $\epsilon$ (typically $0.1$ to $0.2$) is the clip range.</p>
 <p>The result of Stage 3 is the final aligned model: a language model that generates responses maximizing the reward model&rsquo;s score while staying close to the SFT model&rsquo;s distribution.</p>
 <hr>
@@ -226,7 +226,7 @@ Ask it a question and it will produce text that looks like it might follow that 
 <p>RLHF requires a learned reward model - a neural network trained on human preference data that scores responses. This creates two problems: reward hacking (the policy learns to fool the reward model rather than actually improve) and the cost of human annotation at scale.</p>
 <p><strong>Verifiable rewards</strong> sidestep both problems. For tasks where correctness can be checked automatically - mathematics, code, formal logic - the reward signal is the answer to &ldquo;is this solution correct?&rdquo; A math problem either has the right answer or it doesn&rsquo;t. Code either passes tests or it doesn&rsquo;t. No learned reward model, no reward hacking.</p>
 <p><strong>RLVR setup.</strong> The language model generates a chain-of-thought reasoning trace followed by a final answer. A deterministic verifier checks whether the answer is correct and returns reward 1 (correct) or 0 (incorrect). The policy is updated via GRPO (Group Relative Policy Optimization) or similar on-policy RL: generate $G$ solutions per problem, compute rewards, use the group mean and variance to normalise advantages, update with a clipped policy gradient loss identical in structure to PPO.</p>
-<p>$$\mathcal{L}<em>{\text{GRPO}} = -\mathbb{E}!\left[\min!\left(\frac{\pi</em>\theta(o|q)}{\pi_{\theta_{\text{old}}}(o|q)} A, ;\text{clip}!\left(\frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}, 1-\varepsilon, 1+\varepsilon\right) A\right)\right]$$</p>
+<p>$$\mathcal{L}<em>{\text{GRPO}} = -\mathbb{E}\left[\min\left(\frac{\pi</em>\theta(o|q)}{\pi_{\theta_{\text{old}}}(o|q)} A, ;\text{clip}\left(\frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}, 1-\varepsilon, 1+\varepsilon\right) A\right)\right]$$</p>
 <p>where $A$ is the advantage normalised within the group of $G$ outputs for the same question, and $o$ is the output sequence.</p>
 <p><strong>Why it works.</strong> The key insight is that the verifiable reward provides a training signal exactly where you want it - at the final answer - without requiring a learned reward model that can be gamed. The chain-of-thought is not directly supervised; the model is free to develop whatever reasoning process leads to correct answers. This is how DeepSeek-R1 and similar &ldquo;reasoning models&rdquo; are trained: start from a base model, apply RLVR on math/code problems with ground-truth verifiers, and the model spontaneously develops longer, more structured reasoning chains.</p>
 <p><strong>Limitations.</strong> RLVR only works when correctness is verifiable. Open-ended tasks (writing, summarisation, subjective judgements) have no ground-truth verifier. For these, RLHF with a learned reward model remains necessary. RLVR also requires a base model that already has enough capability to solve some fraction of problems - if the initial success rate is near zero, the RL signal vanishes. &ldquo;Rubric-based&rdquo; RLVR extends verifiable rewards to partially-correct answers using structured rubrics evaluated by a stronger model.</p>
@@ -264,7 +264,7 @@ Ask it a question and it will produce text that looks like it might follow that 
 </tr>
 <tr>
 <td>RL objective</td>
-<td>$\mathbb{E}[R(x,y)] - \beta,\text{KL}(\pi_\theta | \pi_{\text{SFT}})$</td>
+<td>$\mathbb{E}[R(x,y)] - \beta\text{KL}(\pi_\theta | \pi_{\text{SFT}})$</td>
 </tr>
 <tr>
 <td>KL penalty</td>

@@ -122,34 +122,34 @@
 <hr>
 <h2 id="recalling-the-rlhf-objective">Recalling the RLHF Objective</h2>
 <p>In RLHF, we train the policy $\pi_\theta$ to maximize:</p>
-<p>$$\mathcal{J}(\theta) = \mathbb{E}<em>{x \sim \mathcal{D},, y \sim \pi</em>\theta(\cdot|x)}!\left[R(x,y) - \beta,\text{KL}!\left(\pi_\theta(\cdot|x),|,\pi_{\text{ref}}(\cdot|x)\right)\right].$$</p>
+<p>$$\mathcal{J}(\theta) = \mathbb{E}<em>{x \sim \mathcal{D}, y \sim \pi</em>\theta(\cdot|x)}\left[R(x,y) - \beta\text{KL}\left(\pi_\theta(\cdot|x)|\pi_{\text{ref}}(\cdot|x)\right)\right].$$</p>
 <p>The reward $R(x,y)$ measures response quality. The KL penalty keeps the trained policy from drifting too far from the reference policy $\pi_{\text{ref}}$ (typically the SFT model). The parameter $\beta$ controls the tradeoff.</p>
 <p>This objective has been studied in the context of entropy-regularized RL. And crucially, it has a <strong>closed-form optimal solution</strong> (Ziebart et al., 2008):</p>
-<p>$$\pi^*(y \mid x) = \frac{1}{Z(x)},\pi_{\text{ref}}(y \mid x)\cdot \exp!\left(\frac{R(x,y)}{\beta}\right),$$</p>
+<p>$$\pi^*(y \mid x) = \frac{1}{Z(x)}\pi_{\text{ref}}(y \mid x)\cdot \exp\left(\frac{R(x,y)}{\beta}\right),$$</p>
 <p>where $Z(x) = \sum_y \pi_{\text{ref}}(y \mid x)\exp(R(x,y)/\beta)$ is a normalizing partition function. This is the Boltzmann distribution of responses, weighted by the reference policy and exponentiated reward.</p>
 <p>You can verify this: the optimal policy places higher probability on responses with high reward, but its shape stays close to $\pi_{\text{ref}}$ (controlled by $\beta$). Large $\beta$: stays near reference. Small $\beta$: concentrates mass on high-reward responses.</p>
 <p>RLHF searches for this optimal policy iteratively, using the reward model and PPO. DPO derives a direct loss function that achieves it in one shot.</p>
 <hr>
 <h2 id="the-key-rearrangement">The Key Rearrangement</h2>
 <p>Starting from the closed-form optimal policy, we can solve for the reward:</p>
-<p>$$\pi^*(y \mid x) = \frac{1}{Z(x)},\pi_{\text{ref}}(y \mid x)\cdot \exp!\left(\frac{R(x,y)}{\beta}\right).$$</p>
+<p>$$\pi^*(y \mid x) = \frac{1}{Z(x)}\pi_{\text{ref}}(y \mid x)\cdot \exp\left(\frac{R(x,y)}{\beta}\right).$$</p>
 <p>Taking logs:</p>
 <p>$$\log \pi^*(y \mid x) = \log \pi_{\text{ref}}(y \mid x) + \frac{R(x,y)}{\beta} - \log Z(x).$$</p>
 <p>Rearranging for $R(x, y)$:</p>
-<p>$$R(x,y) = \beta,\log\frac{\pi^*(y \mid x)}{\pi_{\text{ref}}(y \mid x)} + \beta,\log Z(x).$$</p>
+<p>$$R(x,y) = \beta\log\frac{\pi^*(y \mid x)}{\pi_{\text{ref}}(y \mid x)} + \beta\log Z(x).$$</p>
 <p>This is remarkable. The reward is completely determined by the ratio of the optimal policy to the reference policy. If you know $\pi^*$, you know $R$ - up to the partition function $Z(x)$, which depends only on $x$ and not on the specific response $y$.</p>
 <hr>
 <h2 id="the-dpo-loss-deriving-it">The DPO Loss: Deriving It</h2>
 <p>Now plug this implicit reward into the Bradley-Terry preference model from RLHF Stage 2:</p>
-<p>$$P(y_w \succ y_l \mid x) = \sigma!\left(R(x, y_w) - R(x, y_l)\right).$$</p>
+<p>$$P(y_w \succ y_l \mid x) = \sigma\left(R(x, y_w) - R(x, y_l)\right).$$</p>
 <p>Substituting:</p>
-<p>$$R(x, y_w) - R(x, y_l) = \beta,\log\frac{\pi^<em>(y_w|x)}{\pi_{\text{ref}}(y_w|x)} + \beta\log Z(x) - \beta,\log\frac{\pi^</em>(y_l|x)}{\pi_{\text{ref}}(y_l|x)} - \beta\log Z(x).$$</p>
+<p>$$R(x, y_w) - R(x, y_l) = \beta\log\frac{\pi^<em>(y_w|x)}{\pi_{\text{ref}}(y_w|x)} + \beta\log Z(x) - \beta\log\frac{\pi^</em>(y_l|x)}{\pi_{\text{ref}}(y_l|x)} - \beta\log Z(x).$$</p>
 <p>The $\beta\log Z(x)$ terms cancel (this is the key trick - the partition function drops out):</p>
-<p>$$R(x, y_w) - R(x, y_l) = \beta,\log\frac{\pi^<em>(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta,\log\frac{\pi^</em>(y_l|x)}{\pi_{\text{ref}}(y_l|x)}.$$</p>
+<p>$$R(x, y_w) - R(x, y_l) = \beta\log\frac{\pi^<em>(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta\log\frac{\pi^</em>(y_l|x)}{\pi_{\text{ref}}(y_l|x)}.$$</p>
 <p>So:</p>
-<p>$$P(y_w \succ y_l \mid x) = \sigma!\left(\beta,\log\frac{\pi^<em>(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta,\log\frac{\pi^</em>(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right).$$</p>
+<p>$$P(y_w \succ y_l \mid x) = \sigma\left(\beta\log\frac{\pi^<em>(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta\log\frac{\pi^</em>(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right).$$</p>
 <p>Now replace $\pi^*$ with the parameterized policy $\pi_\theta$ we&rsquo;re training. The DPO loss is simply the negative log-likelihood of the correct preference:</p>
-<p>$$\mathcal{L}<em>{\text{DPO}}(\theta) = -\mathbb{E}</em>{(x, y_w, y_l) \sim \mathcal{D}}!\left[\log\sigma!\left(\beta,\log\frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta,\log\frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right)\right].$$</p>
+<p>$$\mathcal{L}<em>{\text{DPO}}(\theta) = -\mathbb{E}</em>{(x, y_w, y_l) \sim \mathcal{D}}\left[\log\sigma\left(\beta\log\frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta\log\frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right)\right].$$</p>
 <p>That&rsquo;s it. Binary cross-entropy over preference pairs, with the policy&rsquo;s log-probability ratios as the scores. No reward model. No PPO. One loss function.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> The derivation substituted $\pi^<em>$ (the optimal policy, which we&rsquo;re trying to find) with $\pi_\theta$ (the policy we&rsquo;re training). This looks circular - we&rsquo;re using $\pi^</em>$ in the derivation but then replacing it with $\pi_\theta$. The resolution: the DPO loss is constructed so that its minimizer is exactly $\pi^<em>$. We&rsquo;re not assuming we already have $\pi^</em>$; we&rsquo;re building a loss whose minimum achieves $\pi^<em>$. Gradient descent on this loss moves $\pi_\theta$ toward $\pi^</em>$ without needing to know $\pi^*$ in advance.</p>
@@ -170,7 +170,7 @@
 <p>What does optimizing the DPO loss actually do to the policy?</p>
 <p>Let $h_\theta = \beta\log(\pi_\theta(y_w|x)/\pi_{\text{ref}}(y_w|x)) - \beta\log(\pi_\theta(y_l|x)/\pi_{\text{ref}}(y_l|x))$ be the &ldquo;margin&rdquo; between preferred and rejected responses. The loss is $-\log\sigma(h_\theta)$.</p>
 <p>The gradient with respect to $\theta$ has an interpretable form (dropping constants):</p>
-<p>$$\nabla_\theta \mathcal{L}<em>{\text{DPO}} \propto -\sigma(-h</em>\theta)!\left[\nabla_\theta\log\pi_\theta(y_w|x) - \nabla_\theta\log\pi_\theta(y_l|x)\right].$$</p>
+<p>$$\nabla_\theta \mathcal{L}<em>{\text{DPO}} \propto -\sigma(-h</em>\theta)\left[\nabla_\theta\log\pi_\theta(y_w|x) - \nabla_\theta\log\pi_\theta(y_l|x)\right].$$</p>
 <p>The factor $\sigma(-h_\theta)$ is large when the model currently rates $y_l$ above $y_w$ (the preference is &ldquo;wrong&rdquo;), and small when the model already correctly prefers $y_w$. This is an implicit weighting: the loss focuses updates on the pairs the model gets wrong, and de-emphasizes pairs it already gets right.</p>
 <p>The term in brackets increases the log-probability of the preferred response and decreases the log-probability of the rejected response, simultaneously. This is the key behavior: DPO is pushing up on $y_w$ and pulling down on $y_l$, relative to the reference policy - not in absolute terms but as a ratio.</p>
 <hr>
@@ -194,12 +194,12 @@
 <h2 id="dpo-variants">DPO Variants</h2>
 <p>The simplicity of DPO has spawned a family of variants addressing specific limitations:</p>
 <p><strong>IPO (Azar et al., 2023):</strong> Identity Preference Optimization. Modifies the DPO loss to prevent overfitting to the preference data. DPO&rsquo;s loss approaches zero as the margin $h_\theta \to \infty$, meaning the gradient vanishes and training effectively stops before the policy is fully optimized. IPO adds a regularization term to prevent this:</p>
-<p>$$\mathcal{L}<em>{\text{IPO}} = \mathbb{E}!\left[\left(h</em>\theta - \frac{1}{2\beta}\right)^2\right].$$</p>
+<p>$$\mathcal{L}<em>{\text{IPO}} = \mathbb{E}\left[\left(h</em>\theta - \frac{1}{2\beta}\right)^2\right].$$</p>
 <p><strong>SimPO (Meng et al., 2024):</strong> Simple Preference Optimization. Removes the reference model entirely. Instead of using $\pi_{\text{ref}}$ for regularization, SimPO normalizes log-probabilities by sequence length and adds a margin:</p>
-<p>$$\mathcal{L}<em>{\text{SimPO}} = -\log\sigma!\left(\frac{\beta}{|y_w|}\log\pi</em>\theta(y_w|x) - \frac{\beta}{|y_l|}\log\pi_\theta(y_l|x) - \gamma\right).$$</p>
+<p>$$\mathcal{L}<em>{\text{SimPO}} = -\log\sigma\left(\frac{\beta}{|y_w|}\log\pi</em>\theta(y_w|x) - \frac{\beta}{|y_l|}\log\pi_\theta(y_l|x) - \gamma\right).$$</p>
 <p>This eliminates the reference model from memory, halving the inference cost during training.</p>
 <p><strong>ORPO (Hong et al., 2024):</strong> Odds Ratio Preference Optimization. Combines the SFT loss and preference optimization into a single objective. The model learns to follow instructions and to prefer good responses simultaneously, without requiring a separate SFT stage:</p>
-<p>$$\mathcal{L}<em>{\text{ORPO}} = \mathcal{L}</em>{\text{SFT}} - \lambda,\mathbb{E}!\left[\log\sigma!\left(\log\frac{\pi_\theta(y_w|x)}{1-\pi_\theta(y_w|x)} - \log\frac{\pi_\theta(y_l|x)}{1-\pi_\theta(y_l|x)}\right)\right].$$</p>
+<p>$$\mathcal{L}<em>{\text{ORPO}} = \mathcal{L}</em>{\text{SFT}} - \lambda\mathbb{E}\left[\log\sigma\left(\log\frac{\pi_\theta(y_w|x)}{1-\pi_\theta(y_w|x)} - \log\frac{\pi_\theta(y_l|x)}{1-\pi_\theta(y_l|x)}\right)\right].$$</p>
 <hr>
 <h2 id="practical-impact">Practical Impact</h2>
 <p>DPO is currently the dominant method for open-source LLM alignment. Its simplicity means anyone with a GPU, a dataset, and a few hundred lines of code can align a language model.</p>
@@ -225,7 +225,7 @@
 <tbody>
 <tr>
 <td>RLHF objective</td>
-<td>$\mathbb{E}[R(x,y)] - \beta,\text{KL}(\pi | \pi_{\text{ref}})$</td>
+<td>$\mathbb{E}[R(x,y)] - \beta\text{KL}(\pi | \pi_{\text{ref}})$</td>
 </tr>
 <tr>
 <td>Optimal RLHF policy</td>

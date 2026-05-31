@@ -626,11 +626,55 @@ c3                    ; ret
 <p><strong>Stage 4 - Linker</strong></p>
 <p>The linker takes <code>hello.o</code> plus the C++ standard library (<code>libstdc++.so</code>) and resolves every relocation. It finds the compiled definition of <code>operator&lt;&lt;</code>, learns its final address, and patches the zero bytes in the call instruction with that address. The same happens for <code>std::cout</code> and <code>std::endl</code>. What comes out is a self-contained executable where every address is concrete.</p>
 <p>The full pipeline in one picture:</p>
-<pre tabindex="0"><code>hello.cpp         --[preprocessor]--&gt;  hello.i   (pure C++, ~30k lines)
-hello.i           --[compiler]-------&gt;  hello.s   (x86-64 assembly)
-hello.s           --[assembler]-------&gt;  hello.o   (machine code with unfilled relocations)
-hello.o + stdlib  --[linker]----------&gt;  hello     (complete executable, all addresses resolved)
-</code></pre><p>This explains several things that puzzle beginners. Why does <code>#include</code> exist at all? The compiler needs to see declarations (types, function signatures) from other files to type-check your code - the linker handles combining the actual compiled code later. Why are there both &ldquo;compile errors&rdquo; and &ldquo;link errors&rdquo;? They happen at different stages: the compiler reports type mismatches, the linker reports missing definitions. Why can two <code>.cpp</code> files both <code>#include</code> the same header without duplicating code in the final binary? Because the compiler generates code only for definitions, not declarations, and the linker merges them.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 200" width="580" height="200" style="display:block;margin:1.2em 0;font-family:inherit">
+  <defs>
+    <marker id="cpp-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+  </defs>
+  <!-- Row 1: hello.cpp → preprocessor → hello.i -->
+  <rect x="10" y="14" width="100" height="36" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="60" y="28" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">hello.cpp</text>
+  <text x="60" y="42" text-anchor="middle" font-size="10" fill="#6b7280">source</text>
+  <line x1="111" y1="32" x2="143" y2="32" stroke="#64748b" stroke-width="1.5" marker-end="url(#cpp-arr)"/>
+  <rect x="145" y="14" width="110" height="36" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="200" y="28" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">preprocessor</text>
+  <text x="200" y="42" text-anchor="middle" font-size="10" fill="#3b82f6">expand #include, macros</text>
+  <line x1="256" y1="32" x2="288" y2="32" stroke="#64748b" stroke-width="1.5" marker-end="url(#cpp-arr)"/>
+  <rect x="290" y="14" width="100" height="36" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="340" y="28" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">hello.i</text>
+  <text x="340" y="42" text-anchor="middle" font-size="10" fill="#6b7280">pure C++ (~30k lines)</text>
+  <!-- Row 2: hello.i → compiler → hello.s -->
+  <line x1="340" y1="50" x2="340" y2="64" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#cpp-arr)"/>
+  <rect x="145" y="66" width="110" height="36" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="200" y="80" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">compiler</text>
+  <text x="200" y="94" text-anchor="middle" font-size="10" fill="#3b82f6">parse, type-check, codegen</text>
+  <line x1="340" y1="66" x2="260" y2="84" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="145" y1="84" x2="111" y2="84" stroke="#64748b" stroke-width="1.5" marker-end="url(#cpp-arr)"/>
+  <rect x="10" y="66" width="100" height="36" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="60" y="80" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">hello.s</text>
+  <text x="60" y="94" text-anchor="middle" font-size="10" fill="#6b7280">x86-64 assembly</text>
+  <!-- Row 3: hello.s → assembler → hello.o -->
+  <line x1="60" y1="102" x2="60" y2="116" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#cpp-arr)"/>
+  <rect x="145" y="118" width="110" height="36" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="200" y="132" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">assembler</text>
+  <text x="200" y="146" text-anchor="middle" font-size="10" fill="#3b82f6">encode to machine code</text>
+  <line x1="60" y1="118" x2="140" y2="136" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="256" y1="136" x2="288" y2="136" stroke="#64748b" stroke-width="1.5" marker-end="url(#cpp-arr)"/>
+  <rect x="290" y="118" width="100" height="36" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="340" y="132" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">hello.o</text>
+  <text x="340" y="146" text-anchor="middle" font-size="10" fill="#6b7280">object file (relocations)</text>
+  <!-- Row 4: hello.o + stdlib → linker → hello -->
+  <line x1="340" y1="154" x2="340" y2="168" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#cpp-arr)"/>
+  <rect x="145" y="158" width="110" height="36" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="200" y="172" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">linker</text>
+  <text x="200" y="186" text-anchor="middle" font-size="10" fill="#3b82f6">resolve symbols, patch addrs</text>
+  <text x="200" y="158" text-anchor="middle" font-size="10" fill="#94a3b8">+ stdlib</text>
+  <line x1="340" y1="168" x2="260" y2="176" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="145" y1="176" x2="111" y2="176" stroke="#64748b" stroke-width="1.5" marker-end="url(#cpp-arr)"/>
+  <rect x="10" y="158" width="100" height="36" rx="5" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+  <text x="60" y="172" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">hello</text>
+  <text x="60" y="186" text-anchor="middle" font-size="10" fill="#10b981">executable</text>
+</svg>
+<p>This explains several things that puzzle beginners. Why does <code>#include</code> exist at all? The compiler needs to see declarations (types, function signatures) from other files to type-check your code - the linker handles combining the actual compiled code later. Why are there both &ldquo;compile errors&rdquo; and &ldquo;link errors&rdquo;? They happen at different stages: the compiler reports type mismatches, the linker reports missing definitions. Why can two <code>.cpp</code> files both <code>#include</code> the same header without duplicating code in the final binary? Because the compiler generates code only for definitions, not declarations, and the linker merges them.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>

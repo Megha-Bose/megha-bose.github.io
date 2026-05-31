@@ -124,20 +124,20 @@
 <hr>
 <h2 id="importance-sampling">Importance Sampling</h2>
 <p>Suppose you want to compute $\mathbb{E}_p[f(X)]$ but sampling from $p$ is difficult or expensive. If you can sample from a different distribution $q$ (called the proposal), importance sampling rewrites the expectation:</p>
-<p>$$\mathbb{E}_p[f(X)] = \int f(x), p(x), dx = \int f(x), \frac{p(x)}{q(x)}, q(x), dx = \mathbb{E}_q!\left[f(X), \frac{p(X)}{q(X)}\right].$$</p>
+<p>$$\mathbb{E}_p[f(X)] = \int f(x) p(x) dx = \int f(x) \frac{p(x)}{q(x)} q(x) dx = \mathbb{E}_q\left[f(X) \frac{p(X)}{q(X)}\right].$$</p>
 <p>The estimator $\hat{\mu}<em>{\text{IS}} = \frac{1}{n}\sum</em>{i=1}^n f(x_i) \frac{p(x_i)}{q(x_i)}$ with $x_i \sim q$ is unbiased: $\mathbb{E}[\hat{\mu}_{\text{IS}}] = \mathbb{E}_p[f(X)]$.</p>
 <p>The ratio $w(x) = p(x)/q(x)$ is the importance weight. The variance of the estimator is:</p>
-<p>$$\text{Var}(\hat{\mu}_{\text{IS}}) = \frac{1}{n}\text{Var}_q!\left[f(X) w(X)\right] = \frac{1}{n}!\left(\mathbb{E}_q[f(X)^2 w(X)^2] - \mu^2\right).$$</p>
+<p>$$\text{Var}(\hat{\mu}_{\text{IS}}) = \frac{1}{n}\text{Var}_q\left[f(X) w(X)\right] = \frac{1}{n}\left(\mathbb{E}_q[f(X)^2 w(X)^2] - \mu^2\right).$$</p>
 <p>This can be dramatically larger than the variance under $p$. If $q$ puts very little mass on a region where $p$ has high mass and $f$ is large, then the importance weight $w(x) = p(x)/q(x)$ in that region is enormous, causing a few samples to have extreme values. The variance of the IS estimator is finite only if $\mathbb{E}_q[w(X)^2] &lt; \infty$, i.e., if $\chi^2(p | q) &lt; \infty$. When $p$ and $q$ have heavy tails in different places, this condition fails.</p>
 <p><strong>In off-policy RL</strong>, importance sampling is used to reuse experience collected under an old policy $\mu$ to estimate quantities under the current policy $\pi$:</p>
-<p>$$\mathbb{E}<em>\pi[G_t] = \mathbb{E}</em>\mu!\left[G_t \cdot \prod_{k=t}^{T} \frac{\pi(a_k | s_k)}{\mu(a_k | s_k)}\right].$$</p>
+<p>$$\mathbb{E}<em>\pi[G_t] = \mathbb{E}</em>\mu\left[G_t \cdot \prod_{k=t}^{T} \frac{\pi(a_k | s_k)}{\mu(a_k | s_k)}\right].$$</p>
 <p>The product of ratios along a trajectory can be exponentially large or small, making off-policy IS estimators extremely high-variance for long trajectories. Truncated IS (capping importance weights at some maximum value) introduces bias but controls variance.</p>
 <hr>
 <h2 id="control-variates">Control Variates</h2>
 <p>The control variate technique is the most widely applicable variance reduction method. Suppose you want to estimate $\mu = \mathbb{E}[f(X)]$. If you know a function $g(X)$ whose expectation $\mu_g = \mathbb{E}[g(X)]$ is known analytically, then for any constant $c$:</p>
 <p>$$\mathbb{E}[f(X) - c(g(X) - \mu_g)] = \mathbb{E}[f(X)] - c \cdot 0 = \mu.$$</p>
 <p>The estimator $\hat{\mu}_c = \frac{1}{n}\sum_i (f(x_i) - c(g(x_i) - \mu_g))$ is unbiased for any $c$. Its variance is:</p>
-<p>$$\text{Var}(\hat{\mu}_c) = \text{Var}(f) - 2c, \text{Cov}(f, g) + c^2 \text{Var}(g).$$</p>
+<p>$$\text{Var}(\hat{\mu}_c) = \text{Var}(f) - 2c \text{Cov}(f, g) + c^2 \text{Var}(g).$$</p>
 <p>This is minimized over $c$ by:</p>
 <p>$$c^* = \frac{\text{Cov}(f, g)}{\text{Var}(g)}.$$</p>
 <p>With optimal $c^*$, the variance reduction factor is:</p>
@@ -147,19 +147,19 @@
 <hr>
 <h2 id="the-policy-gradient-baseline">The Policy Gradient Baseline</h2>
 <p>The REINFORCE estimator for the policy gradient is:</p>
-<p>$$\nabla_\theta J(\theta) = \mathbb{E}<em>\pi!\left[G_t, \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right]$$</p>
+<p>$$\nabla_\theta J(\theta) = \mathbb{E}<em>\pi\left[G_t \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right]$$</p>
 <p>where $G_t = \sum_{k \geq t} \gamma^{k-t} r_k$ is the return from time $t$. This estimator has high variance because $G_t$ fluctuates across episodes even when the policy is the same.</p>
 <p>The key identity: for any function $b(s_t)$ that does not depend on the action $a_t$:</p>
-<p>$$\mathbb{E}<em>\pi!\left[b(s_t), \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right] = b(s_t), \mathbb{E}<em>\pi!\left[\nabla</em>\theta \log \pi_\theta(a_t | s_t)\right] = b(s_t) \cdot 0 = 0$$</p>
+<p>$$\mathbb{E}<em>\pi\left[b(s_t) \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right] = b(s_t) \mathbb{E}<em>\pi\left[\nabla</em>\theta \log \pi_\theta(a_t | s_t)\right] = b(s_t) \cdot 0 = 0$$</p>
 <p>because $\mathbb{E}<em>{a \sim \pi}[\nabla</em>\theta \log \pi_\theta(a|s)] = \nabla_\theta \sum_a \pi_\theta(a|s) = \nabla_\theta 1 = 0$. This means:</p>
-<p>$$\mathbb{E}<em>\pi!\left[(G_t - b(s_t)), \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right] = \mathbb{E}<em>\pi!\left[G_t, \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right].$$</p>
+<p>$$\mathbb{E}<em>\pi\left[(G_t - b(s_t)) \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right] = \mathbb{E}<em>\pi\left[G_t \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right].$$</p>
 <p>Adding a state-dependent baseline does not change the expected gradient - it is a control variate with zero-mean correction. But it does change the variance. The optimal baseline (minimizing gradient variance) is approximately $b^*(s_t) = V^\pi(s_t) = \mathbb{E}<em>\pi[G_t | s_t]$, the expected return from state $s_t$. With this baseline, the estimator becomes $(G_t - V^\pi(s_t)) \nabla</em>\theta \log \pi_\theta(a_t|s_t)$.</p>
 <p>When the return is below its expected value, the gradient term is downweighted (the action performed worse than average); when above, it is upweighted. This centering dramatically reduces variance because $G_t - V^\pi(s_t)$ has much smaller magnitude than $G_t$ alone.</p>
 <hr>
 <h2 id="the-advantage-function">The Advantage Function</h2>
 <p>The quantity $A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s)$ is the advantage function. It measures how much better action $a$ is compared to the average action in state $s$ under policy $\pi$.</p>
 <p>Using the advantage in policy gradient:</p>
-<p>$$\nabla_\theta J(\theta) = \mathbb{E}<em>\pi!\left[A^\pi(s_t, a_t), \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right].$$</p>
+<p>$$\nabla_\theta J(\theta) = \mathbb{E}<em>\pi\left[A^\pi(s_t, a_t) \nabla</em>\theta \log \pi_\theta(a_t | s_t)\right].$$</p>
 <p>This is the control variate interpretation: $V^\pi(s_t)$ is the control variate $g$, the action-selection score $\nabla_\theta \log \pi$ is uncorrelated with the state baseline by the identity above, and $A^\pi = G_t - V^\pi(s_t)$ is the centered estimand.</p>
 <p>Intuitively: the advantage is zero-centered around the average. Positive advantage means &ldquo;this action was better than average, increase its probability.&rdquo; Negative advantage means &ldquo;this action was worse than average, decrease its probability.&rdquo; The gradient update is proportional to the deviation from average performance, not the absolute level of performance. This is why the baseline matters: if rewards are always large and positive (e.g., scores in the range 1000-1100), the gradient direction is the right, but the variance is enormous due to the scale. Subtracting the baseline centers the signal at zero, eliminating this scale-induced variance.</p>
 <hr>
@@ -172,7 +172,7 @@
 <p><strong>Monte Carlo estimator</strong> ($k \to \infty$): $\hat{A}<em>t^{(\infty)} = G_t - V^\pi(s_t) = \sum</em>{k=0}^\infty \gamma^k r_{t+k} - V^\pi(s_t)$. Unbiased but high variance (the return fluctuates across trajectories).</p>
 <p><strong>$k$-step estimator</strong>: $\hat{A}<em>t^{(k)} = \sum</em>{l=0}^{k-1} \gamma^l \delta_{t+l}$. Bias decreases as $k$ increases; variance increases. The bias comes from using $V^\pi$ as a bootstrap value at the end of the $k$-step return; if $V^\pi$ is wrong, this introduces bias. Monte Carlo uses no bootstrap and is unbiased.</p>
 <p><strong>GAE (Schulman et al., 2015)</strong> takes an exponential average over all $k$-step estimators:</p>
-<p>$$\hat{A}<em>t^{\text{GAE}(\gamma, \lambda)} = \sum</em>{k=0}^\infty (\gamma\lambda)^k, \delta_{t+k} = \delta_t + (\gamma\lambda)\delta_{t+1} + (\gamma\lambda)^2 \delta_{t+2} + \cdots$$</p>
+<p>$$\hat{A}<em>t^{\text{GAE}(\gamma, \lambda)} = \sum</em>{k=0}^\infty (\gamma\lambda)^k \delta_{t+k} = \delta_t + (\gamma\lambda)\delta_{t+1} + (\gamma\lambda)^2 \delta_{t+2} + \cdots$$</p>
 <p>where $\lambda \in [0, 1]$ is the GAE parameter. When $\lambda = 0$: $\hat{A}_t = \delta_t$ (one-step TD, low variance, high bias). When $\lambda = 1$: $\hat{A}_t = G_t - V^\pi(s_t)$ (Monte Carlo, unbiased, high variance). Intermediate $\lambda$ interpolates between these extremes.</p>
 <p>In practice (PPO, A3C, etc.), $\lambda = 0.95$ and $\gamma = 0.99$ are common. The discounting by $(\gamma\lambda)^k$ naturally downweights distant TD errors, both reducing variance and giving recent rewards more influence. GAE is now a standard component of nearly all policy gradient methods.</p>
 <hr>
@@ -195,7 +195,7 @@
 <h2 id="clipping-as-variance-control">Clipping as Variance Control</h2>
 <p>A practical variance reduction technique that appears throughout modern RL is clipping importance weights.</p>
 <p>In PPO (Proximal Policy Optimization), the policy gradient objective is:</p>
-<p>$$\mathcal{L}^{\text{CLIP}}(\theta) = \mathbb{E}_t!\left[\min!\left(r_t(\theta), \hat{A}_t,; \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon), \hat{A}_t\right)\right]$$</p>
+<p>$$\mathcal{L}^{\text{CLIP}}(\theta) = \mathbb{E}_t\left[\min\left(r_t(\theta) \hat{A}_t,; \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) \hat{A}_t\right)\right]$$</p>
 <p>where $r_t(\theta) = \pi_\theta(a_t|s_t) / \pi_{\theta_\text{old}}(a_t|s_t)$ is the importance ratio. The clip prevents the ratio from straying far from 1, which prevents large importance weights from causing catastrophic updates. The clipping introduces a small bias (the gradient is zeroed out when the ratio is outside $[1-\epsilon, 1+\epsilon]$) but dramatically reduces the variance of the policy gradient estimator when policies differ.</p>
 <p>In RLHF (Reinforcement Learning from Human Feedback), reward clipping is similarly used: cap the reward at some maximum value to prevent extreme rewards from dominating the gradient. This is a form of Huber-loss-style robustness, trading a small amount of bias for a large reduction in the influence of reward outliers.</p>
 <p>The tension in all clipping approaches is the bias-variance tradeoff made explicit: tighter clipping reduces variance but introduces more bias (the gradient estimator is no longer unbiased for the true objective). Choosing $\epsilon = 0.2$ in PPO is an empirical choice that works well across many tasks - not a theoretically derived optimum.</p>

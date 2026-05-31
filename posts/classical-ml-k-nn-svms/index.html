@@ -160,7 +160,7 @@ Every classification algorithm is an answer to one question: how do you use that
 <h3 id="gradient-descent-and-the-hinge-loss">Gradient Descent and the Hinge Loss</h3>
 <p>A natural loss for linear classifiers is the <strong>hinge loss</strong>: a training point $(\mathbf{x}_i, y_i)$ contributes loss $\max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$. Points correctly classified with confidence at least 1 contribute zero loss. Points close to the boundary or misclassified contribute positive loss proportional to how wrong they are.</p>
 <p>The total training loss is:</p>
-<p>$$L(\mathbf{w}, b) = \sum_{i=1}^n \max(0,, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$$</p>
+<p>$$L(\mathbf{w}, b) = \sum_{i=1}^n \max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$$</p>
 <p>Gradient descent updates $\mathbf{w}$ and $b$ by subtracting a multiple of the gradient. For the hinge loss, when $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) &lt; 1$, the gradient with respect to $\mathbf{w}$ is $-y_i \mathbf{x}_i$. Points that satisfy the constraint contribute no gradient - only the violating points drive the update.</p>
 <h3 id="the-perceptron">The Perceptron</h3>
 <p>The <strong>Perceptron</strong> is the simplest online learning algorithm for linear classifiers. It initializes $\mathbf{w} = 0$, $b = 0$ and processes one training example at a time. When it makes an error - when $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \leq 0$ - it updates:</p>
@@ -192,7 +192,7 @@ Every classification algorithm is an answer to one question: how do you use that
 <p>The dual has $n$ variables (one per training point) and depends on the training data only through inner products $\mathbf{x}_i \cdot \mathbf{x}_j$. This is the key observation that enables the kernel trick.</p>
 <p><strong>KKT conditions</strong> give the primal-dual relationship. At the optimum: $\mathbf{w} = \sum_i \alpha_i y_i \mathbf{x}_i$. Training points with $\alpha_i = 0$ do not contribute to $\mathbf{w}$ at all - they are irrelevant. Training points with $\alpha_i &gt; 0$ are the <strong>support vectors</strong> - they lie on or inside the margin and determine the decision boundary entirely. The solution is sparse: typically only a small fraction of training points are support vectors.</p>
 <p>The decision function at test time is:</p>
-<p>$$f(\mathbf{x}) = \text{sign}!\left(\sum_{i:,\alpha_i &gt; 0} \alpha_i y_i, \mathbf{x}_i \cdot \mathbf{x} + b\right)$$</p>
+<p>$$f(\mathbf{x}) = \text{sign}\left(\sum_{i:\alpha_i &gt; 0} \alpha_i y_i \mathbf{x}_i \cdot \mathbf{x} + b\right)$$</p>
 <p>The test point interacts with the training data only through inner products with support vectors. Everything else is discarded.</p>
 <hr>
 <h2 id="the-kernel-trick">The Kernel Trick</h2>
@@ -201,13 +201,13 @@ Every classification algorithm is an answer to one question: how do you use that
 <h3 id="common-kernels">Common Kernels</h3>
 <p><strong>Linear kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = \mathbf{x} \cdot \mathbf{z}$. This corresponds to $\phi = \text{id}$, the identity map. Recovers the standard linear SVM.</p>
 <p><strong>Polynomial kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = (\mathbf{x} \cdot \mathbf{z} + 1)^p$. Corresponds to all monomials of degree up to $p$ in the input features. For $d = 2$ and $p = 2$, the feature map is $\phi(x_1, x_2) = (1, \sqrt{2}x_1, \sqrt{2}x_2, x_1^2, \sqrt{2}x_1 x_2, x_2^2)$ - six dimensions from two, computed via a single inner product.</p>
-<p><strong>Radial basis function (RBF) / Gaussian kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = \exp!\left(-\frac{|\mathbf{x} - \mathbf{z}|^2}{2\sigma^2}\right)$. This corresponds to an infinite-dimensional feature map. The bandwidth $\sigma$ controls locality: small $\sigma$ makes the kernel sensitive only to very nearby points (risk of overfitting), large $\sigma$ makes it broad (risk of underfitting). The RBF kernel is by far the most widely used in practice.</p>
+<p><strong>Radial basis function (RBF) / Gaussian kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = \exp\left(-\frac{|\mathbf{x} - \mathbf{z}|^2}{2\sigma^2}\right)$. This corresponds to an infinite-dimensional feature map. The bandwidth $\sigma$ controls locality: small $\sigma$ makes the kernel sensitive only to very nearby points (risk of overfitting), large $\sigma$ makes it broad (risk of underfitting). The RBF kernel is by far the most widely used in practice.</p>
 <h3 id="mercers-condition">Mercer&rsquo;s Condition</h3>
 <p>Not every function $K$ is a valid kernel. For $K$ to correspond to an inner product in some Hilbert space, the <strong>kernel matrix</strong> $K_{ij} = K(\mathbf{x}_i, \mathbf{x}_j)$ must be <strong>positive semidefinite</strong> for any finite set of points $\{\mathbf{x}_1, \ldots, \mathbf{x}_n\}$. This is <strong>Mercer&rsquo;s condition</strong>.</p>
 <p>A positive semidefinite kernel guarantees that the dual optimization problem is convex and has a unique solution. Constructing new kernels from existing ones is safe using these facts: sums of valid kernels are valid, products of valid kernels are valid, and a positive constant multiple of a valid kernel is valid.</p>
 <h3 id="why-kernels-enable-non-linear-separation">Why Kernels Enable Non-Linear Separation</h3>
 <p>A dataset that is not linearly separable in $\mathbb{R}^d$ may become linearly separable in $\mathcal{H}$. The kernel SVM finds a linear boundary in $\mathcal{H}$, which corresponds to a non-linear boundary in the original input space. The decision boundary in $\mathbb{R}^d$ is:</p>
-<p>$$\left\{\mathbf{x} : \sum_{i:,\alpha_i &gt; 0} \alpha_i y_i, K(\mathbf{x}_i, \mathbf{x}) + b = 0\right\}$$</p>
+<p>$$\left\{\mathbf{x} : \sum_{i:\alpha_i &gt; 0} \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}) + b = 0\right\}$$</p>
 <p>For the RBF kernel, this is a sum of Gaussians centered at support vectors. The boundary can be any shape that can be expressed as a weighted combination of such bumps - enormously flexible.</p>
 <hr>
 <h2 id="multi-class-strategies">Multi-Class Strategies</h2>

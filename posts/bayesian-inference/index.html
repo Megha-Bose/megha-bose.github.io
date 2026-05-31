@@ -134,7 +134,7 @@
 <p><strong>Prior</strong> $P(\theta)$: your belief about $\theta$ before seeing any data. It encodes what you knew going in - from domain knowledge, previous experiments, or deliberate ignorance.</p>
 <p><strong>Likelihood</strong> $P(\text{data} \mid \theta)$: how probable the observed data would be if the parameter were $\theta$. This is the same object frequentists work with; the philosophies diverge in what they do with it.</p>
 <p><strong>Posterior</strong> $P(\theta \mid \text{data})$: your updated belief about $\theta$ after seeing the data. This is what you want.</p>
-<p><strong>Normalizing constant</strong> $P(\text{data}) = \int P(\text{data} \mid \theta) P(\theta) , d\theta$: a constant that makes the posterior integrate to 1. It is often intractable to compute in closed form, which is why most practical Bayesian computation relies on sampling methods like MCMC. For now, we often write:</p>
+<p><strong>Normalizing constant</strong> $P(\text{data}) = \int P(\text{data} \mid \theta) P(\theta)  d\theta$: a constant that makes the posterior integrate to 1. It is often intractable to compute in closed form, which is why most practical Bayesian computation relies on sampling methods like MCMC. For now, we often write:</p>
 <p>$$P(\theta \mid \text{data}) \propto P(\text{data} \mid \theta) \cdot P(\theta).$$</p>
 <p>The proportionality sign means &ldquo;equal up to a constant not depending on $\theta$.&rdquo; Since $P(\text{data})$ does not depend on $\theta$, it is just a normalizing factor we can often ignore when we only care about the shape of the posterior.</p>
 <hr>
@@ -165,7 +165,7 @@
 <h2 id="point-estimates-from-the-posterior">Point Estimates from the Posterior</h2>
 <p>Sometimes you need a single number rather than a full distribution. There are three natural candidates.</p>
 <p><strong>MAP estimate (Maximum A Posteriori):</strong> the mode of the posterior - the value of $\theta$ that maximizes $P(\theta \mid \text{data})$. Since $P(\theta \mid \text{data}) \propto P(\text{data} \mid \theta) P(\theta)$, the MAP estimate maximizes the product of likelihood and prior. With a uniform prior, the MAP equals the maximum likelihood estimate (MLE), because the prior contributes a constant and does not change where the maximum is.</p>
-<p><strong>Posterior mean:</strong> $\mathbb{E}[\theta \mid \text{data}] = \int \theta , P(\theta \mid \text{data}) , d\theta$. For the Beta posterior, this is $(\alpha + k)/(\alpha + \beta + n)$. With a uniform prior ($\alpha=\beta=1$), the posterior mean is $(k+1)/(n+2)$, which is a smoothed version of the MLE $k/n$. The posterior mean often has better properties for prediction than MAP, especially under squared-error loss.</p>
+<p><strong>Posterior mean:</strong> $\mathbb{E}[\theta \mid \text{data}] = \int \theta  P(\theta \mid \text{data})  d\theta$. For the Beta posterior, this is $(\alpha + k)/(\alpha + \beta + n)$. With a uniform prior ($\alpha=\beta=1$), the posterior mean is $(k+1)/(n+2)$, which is a smoothed version of the MLE $k/n$. The posterior mean often has better properties for prediction than MAP, especially under squared-error loss.</p>
 <p><strong>Posterior median:</strong> the value that splits the posterior into equal halves. Minimizes expected absolute error. Less commonly used but sometimes more robust.</p>
 <p>Which estimate to report depends on your loss function and use case. The full posterior is always more informative than any point estimate - a point estimate discards the uncertainty.</p>
 <hr>
@@ -178,7 +178,7 @@
 <hr>
 <h2 id="predictive-distributions">Predictive Distributions</h2>
 <p>The posterior is not just for estimating $\theta$ - it is also for making predictions. Suppose you want to predict a new observation $x_\text{new}$ given data. The Bayesian approach is:</p>
-<p>$$P(x_\text{new} \mid \text{data}) = \int P(x_\text{new} \mid \theta) P(\theta \mid \text{data}) , d\theta.$$</p>
+<p>$$P(x_\text{new} \mid \text{data}) = \int P(x_\text{new} \mid \theta) P(\theta \mid \text{data})  d\theta.$$</p>
 <p>This averages predictions over all possible values of $\theta$, weighted by how probable each $\theta$ is given the data. This is the <strong>posterior predictive distribution</strong>. It is more honest than plugging in a single estimate of $\theta$, because it accounts for parameter uncertainty.</p>
 <p>With the coin example: to predict the outcome of the next flip, you integrate over all possible values of $p$ weighted by $\text{Beta}(k+1, n-k+1)$. The result: $P(\text{heads} \mid \text{data}) = (k+1)/(n+2)$, the posterior mean. Prediction and posterior mean coincide for Bernoulli outcomes - a pleasing consistency.</p>
 <hr>
@@ -202,7 +202,7 @@
 <p>In many practical settings, Bayesian and frequentist methods give the same point estimates (MAP = MLE with uniform prior). The differences become important in specific situations.</p>
 <p><strong>Small data.</strong> With few observations, the prior exerts substantial influence on the posterior. If your prior is well-chosen, this is a feature (you are incorporating domain knowledge). If poorly chosen, it is a liability.</p>
 <p><strong>Sequential updating.</strong> Bayesian inference is naturally sequential: today&rsquo;s posterior becomes tomorrow&rsquo;s prior. You can update beliefs as data arrives without rerunning the entire analysis. Frequentist methods require more careful handling of sequential experiments (see optional stopping rules and their pitfalls).</p>
-<p><strong>Nuisance parameters.</strong> If $\theta = (\psi, \lambda)$ and you only care about $\psi$ while $\lambda$ is a nuisance, the Bayesian approach marginalizes over $\lambda$: $P(\psi \mid \text{data}) = \int P(\psi, \lambda \mid \text{data}) , d\lambda$. Frequentist approaches to nuisance parameters (profile likelihood, conditioning) can be more ad hoc.</p>
+<p><strong>Nuisance parameters.</strong> If $\theta = (\psi, \lambda)$ and you only care about $\psi$ while $\lambda$ is a nuisance, the Bayesian approach marginalizes over $\lambda$: $P(\psi \mid \text{data}) = \int P(\psi, \lambda \mid \text{data})  d\lambda$. Frequentist approaches to nuisance parameters (profile likelihood, conditioning) can be more ad hoc.</p>
 <p><strong>Interval interpretation.</strong> Credible intervals mean what you want them to mean. Confidence intervals are a property of the procedure, not of the specific interval you computed. When the audience expects probability statements about parameters, credible intervals are more honest.</p>
 <hr>
 <h2 id="summary">Summary</h2>
@@ -240,7 +240,7 @@
 </tr>
 <tr>
 <td>Posterior predictive</td>
-<td>$\int P(x_\text{new}\mid\theta)P(\theta\mid\text{data}),d\theta$</td>
+<td>$\int P(x_\text{new}\mid\theta)P(\theta\mid\text{data})d\theta$</td>
 </tr>
 <tr>
 <td>MAP with Gaussian prior</td>

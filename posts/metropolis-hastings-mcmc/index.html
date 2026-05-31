@@ -120,16 +120,16 @@
 <p>It worked. And it now powers Bayesian inference, protein structure prediction, and training modern neural networks.</p>
 <hr>
 <h2 id="the-problem">The Problem</h2>
-<p>You have a target distribution $\pi(x)$ that you want to sample from. You can evaluate $\pi(x)$ up to a normalizing constant - that is, you know $\tilde{\pi}(x) \propto \pi(x)$ but not the constant $Z = \int \tilde{\pi}(x) , dx$.</p>
+<p>You have a target distribution $\pi(x)$ that you want to sample from. You can evaluate $\pi(x)$ up to a normalizing constant - that is, you know $\tilde{\pi}(x) \propto \pi(x)$ but not the constant $Z = \int \tilde{\pi}(x)  dx$.</p>
 <p>This situation is ubiquitous in Bayesian inference. The posterior is:</p>
-<p>$$p(\theta \mid \text{data}) = \frac{p(\text{data} \mid \theta) , p(\theta)}{p(\text{data})}$$</p>
-<p>You can evaluate the numerator - the likelihood times the prior. The denominator $p(\text{data}) = \int p(\text{data} \mid \theta) p(\theta) , d\theta$ is an integral over all possible parameters, and it&rsquo;s usually intractable. You know the posterior up to the normalizing constant but can&rsquo;t sample from it directly.</p>
+<p>$$p(\theta \mid \text{data}) = \frac{p(\text{data} \mid \theta)  p(\theta)}{p(\text{data})}$$</p>
+<p>You can evaluate the numerator - the likelihood times the prior. The denominator $p(\text{data}) = \int p(\text{data} \mid \theta) p(\theta)  d\theta$ is an integral over all possible parameters, and it&rsquo;s usually intractable. You know the posterior up to the normalizing constant but can&rsquo;t sample from it directly.</p>
 <p>The goal: generate samples $\theta_1, \theta_2, \ldots$ from $\pi$ without knowing $Z$, so you can compute expectations $\mathbb{E}_\pi[f(\theta)] \approx \frac{1}{N}\sum_i f(\theta_i)$.</p>
 <hr>
 <h2 id="markov-chain-monte-carlo">Markov Chain Monte Carlo</h2>
 <p>The strategy: construct a Markov chain whose stationary distribution is $\pi$. Run the chain for a long time. Collect the states as (approximately) samples from $\pi$.</p>
 <p>For a Markov chain to have $\pi$ as its stationary distribution, it&rsquo;s sufficient for it to satisfy <strong>detailed balance</strong>:</p>
-<p>$$\pi(x) , T(x' \mid x) = \pi(x') , T(x \mid x')$$</p>
+<p>$$\pi(x)  T(x' \mid x) = \pi(x')  T(x \mid x')$$</p>
 <p>This says the probability flow from $x$ to $x'$ equals the probability flow from $x'$ to $x$ - the chain is in equilibrium with respect to $\pi$.</p>
 <hr>
 <h2 id="metropolis-hastings">Metropolis-Hastings</h2>
@@ -140,21 +140,21 @@
 <li>Propose a new state $x' \sim q(\cdot \mid x)$.</li>
 <li>Compute the acceptance probability:</li>
 </ol>
-<p>$$\alpha(x, x') = \min!\left(1, \frac{\tilde{\pi}(x') , q(x \mid x')}{\tilde{\pi}(x) , q(x' \mid x)}\right)$$</p>
+<p>$$\alpha(x, x') = \min\left(1, \frac{\tilde{\pi}(x')  q(x \mid x')}{\tilde{\pi}(x)  q(x' \mid x)}\right)$$</p>
 <ol start="4">
 <li>Accept: move to $x'$ with probability $\alpha$. Otherwise, stay at $x$.</li>
 <li>Record the current state as a sample. Go to step 2.</li>
 </ol>
 <p><strong>Why the normalizing constant cancels:</strong> The ratio $\tilde{\pi}(x')/\tilde{\pi}(x) = \pi(x')/\pi(x)$ regardless of $Z$. You never need to compute it.</p>
 <p><strong>Why this works:</strong> For $x' \neq x$, the probability of moving from $x$ to $x'$ is $q(x' \mid x) \cdot \alpha(x, x')$. You can verify:</p>
-<p>$$\pi(x) , q(x' \mid x) , \alpha(x, x') = \min!\left(\pi(x) q(x' \mid x),; \pi(x') q(x \mid x')\right) = \pi(x') , q(x \mid x') , \alpha(x', x)$$</p>
+<p>$$\pi(x)  q(x' \mid x)  \alpha(x, x') = \min\left(\pi(x) q(x' \mid x),; \pi(x') q(x \mid x')\right) = \pi(x')  q(x \mid x')  \alpha(x', x)$$</p>
 <p>This is exactly detailed balance. So $\pi$ is the stationary distribution.</p>
 <hr>
 <h2 id="the-random-walk-version">The Random Walk Version</h2>
 <p>The most common proposal is a symmetric Gaussian:</p>
 <p>$$q(x' \mid x) = \mathcal{N}(x' \mid x, \sigma^2 I)$$</p>
 <p>Symmetry means $q(x \mid x') = q(x' \mid x)$, so the ratio $q(x \mid x')/q(x' \mid x) = 1$. The acceptance probability simplifies to:</p>
-<p>$$\alpha(x, x') = \min!\left(1, \frac{\tilde{\pi}(x')}{\tilde{\pi}(x)}\right)$$</p>
+<p>$$\alpha(x, x') = \min\left(1, \frac{\tilde{\pi}(x')}{\tilde{\pi}(x)}\right)$$</p>
 <p>If the proposal is in a higher-probability region, always accept. If it&rsquo;s in a lower-probability region, accept with probability $\pi(x')/\pi(x)$. This biases the walk toward high-probability regions without trapping it there.</p>
 <p>The step size $\sigma$ matters enormously. Too small: the chain shuffles around slowly, consecutive samples are nearly identical, you need many steps to explore. Too large: most proposals land in low-probability regions and are rejected, the chain barely moves. For a $d$-dimensional Gaussian target, the optimal acceptance rate is approximately $23.4%$, achieved by setting $\sigma \propto d^{-1/2}$.</p>
 <hr>
@@ -208,7 +208,7 @@
 </tr>
 <tr>
 <td>MH acceptance ratio</td>
-<td>$\min!\left(1, \frac{\tilde{\pi}(x') q(x \mid x')}{\tilde{\pi}(x) q(x' \mid x)}\right)$</td>
+<td>$\min\left(1, \frac{\tilde{\pi}(x') q(x \mid x')}{\tilde{\pi}(x) q(x' \mid x)}\right)$</td>
 </tr>
 <tr>
 <td>Why $Z$ cancels</td>

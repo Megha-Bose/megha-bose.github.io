@@ -119,7 +119,7 @@
 <p>High-dimensional geometry defies the intuition built from two and three dimensions. As the ambient dimension $d$ grows, space becomes vast and sparse in ways that fundamentally alter the behaviour of algorithms, probability, and data. Understanding these phenomena is essential to modern machine learning, compressed sensing, and randomised algorithms.</p>
 <h2 id="the-curse-of-dimensionality-volume-concentration">The Curse of Dimensionality: Volume Concentration</h2>
 <p>Let $B_d(r) = \{x \in \mathbb{R}^d : |x| \leq r\}$ denote the $d$-dimensional ball of radius $r$. Its volume is</p>
-<p>$$\text{Vol}(B_d(r)) = \frac{\pi^{d/2}}{\Gamma(d/2 + 1)}, r^d.$$</p>
+<p>$$\text{Vol}(B_d(r)) = \frac{\pi^{d/2}}{\Gamma(d/2 + 1)} r^d.$$</p>
 <p>A striking consequence of this formula is that the fraction of volume lying within an $\epsilon$-shell near the surface is</p>
 <p>$$\frac{\text{Vol}(B_d(r)) - \text{Vol}(B_d(r(1-\epsilon)))}{\text{Vol}(B_d(r))} = 1 - (1-\epsilon)^d \xrightarrow{d\to\infty} 1$$</p>
 <p>for any fixed $\epsilon &gt; 0$. Practically all of the volume of a high-dimensional ball is concentrated in a thin shell near the boundary.</p>
@@ -135,43 +135,66 @@ Interior fraction: 0.75, 0.35, 0.0000...6
 </code></pre><p>The shell thickness needed to capture half the volume shrinks as $O(1/d)$, so data points drawn uniformly from $B_d(1)$ are effectively confined to a thin annulus. This makes nearest-neighbour search increasingly unreliable as $d$ grows.</p>
 <h3 id="formal-statement">Formal Statement</h3>
 <p><strong>Theorem (Volume Concentration).</strong> For any $\epsilon \in (0,1)$,</p>
-<p>$$\Pr_{x \sim \text{Unif}(B_d(1))}!\left[|x| \geq 1 - \epsilon\right] = 1 - (1-\epsilon)^d.$$</p>
+<p>$$\Pr_{x \sim \text{Unif}(B_d(1))}\left[|x| \geq 1 - \epsilon\right] = 1 - (1-\epsilon)^d.$$</p>
 <p>As $d \to \infty$ this probability converges to $1$ for every fixed $\epsilon &gt; 0$.</p>
 <h2 id="random-vectors-in-high-dimensions">Random Vectors in High Dimensions</h2>
 <h3 id="concentration-of-the-norm">Concentration of the Norm</h3>
 <p>Let $x = (x_1,\dots,x_d)$ with $x_i \overset{\text{i.i.d.}}{\sim} \mathcal{N}(0,1)$. Then $|x|^2 = \sum_{i=1}^d x_i^2 \sim \chi^2(d)$, which has mean $d$ and variance $2d$. By the law of large numbers,</p>
 <p>$$\frac{|x|^2}{d} \xrightarrow{d\to\infty} 1 \quad \text{in probability},$$</p>
 <p>so $|x| \approx \sqrt{d}$ with fluctuations of order $1$. More precisely, a Gaussian concentration argument gives</p>
-<p>$$\Pr!\left[,\bigl||x| - \sqrt{d}\bigr| \geq t\right] \leq 2\exp!\left(-\frac{t^2}{2}\right).$$</p>
+<p>$$\Pr\left[\bigl||x| - \sqrt{d}\bigr| \geq t\right] \leq 2\exp\left(-\frac{t^2}{2}\right).$$</p>
 <p>A standard Gaussian vector in $\mathbb{R}^d$ has norm tightly concentrated near $\sqrt{d}$, not near $0$ or $\infty$.</p>
 <h3 id="near-orthogonality-of-random-unit-vectors">Near-Orthogonality of Random Unit Vectors</h3>
 <p>For two independent standard Gaussian vectors $x, y \in \mathbb{R}^d$, the inner product of the normalised vectors satisfies</p>
-<p>$$\left\langle \frac{x}{|x|}, \frac{y}{|y|}\right\rangle \approx \mathcal{N}!\left(0, \frac{1}{d}\right).$$</p>
+<p>$$\left\langle \frac{x}{|x|}, \frac{y}{|y|}\right\rangle \approx \mathcal{N}\left(0, \frac{1}{d}\right).$$</p>
 <p>The inner product concentrates near $0$ with standard deviation $1/\sqrt{d}$. A random pair of unit vectors is nearly orthogonal. This means one can fit exponentially many ($2^{\Omega(d)}$) nearly-orthogonal vectors in $\mathbb{R}^d$, which is the geometric engine behind many high-dimensional constructions.</p>
 <h2 id="the-johnson-lindenstrauss-lemma">The Johnson-Lindenstrauss Lemma</h2>
 <p><strong>Theorem (Johnson-Lindenstrauss, 1984).</strong> Let $\varepsilon \in (0,1)$ and let $P$ be any set of $n$ points in $\mathbb{R}^D$. There exists a map $f: \mathbb{R}^D \to \mathbb{R}^m$ with</p>
-<p>$$m = O!\left(\frac{\log n}{\varepsilon^2}\right)$$</p>
+<p>$$m = O\left(\frac{\log n}{\varepsilon^2}\right)$$</p>
 <p>such that for all $u, v \in P$,</p>
 <p>$$(1-\varepsilon)|u-v|^2 \leq |f(u)-f(v)|^2 \leq (1+\varepsilon)|u-v|^2.$$</p>
 <h3 id="proof-sketch-via-gaussian-projections">Proof Sketch via Gaussian Projections</h3>
 <p>Let $A \in \mathbb{R}^{m \times D}$ have i.i.d. $\mathcal{N}(0,1)$ entries and define $f(x) = \frac{1}{\sqrt{m}}Ax$. For a fixed vector $v \in \mathbb{R}^D$,</p>
-<p>$$\mathbb{E}!\left[|Av|^2\right] = m|v|^2.$$</p>
+<p>$$\mathbb{E}\left[|Av|^2\right] = m|v|^2.$$</p>
 <p>Each coordinate of $Av$ is $\mathcal{N}(0, |v|^2)$, and $|Av|^2/|v|^2 \sim \chi^2(m)$. A Chernoff-type bound for $\chi^2$ random variables gives</p>
-<p>$$\Pr!\left[,\left|\frac{|Av|^2}{m|v|^2} - 1\right| \geq \varepsilon\right] \leq 2e^{-(\varepsilon^2 - \varepsilon^3)m/4}.$$</p>
+<p>$$\Pr\left[\left|\frac{|Av|^2}{m|v|^2} - 1\right| \geq \varepsilon\right] \leq 2e^{-(\varepsilon^2 - \varepsilon^3)m/4}.$$</p>
 <p>Setting $m = C\log n / \varepsilon^2$ makes this at most $2/n^2$. A union bound over the $\binom{n}{2} &lt; n^2$ pairs of points completes the argument.</p>
-<pre tabindex="0"><code>Original space R^D          Projected space R^m
-  .   .                         . .
-.   .   .   ---[A/sqrt(m)]--&gt;  .   .
-  .   .                         . .
-distances preserved up to (1±ε)
-</code></pre><p>The JL lemma has far-reaching consequences: it justifies random projection as a preprocessing step in nearest-neighbour search, SVMs, and clustering, reducing both storage and computation while preserving geometric structure.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 140" width="480" height="140" style="display:block;margin:1.2em 0;font-family:inherit">
+  <defs>
+    <marker id="jl-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+  </defs>
+  <!-- Left cloud: high-dim -->
+  <ellipse cx="110" cy="72" rx="90" ry="52" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="110" y="18" text-anchor="middle" font-size="12" fill="#374151" font-weight="bold">Original space R^D</text>
+  <!-- scattered dots -->
+  <circle cx="75" cy="58" r="4" fill="#3b82f6"/><circle cx="95" cy="45" r="4" fill="#3b82f6"/>
+  <circle cx="115" cy="72" r="4" fill="#3b82f6"/><circle cx="135" cy="55" r="4" fill="#3b82f6"/>
+  <circle cx="85" cy="88" r="4" fill="#3b82f6"/><circle cx="140" cy="82" r="4" fill="#3b82f6"/>
+  <circle cx="110" cy="100" r="4" fill="#3b82f6"/><circle cx="60" cy="75" r="4" fill="#3b82f6"/>
+  <circle cx="155" cy="68" r="4" fill="#3b82f6"/>
+  <text x="110" y="136" text-anchor="middle" font-size="10" fill="#94a3b8">D dimensions (large)</text>
+  <!-- Arrow + label -->
+  <line x1="207" y1="72" x2="260" y2="72" stroke="#64748b" stroke-width="2" marker-end="url(#jl-arr)"/>
+  <text x="234" y="60" text-anchor="middle" font-size="11" fill="#374151">A / &#x221A;m</text>
+  <text x="234" y="86" text-anchor="middle" font-size="10" fill="#10b981">(1&#xB1;&#x3B5;) distances</text>
+  <!-- Right cloud: low-dim -->
+  <ellipse cx="370" cy="72" rx="68" ry="45" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="370" y="18" text-anchor="middle" font-size="12" fill="#374151" font-weight="bold">Projected space R^m</text>
+  <!-- fewer dots -->
+  <circle cx="338" cy="62" r="4" fill="#ef4444"/><circle cx="358" cy="50" r="4" fill="#ef4444"/>
+  <circle cx="375" cy="72" r="4" fill="#ef4444"/><circle cx="395" cy="60" r="4" fill="#ef4444"/>
+  <circle cx="348" cy="85" r="4" fill="#ef4444"/><circle cx="400" cy="80" r="4" fill="#ef4444"/>
+  <circle cx="368" cy="93" r="4" fill="#ef4444"/>
+  <text x="370" y="136" text-anchor="middle" font-size="10" fill="#94a3b8">m dimensions (m &#x226A; D)</text>
+</svg>
+<p>The JL lemma has far-reaching consequences: it justifies random projection as a preprocessing step in nearest-neighbour search, SVMs, and clustering, reducing both storage and computation while preserving geometric structure.</p>
 <h2 id="concentration-of-measure">Concentration of Measure</h2>
 <p><strong>Definition.</strong> A function $f: \mathbb{R}^d \to \mathbb{R}$ is $L$-Lipschitz (with respect to the Euclidean norm) if $|f(x)-f(y)| \leq L|x-y|$ for all $x,y$.</p>
 <p><strong>Theorem (Gaussian Concentration).</strong> If $x \sim \mathcal{N}(0, I_d)$ and $f$ is $L$-Lipschitz, then</p>
-<p>$$\Pr!\left[f(x) \geq \mathbb{E}[f(x)] + t\right] \leq e^{-t^2/(2L^2)}.$$</p>
+<p>$$\Pr\left[f(x) \geq \mathbb{E}[f(x)] + t\right] \leq e^{-t^2/(2L^2)}.$$</p>
 <p>This is a profound statement: in high dimensions, a Lipschitz function of a Gaussian vector is essentially constant, deviating from its mean by more than $t$ with probability exponentially small in $t^2$.</p>
 <p><strong>Theorem (McDiarmid&rsquo;s Inequality).</strong> Let $f(x_1,\dots,x_n)$ satisfy: changing any single $x_i$ while fixing the others changes $f$ by at most $c_i$. For independent $x_1,\dots,x_n$,</p>
-<p>$$\Pr!\left[f - \mathbb{E}[f] \geq t\right] \leq \exp!\left(-\frac{2t^2}{\sum_i c_i^2}\right).$$</p>
+<p>$$\Pr\left[f - \mathbb{E}[f] \geq t\right] \leq \exp\left(-\frac{2t^2}{\sum_i c_i^2}\right).$$</p>
 <p>McDiarmid&rsquo;s inequality is the bounded-differences analogue of Gaussian concentration and is ubiquitous in learning theory.</p>
 <h2 id="compressed-sensing-and-the-restricted-isometry-property">Compressed Sensing and the Restricted Isometry Property</h2>
 <h3 id="the-restricted-isometry-property">The Restricted Isometry Property</h3>
@@ -179,16 +202,47 @@ distances preserved up to (1±ε)
 <p>$$(1-\delta_k)|x|^2 \leq |Ax|^2 \leq (1+\delta_k)|x|^2$$</p>
 <p>for all $k$-sparse vectors $x$ (vectors with at most $k$ non-zero entries).</p>
 <p><strong>Theorem.</strong> Let $A \in \mathbb{R}^{m \times n}$ have i.i.d. $\mathcal{N}(0,1/m)$ entries. If</p>
-<p>$$m = O!\left(k\log\frac{n}{k}\right),$$</p>
+<p>$$m = O\left(k\log\frac{n}{k}\right),$$</p>
 <p>then $A$ satisfies RIP of order $k$ with constant $\delta_k &lt; 1/4$ with probability at least $1 - 2e^{-cm}$.</p>
 <p>The proof uses a covering-number argument: there are at most $\binom{n}{k} \leq (en/k)^k$ supports of size $k$, and on each one applies Gaussian concentration.</p>
 <h3 id="compressed-sensing-recovery">Compressed Sensing Recovery</h3>
 <p><strong>Theorem (Candes-Tao, 2006).</strong> Suppose $x \in \mathbb{R}^n$ is $k$-sparse and $A \in \mathbb{R}^{m \times n}$ satisfies RIP with $\delta_{2k} &lt; \sqrt{2}-1$. Then $x$ is the unique solution to</p>
 <p>$$\min_{z \in \mathbb{R}^n} |z|_1 \quad \text{subject to} \quad Az = Ax.$$</p>
-<pre tabindex="0"><code>n-dimensional signal x   m-dimensional measurements     Recovery
-[0, 3, 0, 0, 7, 0, 0, 2] ---[A: m&lt;&lt;n]---&gt; [y_1,...,y_m] --[L1 min]--&gt; x
-k=3 nonzeros              m = O(k log n/k)                 exact!
-</code></pre><p>This is the theoretical foundation of compressed sensing: rather than measuring $n$ quantities, only $m \ll n$ random linear measurements suffice to recover a sparse signal exactly, by solving a convex programme.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 130" width="560" height="130" style="display:block;margin:1.2em 0;font-family:inherit">
+  <defs>
+    <marker id="cs-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+  </defs>
+  <!-- Sparse signal x -->
+  <rect x="10" y="30" width="120" height="70" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="70" y="48" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">x &#x2208; R^n</text>
+  <text x="70" y="62" text-anchor="middle" font-size="10" fill="#374151">[0, 3, 0, 0, 7, 0, 2]</text>
+  <text x="70" y="76" text-anchor="middle" font-size="10" fill="#6b7280">k nonzeros</text>
+  <text x="70" y="90" text-anchor="middle" font-size="10" fill="#3b82f6">(k &#x226A; n)</text>
+  <!-- arrow -->
+  <line x1="131" y1="65" x2="163" y2="65" stroke="#64748b" stroke-width="1.5" marker-end="url(#cs-arr)"/>
+  <text x="147" y="56" text-anchor="middle" font-size="10" fill="#374151">A</text>
+  <text x="147" y="80" text-anchor="middle" font-size="9" fill="#94a3b8">m &#x226A; n</text>
+  <!-- Measurements y -->
+  <rect x="165" y="30" width="120" height="70" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="225" y="48" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">y &#x2208; R^m</text>
+  <text x="225" y="62" text-anchor="middle" font-size="10" fill="#374151">[y&#x2081;, y&#x2082;, &#x2026;, y&#x2098;]</text>
+  <text x="225" y="76" text-anchor="middle" font-size="10" fill="#6b7280">random linear</text>
+  <text x="225" y="90" text-anchor="middle" font-size="10" fill="#3b82f6">measurements</text>
+  <!-- arrow -->
+  <line x1="286" y1="65" x2="318" y2="65" stroke="#64748b" stroke-width="1.5" marker-end="url(#cs-arr)"/>
+  <text x="302" y="56" text-anchor="middle" font-size="10" fill="#374151">&#x2113;&#xB9; min</text>
+  <!-- Recovered x -->
+  <rect x="320" y="30" width="120" height="70" rx="6" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="380" y="48" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e293b">x&#x0302; &#x2208; R^n</text>
+  <text x="380" y="62" text-anchor="middle" font-size="10" fill="#374151">[0, 3, 0, 0, 7, 0, 2]</text>
+  <text x="380" y="76" text-anchor="middle" font-size="10" fill="#6b7280">exact recovery</text>
+  <text x="380" y="90" text-anchor="middle" font-size="10" fill="#10b981">if RIP holds</text>
+  <!-- Bottom labels -->
+  <text x="70" y="118" text-anchor="middle" font-size="10" fill="#94a3b8">n-dim sparse signal</text>
+  <text x="225" y="118" text-anchor="middle" font-size="10" fill="#94a3b8">m = O(k log n/k)</text>
+  <text x="380" y="118" text-anchor="middle" font-size="10" fill="#94a3b8">solve convex program</text>
+</svg>
+<p>This is the theoretical foundation of compressed sensing: rather than measuring $n$ quantities, only $m \ll n$ random linear measurements suffice to recover a sparse signal exactly, by solving a convex programme.</p>
 <h2 id="covering-numbers-and-epsilon-nets">Covering Numbers and Epsilon-Nets</h2>
 <p><strong>Definition.</strong> An $\varepsilon$-net of a set $K \subset \mathbb{R}^d$ is a finite set $\mathcal{N} \subseteq K$ such that every point of $K$ is within distance $\varepsilon$ of some point in $\mathcal{N}$. The covering number $\mathcal{N}(K, |\cdot|, \varepsilon)$ is the minimum size of an $\varepsilon$-net.</p>
 <p>For the $d$-dimensional unit ball,</p>

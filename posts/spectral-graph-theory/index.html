@@ -175,9 +175,30 @@ $$x^T L x = \sum_{(i,j)\in E}(x_i - x_j)^2 \geq 0.$$</p>
 <li>Treat each row $u_i \in \mathbb{R}^k$ as the embedding of vertex $i$.</li>
 <li>Run $k$-means on $\{u_1,\dots,u_n\}$ to obtain cluster assignments.</li>
 </ol>
-<pre tabindex="0"><code>n vertices                  k-dimensional embedding       k clusters
-  G=(V,E)  --[eig(L)]--&gt; U in R^{n x k} --[k-means]--&gt; {C_1,...,C_k}
-</code></pre><p><strong>Theoretical guarantee.</strong> If $G$ is a disjoint union of $k$ cliques, then $\lambda_1 = \cdots = \lambda_k = 0$ with multiplicity $k$, and the eigenvectors are exactly the indicator vectors of the cliques. Perturbation theory (Davis-Kahan theorem) shows that for graphs close to this ideal, spectral clustering recovers the clusters up to small error.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 110" width="560" height="110" style="display:block;margin:1.2em 0;font-family:inherit">
+  <defs>
+    <marker id="sc-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+  </defs>
+  <!-- Graph G(V,E) -->
+  <rect x="10" y="28" width="120" height="50" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="70" y="50" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">G = (V, E)</text>
+  <text x="70" y="66" text-anchor="middle" font-size="10" fill="#6b7280">n vertices</text>
+  <!-- arrow + label -->
+  <line x1="131" y1="53" x2="171" y2="53" stroke="#64748b" stroke-width="1.5" marker-end="url(#sc-arr)"/>
+  <text x="151" y="44" text-anchor="middle" font-size="10" fill="#374151">eig(L)</text>
+  <!-- Embedding matrix -->
+  <rect x="173" y="28" width="160" height="50" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="253" y="50" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">U &#x2208; R^(n&#xD7;k)</text>
+  <text x="253" y="66" text-anchor="middle" font-size="10" fill="#3b82f6">k-dim. embedding of vertices</text>
+  <!-- arrow + label -->
+  <line x1="334" y1="53" x2="374" y2="53" stroke="#64748b" stroke-width="1.5" marker-end="url(#sc-arr)"/>
+  <text x="354" y="44" text-anchor="middle" font-size="10" fill="#374151">k-means</text>
+  <!-- Clusters -->
+  <rect x="376" y="28" width="170" height="50" rx="6" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="461" y="50" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">{C&#x2081;, C&#x2082;, &#x2026;, C&#x2096;}</text>
+  <text x="461" y="66" text-anchor="middle" font-size="10" fill="#10b981">k cluster assignments</text>
+</svg>
+<p><strong>Theoretical guarantee.</strong> If $G$ is a disjoint union of $k$ cliques, then $\lambda_1 = \cdots = \lambda_k = 0$ with multiplicity $k$, and the eigenvectors are exactly the indicator vectors of the cliques. Perturbation theory (Davis-Kahan theorem) shows that for graphs close to this ideal, spectral clustering recovers the clusters up to small error.</p>
 <h3 id="normalised-spectral-clustering">Normalised Spectral Clustering</h3>
 <p>Using $\mathcal{L}$ instead of $L$ gives the <strong>Shi-Malik normalised cuts</strong> algorithm, which minimises the ratio of cut edges to the total degree within clusters. In practice, the rows of $U$ are often renormalised to unit length before $k$-means.</p>
 <h2 id="random-walks-and-mixing-times">Random Walks and Mixing Times</h2>
@@ -188,7 +209,7 @@ $$x^T L x = \sum_{(i,j)\in E}(x_i - x_j)^2 \geq 0.$$</p>
 <p>so the eigenvalues of $P$ are $\mu_i = 1 - \lambda_i(\mathcal{L})$, all in $[-1,1]$.</p>
 <h3 id="mixing-time-and-the-spectral-gap">Mixing Time and the Spectral Gap</h3>
 <p>For a connected non-bipartite graph, the random walk converges to the stationary distribution $\pi_i = d_i / \text{vol}(G)$. The <strong>spectral gap</strong> is $\lambda_2(\mathcal{L})$, and the <strong>mixing time</strong> satisfies</p>
-<p>$$t_{\text{mix}} = O!\left(\frac{\log n}{\lambda_2(\mathcal{L})}\right).$$</p>
+<p>$$t_{\text{mix}} = O\left(\frac{\log n}{\lambda_2(\mathcal{L})}\right).$$</p>
 <p>A large spectral gap means rapid mixing; a small spectral gap (near-bottleneck) means slow mixing. By Cheeger&rsquo;s inequality, rapid mixing is equivalent to high conductance.</p>
 <pre tabindex="0"><code>Spectrum of P:
   -1       0           mu_2  1
@@ -210,7 +231,7 @@ Mixing rate governed by gap: 1 - mu_2 = lambda_2
 <p>The spectral view of graphs directly motivates <strong>graph convolutional networks (GCNs)</strong>. Define the symmetrically normalised adjacency</p>
 <p>$$\hat{A} = \tilde{D}^{-1/2}\tilde{A}\tilde{D}^{-1/2}, \quad \tilde{A} = A + I, \quad \tilde{D}_{ii} = 1 + d_i.$$</p>
 <p>A GCN layer propagates node features $H^{(l)} \in \mathbb{R}^{n \times f_l}$ as</p>
-<p>$$H^{(l+1)} = \sigma!\left(\hat{A}H^{(l)}W^{(l)}\right),$$</p>
+<p>$$H^{(l+1)} = \sigma\left(\hat{A}H^{(l)}W^{(l)}\right),$$</p>
 <p>where $W^{(l)} \in \mathbb{R}^{f_l \times f_{l+1}}$ is a learnable weight matrix and $\sigma$ is an activation function.</p>
 <pre tabindex="0"><code>Layer l:                      Layer l+1:
 H^(l) in R^{n x f_l}  --&gt;  sigma(A_hat H^(l) W^(l))  --&gt;  H^{l+1} in R^{n x f_{l+1}}

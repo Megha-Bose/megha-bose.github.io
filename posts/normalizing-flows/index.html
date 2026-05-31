@@ -122,7 +122,7 @@
 <hr>
 <h2 id="change-of-variables">Change of Variables</h2>
 <p>Let $z \sim p_Z(z)$ be a simple distribution (standard Gaussian) and let $f: \mathbb{R}^d \to \mathbb{R}^d$ be a differentiable bijection. Define $x = f^{-1}(z)$, so $z = f(x)$. The density of $x$ is given by:</p>
-<p>$$p_X(x) = p_Z(f(x)), \left|\det J_f(x)\right|,$$</p>
+<p>$$p_X(x) = p_Z(f(x)) \left|\det J_f(x)\right|,$$</p>
 <p>where $J_f(x) = \partial f(x) / \partial x \in \mathbb{R}^{d \times d}$ is the Jacobian of $f$ at $x$. In log form:</p>
 <p>$$\log p_X(x) = \log p_Z(f(x)) + \log \left|\det J_f(x)\right|.$$</p>
 <p>The Jacobian determinant accounts for how the transformation $f$ stretches or compresses volume. If $f$ expands a region (large $|\det J_f|$), the density there must decrease to keep total probability at 1. If $f$ compresses a region (small $|\det J_f|$), the density increases.</p>
@@ -163,9 +163,9 @@
 <p>Define a vector field $v_\theta(x, t): \mathbb{R}^d \times [0, 1] \to \mathbb{R}^d$. The transformation is the solution to:</p>
 <p>$$\frac{dx}{dt} = v_\theta(x, t), \qquad x(0) = z \sim p_Z.$$</p>
 <p>Running the ODE from $t=0$ to $t=1$ maps $z$ to a sample $x = x(1)$. The density at any time $t$ evolves according to the instantaneous change of variables (Liouville&rsquo;s theorem):</p>
-<p>$$\frac{\partial \log p_t(x(t))}{\partial t} = -\text{tr}!\left(\frac{\partial v_\theta}{\partial x}\right).$$</p>
+<p>$$\frac{\partial \log p_t(x(t))}{\partial t} = -\text{tr}\left(\frac{\partial v_\theta}{\partial x}\right).$$</p>
 <p>The log-density change is the trace of the Jacobian of the vector field - much cheaper than the determinant, and the trace can be estimated with Hutchinson&rsquo;s estimator using $O(1)$ vector-Jacobian products. The log-likelihood is:</p>
-<p>$$\log p_X(x) = \log p_Z(x(0)) - \int_0^1 \text{tr}!\left(\frac{\partial v_\theta}{\partial x(t)}\right) dt.$$</p>
+<p>$$\log p_X(x) = \log p_Z(x(0)) - \int_0^1 \text{tr}\left(\frac{\partial v_\theta}{\partial x(t)}\right) dt.$$</p>
 <p>This integral is computed by augmenting the ODE state with the log-density and solving the joint ODE numerically. The vector field $v_\theta$ can be any neural network - there is no coupling structure required. CNFs are in principle more expressive than discrete flows, but the ODE integration makes training slower than discrete flows (many function evaluations per gradient step).</p>
 <p><strong>Flow Matching.</strong> Training a CNF by maximum likelihood is expensive because the ODE must be integrated at each training step. Flow Matching (Lipman et al., 2022) avoids this by training $v_\theta$ to match a target conditional vector field that is known in closed form. For straight-line paths between $z \sim \mathcal{N}(0,I)$ and $x \sim p_{\text{data}}$, the target vector field is simply $v = x - z$ at each point. This reduces CNF training to a simple regression problem, with no ODE integration required during training.</p>
 <hr>

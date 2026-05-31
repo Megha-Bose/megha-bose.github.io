@@ -155,7 +155,7 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 <li>$V \in \mathbb{R}^{m \times d_v}$: <strong>Values</strong> - $m$ row vectors, each holding the actual content.</li>
 </ul>
 <p>The attention computation:</p>
-<p>$$\text{Attention}(Q, K, V) = \text{softmax}!\left(\frac{QK^\top}{\sqrt{d}}\right) V.$$</p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d}}\right) V.$$</p>
 <p>Step by step:</p>
 <p><strong>$QK^\top$</strong>: a matrix of dot products. Entry $(i, j)$ is the inner product of query $i$ with key $j$ - a scalar score measuring compatibility. The result is $n \times m$.</p>
 <p><strong>Divide by $\sqrt{d}$</strong>: scale down the scores. Without this, the dot products grow with $d$ - each query-key pair is a sum of $d$ terms, and with random initialization the variance is $d$, so the standard deviation is $\sqrt{d}$. Large values push the softmax into saturation, where gradients vanish. Dividing by $\sqrt{d}$ restores variance to 1 and keeps training stable.</p>
@@ -182,7 +182,7 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 <p>Given a sequence of token representations $X \in \mathbb{R}^{n \times d}$:</p>
 <p>$$Q = X W_Q, \quad K = X W_K, \quad V = X W_V.$$</p>
 <p>The matrices $W_Q, W_K, W_V \in \mathbb{R}^{d \times d}$ are learned projections. Self-attention then computes:</p>
-<p>$$\text{Attention}(X W_Q, X W_K, X W_V) = \text{softmax}!\left(\frac{X W_Q W_K^\top X^\top}{\sqrt{d}}\right) X W_V.$$</p>
+<p>$$\text{Attention}(X W_Q, X W_K, X W_V) = \text{softmax}\left(\frac{X W_Q W_K^\top X^\top}{\sqrt{d}}\right) X W_V.$$</p>
 <p>Every token attends to every other token in the same sequence - including itself.</p>
 <p>This directly solves the coreference problem from our opening example. In &ldquo;The trophy doesn&rsquo;t fit in the suitcase because it is too big&rdquo;, the token &ldquo;it&rdquo; can attend strongly to &ldquo;trophy&rdquo; (and weakly to &ldquo;suitcase&rdquo;). The attention weight $\alpha_{\text{it}, \text{trophy}}$ will be large; $\alpha_{\text{it}, \text{suitcase}}$ will be small. The model learns this from data, without being given coreference labels.</p>
 <hr>
@@ -191,7 +191,7 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 <p><strong>Multi-head attention</strong> runs $h$ attention heads in parallel, each with its own learned projections:</p>
 <p>$$\text{head}<em>i = \text{Attention}(Q W</em>{Q}^i, K W_{K}^i, V W_{V}^i)$$</p>
 <p>where $W_Q^i, W_K^i \in \mathbb{R}^{d \times d_k}$ and $W_V^i \in \mathbb{R}^{d \times d_v}$ are head-specific projection matrices. The outputs are concatenated and projected:</p>
-<p>$$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h) , W_O.$$</p>
+<p>$$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)  W_O.$$</p>
 <p>In the original transformer, $h = 8$ heads, $d = 512$, $d_k = d_v = d/h = 64$. Total computation is roughly the same as a single head of dimension 512.</p>
 <p>The heads do not divide responsibilities by fiat - they learn to specialize through training. Empirically, different heads attend to different patterns: one head may track subject-verb dependencies, another may track modifier-noun relationships, another may focus on coreference. Each head operates in a different learned subspace of the representation, and different subspaces capture different relationship types.</p>
 <p><strong>Why heads specialize.</strong> Running $h$ attention heads in parallel and projecting them down to the model dimension creates $h$ independently learned routing patterns. Do heads specialize? Empirically, yes - and the specialization is partly explained by the projection matrices. Each head projects queries, keys, and values into a lower-dimensional subspace before computing attention. Different heads project into different subspaces, so they &ldquo;see&rdquo; different aspects of the representation. The softmax is sensitive to scale (which is why we divide by $\sqrt{d_k}$), so heads that project to subspaces emphasizing different features will learn to attend to different patterns.</p>
@@ -246,7 +246,7 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 </tr>
 <tr>
 <td>Scaled dot-product attention</td>
-<td>$\text{softmax}(QK^\top / \sqrt{d}) , V$</td>
+<td>$\text{softmax}(QK^\top / \sqrt{d})  V$</td>
 </tr>
 <tr>
 <td>Self-attention</td>

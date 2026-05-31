@@ -124,13 +124,13 @@
 <hr>
 <h2 id="bayesian-decision-theory">Bayesian Decision Theory</h2>
 <p>The setup is as follows. We have $K$ classes, a prior distribution $P(C=k)$ over classes, and a class-conditional density $p(x \mid C=k)$ that describes the distribution of the input $x$ given that the true class is $k$. By Bayes' rule, the posterior probability of class $k$ given observation $x$ is:</p>
-<p>$$P(C=k \mid x) = \frac{p(x \mid C=k), P(C=k)}{p(x)},$$</p>
-<p>where the marginal density $p(x) = \sum_{k=1}^K p(x \mid C=k), P(C=k)$ normalizes the posterior to sum to one over all classes.</p>
+<p>$$P(C=k \mid x) = \frac{p(x \mid C=k) P(C=k)}{p(x)},$$</p>
+<p>where the marginal density $p(x) = \sum_{k=1}^K p(x \mid C=k) P(C=k)$ normalizes the posterior to sum to one over all classes.</p>
 <p>The Bayes classifier assigns the class with the highest posterior probability:</p>
-<p>$$k^* = \arg\max_k P(C=k \mid x) = \arg\max_k, p(x \mid C=k), P(C=k).$$</p>
+<p>$$k^* = \arg\max_k P(C=k \mid x) = \arg\max_k p(x \mid C=k) P(C=k).$$</p>
 <p>The second equality holds because $p(x)$ is the same for all classes and does not affect the argmax. This rule minimizes the probability of misclassification for each individual $x$: at every point in feature space, it picks the class that is most likely to be correct given the evidence. Because it minimizes the pointwise error probability, it also minimizes the overall error rate, which is just the expected pointwise error over all $x$.</p>
 <p>The <strong>Bayes error rate</strong> is the error rate of this optimal classifier:</p>
-<p>$$\varepsilon^* = 1 - \mathbb{E}_x!\left[\max_k P(C=k \mid x)\right].$$</p>
+<p>$$\varepsilon^* = 1 - \mathbb{E}_x\left[\max_k P(C=k \mid x)\right].$$</p>
 <p>This is the irreducible error &ndash; no classifier, no matter how complex or data-rich, can do better. To understand why it is irreducible, consider a point $x$ where $P(C=1 \mid x) = 0.6$ and $P(C=2 \mid x) = 0.4$. The Bayes classifier assigns class 1, and it is correct 60% of the time at this point. The remaining 40% is error that cannot be eliminated &ndash; it is genuine ambiguity in the data-generating process. The features $x$ simply do not carry enough information to distinguish the classes with certainty. This irreducible error reflects the overlap between class-conditional distributions: wherever $p(x \mid C=1)$ and $p(x \mid C=2)$ both have support, there will be some ambiguity, and the Bayes classifier absorbs this irreducible fraction of errors. Any real classifier &ndash; one that must estimate the posterior from finite data &ndash; will have an error rate at least as large as $\varepsilon^*$, and typically larger due to estimation error.</p>
 <hr>
 <h2 id="discriminant-functions">Discriminant Functions</h2>
@@ -153,17 +153,17 @@
 <p>So far, we have assumed that all errors are equally bad &ndash; the 0-1 loss. In practice, errors have different costs. In a medical screening test for a serious disease, failing to diagnose a sick patient (false negative) can be catastrophic, while incorrectly flagging a healthy patient (false positive) leads to further testing but not immediate harm. The right framework is to specify a loss matrix $L$, where $L[i][j]$ is the cost incurred when we predict class $i$ and the true class is $j$.</p>
 <p>Under 0-1 loss, $L[i][j] = 1 - \delta_{ij}$: correct predictions cost 0, and any error costs 1. But with an arbitrary loss matrix, the optimal decision changes.</p>
 <p>The <strong>conditional risk</strong> of predicting class $i$ given observation $x$ is the expected loss under the posterior:</p>
-<p>$$R(\alpha = i \mid x) = \sum_{j=1}^K L[i][j], P(C=j \mid x).$$</p>
+<p>$$R(\alpha = i \mid x) = \sum_{j=1}^K L[i][j] P(C=j \mid x).$$</p>
 <p>This is a weighted sum of losses, where the weights are the posterior probabilities of each true class. The minimum risk classifier chooses the action that minimizes conditional risk at each point:</p>
-<p>$$\alpha^*(x) = \arg\min_i, R(\alpha = i \mid x).$$</p>
+<p>$$\alpha^*(x) = \arg\min_i R(\alpha = i \mid x).$$</p>
 <p>The <strong>overall Bayes risk</strong> is the expected conditional risk under the data distribution:</p>
-<p>$$R^* = \mathbb{E}_x!\left[\min_i R(\alpha = i \mid x)\right].$$</p>
+<p>$$R^* = \mathbb{E}_x\left[\min_i R(\alpha = i \mid x)\right].$$</p>
 <p>This generalizes the standard Bayes error rate: with 0-1 loss, $R^* = \varepsilon^*$. With asymmetric loss, the decision boundaries shift away from the equal-posterior surface and toward regions where the high-cost errors are less likely. Specifically, a high cost for false negatives (missing disease) pushes the decision boundary so that we classify as positive (diseased) even at lower posterior probabilities &ndash; accepting more false positives to avoid the catastrophic false negatives.</p>
 <hr>
 <h2 id="decision-boundaries-and-error-rates">Decision Boundaries and Error Rates</h2>
 <p>For two classes, the error rate has a clean decomposition. Let $R_1$ and $R_2$ be the decision regions &ndash; the subsets of input space assigned to class 1 and class 2 respectively. The total probability of error is:</p>
-<p>$$P(\text{error}) = \int_{R_2} p(x \mid C=1), P(C=1), dx + \int_{R_1} p(x \mid C=2), P(C=2), dx.$$</p>
-<p>The first term is the probability of misclassifying a class-1 point as class 2, and the second term is the reverse. The Bayes classifier minimizes this by assigning each $x$ to the class with the larger joint probability $p(x \mid C=k), P(C=k)$, which is equivalent to maximizing the posterior.</p>
+<p>$$P(\text{error}) = \int_{R_2} p(x \mid C=1) P(C=1) dx + \int_{R_1} p(x \mid C=2) P(C=2) dx.$$</p>
+<p>The first term is the probability of misclassifying a class-1 point as class 2, and the second term is the reverse. The Bayes classifier minimizes this by assigning each $x$ to the class with the larger joint probability $p(x \mid C=k) P(C=k)$, which is equivalent to maximizing the posterior.</p>
 <p>For Gaussian classes with equal covariance $\Sigma$, the Bayes decision boundary has an explicit form. Setting $g_1(x) = g_2(x)$ gives the hyperplane:</p>
 <p>$$(\mu_1 - \mu_2)^\top \Sigma^{-1} x = \frac{1}{2}(\mu_1 - \mu_2)^\top \Sigma^{-1}(\mu_1 + \mu_2) - \log\frac{P(C=1)}{P(C=2)}.$$</p>
 <p>The left side is the Mahalanobis projection of $x$ onto the direction connecting the two class means. The right side is a threshold that adjusts for the class means, the geometry of $\Sigma$, and the prior ratio. When the priors are equal, the boundary passes through the midpoint between the two means (in Mahalanobis distance). When one class is more probable a priori, the boundary shifts toward the less probable class &ndash; we require more evidence to classify into the rare class.</p>
@@ -185,7 +185,7 @@
 <p>$$P(C=k \mid x) \propto P(C=k) \prod_{j=1}^d p(x_j \mid C=k),$$</p>
 <p>and the Naive Bayes classifier assigns class $k^* = \arg\max_k \left[\log P(C=k) + \sum_{j=1}^d \log p(x_j \mid C=k)\right].$</p>
 <p>The parametric form chosen for each $p(x_j \mid C=k)$ depends on the feature type:</p>
-<p><strong>Gaussian Naive Bayes</strong> assumes $p(x_j \mid C=k) = \mathcal{N}(x_j;, \mu_{jk},, \sigma_{jk}^2)$. The MLE estimates are the per-feature, per-class sample mean and variance: $\hat{\mu}<em>{jk} = \frac{1}{n_k}\sum</em>{x \in C_k} x_j$ and $\hat{\sigma}<em>{jk}^2 = \frac{1}{n_k}\sum</em>{x \in C_k}(x_j - \hat{\mu}_{jk})^2$. This requires estimating $2Kd$ scalars rather than a $Kd \times d$ covariance matrix &ndash; a dramatic reduction.</p>
+<p><strong>Gaussian Naive Bayes</strong> assumes $p(x_j \mid C=k) = \mathcal{N}(x_j; \mu_{jk}, \sigma_{jk}^2)$. The MLE estimates are the per-feature, per-class sample mean and variance: $\hat{\mu}<em>{jk} = \frac{1}{n_k}\sum</em>{x \in C_k} x_j$ and $\hat{\sigma}<em>{jk}^2 = \frac{1}{n_k}\sum</em>{x \in C_k}(x_j - \hat{\mu}_{jk})^2$. This requires estimating $2Kd$ scalars rather than a $Kd \times d$ covariance matrix &ndash; a dramatic reduction.</p>
 <p><strong>Bernoulli Naive Bayes</strong> handles binary features. Each $p(x_j = 1 \mid C=k) = \theta_{jk}$ is estimated as the fraction of class-$k$ training points with $x_j = 1$. This is the natural model when each feature is an indicator variable.</p>
 <p><strong>Multinomial Naive Bayes</strong> is the standard for text classification with a bag-of-words representation. Here $x_j$ is the count of word $j$ in a document, and $p(\text{word}<em>j \mid C=k) = \theta</em>{jk}$ is estimated as the count of word $j$ in all class-$k$ documents divided by the total word count in class-$k$ documents. Classification scores documents by the log-probability of the word sequence under each class model, plus the log-prior.</p>
 <p><strong>Why does Naive Bayes work despite the independence assumption being violated?</strong> In practice, features are almost never conditionally independent given the class. In text, words co-occur in strong patterns; in images, adjacent pixels are highly correlated. Yet Naive Bayes often achieves competitive accuracy. The reason is that we ultimately only need the decision boundary to be correct, not the density estimates themselves. The Naive Bayes posterior $\tilde{P}(C=k \mid x) \propto P(C=k)\prod_j p(x_j \mid C=k)$ is a distorted version of the true posterior, but the argmax &ndash; the class it assigns &ndash; can agree with the true Bayes classifier even when the probability values are badly miscalibrated. The decision boundary is determined by the sign of the log-posterior ratio, and this can be correct even when the individual log-posteriors are off by a constant or a multiplicative factor. The independence assumption biases the density estimates, but it biases them in a correlated way that largely preserves the ranking of classes.</p>
@@ -193,14 +193,14 @@
 <hr>
 <h2 id="bayesian-learning-vs-mle">Bayesian Learning vs MLE</h2>
 <p>The Naive Bayes classifier and LDA/QDA both use MLE to estimate their parameters from training data. MLE finds the single parameter vector $\hat{\theta}$ that maximizes the likelihood of the training data:</p>
-<p>$$\hat{\theta}<em>{\text{MLE}} = \arg\max</em>\theta, p(\mathcal{D} \mid \theta).$$</p>
+<p>$$\hat{\theta}<em>{\text{MLE}} = \arg\max</em>\theta p(\mathcal{D} \mid \theta).$$</p>
 <p>This treats the parameters as fixed but unknown. Bayesian learning takes a different view: parameters are random variables with a prior distribution $p(\theta)$, and training data updates this prior to a posterior:</p>
-<p>$$p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta), p(\theta).$$</p>
+<p>$$p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta) p(\theta).$$</p>
 <p>The <strong>MAP estimate</strong> (maximum a posteriori) finds the mode of this posterior:</p>
-<p>$$\hat{\theta}<em>{\text{MAP}} = \arg\max</em>\theta, \left[\log p(\mathcal{D} \mid \theta) + \log p(\theta)\right].$$</p>
+<p>$$\hat{\theta}<em>{\text{MAP}} = \arg\max</em>\theta \left[\log p(\mathcal{D} \mid \theta) + \log p(\theta)\right].$$</p>
 <p>MAP is equivalent to MLE with a regularization term: the log-prior $\log p(\theta)$ penalizes parameter values that are unlikely under the prior. A Gaussian prior on $\theta$ with mean zero corresponds to $L_2$ regularization. A Laplace prior corresponds to $L_1$ regularization. MLE is the limiting case of MAP with a uniform prior.</p>
 <p>Full Bayesian prediction goes further, averaging over all parameter values weighted by the posterior rather than committing to a single estimate:</p>
-<p>$$p(y \mid x, \mathcal{D}) = \int p(y \mid x, \theta), p(\theta \mid \mathcal{D}), d\theta.$$</p>
+<p>$$p(y \mid x, \mathcal{D}) = \int p(y \mid x, \theta) p(\theta \mid \mathcal{D}) d\theta.$$</p>
 <p>This predictive distribution is more calibrated than a point estimate &ndash; it incorporates parameter uncertainty. However, this integral is usually intractable for complex models, which is why MAP and MLE remain the workhorses in practice.</p>
 <p>For categorical distributions &ndash; as in Multinomial Naive Bayes &ndash; the conjugate prior is the Dirichlet distribution. If we place a Dirichlet prior $\text{Dir}(\alpha_1, \ldots, \alpha_V)$ on the word probabilities $(\theta_{1k}, \ldots, \theta_{Vk})$ for class $k$, the posterior given the observed word counts $n_{jk}$ is again Dirichlet with updated parameters $\alpha_j + n_{jk}$. The MAP estimate adds $\alpha_j - 1$ pseudo-counts to each word. Setting $\alpha_j = 2$ for all $j$ (a uniform Dirichlet) gives Laplace smoothing: $\hat{\theta}<em>{jk} = (n</em>{jk} + 1)/(n_k + V)$. This prevents zero probabilities for words not seen in the training set of class $k$, which would otherwise make the Naive Bayes posterior zero for any document containing an unseen word &ndash; a severe failure mode without smoothing.</p>
 <hr>
@@ -226,7 +226,7 @@
 <tbody>
 <tr>
 <td>Bayes classifier</td>
-<td>$k^* = \arg\max_k P(C=k \mid x) = \arg\max_k p(x \mid C=k), P(C=k)$</td>
+<td>$k^* = \arg\max_k P(C=k \mid x) = \arg\max_k p(x \mid C=k) P(C=k)$</td>
 </tr>
 <tr>
 <td>Bayes error rate</td>
@@ -246,7 +246,7 @@
 </tr>
 <tr>
 <td>Conditional risk</td>
-<td>$R(\alpha=i \mid x) = \sum_j L[i][j], P(C=j \mid x)$; expected loss of action $i$</td>
+<td>$R(\alpha=i \mid x) = \sum_j L[i][j] P(C=j \mid x)$; expected loss of action $i$</td>
 </tr>
 <tr>
 <td>Minimum risk rule</td>

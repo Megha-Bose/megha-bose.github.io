@@ -125,16 +125,16 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
 <hr>
 <h2 id="the-problem-precisely">The Problem, Precisely</h2>
 <p>Self-attention computes:</p>
-<p>$$\text{Attention}(Q, K, V) = \text{softmax}!\left(\frac{QK^\top}{\sqrt{d}}\right) V$$</p>
+<p>$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d}}\right) V$$</p>
 <p>where $Q = XW_Q$, $K = XW_K$, $V = XW_V$.</p>
 <p>If you apply a permutation matrix $P$ to the rows of $X$ - rearranging the tokens - then $Q$ becomes $PQ$, $K$ becomes $PK$, and $V$ becomes $PV$. The attention matrix becomes:</p>
-<p>$$\text{softmax}!\left(\frac{(PQ)(PK)^\top}{\sqrt{d}}\right) = \text{softmax}!\left(\frac{PQK^\top P^\top}{\sqrt{d}}\right) = P \cdot \text{softmax}!\left(\frac{QK^\top}{\sqrt{d}}\right) \cdot P^\top.$$</p>
+<p>$$\text{softmax}\left(\frac{(PQ)(PK)^\top}{\sqrt{d}}\right) = \text{softmax}\left(\frac{PQK^\top P^\top}{\sqrt{d}}\right) = P \cdot \text{softmax}\left(\frac{QK^\top}{\sqrt{d}}\right) \cdot P^\top.$$</p>
 <p>The output is $P \cdot \text{Attention}(Q, K, V) \cdot P^\top \cdot PV = P \cdot \text{Attention}(Q, K, V)$. The output rows are just the input rows permuted the same way. Self-attention is <strong>permutation-equivariant</strong>: permute the input, get a correspondingly permuted output, with no memory of which position was which.</p>
 <p>The solution: before computing attention, add a position-dependent vector to each token embedding so that the same token at different positions has a different representation.</p>
 <hr>
 <h2 id="absolute-sinusoidal-encodings">Absolute Sinusoidal Encodings</h2>
 <p>The original transformer (Vaswani et al. 2017) uses a fixed, deterministic positional encoding. For a sequence position $\text{pos} \in \{0, 1, 2, \ldots\}$ and an embedding dimension $d$, the positional vector $\text{PE}(\text{pos}) \in \mathbb{R}^d$ has entries:</p>
-<p>$$\text{PE}(\text{pos}, 2i) = \sin!\left(\frac{\text{pos}}{10000^{2i/d}}\right), \qquad \text{PE}(\text{pos}, 2i+1) = \cos!\left(\frac{\text{pos}}{10000^{2i/d}}\right)$$</p>
+<p>$$\text{PE}(\text{pos}, 2i) = \sin\left(\frac{\text{pos}}{10000^{2i/d}}\right), \qquad \text{PE}(\text{pos}, 2i+1) = \cos\left(\frac{\text{pos}}{10000^{2i/d}}\right)$$</p>
 <p>for $i = 0, 1, \ldots, d/2 - 1$. This vector is added to the token embedding: $\tilde{x}<em>{\text{pos}} = x</em>{\text{pos}} + \text{PE}(\text{pos})$.</p>
 <h3 id="what-this-encodes">What This Encodes</h3>
 <p>Think of the position encoding as a clock with many hands, each ticking at a different frequency.</p>

@@ -227,13 +227,13 @@ The hidden state $\mathbf{x_k} \in \mathbb{R}^d$ at layer $k$ is updated by addi
 <p>$$\frac{\partial p}{\partial t} + \nabla \cdot (f \cdot p) = 0$$</p>
 <p>This is just conservation of probability: the total probability in any region changes only because probability flows in or out through the boundary. The same equation governs fluid density in fluid mechanics.</p>
 <p>Taking $\log$ and working along the trajectory:</p>
-<p>$$\frac{\partial \log p(\mathbf{x}(t), t)}{\partial t} = -\text{tr}!\left(\frac{\partial f}{\partial \mathbf{x}}(\mathbf{x}(t), t, \theta)\right)$$</p>
+<p>$$\frac{\partial \log p(\mathbf{x}(t), t)}{\partial t} = -\text{tr}\left(\frac{\partial f}{\partial \mathbf{x}}(\mathbf{x}(t), t, \theta)\right)$$</p>
 <p>The log-density changes at a rate equal to the negative <strong>trace</strong> of the Jacobian - not the log-determinant, just the trace. The trace costs $O(d)$ per computation instead of $O(d^3)$ for the determinant.</p>
 <p><strong>Stochastic trace estimation.</strong> Even computing the full Jacobian to extract its trace is $O(d^2)$. Hutchinson&rsquo;s estimator reduces this to $O(d)$: for $\epsilon$ with $\mathbb{E}[\epsilon\epsilon^T] = I$,</p>
 <p>$$\text{tr}(J) = \mathbb{E}_\epsilon[\epsilon^T J \epsilon]$$</p>
 <p>and $J\epsilon$ (a Jacobian-vector product) can be computed in $O(d)$ time via automatic differentiation (a single backward pass). Sample $\epsilon$ from a standard normal or Rademacher distribution, compute $\epsilon^T J \epsilon$, and average over a few samples.</p>
 <p><strong>FFJORD.</strong> Putting this together: to compute the log-likelihood of a sample $\mathbf{x}$, integrate the Neural ODE backward from $t = T$ to $t = 0$ to find $\mathbf{z} = \mathbf{x}(0)$, simultaneously accumulating $\int_T^0 \text{tr}(\partial f / \partial \mathbf{x}) dt$ via Hutchinson&rsquo;s estimator. The log-likelihood is:</p>
-<p>$$\log p(\mathbf{x}) = \log p_0(\mathbf{z}) + \int_T^0 \text{tr}!\left(\frac{\partial f}{\partial \mathbf{x}}\right) dt$$</p>
+<p>$$\log p(\mathbf{x}) = \log p_0(\mathbf{z}) + \int_T^0 \text{tr}\left(\frac{\partial f}{\partial \mathbf{x}}\right) dt$$</p>
 <p>This is <strong>FFJORD</strong> (Free-Form Jacobian of Reversible Dynamics, Grathwohl et al., 2018). The key advantage over discrete normalizing flows: no architectural constraints on $f$. The vector field can be any neural network.</p>
 <hr>
 <h2 id="section-6-hamiltonian-neural-networks">Section 6: Hamiltonian Neural Networks</h2>
@@ -252,9 +252,9 @@ The hidden state $\mathbf{x_k} \in \mathbb{R}^d$ at layer $k$ is updated by addi
 <p>For an infinitesimal time step, the flow map $g_{\Delta t}: \mathbf{x}(t) \mapsto \mathbf{x}(t + \Delta t) = \mathbf{x}(t) + \Delta t \cdot f(\mathbf{x}(t), t, \theta)$ has Jacobian:</p>
 <p>$$\frac{\partial g_{\Delta t}}{\partial \mathbf{x}} = I + \Delta t \frac{\partial f}{\partial \mathbf{x}} + O(\Delta t^2)$$</p>
 <p>The determinant of this Jacobian:</p>
-<p>$$\det!\left(I + \Delta t \frac{\partial f}{\partial \mathbf{x}}\right) = 1 + \Delta t \cdot \text{tr}!\left(\frac{\partial f}{\partial \mathbf{x}}\right) + O(\Delta t^2)$$</p>
+<p>$$\det\left(I + \Delta t \frac{\partial f}{\partial \mathbf{x}}\right) = 1 + \Delta t \cdot \text{tr}\left(\frac{\partial f}{\partial \mathbf{x}}\right) + O(\Delta t^2)$$</p>
 <p>(using the identity $\det(I + \epsilon A) = 1 + \epsilon \text{tr}(A) + O(\epsilon^2)$, which follows from the characteristic polynomial expansion). Taking the log:</p>
-<p>$$\log \det!\left(I + \Delta t \frac{\partial f}{\partial \mathbf{x}}\right) \approx \Delta t \cdot \text{tr}!\left(\frac{\partial f}{\partial \mathbf{x}}\right)$$</p>
+<p>$$\log \det\left(I + \Delta t \frac{\partial f}{\partial \mathbf{x}}\right) \approx \Delta t \cdot \text{tr}\left(\frac{\partial f}{\partial \mathbf{x}}\right)$$</p>
 <p>Dividing by $\Delta t$ and taking $\Delta t \to 0$ gives the instantaneous rate $\text{tr}(\partial f / \partial \mathbf{x})$. The trace is the infinitesimal version of the log-determinant. For finite flows (finite integration time), the log-determinant accumulates as $\int_0^T \text{tr}(\partial f / \partial \mathbf{x}) dt$, which is what FFJORD computes via ODE integration.</p>
 <p>This explains why continuous normalizing flows can use unrestricted architectures: the trace, unlike the determinant, is cheap to compute via automatic differentiation and stochastic estimation.</p>
 <hr>
@@ -348,7 +348,7 @@ x_T  <span style="color:#f92672">=</span> sol<span style="color:#f92672">.</span
 <p>A significant limitation of Neural ODEs: the solution of an ODE forms a flow - a diffeomorphism. This means trajectories starting from different initial conditions cannot intersect. If two distinct inputs map to two distinct outputs, the ODE must route them along non-intersecting paths.</p>
 <p>For some tasks - particularly those requiring trajectories to &ldquo;cross&rdquo; in the state space - this constraint is too restrictive. The standard Neural ODE in $\mathbb{R}^d$ cannot, for example, learn the mapping that takes a 1D input $x$ to $\sin(x)$ if the training data has multiple inputs mapping to the same output range through different routes.</p>
 <p><strong>Augmented Neural ODEs</strong> (Dupont et al., 2019) resolve this by augmenting the state space. Instead of evolving $\mathbf{x}(t) \in \mathbb{R}^d$, augment to $[\mathbf{x}(t), \mathbf{a}(t)] \in \mathbb{R}^{d + p}$ where $\mathbf{a}(0) = \mathbf{0}$ is an auxiliary state initialized to zero. The ODE evolves in the higher-dimensional space:</p>
-<p>$$\frac{d}{dt}\begin{pmatrix} \mathbf{x}(t) \\ \mathbf{a}(t) \end{pmatrix} = f!\left(\begin{pmatrix} \mathbf{x}(t) \\ \mathbf{a}(t) \end{pmatrix}, t, \theta\right)$$</p>
+<p>$$\frac{d}{dt}\begin{pmatrix} \mathbf{x}(t) \\ \mathbf{a}(t) \end{pmatrix} = f\left(\begin{pmatrix} \mathbf{x}(t) \\ \mathbf{a}(t) \end{pmatrix}, t, \theta\right)$$</p>
 <p>The output is still $\mathbf{x}(T)$ (ignoring the auxiliary dimensions). But now the trajectories have extra room to maneuver in the augmented space, bypassing the crossing constraint. Two trajectories that would cross in $\mathbb{R}^d$ can separate in $\mathbb{R}^{d+p}$ without crossing.</p>
 <p>The tradeoff: more parameters, higher-dimensional ODE (more expensive to solve), and less interpretability. But augmentation often dramatically reduces the number of function evaluations needed (fewer NFE), making the overall computation faster despite the larger state.</p>
 <hr>

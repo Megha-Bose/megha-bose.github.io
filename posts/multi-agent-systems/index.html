@@ -162,10 +162,10 @@ In a multi-agent system, this assumption collapses." />
 <p>$$D_i(s, \mathbf{a}) = R_{\text{joint}}(s, \mathbf{a}) - R_{\text{joint}}(s, \mathbf{a}_{-i}^0),$$</p>
 <p>where $\mathbf{a}_{-i}^0$ is the joint action with agent $i$ replaced by a default (e.g., do-nothing) action. This measures how much agent $i$&rsquo;s action changed the outcome. It is more informative than the global reward but requires evaluating a counterfactual, which may be expensive or ambiguous depending on the choice of default.</p>
 <p><strong>Shapley value.</strong> The Shapley value from cooperative game theory provides a uniquely axiomatically justified attribution:</p>
-<p>$$\phi_i = \sum_{C \subseteq N \setminus \{i\}} \frac{|C|!,(n - |C| - 1)!}{n!} \left[ v(C \cup \{i\}) - v(C) \right],$$</p>
+<p>$$\phi_i = \sum_{C \subseteq N \setminus \{i\}} \frac{|C|!(n - |C| - 1)!}{n!} \left[ v(C \cup \{i\}) - v(C) \right],$$</p>
 <p>where $N = \{1, \ldots, n\}$ and $v(C)$ is the value (expected reward) achievable by coalition $C$. The Shapley value is the unique attribution satisfying efficiency, symmetry, linearity, and null-player axioms. Computing it exactly requires summing over all $2^n$ subsets, making it tractable only for small $n$.</p>
 <p><strong>Counterfactual baselines (COMA).</strong> Rather than replacing agent $i$ with a default, COMA constructs a policy-gradient update using a counterfactual baseline that marginalizes over agent $i$&rsquo;s actions while holding others fixed:</p>
-<p>$$A_i(s, \mathbf{a}) = Q(s, \mathbf{a}) - \sum_{a_i'} \pi_i(a_i' \mid s), Q(s, (a_i', \mathbf{a}_{-i})).$$</p>
+<p>$$A_i(s, \mathbf{a}) = Q(s, \mathbf{a}) - \sum_{a_i'} \pi_i(a_i' \mid s) Q(s, (a_i', \mathbf{a}_{-i})).$$</p>
 <p>This is the advantage of agent $i$&rsquo;s actual action relative to its average action, given what others are doing - a tractable approximation to the difference reward that can be computed with a centralized critic.</p>
 <hr>
 <h2 id="communication-in-multi-agent-systems">Communication in Multi-Agent Systems</h2>
@@ -181,7 +181,7 @@ In a multi-agent system, this assumption collapses." />
 <p><strong>Factored value functions.</strong> VDN (Value Decomposition Networks) decomposes the joint Q-function additively:</p>
 <p>$$Q_{\text{joint}}(s, \mathbf{a}) = \sum_{i=1}^n Q_i(o_i, a_i).$$</p>
 <p>This is a strong structural assumption, but enables decentralized execution: each agent maximizes its own $Q_i$ independently. QMIX relaxes this to a monotone mixing:</p>
-<p>$$Q_{\text{joint}}(s, \mathbf{a}) = f_{\text{mix}}!\left(Q_1(o_1, a_1), \ldots, Q_n(o_n, a_n);\ s\right),$$</p>
+<p>$$Q_{\text{joint}}(s, \mathbf{a}) = f_{\text{mix}}\left(Q_1(o_1, a_1), \ldots, Q_n(o_n, a_n);\ s\right),$$</p>
 <p>where $f_{\text{mix}}$ is a monotone function of the individual Q-values (weights constrained to be non-negative). This preserves the <strong>IGM (Individual-Global Max)</strong> property: $\operatorname{argmax}<em>{\mathbf{a}} Q</em>{\text{joint}} = (\operatorname{argmax}<em>{a_1} Q_1, \ldots, \operatorname{argmax}</em>{a_n} Q_n)$, so decentralized greedy actions are globally optimal under the factored approximation.</p>
 <p><strong>Mean field approximation.</strong> When agents are numerous and interact weakly, each agent&rsquo;s influence on any single other agent is small. Mean field MARL replaces the effect of all other agents with a single aggregate quantity - the mean action $\bar{a} = \frac{1}{n-1}\sum_{j \neq i} a_j$ - reducing the $n$-agent interaction to a two-body problem between agent $i$ and the mean field. This reduces complexity from exponential to linear but requires the mean field assumption to hold approximately.</p>
 <p><strong>Attention-based methods.</strong> Transformer-style attention allows each agent to selectively aggregate information from a variable-size set of neighbors, weighting contributions by relevance. This handles heterogeneous agent populations and partial connectivity without assuming a fixed interaction structure.</p>
