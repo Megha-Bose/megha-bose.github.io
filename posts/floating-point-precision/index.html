@@ -1,116 +1,71 @@
-<!doctype html>
-<html lang="en-us">
-  <head>
-    <title>Floating-Point - Representing Infinity on a Finite Machine // Megha Bose</title>
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <meta charset="utf-8" />
-    <meta name="generator" content="Hugo 0.92.2" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="author" content="Megha Bose" />
-    <meta name="description" content="" />
-    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-
-    
-    <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Floating-Point - Representing Infinity on a Finite Machine"/>
+<!doctype html><html lang="en-us">
+<head>
+<title>Floating-Point - Representing Infinity on a Finite Machine // Megha Bose</title>
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Floating-Point - Representing Infinity on a Finite Machine">
 <meta name="twitter:description" content="Helpful context:
- Binary &amp; Number Systems - How Computers Count    In 1994, Intel shipped a Pentium processor with a flaw in its floating-point division unit. The error was tiny - at most 5 parts in 10 billion - and affected only specific operands. Intel&rsquo;s engineers initially dismissed it as inconsequential for most users. The public disagreed. After a professor of mathematics posted his findings online, the story spread."/>
-
-    <meta property="og:title" content="Floating-Point - Representing Infinity on a Finite Machine" />
+ Binary & Number Systems - How Computers Count    In 1994, Intel shipped a Pentium processor with a flaw in its floating-point division unit. The error was tiny - at most 5 parts in 10 billion - and affected only specific operands. Intel&rsquo;s engineers initially dismissed it as inconsequential for most users. The public disagreed. After a professor of mathematics posted his findings online, the story spread.">
+<meta property="og:title" content="Floating-Point - Representing Infinity on a Finite Machine">
 <meta property="og:description" content="Helpful context:
- Binary &amp; Number Systems - How Computers Count    In 1994, Intel shipped a Pentium processor with a flaw in its floating-point division unit. The error was tiny - at most 5 parts in 10 billion - and affected only specific operands. Intel&rsquo;s engineers initially dismissed it as inconsequential for most users. The public disagreed. After a professor of mathematics posted his findings online, the story spread." />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="http://megha-bose.github.io/posts/floating-point-precision/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
-<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
-
-
-
-    <script>
-      (function() {
-        var saved = localStorage.getItem('theme');
-        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
-      })();
-    </script>
-  </head>
-  <body>
-    <header class="app-header">
-      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
-      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-      <nav class="app-header-menu">
-          <a class="app-header-menu-item" href="/about/">About Me</a>
-             <br> 
-          
-          <a class="app-header-menu-item" href="/resume/"> Resume</a>
-             <br> 
-          
-          <a class="app-header-menu-item" href="/categories/">Topics</a>
-             <br> 
-          
-          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-      </nav>
-      <div class="app-header-social">
-        
-          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
-  <title>Github</title>
-  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-</svg>
-          </a>
-        
-          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
-  <title>Linkedin</title>
-  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
-</svg>
-          </a>
-        
-          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
-  <title>X</title>
-  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
-</svg>
-          </a>
-        
-          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
-  <title>Instagram</title>
-  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-</svg>
-          </a>
-        
-      </div>
-      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-        <span class="theme-toggle-icon"></span>
-      </button>
-    </header>
-    <main class="app-container">
-      
-  <article class="post">
-    <header class="post-header">
-      <h1 class ="post-title">Floating-Point - Representing Infinity on a Finite Machine</h1>
-      <div class="post-meta">
-        <div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
-  <title>calendar</title>
-  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
-</svg>
-          Sep 15, 2024
-        </div>
-        <div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
-  <title>clock</title>
-  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
-</svg>
-          9 min read
-        </div>
-      </div>
-    </header>
-    <div class="post-content">
-      <p><strong>Helpful context:</strong></p>
+ Binary & Number Systems - How Computers Count    In 1994, Intel shipped a Pentium processor with a flaw in its floating-point division unit. The error was tiny - at most 5 parts in 10 billion - and affected only specific operands. Intel&rsquo;s engineers initially dismissed it as inconsequential for most users. The public disagreed. After a professor of mathematics posted his findings online, the story spread.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/floating-point-precision/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
+<br>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
+<br>
+<a class="app-header-menu-item" href="/categories/">Topics</a>
+<br>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+</nav>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
+</button>
+</header>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Floating-Point - Representing Infinity on a Finite Machine</h1>
+<div class="post-meta">
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class="post-content">
+<p><strong>Helpful context:</strong></p>
 <ul>
-<li><a href="/posts/binary-number-systems/" target="_blank" rel="noopener noreferrer">Binary &amp; Number Systems - How Computers Count</a>
+<li><a href="/posts/binary-number-systems/" target="_blank" rel="noopener noreferrer">Binary & Number Systems - How Computers Count</a>
 </li>
 </ul>
 <hr>
@@ -118,10 +73,10 @@
 <p>The incident exposed something important: floating-point arithmetic is not a clean approximation of real arithmetic. It has specific, bounded behavior governed by a 1985 standard. When that behavior is misunderstood, the results range from annoying (0.1 + 0.2 ≠ 0.3) to catastrophic (ML training divergence, financial miscalculation, missile guidance error). When it is understood, you can write numerically stable code and reason precisely about where errors come from.</p>
 <h2 id="why-01-cannot-be-represented-exactly">Why 0.1 Cannot Be Represented Exactly</h2>
 <p>Binary fractions work the same way decimal fractions do - but in base 2.</p>
-<p>Just as 1/3 has no finite decimal representation (0.3333&hellip;), many simple decimal fractions have no finite binary representation. <code>0.1</code> in binary is <code>0.0001100110011...</code> repeating forever. The hardware stores a finite approximation.</p>
+<p>Just as 1/3 has no finite decimal representation (0.3333&mldr;), many simple decimal fractions have no finite binary representation. <code>0.1</code> in binary is <code>0.0001100110011...</code> repeating forever. The hardware stores a finite approximation.</p>
 <p>The actual stored value for <code>0.1</code> as a 64-bit double is:</p>
 <p>$$0.1000000000000000055511151231257827021181583404541015625$$</p>
-<p>That 55&hellip; at the 17th decimal place is the error. Add two of these approximations together and the errors compound. The result of <code>0.1 + 0.2</code> is not <code>0.3</code> (which is also approximated) but a different approximation that, printed with full precision, shows as <code>0.30000000000000004</code>.</p>
+<p>That 55&mldr; at the 17th decimal place is the error. Add two of these approximations together and the errors compound. The result of <code>0.1 + 0.2</code> is not <code>0.3</code> (which is also approximated) but a different approximation that, printed with full precision, shows as <code>0.30000000000000004</code>.</p>
 <p>This is not a Python bug, not a hardware defect, and not worth losing sleep over in most contexts. It is the correct consequence of a standard design decision made in 1985.</p>
 <h2 id="ieee-754-the-standard-that-rules-everything">IEEE 754: The Standard That Rules Everything</h2>
 <p>The IEEE 754 standard, published in 1985, governs floating-point arithmetic on virtually every CPU, GPU, and DSP manufactured since. Before it, different hardware vendors used different floating-point formats. Code that ran correctly on one machine could produce entirely different results on another. IEEE 754 ended that chaos.</p>
@@ -213,7 +168,7 @@ getcontext()<span style="color:#f92672">.</span>prec <span style="color:#f92672"
 a <span style="color:#f92672">=</span> Decimal(<span style="color:#e6db74">&#39;0.1&#39;</span>)
 b <span style="color:#f92672">=</span> Decimal(<span style="color:#e6db74">&#39;0.2&#39;</span>)
 print(a <span style="color:#f92672">+</span> b)   <span style="color:#75715e"># Decimal(&#39;0.3&#39;) - exact in decimal</span>
-</code></pre></div><p>This is the right choice for financial calculations. A bank that stores $0.10 as a float will occasionally compute $0.09999&hellip; and round incorrectly. Banks store amounts in integer cents (or millicents for FX), or use <code>Decimal</code>. The US Federal Reserve&rsquo;s payment processing systems use decimal arithmetic exactly for this reason.</p>
+</code></pre></div><p>This is the right choice for financial calculations. A bank that stores $0.10 as a float will occasionally compute $0.09999&mldr; and round incorrectly. Banks store amounts in integer cents (or millicents for FX), or use <code>Decimal</code>. The US Federal Reserve&rsquo;s payment processing systems use decimal arithmetic exactly for this reason.</p>
 <p>But <code>Decimal</code> is <strong>50 - 100x slower</strong> than native float. For scientific computing, ML, simulation, signal processing - anything where you&rsquo;re computing thousands of operations per second - <code>Decimal</code> is prohibitively slow. The question is not &ldquo;should I use float or Decimal&rdquo; but &ldquo;does the rounding error matter for this computation?&rdquo;</p>
 <p>For most ML training, the answer is emphatically no. Using <code>float32</code> instead of <code>float64</code> costs you 7 decimal digits of precision vs 15, but the gradients in a neural network are noisy anyway - the difference between <code>float64</code> and <code>float32</code> is swamped by stochastic gradient descent&rsquo;s inherent randomness.</p>
 <h2 id="how-ml-uses-float16-and-bfloat16">How ML Uses float16 and bfloat16</h2>
@@ -300,44 +255,13 @@ print(a <span style="color:#f92672">+</span> b)   <span style="color:#75715e"># 
 <li><a href="/posts/cache-friendly-code/" target="_blank" rel="noopener noreferrer">Cache-Friendly Code - Letting the Hardware Do What It Was Built For</a>
 </li>
 </ul>
-
-    </div>
-    <div class="post-footer">
-      
-    </div>
-  </article>
-
-    </main>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
-      onload="renderMathInElement(document.body, {
-        delimiters: [
-          {left: '$$', right: '$$', display: true},
-          {left: '$', right: '$', display: false}
-        ]
-      });"></script>
-    <script>
-      (function() {
-        var btn = document.getElementById('theme-toggle');
-        function applyTheme(theme, save) {
-          if (theme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-          } else {
-            document.documentElement.removeAttribute('data-theme');
-          }
-          if (save) localStorage.setItem('theme', theme);
-        }
-        btn.addEventListener('click', function() {
-          var current = document.documentElement.getAttribute('data-theme');
-          applyTheme(current === 'light' ? 'dark' : 'light', true);
-        });
-        
-        window.addEventListener('pageshow', function(e) {
-          if (e.persisted) {
-            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
-          }
-        });
-      })();
-    </script>
-  </body>
+</div>
+<div class="post-footer">
+</div>
+</article>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
 </html>
