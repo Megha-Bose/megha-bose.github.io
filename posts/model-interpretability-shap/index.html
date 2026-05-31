@@ -1,0 +1,253 @@
+<!doctype html><html lang="en-us">
+<head>
+<title>Model Interpretability - Why Your Model Said That // Megha Bose</title>
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Model Interpretability - Why Your Model Said That">
+<meta name="twitter:description" content="Helpful context:
+ Ensembles - Weak Learners That Combine Into Something Stronger  Decision Trees - Splitting the Data Until the Answer Emerges    A bank denies a loan. The applicant asks why. &ldquo;Our model said so&rdquo; is not an acceptable answer - in many jurisdictions it is illegal. A hospital uses ML to flag high-risk patients. A doctor needs to know which factors drove the risk score before acting on it.">
+<meta property="og:title" content="Model Interpretability - Why Your Model Said That">
+<meta property="og:description" content="Helpful context:
+ Ensembles - Weak Learners That Combine Into Something Stronger  Decision Trees - Splitting the Data Until the Answer Emerges    A bank denies a loan. The applicant asks why. &ldquo;Our model said so&rdquo; is not an acceptable answer - in many jurisdictions it is illegal. A hospital uses ML to flag high-risk patients. A doctor needs to know which factors drove the risk score before acting on it.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/model-interpretability-shap/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
+<br>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
+<br>
+<a class="app-header-menu-item" href="/categories/">Topics</a>
+<br>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+</nav>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
+</button>
+</header>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Model Interpretability - Why Your Model Said That</h1>
+<div class="post-meta">
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+8 min read
+</div>
+</div>
+</header>
+<div class="post-content">
+<p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/ensembles-forests-boosting/" target="_blank" rel="noopener noreferrer">Ensembles - Weak Learners That Combine Into Something Stronger</a>
+</li>
+<li><a href="/posts/decision-trees/" target="_blank" rel="noopener noreferrer">Decision Trees - Splitting the Data Until the Answer Emerges</a>
+</li>
+</ul>
+<hr>
+<p>A bank denies a loan. The applicant asks why. &ldquo;Our model said so&rdquo; is not an acceptable answer - in many jurisdictions it is illegal. A hospital uses ML to flag high-risk patients. A doctor needs to know which factors drove the risk score before acting on it. A self-driving system brakes unexpectedly. An engineer needs to understand what the model saw.</p>
+<p>Interpretability is not a nice-to-have. It is how you debug models, build trust, comply with regulation, and catch models that learned the wrong thing. A model that achieves 94% accuracy because it learned to use a spurious feature (patient zipcode, transaction device type) will fail in deployment in ways that pure accuracy metrics never reveal.</p>
+<h2 id="the-spectrum-of-interpretability">The Spectrum of Interpretability</h2>
+<p>Some models are interpretable by design:</p>
+<ul>
+<li>A linear regression with 5 features has coefficients that directly say &ldquo;increasing age by 1 unit changes the prediction by X.&rdquo;</li>
+<li>A decision tree of depth 3 can be drawn on a whiteboard and followed by a human.</li>
+</ul>
+<p>The problem is that these models are less accurate than complex alternatives on most real-world problems. The tension between accuracy and interpretability has driven a whole field of post-hoc explanation methods - techniques that look at a trained black-box model and explain its behavior after the fact.</p>
+<h2 id="feature-importance-the-global-picture">Feature Importance: The Global Picture</h2>
+<p>Before diving into per-prediction explanations, start with global feature importance. Which features does the model rely on most?</p>
+<p><strong>Permutation importance</strong>: for each feature, shuffle its values randomly across the dataset (breaking its correlation with the target), recompute predictions, and measure how much worse the model gets. A feature that matters causes a large accuracy drop when shuffled. A feature that is redundant or irrelevant causes little change.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> sklearn.inspection <span style="color:#f92672">import</span> permutation_importance
+
+result <span style="color:#f92672">=</span> permutation_importance(model, X_val, y_val, n_repeats<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>)
+<span style="color:#75715e"># result.importances_mean[i] = mean drop in score when feature i is shuffled</span>
+sorted_idx <span style="color:#f92672">=</span> result<span style="color:#f92672">.</span>importances_mean<span style="color:#f92672">.</span>argsort()[::<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]
+</code></pre></div><p>Permutation importance is model-agnostic and measures actual impact on held-out data, not training data. The main risk: if two features are correlated, shuffling one still leaves part of the information in the other, so correlated features can both appear unimportant even when the information they carry is critical.</p>
+<p><strong>Tree-based feature importance</strong>: tree models (random forests, XGBoost, LightGBM) compute built-in importance as the total gain from splits on each feature across all trees. This is fast but biased toward high-cardinality features (continuous features with many split points) and reflects training-set importance rather than generalization.</p>
+<h2 id="partial-dependence-plots-how-a-feature-affects-predictions">Partial Dependence Plots: How a Feature Affects Predictions</h2>
+<p>Permutation importance tells you which features matter. Partial Dependence Plots (PDPs) tell you how - the shape of the relationship between a feature and the model&rsquo;s output.</p>
+<p>For feature $j$, a PDP shows the average prediction across the dataset as we vary feature $j$&rsquo;s value while keeping all other features at their observed values.</p>
+<p>$$\text{PDP}<em>j(v) = \frac{1}{n} \sum</em>{i=1}^n f(x_i^{(-j)}, v)$$</p>
+<p>where $x_i^{(-j)}$ is the $i$-th example with feature $j$ replaced by $v$. You sweep $v$ across its range and plot the average prediction.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> sklearn.inspection <span style="color:#f92672">import</span> PartialDependenceDisplay
+
+PartialDependenceDisplay<span style="color:#f92672">.</span>from_estimator(
+    model, X_train, features<span style="color:#f92672">=</span>[<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">2</span>, (<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">2</span>)],  <span style="color:#75715e"># single features + interaction</span>
+    kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;average&#39;</span>
+)
+</code></pre></div><p>A PDP that rises steeply over some range tells you the model believes that region matters most. A flat PDP means the feature has little effect. Two-feature PDPs show interaction effects.</p>
+<p><strong>Limitation</strong>: PDPs show averages. If the relationship is heterogeneous - the feature matters a lot for some subgroups and not at all for others - the average can be misleading. Individual Conditional Expectation (ICE) plots show per-example curves instead of the average.</p>
+<h2 id="shap-shapley-values-from-game-theory">SHAP: Shapley Values From Game Theory</h2>
+<p>SHAP (SHapley Additive exPlanations, Lundberg and Lee, 2017) is the current gold standard for feature attribution. It gives each feature a numeric contribution to a specific prediction - not just globally but locally, for each individual example.</p>
+<p>The mathematics comes from cooperative game theory. Imagine the features as players in a coalition game. The model&rsquo;s prediction is the &ldquo;payout.&rdquo; Each feature&rsquo;s <strong>Shapley value</strong> is its fair share of the payout, averaging its marginal contribution over all possible orderings in which features could join the prediction.</p>
+<p>Formally, the Shapley value of feature $j$ for prediction $f(x)$ is:</p>
+<p>$$\phi_j = \sum_{S \subseteq F \setminus {j}} \frac{|S|!(|F|-|S|-1)!}{|F|!} \left[ f(x_{S \cup {j}}) - f(x_S) \right]$$</p>
+<p>where $F$ is the full set of features, $S$ ranges over all subsets not containing $j$, and $f(x_S)$ is the model&rsquo;s prediction using only the features in $S$ (with remaining features averaged out). The factorials weight each subset by the probability that feature $j$ joins in that particular order.</p>
+<p>This satisfies four properties that make it uniquely &ldquo;fair&rdquo;:</p>
+<ul>
+<li><strong>Efficiency</strong>: SHAP values sum to the difference between the prediction and the baseline (average prediction): $\sum_j \phi_j = f(x) - \mathbb{E}[f(X)]$.</li>
+<li><strong>Symmetry</strong>: if two features always contribute equally, they get equal Shapley values.</li>
+<li><strong>Dummy</strong>: if a feature never changes any prediction, its Shapley value is 0.</li>
+<li><strong>Additivity</strong>: the Shapley values for a model that is a sum of two sub-models equals the sum of Shapley values from each sub-model separately.</li>
+</ul>
+<p>These properties are what distinguish Shapley values from simpler attribution schemes. Many intuitive approaches (like simply using gradients or split counts) violate one or more of these, leading to counterintuitive attributions.</p>
+<p><strong>The problem with naive Shapley</strong>: computing it exactly requires evaluating the model on $2^{|F|}$ feature subsets. With 100 features, that is $2^{100}$ evaluations - completely intractable.</p>
+<h3 id="treeshap-exact-and-fast-for-tree-models">TreeSHAP: Exact and Fast for Tree Models</h3>
+<p>Lundberg et al. developed TreeSHAP (2018), an algorithm that computes exact Shapley values for tree models (XGBoost, LightGBM, random forests) in $O(T L D^2)$ time, where $T$ is the number of trees, $L$ is the number of leaves, and $D$ is the depth. This is polynomial, not exponential.</p>
+<p>The key insight: in a tree, when feature $j$ is not in subset $S$, its contribution is computed by the weighted average across the left and right branches at any split on feature $j$ (weighted by the fraction of training examples in each branch). TreeSHAP exploits the tree structure to compute this average analytically during a single tree traversal.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> shap
+
+explainer <span style="color:#f92672">=</span> shap<span style="color:#f92672">.</span>TreeExplainer(model)  <span style="color:#75715e"># works for XGBoost, LightGBM, sklearn trees</span>
+shap_values <span style="color:#f92672">=</span> explainer<span style="color:#f92672">.</span>shap_values(X_test)
+<span style="color:#75715e"># shap_values[i, j] = contribution of feature j to prediction for example i</span>
+</code></pre></div><p>For neural networks and other models, <code>shap.DeepExplainer</code> (uses the DeepLIFT algorithm) and <code>shap.KernelExplainer</code> (model-agnostic, slower) are available.</p>
+<h3 id="reading-shap-output">Reading SHAP Output</h3>
+<p><strong>Local explanation (waterfall plot)</strong>: for a single prediction, shows each feature&rsquo;s contribution as a bar from the baseline (average prediction) to the final prediction. Features that pushed the prediction up are shown in one direction; features that pushed it down in the other. This is how you explain a single loan denial to a customer.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">shap<span style="color:#f92672">.</span>plots<span style="color:#f92672">.</span>waterfall(shap_values[<span style="color:#ae81ff">0</span>])
+</code></pre></div><p><strong>Global explanation (beeswarm plot)</strong>: for the entire dataset, shows the distribution of SHAP values for each feature. Every dot is one example - its horizontal position is its SHAP value, and its color represents the feature value (high vs low). This simultaneously shows which features matter globally (large spread) and the direction of their effect (positive SHAP values for high feature values = positive correlation).</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">shap<span style="color:#f92672">.</span>plots<span style="color:#f92672">.</span>beeswarm(shap_values)
+</code></pre></div><p><strong>Dependence plot</strong>: similar to a PDP but uses SHAP values instead of raw predictions. Plots one feature&rsquo;s SHAP values on the y-axis against its raw values on the x-axis. Coloring by a second feature reveals interactions.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">shap<span style="color:#f92672">.</span>plots<span style="color:#f92672">.</span>scatter(shap_values[:, <span style="color:#e6db74">&#34;age&#34;</span>], color<span style="color:#f92672">=</span>shap_values[:, <span style="color:#e6db74">&#34;income&#34;</span>])
+</code></pre></div><h2 id="lime-local-explanations-via-approximation">LIME: Local Explanations via Approximation</h2>
+<p>LIME (Local Interpretable Model-agnostic Explanations, Ribeiro et al., 2016) takes a different approach: instead of tracing through the model&rsquo;s internals, it fits a simple interpretable model locally around the prediction you want to explain.</p>
+<p>For a prediction $f(x)$:</p>
+<ol>
+<li>Perturb $x$ to create a neighborhood of similar examples.</li>
+<li>Get the black-box model&rsquo;s predictions on all of them.</li>
+<li>Fit a weighted linear regression to those predictions (weighted by proximity to $x$).</li>
+<li>The linear model&rsquo;s coefficients are the explanation.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> lime
+<span style="color:#f92672">import</span> lime.lime_tabular
+
+explainer <span style="color:#f92672">=</span> lime<span style="color:#f92672">.</span>lime_tabular<span style="color:#f92672">.</span>LimeTabularExplainer(
+    X_train, feature_names<span style="color:#f92672">=</span>feature_names, class_names<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;no&#39;</span>, <span style="color:#e6db74">&#39;yes&#39;</span>], mode<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;classification&#39;</span>
+)
+exp <span style="color:#f92672">=</span> explainer<span style="color:#f92672">.</span>explain_instance(X_test[<span style="color:#ae81ff">0</span>], model<span style="color:#f92672">.</span>predict_proba, num_features<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>)
+exp<span style="color:#f92672">.</span>show_in_notebook()
+</code></pre></div><p><strong>LIME&rsquo;s trade-off</strong>: it is model-agnostic (works for any black-box, including images and text). But the linear approximation can be unstable - running LIME twice on the same example with different random seeds can give meaningfully different explanations, because the perturbation neighborhood is sampled randomly. SHAP has better theoretical guarantees and is more reproducible. Use LIME when you cannot use TreeSHAP (non-tree models) and KernelSHAP is too slow.</p>
+<h2 id="choosing-the-right-tool">Choosing the Right Tool</h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>When to use</th>
+<th>Limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Permutation importance</td>
+<td>Quick global overview; understand which features matter</td>
+<td>Breaks with correlated features</td>
+</tr>
+<tr>
+<td>PDP / ICE</td>
+<td>Understand the shape of feature effects; functional form</td>
+<td>Averages hide heterogeneity</td>
+</tr>
+<tr>
+<td>TreeSHAP</td>
+<td>Tree models; exact Shapley values; fast</td>
+<td>Trees only</td>
+</tr>
+<tr>
+<td>KernelSHAP</td>
+<td>Any model; SHAP guarantees</td>
+<td>Slow on large datasets</td>
+</tr>
+<tr>
+<td>LIME</td>
+<td>Any model including images/text; quick local explanations</td>
+<td>Unstable; local linear approximation can be poor</td>
+</tr>
+</tbody>
+</table>
+<p>In practice: use SHAP for tree models (it is exact, fast, and theoretically sound). Use LIME for other modalities where SHAP is expensive. Always pair global importance (beeswarm) with local explanations (waterfall) for individual cases.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Permutation importance</td>
+<td>Shuffle feature; measure accuracy drop; model-agnostic global importance</td>
+</tr>
+<tr>
+<td>PDP</td>
+<td>Average prediction as feature varies; shows functional relationship</td>
+</tr>
+<tr>
+<td>Shapley value</td>
+<td>Feature&rsquo;s marginal contribution averaged over all orderings; uniquely fair</td>
+</tr>
+<tr>
+<td>Efficiency</td>
+<td>SHAP values sum to prediction minus baseline</td>
+</tr>
+<tr>
+<td>TreeSHAP</td>
+<td>Exact Shapley for trees in polynomial time; preferred for XGBoost/LightGBM</td>
+</tr>
+<tr>
+<td>Beeswarm plot</td>
+<td>Global SHAP: distribution of values per feature across dataset</td>
+</tr>
+<tr>
+<td>Waterfall plot</td>
+<td>Local SHAP: each feature&rsquo;s push on one prediction</td>
+</tr>
+<tr>
+<td>LIME</td>
+<td>Local linear approximation around one prediction; model-agnostic but unstable</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/ensembles-forests-boosting/" target="_blank" rel="noopener noreferrer">Ensembles - Weak Learners That Combine Into Something Stronger</a>
+</li>
+<li><a href="/posts/imbalanced-classification/" target="_blank" rel="noopener noreferrer">Imbalanced Classification - When 99% Accuracy Means the Model Is Useless</a>
+</li>
+</ul>
+</div>
+<div class="post-footer">
+</div>
+</article>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

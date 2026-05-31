@@ -58,7 +58,7 @@
 Jun 1, 2024
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-11 min read
+14 min read
 </div>
 </div>
 </header>
@@ -134,6 +134,45 @@ Jun 1, 2024
 <li><strong>Cache-aware block structure</strong>: data is stored in compressed block format optimized for cache access patterns during tree construction.</li>
 </ul>
 <p>These improvements together make XGBoost substantially faster and often more accurate than vanilla GBM, particularly on large datasets.</p>
+<hr>
+<h2 id="lightgbm-the-speed-champion-for-tabular-data">LightGBM: The Speed Champion for Tabular Data</h2>
+<p>XGBoost made gradient boosting practical at scale. LightGBM (Ke et al., Microsoft, 2017) pushed speed further by rethinking how trees are built. The result is often 10-20x faster than XGBoost with comparable or better accuracy - which is why LightGBM dominates Kaggle tabular competitions and industrial deployments.</p>
+<p>Two core algorithmic innovations drive the speedup:</p>
+<p><strong>Leaf-wise (best-first) tree growth</strong>: standard gradient boosting grows trees level by level - all nodes at depth $d$ are split before any node at depth $d+1$. LightGBM instead always splits the leaf with the largest loss reduction, regardless of depth. A single path through the tree may grow very deep while other branches stay shallow. This finds more complex patterns with fewer total leaves, producing better trees at the same computational budget. The risk: leaf-wise growth can overfit on small datasets because individual leaves may end up with few examples. Use <code>num_leaves</code> and <code>min_data_in_leaf</code> to control this.</p>
+<p><strong>GOSS (Gradient-based One-Side Sampling)</strong>: in a boosted tree at step $m$, examples with large gradients $|g_i|$ are the ones the current model is getting wrong - they are the most informative for the next tree. Examples with small gradients are already well-predicted. GOSS keeps all high-gradient examples and randomly samples a fraction of low-gradient examples, then upweights the sampled low-gradient examples by a correction factor so the gradient statistics remain unbiased. This reduces the number of examples used for each split computation without hurting accuracy much, since low-gradient examples contribute little information.</p>
+<p><strong>EFB (Exclusive Feature Bundling)</strong>: high-dimensional data often has many sparse features that are rarely non-zero simultaneously (think one-hot encoded categoricals). EFB bundles such mutually exclusive features into a single feature, reducing the effective feature count and making each split computation cheaper.</p>
+<p><strong>Native categorical support</strong>: LightGBM can handle categorical features directly without one-hot encoding by finding the optimal split over category values using a specialized algorithm. This is both faster and often more accurate than one-hot encoding, which can produce thousands of sparse columns.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> lightgbm <span style="color:#66d9ef">as</span> lgb
+
+model <span style="color:#f92672">=</span> lgb<span style="color:#f92672">.</span>LGBMClassifier(
+    n_estimators<span style="color:#f92672">=</span><span style="color:#ae81ff">1000</span>,
+    learning_rate<span style="color:#f92672">=</span><span style="color:#ae81ff">0.05</span>,
+    num_leaves<span style="color:#f92672">=</span><span style="color:#ae81ff">31</span>,          <span style="color:#75715e"># controls tree complexity; lower = less overfitting</span>
+    min_child_samples<span style="color:#f92672">=</span><span style="color:#ae81ff">20</span>,   <span style="color:#75715e"># minimum examples per leaf</span>
+    subsample<span style="color:#f92672">=</span><span style="color:#ae81ff">0.8</span>,          <span style="color:#75715e"># row subsampling (like XGBoost&#39;s subsample)</span>
+    colsample_bytree<span style="color:#f92672">=</span><span style="color:#ae81ff">0.8</span>,   <span style="color:#75715e"># feature subsampling per tree</span>
+    reg_alpha<span style="color:#f92672">=</span><span style="color:#ae81ff">0.1</span>,          <span style="color:#75715e"># L1 regularization</span>
+    reg_lambda<span style="color:#f92672">=</span><span style="color:#ae81ff">1.0</span>,         <span style="color:#75715e"># L2 regularization</span>
+)
+model<span style="color:#f92672">.</span>fit(
+    X_train, y_train,
+    eval_set<span style="color:#f92672">=</span>[(X_val, y_val)],
+    callbacks<span style="color:#f92672">=</span>[lgb<span style="color:#f92672">.</span>early_stopping(<span style="color:#ae81ff">50</span>), lgb<span style="color:#f92672">.</span>log_evaluation(<span style="color:#ae81ff">100</span>)]
+)
+</code></pre></div><p><strong>Pros:</strong></p>
+<ul>
+<li>10-20x faster than XGBoost on large datasets.</li>
+<li>Lower memory: histogram-based splits mean LightGBM bins continuous features upfront rather than sorting full arrays at each split.</li>
+<li>Handles large datasets natively without approximate sketches.</li>
+<li>Native categorical support avoids preprocessing overhead.</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>Leaf-wise growth is more prone to overfitting on small datasets (fewer than a few thousand examples). Use XGBoost or Random Forest there.</li>
+<li><code>num_leaves</code> is the most important hyperparameter and its right value varies widely across datasets. Start with <code>num_leaves=31</code> and tune.</li>
+<li>The speed makes it easy to overfit by running too many iterations - always use early stopping.</li>
+</ul>
+<p><strong>Choosing between XGBoost and LightGBM</strong>: for large datasets (100K+ rows), default to LightGBM for speed. For small datasets or when you need maximum control over overfitting, XGBoost is safer. Both should be in your toolkit - they often produce diverse predictions that improve when stacked or ensembled together.</p>
 <hr>
 <h2 id="feature-importance">Feature Importance</h2>
 <p>Tree ensembles provide natural feature importance estimates. The two main approaches often disagree, and understanding why is important.</p>

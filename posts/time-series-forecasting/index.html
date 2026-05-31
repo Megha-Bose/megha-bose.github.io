@@ -1,0 +1,277 @@
+<!doctype html><html lang="en-us">
+<head>
+<title>Time Series Forecasting - Predicting Tomorrow From the Shape of Yesterday // Megha Bose</title>
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Time Series Forecasting - Predicting Tomorrow From the Shape of Yesterday">
+<meta name="twitter:description" content="Helpful context:
+ Ensembles - Weak Learners That Combine Into Something Stronger  Cross-Validation - Testing Your Model on Data It Has Never Seen    Most machine learning problems assume that the order of your data does not matter - you shuffle your training examples, and nothing changes. Time series problems violate this assumption fundamentally. The order is the signal. What happened at 2pm tells you something about what will happen at 3pm.">
+<meta property="og:title" content="Time Series Forecasting - Predicting Tomorrow From the Shape of Yesterday">
+<meta property="og:description" content="Helpful context:
+ Ensembles - Weak Learners That Combine Into Something Stronger  Cross-Validation - Testing Your Model on Data It Has Never Seen    Most machine learning problems assume that the order of your data does not matter - you shuffle your training examples, and nothing changes. Time series problems violate this assumption fundamentally. The order is the signal. What happened at 2pm tells you something about what will happen at 3pm.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/time-series-forecasting/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
+<br>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
+<br>
+<a class="app-header-menu-item" href="/categories/">Topics</a>
+<br>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+</nav>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
+</button>
+</header>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Time Series Forecasting - Predicting Tomorrow From the Shape of Yesterday</h1>
+<div class="post-meta">
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class="post-content">
+<p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/ensembles-forests-boosting/" target="_blank" rel="noopener noreferrer">Ensembles - Weak Learners That Combine Into Something Stronger</a>
+</li>
+<li><a href="/posts/cross-validation/" target="_blank" rel="noopener noreferrer">Cross-Validation - Testing Your Model on Data It Has Never Seen</a>
+</li>
+</ul>
+<hr>
+<p>Most machine learning problems assume that the order of your data does not matter - you shuffle your training examples, and nothing changes. Time series problems violate this assumption fundamentally. The order is the signal. What happened at 2pm tells you something about what will happen at 3pm. Shuffling destroys that information.</p>
+<p>This is why time series forecasting is its own subfield rather than a special case of regression. The temporal structure requires different models, different evaluation strategies, and different thinking about what features are even valid to use.</p>
+<h2 id="decomposing-a-time-series">Decomposing a Time Series</h2>
+<p>Before choosing a model, understand the structure of your series. Most time series can be decomposed into three components:</p>
+<p><strong>Trend</strong>: the long-term direction. Sales of a growing product trend upward. A company closing stores trends downward. The trend changes slowly.</p>
+<p><strong>Seasonality</strong>: regular, repeating patterns at a fixed period. Traffic spikes every weekday morning and drops on weekends. Ice cream sales peak every summer. The period is known (weekly, yearly, daily) and the pattern repeats.</p>
+<p><strong>Residual</strong>: what is left after removing trend and seasonality. Genuine random variation, one-time events, the signal you cannot model.</p>
+<p><strong>STL decomposition</strong> (Seasonal and Trend decomposition using Loess) extracts these three components from any time series using locally-weighted regression:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> statsmodels.tsa.seasonal <span style="color:#f92672">import</span> STL
+stl <span style="color:#f92672">=</span> STL(series, period<span style="color:#f92672">=</span><span style="color:#ae81ff">12</span>)  <span style="color:#75715e"># monthly data with yearly seasonality</span>
+result <span style="color:#f92672">=</span> stl<span style="color:#f92672">.</span>fit()
+
+trend <span style="color:#f92672">=</span> result<span style="color:#f92672">.</span>trend
+seasonal <span style="color:#f92672">=</span> result<span style="color:#f92672">.</span>seasonal
+residual <span style="color:#f92672">=</span> result<span style="color:#f92672">.</span>resid
+</code></pre></div><p>Looking at each component tells you what kind of model you need. A strong trend suggests you need a model with trend components. Strong seasonality suggests you need a seasonal model or seasonal features. If the residual looks like structured signal rather than noise, there is still something left to model.</p>
+<h2 id="arima-the-classical-approach">ARIMA: The Classical Approach</h2>
+<p>ARIMA (AutoRegressive Integrated Moving Average) is the foundation of classical time series forecasting. Understanding its three components reveals the structure of the problem:</p>
+<p><strong>Autoregressive (AR, order $p$)</strong>: the current value is a linear combination of the $p$ most recent values plus an error term:
+$$y_t = c + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \cdots + \phi_p y_{t-p} + \varepsilon_t$$</p>
+<p>This captures the persistence of the series - today&rsquo;s value is correlated with yesterday&rsquo;s.</p>
+<p><strong>Integrated (I, order $d$)</strong>: differencing the series $d$ times to make it stationary. A stationary series has constant mean and variance over time - most ARIMA theory requires stationarity. If a series has a trend (non-constant mean), one round of differencing ($y'<em>t = y_t - y</em>{t-1}$) removes it.</p>
+<p><strong>Moving Average (MA, order $q$)</strong>: the current value depends on the past $q$ forecast errors:
+$$y_t = c + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}$$</p>
+<p>This captures the &ldquo;shock persistence&rdquo; - how long a single unexpected event continues to affect the series.</p>
+<p>Together, ARIMA($p$, $d$, $q$) captures autocorrelation from past values (AR), makes the series stationary (I), and models remaining correlation in the residuals (MA).</p>
+<p><strong>Choosing $p$ and $q$</strong>: the Autocorrelation Function (ACF) plot shows correlation between the series and its lagged versions. The Partial Autocorrelation Function (PACF) shows correlation at each lag after removing the effect of shorter lags. For an AR($p$) process, PACF cuts off at lag $p$. For an MA($q$) process, ACF cuts off at lag $q$. In practice, <code>auto_arima</code> from <code>pmdarima</code> searches over parameter combinations automatically using AIC or BIC.</p>
+<p><strong>SARIMA</strong> extends ARIMA with seasonal components: SARIMA($p$, $d$, $q$)($P$, $D$, $Q$, $s$) adds seasonal AR, differencing, and MA terms at period $s$ (e.g., $s = 12$ for monthly data with yearly seasonality).</p>
+<p><strong>Pros of ARIMA</strong>:</p>
+<ul>
+<li>Interpretable: the coefficients directly describe how past values influence predictions.</li>
+<li>Well-understood statistically: confidence intervals have rigorous justification.</li>
+<li>Works well on short, simple series.</li>
+</ul>
+<p><strong>Cons of ARIMA</strong>:</p>
+<ul>
+<li>Assumes linearity. Cannot model complex nonlinear seasonal patterns.</li>
+<li>One model per series. With 10,000 time series (one per store, one per SKU), you train 10,000 separate models.</li>
+<li>Requires stationarity testing and transformation, which adds steps.</li>
+<li>Does not naturally incorporate external variables (covariates) like promotions, holidays, weather.</li>
+</ul>
+<h2 id="exponential-smoothing-holt-winters">Exponential Smoothing (Holt-Winters)</h2>
+<p>Exponential smoothing weights recent observations more heavily than older ones. The weight decays exponentially with time.</p>
+<p><strong>Simple exponential smoothing</strong>: $\hat{y}_{t+1} = \alpha y_t + (1-\alpha) \hat{y}_t$. The parameter $\alpha \in (0,1)$ controls how quickly the model forgets the past. $\alpha = 0.9$ responds quickly to changes; $\alpha = 0.1$ produces a very smooth forecast.</p>
+<p><strong>Holt&rsquo;s method (double exponential smoothing)</strong> adds a trend component, allowing the model to extrapolate a linear trend forward.</p>
+<p><strong>Holt-Winters (triple exponential smoothing)</strong> adds a seasonal component. Both additive ($y_t = \text{trend} + \text{seasonal} + \text{error}$) and multiplicative ($y_t = \text{trend} \times \text{seasonal} \times \text{error}$) seasonality are supported. Multiplicative is appropriate when seasonal swings scale with the level (summer sales are 30% above the trend, regardless of whether the trend is 100 or 1000).</p>
+<p><strong>Pros</strong>: fast, simple, no stationarity requirements, handles trend and seasonality well.</p>
+<p><strong>Cons</strong>: only one seasonal period (cannot model both weekly and yearly seasonality simultaneously), limited to exponential decay structure.</p>
+<h2 id="prophet-practical-forecasting-at-scale">Prophet: Practical Forecasting at Scale</h2>
+<p>Facebook&rsquo;s Prophet (Taylor and Letham, 2018) was designed for the problems that ARIMA and Holt-Winters handle poorly in practice: multiple seasonalities, irregular holidays, missing data, and sudden trend changes (changepoints).</p>
+<p>Prophet models the time series as:
+$$y(t) = g(t) + s(t) + h(t) + \varepsilon_t$$</p>
+<p>where $g(t)$ is the trend (piecewise linear or logistic growth with automatic changepoint detection), $s(t)$ is seasonality (Fourier series allowing multiple periods simultaneously), and $h(t)$ is holiday/event effects (user-specified special dates with their own effect parameters).</p>
+<p>The model is fit with a regularized regression, making it robust. Uncertainty is quantified via MCMC or a Laplace approximation.</p>
+<p><strong>Pros</strong>:</p>
+<ul>
+<li>Handles multiple seasonalities (daily, weekly, yearly) simultaneously.</li>
+<li>Robust to missing data - no imputation needed.</li>
+<li>Automatic changepoint detection when the trend shifts.</li>
+<li>Holiday effects can be specified by the user (Diwali, Black Friday, etc.).</li>
+<li>Easy to tune for domain experts who understand trend/seasonality/holiday concepts.</li>
+</ul>
+<p><strong>Cons</strong>:</p>
+<ul>
+<li>Assumes additive structure. Multiplicative seasonality is supported but less clean.</li>
+<li>Not always the most accurate on complex series - it is optimized for explainability and robustness, not raw RMSE.</li>
+<li>Does not handle covariates as naturally as ML-based approaches.</li>
+</ul>
+<h2 id="ml-on-time-series-feature-engineering-is-everything">ML on Time Series: Feature Engineering Is Everything</h2>
+<p>The most powerful and flexible approach for complex time series - especially when you have many related series or external covariates - is to frame the problem as supervised regression and use LightGBM or XGBoost.</p>
+<p>The key is feature engineering. You transform the time series into a standard feature matrix where each row represents one prediction target (one time step), and the columns are features derived from the history.</p>
+<p><strong>Lag features</strong>: the value at time $t-1$, $t-2$, &mldr;, $t-k$ for some lookback window $k$. These are the most important features for most time series.</p>
+<p><strong>Rolling statistics</strong>: mean, standard deviation, min, max over a rolling window (e.g., the mean of the last 7 days, the standard deviation of the last 30 days). These capture local level and volatility.</p>
+<p><strong>Date and calendar features</strong>: hour of day, day of week, week of year, month, quarter, is_weekend, is_holiday. These capture deterministic seasonality directly.</p>
+<p><strong>Target lags of related series</strong>: if you are forecasting sales for product A, the sales of product B (a substitute or complement) in the previous period may be informative.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">make_features</span>(df, lags<span style="color:#f92672">=</span>[<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">14</span>, <span style="color:#ae81ff">28</span>]):
+    df <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>copy()
+    <span style="color:#66d9ef">for</span> lag <span style="color:#f92672">in</span> lags:
+        df[<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;lag_</span><span style="color:#e6db74">{</span>lag<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#34;sales&#34;</span>]<span style="color:#f92672">.</span>shift(lag)
+    df[<span style="color:#e6db74">&#34;rolling_mean_7&#34;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#34;sales&#34;</span>]<span style="color:#f92672">.</span>shift(<span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span>rolling(<span style="color:#ae81ff">7</span>)<span style="color:#f92672">.</span>mean()
+    df[<span style="color:#e6db74">&#34;rolling_std_7&#34;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#34;sales&#34;</span>]<span style="color:#f92672">.</span>shift(<span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span>rolling(<span style="color:#ae81ff">7</span>)<span style="color:#f92672">.</span>std()
+    df[<span style="color:#e6db74">&#34;day_of_week&#34;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#34;date&#34;</span>]<span style="color:#f92672">.</span>dt<span style="color:#f92672">.</span>dayofweek
+    df[<span style="color:#e6db74">&#34;month&#34;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#34;date&#34;</span>]<span style="color:#f92672">.</span>dt<span style="color:#f92672">.</span>month
+    df[<span style="color:#e6db74">&#34;is_weekend&#34;</span>] <span style="color:#f92672">=</span> (df[<span style="color:#e6db74">&#34;day_of_week&#34;</span>] <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">5</span>)<span style="color:#f92672">.</span>astype(int)
+    <span style="color:#66d9ef">return</span> df<span style="color:#f92672">.</span>dropna()
+</code></pre></div><p>The <code>.shift(1)</code> is critical: when predicting $y_t$, every feature must use only information available at time $t-1$ or earlier. Using same-period information is <strong>data leakage</strong> - the model appears to work but fails in production because the future information is unavailable when you actually need to predict.</p>
+<p><strong>Pros of ML approach</strong>:</p>
+<ul>
+<li>Can capture complex nonlinear interactions.</li>
+<li>Naturally incorporates covariates (price, promotions, weather).</li>
+<li>One model can handle thousands of time series if you stack them (add a series ID as a categorical feature).</li>
+<li>Benefits from all the XGBoost/LightGBM machinery: regularization, handling missing values, fast training.</li>
+</ul>
+<p><strong>Cons</strong>:</p>
+<ul>
+<li>Requires careful walk-forward validation (see below).</li>
+<li>Feature engineering requires domain knowledge.</li>
+<li>Does not extrapolate trends as naturally as ARIMA.</li>
+<li>Lag features at long horizons carry forward prediction error from shorter horizons.</li>
+</ul>
+<h2 id="walk-forward-validation-never-peek-at-the-future">Walk-Forward Validation: Never Peek at the Future</h2>
+<p>Standard cross-validation shuffles data randomly. For time series, this is wrong and misleading - using future data to predict the past inflates metrics and gives false confidence.</p>
+<p><strong>Walk-forward (expanding window) validation</strong>: train on all data up to time $T$, validate on $T+1$ through $T+h$. Then train on all data up to $T+h$, validate on $T+h+1$ through $T+2h$. Repeat until you have used all the data as validation.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> sklearn.model_selection <span style="color:#f92672">import</span> TimeSeriesSplit
+
+tscv <span style="color:#f92672">=</span> TimeSeriesSplit(n_splits<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>)
+<span style="color:#66d9ef">for</span> train_idx, val_idx <span style="color:#f92672">in</span> tscv<span style="color:#f92672">.</span>split(X):
+    X_train, X_val <span style="color:#f92672">=</span> X[train_idx], X[val_idx]
+    y_train, y_val <span style="color:#f92672">=</span> y[train_idx], y[val_idx]
+    <span style="color:#75715e"># train and evaluate</span>
+</code></pre></div><p>The validation split always uses later data than the training data. This mirrors the actual deployment condition: you always predict the future from the past.</p>
+<h2 id="when-to-use-which">When to Use Which</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ARIMA/SARIMA</td>
+<td>Single series, stationary or easily made so, interpretability required</td>
+</tr>
+<tr>
+<td>Holt-Winters</td>
+<td>Clear trend + single seasonality, simple to tune</td>
+</tr>
+<tr>
+<td>Prophet</td>
+<td>Multiple seasonalities, holidays important, missing data, business user wants to tune</td>
+</tr>
+<tr>
+<td>LightGBM with lag features</td>
+<td>Many related series, covariates available, high accuracy is the goal</td>
+</tr>
+<tr>
+<td>LSTM / Transformer</td>
+<td>Very long dependencies, complex temporal patterns, large data (millions of timesteps)</td>
+</tr>
+</tbody>
+</table>
+<p>The ML approach (LightGBM) wins most Kaggle forecasting competitions and performs best on most commercial forecasting tasks with enough data. Classical methods win when the series is short, the pattern is simple, or you need statistical confidence intervals. Prophet wins in business settings where the model needs to be maintained by domain experts who are not ML engineers.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>STL decomposition</td>
+<td>Separates trend, seasonality, residual; reveals what kind of model is needed</td>
+</tr>
+<tr>
+<td>Stationarity</td>
+<td>Required by ARIMA; achieved by differencing</td>
+</tr>
+<tr>
+<td>ACF / PACF</td>
+<td>Diagnostic plots for choosing AR ($p$) and MA ($q$) orders</td>
+</tr>
+<tr>
+<td>SARIMA</td>
+<td>ARIMA with seasonal components; requires specifying the period</td>
+</tr>
+<tr>
+<td>Prophet</td>
+<td>Piecewise trend + Fourier seasonality + holidays; robust and tunable</td>
+</tr>
+<tr>
+<td>Lag features</td>
+<td>Core of ML approach; always shift by 1+ to avoid leakage</td>
+</tr>
+<tr>
+<td>Walk-forward validation</td>
+<td>Only valid CV for time series; train on past, validate on future</td>
+</tr>
+<tr>
+<td>Multiplicative seasonality</td>
+<td>Use when seasonal swing scales with level (percentages, not absolutes)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/ensembles-forests-boosting/" target="_blank" rel="noopener noreferrer">Ensembles - Weak Learners That Combine Into Something Stronger</a>
+</li>
+<li><a href="/posts/cross-validation/" target="_blank" rel="noopener noreferrer">Cross-Validation - Testing Your Model on Data It Has Never Seen</a>
+</li>
+</ul>
+</div>
+<div class="post-footer">
+</div>
+</article>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

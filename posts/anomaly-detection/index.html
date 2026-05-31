@@ -1,0 +1,241 @@
+<!doctype html><html lang="en-us">
+<head>
+<title>Anomaly Detection - Finding the Needles Without Knowing the Haystack // Megha Bose</title>
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Anomaly Detection - Finding the Needles Without Knowing the Haystack">
+<meta name="twitter:description" content="Helpful context:
+ Clustering - Finding Structure When Nobody Gave You Labels  Ensembles - Weak Learners That Combine Into Something Stronger    A credit card transaction processing system handles ten million transactions per day. Fraud accounts for perhaps 50 of them. You cannot train a standard classifier because you have almost no positive examples, and the ones you do have are already labeled - meaning they are old fraud patterns that fraudsters have since stopped using.">
+<meta property="og:title" content="Anomaly Detection - Finding the Needles Without Knowing the Haystack">
+<meta property="og:description" content="Helpful context:
+ Clustering - Finding Structure When Nobody Gave You Labels  Ensembles - Weak Learners That Combine Into Something Stronger    A credit card transaction processing system handles ten million transactions per day. Fraud accounts for perhaps 50 of them. You cannot train a standard classifier because you have almost no positive examples, and the ones you do have are already labeled - meaning they are old fraud patterns that fraudsters have since stopped using.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/anomaly-detection/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-06-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-01T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
+<br>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
+<br>
+<a class="app-header-menu-item" href="/categories/">Topics</a>
+<br>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+</nav>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
+</button>
+</header>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Anomaly Detection - Finding the Needles Without Knowing the Haystack</h1>
+<div class="post-meta">
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jun 1, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class="post-content">
+<p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/clustering/" target="_blank" rel="noopener noreferrer">Clustering - Finding Structure When Nobody Gave You Labels</a>
+</li>
+<li><a href="/posts/ensembles-forests-boosting/" target="_blank" rel="noopener noreferrer">Ensembles - Weak Learners That Combine Into Something Stronger</a>
+</li>
+</ul>
+<hr>
+<p>A credit card transaction processing system handles ten million transactions per day. Fraud accounts for perhaps 50 of them. You cannot train a standard classifier because you have almost no positive examples, and the ones you do have are already labeled - meaning they are old fraud patterns that fraudsters have since stopped using. You need to find the transactions that are weird relative to everything else, without someone labeling what &ldquo;weird&rdquo; looks like.</p>
+<p>This is the anomaly detection problem. It appears across fraud detection, server monitoring, manufacturing quality control, medical diagnosis, and network intrusion - anywhere that normal behavior is abundant and you are hunting for rare deviations. What makes it hard is the same thing that makes it interesting: you often cannot define what you are looking for, only what you are not looking for.</p>
+<h2 id="the-core-idea">The Core Idea</h2>
+<p>Anomaly detection methods work by modeling normal. Once you have a model of what normal looks like, anything that deviates significantly from that model is flagged as anomalous.</p>
+<p>This sounds simple but has two deep complications. First, you need enough &ldquo;normal&rdquo; data to model it well. Second, you need to decide what &ldquo;significantly deviate&rdquo; means - that threshold is always a judgment call that trades off false positives (normal things flagged as anomalous) against false negatives (real anomalies missed).</p>
+<h2 id="isolation-forest-normal-is-hard-to-isolate">Isolation Forest: Normal Is Hard to Isolate</h2>
+<p>Isolation Forest (Liu et al., 2008) is the most widely used anomaly detection algorithm in industry, and its insight is beautiful in its simplicity.</p>
+<p>Anomalies are rare and different. Normal points cluster together in dense regions of feature space. Anomalies sit in sparse regions, far from everything else. The key observation: <strong>it takes fewer random splits to isolate an anomaly than to isolate a normal point</strong>.</p>
+<p>Imagine randomly selecting a feature and a split value within its range, repeatedly, until each point is alone. A normal point surrounded by similar neighbors requires many splits before it is isolated - each split separates it from only a few neighbors. An anomaly in sparse space is isolated after just a few splits - a single cut might separate it from the entire rest of the dataset.</p>
+<p>The algorithm builds $T$ random trees:</p>
+<ol>
+<li>Randomly subsample $\psi$ points from the dataset (typically $\psi = 256$).</li>
+<li>Recursively split by randomly selecting a feature and a random split value within that feature&rsquo;s range, until every point is isolated or the tree reaches maximum depth.</li>
+<li>For a new point, the <strong>isolation depth</strong> is the number of splits required to isolate it in the tree.</li>
+</ol>
+<p>The anomaly score is computed from the average path length across all $T$ trees, normalized by the expected path length for a random binary tree. Points with shorter average path length (easier to isolate) get higher anomaly scores.</p>
+<p><strong>What works well</strong>: Isolation Forest is fast to train ($O(T \psi \log \psi)$, largely independent of $n$), requires no distance computations, handles high-dimensional data reasonably, and works unsupervised. The $\psi = 256$ default is remarkably robust - using a small subsample per tree speeds up training without harming performance, because isolated points are identified with few points anyway.</p>
+<p><strong>Where it struggles</strong>: anomalies that form their own dense cluster (a group of fraudsters using the same pattern) may not be isolated quickly because they are dense relative to each other. Points near the boundary of the normal distribution may score as anomalous even when they are not.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> sklearn.ensemble <span style="color:#f92672">import</span> IsolationForest
+
+clf <span style="color:#f92672">=</span> IsolationForest(n_estimators<span style="color:#f92672">=</span><span style="color:#ae81ff">100</span>, contamination<span style="color:#f92672">=</span><span style="color:#ae81ff">0.01</span>, random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>)
+clf<span style="color:#f92672">.</span>fit(X_train)  <span style="color:#75715e"># trains on all data; no labels needed</span>
+scores <span style="color:#f92672">=</span> clf<span style="color:#f92672">.</span>score_samples(X_test)  <span style="color:#75715e"># more negative = more anomalous</span>
+labels <span style="color:#f92672">=</span> clf<span style="color:#f92672">.</span>predict(X_test)        <span style="color:#75715e"># -1 = anomaly, 1 = normal</span>
+</code></pre></div><p>The <code>contamination</code> parameter is your estimate of the fraction of anomalies in the data. It sets the decision threshold. If you do not know this fraction, set it conservatively low (0.001 to 0.05) and examine the score distribution manually.</p>
+<h2 id="local-outlier-factor-anomaly-relative-to-neighbors">Local Outlier Factor: Anomaly Relative to Neighbors</h2>
+<p>Isolation Forest uses global density. Local Outlier Factor (LOF, Breunig et al., 2000) uses local density - comparing each point&rsquo;s density to its neighbors' density. This matters when the data has regions of different density: a point in a sparse region might be normal for that region, while the same distance from its neighbors in a denser region would be highly anomalous.</p>
+<p>For each point $p$, LOF computes:</p>
+<ol>
+<li>Find the $k$ nearest neighbors of $p$.</li>
+<li>Compute the <strong>reachability distance</strong> from $p$ to each neighbor (max of actual distance and the neighbor&rsquo;s $k$-th nearest neighbor distance - this smoothing prevents instability with points that are very close together).</li>
+<li>Compute the <strong>local reachability density</strong> of $p$: the inverse of the average reachability distance to $p$&rsquo;s neighbors.</li>
+<li>The <strong>LOF score</strong> of $p$ is the ratio of the average local reachability density of $p$&rsquo;s neighbors to $p$&rsquo;s own local reachability density.</li>
+</ol>
+<p>A LOF score near 1 means $p$ has the same density as its neighbors - it is normal. A LOF score much greater than 1 means $p$ is in a sparser region than its neighbors - it is an outlier relative to its local context.</p>
+<p><strong>What works well</strong>: LOF detects local anomalies that global methods miss. In a dataset where fraud occurs in multiple different &ldquo;styles&rdquo; each with its own density, LOF can detect deviations within each style separately.</p>
+<p><strong>Where it struggles</strong>: LOF requires computing pairwise distances, making it $O(n^2)$ in the worst case - unusable for datasets above a few hundred thousand points. The choice of $k$ significantly affects results, and the right $k$ varies across different regions of the data.</p>
+<h2 id="statistical-baselines">Statistical Baselines</h2>
+<p>Before reaching for Isolation Forest, statistical baselines deserve consideration. They are transparent, fast, and surprisingly effective for low-dimensional data with known distributions.</p>
+<p><strong>Z-score</strong>: flag points where $|x - \mu| / \sigma > 3$ (more than 3 standard deviations from the mean). Works well for univariate Gaussian data. Breaks down for skewed distributions or when the mean and standard deviation are themselves distorted by the anomalies you are trying to find.</p>
+<p><strong>IQR method</strong>: flag points below $Q1 - 1.5 \times IQR$ or above $Q3 + 1.5 \times IQR$. More robust than z-score because quartiles are not affected by extreme values.</p>
+<p><strong>Multivariate Gaussian</strong>: fit a Gaussian to the data (estimate $\mu$ and $\Sigma$), then compute the Mahalanobis distance of each new point. Points with high Mahalanobis distance are anomalous. The Mahalanobis distance accounts for correlations between features: a point can be normal on every individual feature but anomalous in their combination.</p>
+<p>Statistical methods require assuming a distribution. When the assumption holds, they are powerful and interpretable. When it does not, Isolation Forest or LOF are safer bets.</p>
+<h2 id="one-class-svm-a-tight-boundary-around-normal">One-Class SVM: A Tight Boundary Around Normal</h2>
+<p>One-Class SVM (Schölkopf et al., 2001) learns a boundary in feature space (or in a kernel-induced space) that contains the normal data, then flags anything outside that boundary as anomalous.</p>
+<p>The standard SVM separates two classes with a margin. One-Class SVM has only one class, so it separates the data from the origin in a high-dimensional feature space, finding the boundary that contains most of the normal points with maximum margin from the origin.</p>
+<p><strong>What works well</strong>: the kernel trick allows One-Class SVM to learn complex boundaries (an RBF kernel can wrap tightly around clusters of arbitrary shape). Works in high dimensions.</p>
+<p><strong>Where it struggles</strong>: very sensitive to the regularization parameter $\nu$ (fraction of training points allowed to be outside the boundary) and the kernel bandwidth. Getting these right requires validation data with known labels - which often defeats the purpose of unsupervised anomaly detection. Training scales poorly ($O(n^2)$ to $O(n^3)$) for large datasets.</p>
+<h2 id="autoencoder-based-detection">Autoencoder-Based Detection</h2>
+<p>An autoencoder is a neural network that learns to compress data into a low-dimensional representation (the bottleneck) and then reconstruct the original input. Trained on normal data, it learns to reconstruct normal patterns efficiently but fails to reconstruct anomalies well - because the bottleneck has not learned to represent patterns it never saw.</p>
+<p>The anomaly score is the <strong>reconstruction error</strong>: the difference between the input and the autoencoder&rsquo;s output. Normal points have low reconstruction error. Anomalous points have high reconstruction error.</p>
+<p><strong>What works well</strong>: autoencoders can model extremely complex normal patterns - images, time series, text, multi-sensor industrial data. They are the right tool when the normal data is high-dimensional and structured (factory sensor readings, network packet flows, medical scans).</p>
+<p><strong>Where it struggles</strong>: requires enough normal training data to learn the data manifold. Requires careful tuning of architecture and training. The reconstruction error threshold is a hyperparameter. Anomalies that look similar to normal data in the latent space (same broad structure, wrong fine-grained detail) may not be caught.</p>
+<h2 id="choosing-the-right-tool">Choosing the Right Tool</h2>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Speed</th>
+<th>Labels needed</th>
+<th>Strengths</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Isolation Forest</td>
+<td>Fast</td>
+<td>None</td>
+<td>Scales to millions, robust, high-dim</td>
+<td>Clustered anomalies, boundary cases</td>
+</tr>
+<tr>
+<td>LOF</td>
+<td>Slow</td>
+<td>None</td>
+<td>Local anomalies, varying density</td>
+<td>$O(n^2)$, sensitive to $k$</td>
+</tr>
+<tr>
+<td>Z-score / IQR</td>
+<td>Very fast</td>
+<td>None</td>
+<td>Transparent, interpretable</td>
+<td>Assumes distribution, univariate</td>
+</tr>
+<tr>
+<td>One-Class SVM</td>
+<td>Slow</td>
+<td>None</td>
+<td>Complex boundaries, high-dim</td>
+<td>Very sensitive to hyperparameters</td>
+</tr>
+<tr>
+<td>Autoencoder</td>
+<td>Moderate</td>
+<td>None (but more data)</td>
+<td>Complex structured data, images</td>
+<td>Requires tuning, significant data</td>
+</tr>
+</tbody>
+</table>
+<p>In production anomaly detection, the workflow is almost always:</p>
+<ol>
+<li>Train Isolation Forest as the baseline - fast, robust, requires minimal tuning.</li>
+<li>Examine flagged anomalies manually to understand what kinds of anomalies the data actually contains.</li>
+<li>If local anomalies matter, add LOF or a local variant.</li>
+<li>If the data is high-dimensional and structured (images, sequences), consider an autoencoder.</li>
+<li>Set thresholds based on the acceptable false positive rate for your application.</li>
+</ol>
+<p>The contamination fraction and score threshold are the decisions that matter most in deployment. A fraud system that flags 0.01% of transactions for review has very different operational requirements than one that flags 0.1%. The ML model produces scores; the threshold determines the operating point.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Anomaly detection</td>
+<td>Model normal; flag deviations; no labels needed</td>
+</tr>
+<tr>
+<td>Isolation Forest</td>
+<td>Short isolation path = anomaly; fast; scales to millions</td>
+</tr>
+<tr>
+<td>Contamination</td>
+<td>Fraction of anomalies; sets decision threshold</td>
+</tr>
+<tr>
+<td>LOF</td>
+<td>Compare density to neighbors; finds local anomalies; $O(n^2)$</td>
+</tr>
+<tr>
+<td>Mahalanobis distance</td>
+<td>Multivariate outlier score; accounts for correlations</td>
+</tr>
+<tr>
+<td>Autoencoder</td>
+<td>High reconstruction error = anomaly; for complex structured data</td>
+</tr>
+<tr>
+<td>Threshold tuning</td>
+<td>The operating point is always a judgment call; use false positive rate requirements</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/imbalanced-classification/" target="_blank" rel="noopener noreferrer">Imbalanced Classification - When 99% Accuracy Means the Model Is Useless</a>
+</li>
+<li><a href="/posts/clustering/" target="_blank" rel="noopener noreferrer">Clustering - Finding Structure When Nobody Gave You Labels</a>
+</li>
+</ul>
+</div>
+<div class="post-footer">
+</div>
+</article>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>

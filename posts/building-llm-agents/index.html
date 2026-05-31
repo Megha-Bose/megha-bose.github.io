@@ -1,0 +1,263 @@
+<!doctype html><html lang="en-us">
+<head>
+<title>Building LLM Agents - Giving Models the Ability to Act, Evaluate, and Iterate // Megha Bose</title>
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Building LLM Agents - Giving Models the Ability to Act, Evaluate, and Iterate">
+<meta name="twitter:description" content="Helpful context:
+ Transformers From First Principles  Reinforcement Learning - Learning to Act Without Being Told What Is Right    A language model that responds to a single prompt is powerful. A language model that can take actions, observe results, evaluate whether it succeeded, and try again is qualitatively different. It can write code and run it. It can search the web, read a result, and decide what to search next.">
+<meta property="og:title" content="Building LLM Agents - Giving Models the Ability to Act, Evaluate, and Iterate">
+<meta property="og:description" content="Helpful context:
+ Transformers From First Principles  Reinforcement Learning - Learning to Act Without Being Told What Is Right    A language model that responds to a single prompt is powerful. A language model that can take actions, observe results, evaluate whether it succeeded, and try again is qualitatively different. It can write code and run it. It can search the web, read a result, and decide what to search next.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/building-llm-agents/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-07-10T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-07-10T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
+<br>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
+<br>
+<a class="app-header-menu-item" href="/categories/">Topics</a>
+<br>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+</nav>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
+</button>
+</header>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Building LLM Agents - Giving Models the Ability to Act, Evaluate, and Iterate</h1>
+<div class="post-meta">
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jul 10, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+12 min read
+</div>
+</div>
+</header>
+<div class="post-content">
+<p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/transformers-from-first-principles/" target="_blank" rel="noopener noreferrer">Transformers From First Principles</a>
+</li>
+<li><a href="/posts/reinforcement-learning/" target="_blank" rel="noopener noreferrer">Reinforcement Learning - Learning to Act Without Being Told What Is Right</a>
+</li>
+</ul>
+<hr>
+<p>A language model that responds to a single prompt is powerful. A language model that can take actions, observe results, evaluate whether it succeeded, and try again is qualitatively different. It can write code and run it. It can search the web, read a result, and decide what to search next. It can draft a document, critique its own draft, and revise until it meets a quality bar. This is the shift from &ldquo;model&rdquo; to &ldquo;agent.&rdquo;</p>
+<p>Building agents has become a core ML engineering skill because the gap between what a model knows and what a model can do depends entirely on what tools and loops you wrap around it. The model itself is fixed. The agent architecture determines whether it can use that knowledge to accomplish real tasks.</p>
+<hr>
+<h2 id="the-core-idea-action-observation-loops">The Core Idea: Action-Observation Loops</h2>
+<p>A pure language model takes a context and returns a completion. An agent adds a loop: it can decide to take an action (call a tool, run code, query a database), observe the result, and continue reasoning with that new information. The loop runs until the agent produces a final answer or hits a stopping condition.</p>
+<p>This loop is the fundamental building block. Everything else - planning, memory, multi-agent coordination, quality evaluation - is a different way of structuring or extending this loop.</p>
+<p>The simplest instantiation: give the model a list of tools with descriptions, let it choose which tool to call and with what arguments, execute the tool, append the result to the context, and repeat. This is exactly what OpenAI&rsquo;s function calling, Anthropic&rsquo;s tool use, and the open-source LangChain and LlamaIndex frameworks implement.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">tools <span style="color:#f92672">=</span> [
+    {
+        <span style="color:#e6db74">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;search_web&#34;</span>,
+        <span style="color:#e6db74">&#34;description&#34;</span>: <span style="color:#e6db74">&#34;Search the web for current information&#34;</span>,
+        <span style="color:#e6db74">&#34;parameters&#34;</span>: {<span style="color:#e6db74">&#34;query&#34;</span>: <span style="color:#e6db74">&#34;string&#34;</span>}
+    },
+    {
+        <span style="color:#e6db74">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;run_python&#34;</span>,
+        <span style="color:#e6db74">&#34;description&#34;</span>: <span style="color:#e6db74">&#34;Execute Python code and return stdout&#34;</span>,
+        <span style="color:#e6db74">&#34;parameters&#34;</span>: {<span style="color:#e6db74">&#34;code&#34;</span>: <span style="color:#e6db74">&#34;string&#34;</span>}
+    }
+]
+
+<span style="color:#75715e"># The loop</span>
+messages <span style="color:#f92672">=</span> [{<span style="color:#e6db74">&#34;role&#34;</span>: <span style="color:#e6db74">&#34;user&#34;</span>, <span style="color:#e6db74">&#34;content&#34;</span>: user_task}]
+<span style="color:#66d9ef">while</span> <span style="color:#66d9ef">True</span>:
+    response <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>complete(messages, tools<span style="color:#f92672">=</span>tools)
+    <span style="color:#66d9ef">if</span> response<span style="color:#f92672">.</span>finish_reason <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;tool_call&#34;</span>:
+        tool_result <span style="color:#f92672">=</span> execute_tool(response<span style="color:#f92672">.</span>tool_call)
+        messages<span style="color:#f92672">.</span>append(response)
+        messages<span style="color:#f92672">.</span>append({<span style="color:#e6db74">&#34;role&#34;</span>: <span style="color:#e6db74">&#34;tool&#34;</span>, <span style="color:#e6db74">&#34;content&#34;</span>: tool_result})
+    <span style="color:#66d9ef">else</span>:
+        <span style="color:#66d9ef">break</span>  <span style="color:#75715e"># final answer</span>
+</code></pre></div><p>The key design decision embedded here: the model chooses when to stop. It can make 0 tool calls (simple question) or 20 (complex research task) depending on what the task requires.</p>
+<hr>
+<h2 id="react-interleaving-thought-and-action">ReAct: Interleaving Thought and Action</h2>
+<p>The ReAct pattern (Yao et al., 2022) structures the loop explicitly: at each step, the model produces a <strong>Thought</strong> (reasoning about what to do), an <strong>Action</strong> (tool call with arguments), and receives an <strong>Observation</strong> (tool result). This chain continues until the model produces a final answer.</p>
+<pre tabindex="0"><code>Thought: The user wants to know the population of the capital of Japan. I need to identify the capital first.
+Action: search_web(&quot;capital of Japan&quot;)
+Observation: Tokyo is the capital of Japan.
+
+Thought: Now I need the population of Tokyo.
+Action: search_web(&quot;population of Tokyo 2024&quot;)
+Observation: Tokyo's population is approximately 13.96 million (city proper) or 37 million (greater metropolitan area).
+
+Thought: I have enough information to answer.
+Answer: The capital of Japan, Tokyo, has a city population of about 14 million and a metro population of about 37 million.
+</code></pre><p>The Thought step is crucial and often underappreciated. It makes the model&rsquo;s reasoning visible (useful for debugging), and it helps the model plan its next action better by explicitly stating what it has learned and what it still needs. Without the thought step, models tend to take actions more impulsively - calling a tool without reasoning about whether the result will actually help.</p>
+<p><strong>Why ReAct works better than pure chain-of-thought</strong>: chain-of-thought generates a long reasoning trace from the model&rsquo;s parametric memory alone. For tasks requiring current information, arithmetic, or code execution, that memory is unreliable. ReAct grounds each reasoning step with real observations, correcting the model&rsquo;s course when its initial assumptions are wrong.</p>
+<hr>
+<h2 id="working-with-different-types-of-data">Working With Different Types of Data</h2>
+<p>Agents become dramatically more capable when they can work across data modalities. The tool interface makes this possible without changing the core loop - you simply add tools that can handle different data types.</p>
+<p><strong>Structured data (databases, spreadsheets)</strong>: give the agent a tool to execute SQL or pandas operations. The agent reads a schema description, plans a query, executes it, and interprets the results. This is far more reliable than asking the model to &ldquo;remember&rdquo; the structure of a table from its training data.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">query_database</span>(sql: str) <span style="color:#f92672">-&gt;</span> str:
+    <span style="color:#e6db74">&#34;&#34;&#34;Execute SQL and return results as a formatted string&#34;&#34;&#34;</span>
+    <span style="color:#66d9ef">try</span>:
+        results <span style="color:#f92672">=</span> db<span style="color:#f92672">.</span>execute(sql)<span style="color:#f92672">.</span>fetchall()
+        <span style="color:#66d9ef">return</span> format_as_table(results)
+    <span style="color:#66d9ef">except</span> <span style="color:#a6e22e">Exception</span> <span style="color:#66d9ef">as</span> e:
+        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;SQL error: </span><span style="color:#e6db74">{</span>e<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>  <span style="color:#75715e"># agent can see and fix the error</span>
+</code></pre></div><p><strong>Code execution</strong>: a code interpreter tool lets the agent perform precise computation, generate plots, run tests, and debug. This is how you get reliable arithmetic and data analysis from models that struggle with long calculations in pure text.</p>
+<p><strong>Documents and knowledge bases</strong>: a retrieval tool lets the agent fetch relevant content on demand rather than depending on the context window to hold everything. The agent decides what to retrieve based on what it currently needs - a form of active memory management.</p>
+<p><strong>APIs and external services</strong>: agents can call any service with a well-described interface. A weather API, a payment processor, a calendar system - the agent needs only the tool description to use them correctly.</p>
+<p><strong>Multimodal</strong>: modern models can reason over images, audio, and video within the same context window. An agent working on a design task might take a screenshot, describe what it sees, modify code, re-screenshot, and compare - all within one loop.</p>
+<hr>
+<h2 id="self-evaluation-and-quality-gates">Self-Evaluation and Quality Gates</h2>
+<p>The most important pattern for reliable agents: build evaluation into the loop. Instead of hoping the model produces a good answer on the first try, make the agent evaluate its own output and iterate until it meets a quality bar.</p>
+<p><strong>Code agents</strong> are the clearest example. The agent writes code, runs it, reads any errors or test failures, and revises. The evaluation is automatic: the code either passes the tests or it doesn&rsquo;t. Human judgment is not required in the loop.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">coding_agent</span>(task: str, tests: str) <span style="color:#f92672">-&gt;</span> str:
+    code <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
+    <span style="color:#66d9ef">for</span> attempt <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+        code <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>complete(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Write Python code for: </span><span style="color:#e6db74">{</span>task<span style="color:#e6db74">}</span><span style="color:#ae81ff">\n\n</span><span style="color:#e6db74">Previous attempt: </span><span style="color:#e6db74">{</span>code<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+        result <span style="color:#f92672">=</span> run_tests(code, tests)
+        <span style="color:#66d9ef">if</span> result<span style="color:#f92672">.</span>passed:
+            <span style="color:#66d9ef">return</span> code
+        <span style="color:#75715e"># Feed failure back to model</span>
+        messages<span style="color:#f92672">.</span>append({<span style="color:#e6db74">&#34;role&#34;</span>: <span style="color:#e6db74">&#34;tool&#34;</span>, <span style="color:#e6db74">&#34;content&#34;</span>: <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Tests failed:</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">{</span>result<span style="color:#f92672">.</span>errors<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>})
+    <span style="color:#66d9ef">return</span> code  <span style="color:#75715e"># return best attempt after max retries</span>
+</code></pre></div><p><strong>Research and writing agents</strong> need a different kind of evaluator. One pattern: use the model itself as the evaluator. After producing a draft, the agent runs a second prompt: &ldquo;Does this answer the user&rsquo;s question completely and accurately? What is missing or wrong?&rdquo; This critic output becomes the input for the next revision.</p>
+<p><strong>Using a stronger model as evaluator</strong>: a common production pattern is to generate with a fast, cheap model and evaluate with a slower, more capable one. The evaluator checks for accuracy, completeness, and safety before the result is returned to the user. This gives you the throughput of the smaller model with the quality floor of the larger one.</p>
+<p>The key engineering insight: quality gates should be checkable. Define exactly what &ldquo;good enough&rdquo; means before building the agent. If you cannot define the quality bar programmatically (or with a reliable LLM judge), the agent cannot iterate toward it.</p>
+<hr>
+<h2 id="memory-what-the-agent-knows-and-remembers">Memory: What the Agent Knows and Remembers</h2>
+<p>An agent&rsquo;s context window is its working memory - everything it currently knows. But context windows are finite, and tasks can span many steps. Agents need strategies for what to keep in context and what to offload.</p>
+<p><strong>In-context memory</strong> is everything in the current conversation. It is fast and directly accessible, but limited in size. Long agent runs accumulate tool outputs, intermediate reasoning, and revisions that eventually overflow the context. Strategies: summarize earlier steps before adding new ones, or maintain a &ldquo;scratchpad&rdquo; of key facts that gets updated and compressed.</p>
+<p><strong>External memory (retrieval)</strong> stores information outside the context and retrieves it on demand. A vector database of past conversations, a key-value store of facts the agent has learned, or a structured database of domain knowledge. The agent retrieves relevant chunks as needed using semantic search or exact lookup.</p>
+<p><strong>Episodic memory</strong> is a record of what the agent has done - actions taken, results observed, decisions made. This is essential for long-horizon tasks where the agent needs to avoid revisiting dead ends or repeating successful steps. A simple implementation: maintain a log and include a summary in each new prompt.</p>
+<p><strong>Procedural memory</strong> is the agent&rsquo;s knowledge of how to use its tools effectively - which tools work well for which situations, common error patterns and fixes, successful strategies. This can be encoded in the system prompt, retrieved from a few-shot example store, or fine-tuned into the model.</p>
+<hr>
+<h2 id="planning-breaking-hard-tasks-into-steps">Planning: Breaking Hard Tasks Into Steps</h2>
+<p>Simple tasks can be handled by a reactive loop (act, observe, respond). Complex tasks require planning: the agent needs to figure out what steps to take before taking them, because early choices constrain later options.</p>
+<p><strong>Plan-and-execute</strong>: the agent first generates a complete plan (a list of steps), then executes each step in sequence. This makes reasoning explicit and allows the user to inspect or correct the plan before execution.</p>
+<pre tabindex="0"><code>Plan:
+1. Fetch current exchange rates for USD/EUR and USD/JPY
+2. Download the company's Q3 revenue data
+3. Convert all figures to USD
+4. Generate a bar chart
+5. Write a two-paragraph summary
+
+Executing step 1...
+Executing step 2...
+</code></pre><p><strong>Replanning</strong>: pure plan-and-execute fails when the world does not match the agent&rsquo;s expectations. A better pattern: execute the plan step by step, but after each step, check whether the plan needs to be revised based on what was actually observed. If step 3 reveals an unexpected data format, replan steps 4-5 accordingly.</p>
+<p><strong>Hierarchical planning</strong>: for very complex tasks, the agent maintains a high-level plan (write a research report) and generates sub-plans for each step (outline, draft section 1, research claims in section 1, revise section 1). This prevents the context from being overwhelmed by the details of one sub-task.</p>
+<hr>
+<h2 id="multi-agent-patterns">Multi-Agent Patterns</h2>
+<p>Some tasks are parallelizable, some require specialization, and some are too large for a single agent&rsquo;s context window. Multi-agent architectures address all three.</p>
+<p><strong>Parallelism</strong>: a coordinator agent decomposes a task into independent sub-tasks and spawns worker agents to handle each in parallel. A research agent might split &ldquo;summarize 10 papers&rdquo; into 10 parallel summarization agents, then aggregate the results. This reduces latency by running subtasks concurrently.</p>
+<p><strong>Specialization</strong>: different agents have different system prompts, tools, and fine-tuning. A coding agent has access to code execution tools and a system prompt focused on software engineering. A data analysis agent has access to database tools and visualization libraries. A coordinator routes tasks to the appropriate specialist.</p>
+<p><strong>Self-critique with a separate agent</strong>: instead of asking the same model to generate and evaluate, use two separate agent instances - one generates, one critiques. The generator is optimized for creativity and completeness; the critic is optimized for accuracy and catching errors. Separating these roles reduces the &ldquo;self-congratulatory&rdquo; failure mode where the model approves its own output uncritically.</p>
+<p><strong>Debate</strong>: two agents take opposing positions on a question and argue for their view. A judge agent evaluates the arguments. Research shows this can improve accuracy on hard questions by forcing both models to steelman alternative views.</p>
+<hr>
+<h2 id="practical-engineering-considerations">Practical Engineering Considerations</h2>
+<p>Building reliable agents is not just about the model - it is about the engineering around it.</p>
+<p><strong>Determinism and retries</strong>: LLM outputs are stochastic. The same input can produce different tool calls or different plans across runs. Make your agent loops retry on errors, log all tool calls and results, and use deterministic evaluation where possible (run tests, not just ask the model &ldquo;does this look right?").</p>
+<p><strong>Cost and latency</strong>: each iteration of the loop costs tokens and time. A naively designed agent that loops 20 times on a simple task is expensive and slow. Set hard limits on iterations. Use cheap models for generation and expensive models for final evaluation. Cache tool results when the same query appears multiple times.</p>
+<p><strong>Tool design matters enormously</strong>: poorly designed tools cause agents to fail. A tool that returns a wall of text when the agent needed one number, or that errors out with cryptic messages, derails the agent&rsquo;s reasoning. Design tools with agent use in mind: return structured, concise output; return informative error messages the agent can act on; validate inputs before executing.</p>
+<p><strong>Safety and sandboxing</strong>: agents that execute code, call APIs, or modify databases need guardrails. Run code in isolated containers (Docker) with no network access and resource limits. Require confirmation before irreversible actions (sending emails, making purchases, deleting data). Log all tool calls with inputs and outputs for auditing.</p>
+<p><strong>Failure modes to watch for</strong>:</p>
+<ul>
+<li><strong>Hallucinated tool calls</strong>: the agent invents arguments for a tool that don&rsquo;t make sense. Add input validation to all tools.</li>
+<li><strong>Infinite loops</strong>: the agent keeps trying the same failing approach. Track which strategies have failed and include that in the prompt.</li>
+<li><strong>Context overflow</strong>: long runs fill the context with tool outputs. Summarize and prune aggressively.</li>
+<li><strong>Goal drift</strong>: over many steps, the agent loses track of the original task. Re-include the original task in each prompt explicitly.</li>
+</ul>
+<hr>
+<h2 id="evaluating-agent-systems">Evaluating Agent Systems</h2>
+<p>Evaluating agents is harder than evaluating classifiers because agents produce sequences of actions, not single outputs.</p>
+<p><strong>Task completion rate</strong>: does the agent successfully complete the task? Define a clear success criterion upfront (tests pass, document meets quality rubric, data is accurate). Measure on a diverse test set.</p>
+<p><strong>Efficiency</strong>: how many tool calls, tokens, and dollars does the agent spend? A correct answer reached in 3 steps is better than one reached in 15. Track and optimize.</p>
+<p><strong>Error recovery rate</strong>: when the agent makes a mistake (wrong tool call, incorrect plan), does it recover? Log every time an error occurs and measure how often the agent self-corrects vs. gives up or compounds the error.</p>
+<p><strong>Trajectory evaluation</strong>: use an LLM judge to score the agent&rsquo;s reasoning at each step. Did it correctly interpret the tool output? Did it update its plan appropriately? This gives insight into where the reasoning breaks down before the final output fails.</p>
+<p>Build a test suite of realistic tasks before deploying. Agents fail in subtle ways that only appear at the edge cases of real usage - incomplete plans, misread tool outputs, context overflows mid-task. A test suite is the only way to catch these systematically.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agent loop</td>
+<td>Action, observation, reasoning, repeat; the core pattern behind all agents</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>Interleave Thought, Action, Observation; makes reasoning grounded and visible</td>
+</tr>
+<tr>
+<td>Tool design</td>
+<td>Tools are the interface to the world; poor tools break good agents</td>
+</tr>
+<tr>
+<td>Self-evaluation</td>
+<td>Build quality checks into the loop; iterate until the bar is met</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>In-context for fast access; external retrieval for scale; episodic for long tasks</td>
+</tr>
+<tr>
+<td>Plan-and-execute</td>
+<td>Generate a plan, then execute step by step with replanning on surprises</td>
+</tr>
+<tr>
+<td>Multi-agent</td>
+<td>Parallelism, specialization, and critique via separate agents</td>
+</tr>
+<tr>
+<td>Evaluation</td>
+<td>Task completion, efficiency, error recovery - all need explicit test suites</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/transformers-from-first-principles/" target="_blank" rel="noopener noreferrer">Transformers From First Principles</a>
+</li>
+<li><a href="/posts/multi-agent-systems/" target="_blank" rel="noopener noreferrer">Multi-Agent Systems - Intelligence That Emerges From Interaction</a>
+</li>
+</ul>
+</div>
+<div class="post-footer">
+</div>
+</article>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>
