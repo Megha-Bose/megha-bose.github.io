@@ -15,12 +15,12 @@
     <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Trees &amp; Heaps - When Flat Structures Hit Their Limit"/>
 <meta name="twitter:description" content="Helpful context:
- Data Structures - Storage Is Strategy    Every file system on your computer is a tree. Every DOM in a web browser - the structure that defines what a webpage looks like - is a tree. The decision trees inside chess engines are trees. Phylogenetic trees in biology show evolutionary relationships. Organizational hierarchies are trees.
+ Data Structures - Storage Is Strategy    Every file system on your computer is a tree. Every DOM in a web browser is a tree. The decision trees inside chess engines are trees. Phylogenetic trees in biology show evolutionary relationships. Organizational hierarchies are trees. When you encounter (3 &#43; 4) * 2 in code, the compiler builds a tree before evaluating it.
 Trees are not an abstract data structure invented by computer scientists."/>
 
     <meta property="og:title" content="Trees &amp; Heaps - When Flat Structures Hit Their Limit" />
 <meta property="og:description" content="Helpful context:
- Data Structures - Storage Is Strategy    Every file system on your computer is a tree. Every DOM in a web browser - the structure that defines what a webpage looks like - is a tree. The decision trees inside chess engines are trees. Phylogenetic trees in biology show evolutionary relationships. Organizational hierarchies are trees.
+ Data Structures - Storage Is Strategy    Every file system on your computer is a tree. Every DOM in a web browser is a tree. The decision trees inside chess engines are trees. Phylogenetic trees in biology show evolutionary relationships. Organizational hierarchies are trees. When you encounter (3 &#43; 4) * 2 in code, the compiler builds a tree before evaluating it.
 Trees are not an abstract data structure invented by computer scientists." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://megha-bose.github.io/posts/trees-and-heaps/" /><meta property="article:section" content="posts" />
@@ -105,7 +105,7 @@ Trees are not an abstract data structure invented by computer scientists." />
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          16 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -116,19 +116,24 @@ Trees are not an abstract data structure invented by computer scientists." />
 </li>
 </ul>
 <hr>
-<p>Every file system on your computer is a tree. Every DOM in a web browser - the structure that defines what a webpage looks like - is a tree. The decision trees inside chess engines are trees. Phylogenetic trees in biology show evolutionary relationships. Organizational hierarchies are trees.</p>
+<p>Every file system on your computer is a tree. Every DOM in a web browser is a tree. The decision trees inside chess engines are trees. Phylogenetic trees in biology show evolutionary relationships. Organizational hierarchies are trees. When you encounter <code>(3 + 4) * 2</code> in code, the compiler builds a tree before evaluating it.</p>
 <p>Trees are not an abstract data structure invented by computer scientists. They are the shape that hierarchical data naturally takes. When things have parents and children, a tree is what you get.</p>
 <hr>
 <h2 id="what-is-a-tree">What Is a Tree?</h2>
-<p>A tree is a connected graph with no cycles and a designated root node. Every node except the root has exactly one parent. Every node can have zero or more children. Nodes with no children are called leaves. We always draw the root at the top and the leaves at the bottom - the exact opposite of an actual tree. Computer scientists apparently spent too much time indoors.</p>
-<p>A <strong>binary tree</strong> is a tree where every node has at most two children, called left and right.</p>
+<p>A tree is a connected graph with no cycles and a designated root node. Every node except the root has exactly one parent. Every node can have zero or more children. Nodes with no children are called leaves.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TreeNode</span>:
+    <span style="color:#66d9ef">def</span> __init__(self, val: int):
+        self<span style="color:#f92672">.</span>val <span style="color:#f92672">=</span> val
+        self<span style="color:#f92672">.</span>left: <span style="color:#e6db74">&#34;TreeNode | None&#34;</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+        self<span style="color:#f92672">.</span>right: <span style="color:#e6db74">&#34;TreeNode | None&#34;</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</code></pre></div><p>A <strong>binary tree</strong> restricts each node to at most two children, called left and right.</p>
 <p>A few vocabulary items you&rsquo;ll encounter constantly:</p>
 <ul>
 <li><strong>Height</strong> of a node: the length of the longest path from that node down to a leaf. The height of a leaf is 0. The height of the tree is the height of the root.</li>
 <li><strong>Depth</strong> of a node: the length of the path from the root down to that node. The root has depth 0.</li>
-<li><strong>Complete binary tree</strong>: all levels are fully filled except possibly the last, which is filled from left to right.</li>
-<li><strong>Full binary tree</strong>: every node has either 0 or 2 children (no nodes with exactly 1 child).</li>
-<li><strong>Perfect binary tree</strong>: all interior nodes have 2 children and all leaves are at the same depth. A perfect binary tree of height $h$ has $2^{h+1} - 1$ nodes.</li>
+<li><strong>Complete binary tree</strong>: all levels are fully filled except possibly the last, which is filled left to right.</li>
+<li><strong>Full binary tree</strong>: every node has either 0 or 2 children.</li>
+<li><strong>Perfect binary tree</strong>: all interior nodes have 2 children and all leaves are at the same depth. Has exactly $2^{h+1} - 1$ nodes at height $h$.</li>
 </ul>
 <div class="mermaid">
 flowchart TD
@@ -142,10 +147,10 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p>A binary tree of height $h$ has at most $2^{h+1} - 1$ nodes. Conversely, a binary tree with $n$ nodes has height at least $\log_2 n$. This logarithmic relationship is the source of $O(\log n)$ performance for tree operations.</p>
+<p>A binary tree with $n$ nodes has height at least $\log_2 n$. This logarithmic relationship is the source of $O(\log n)$ performance for tree operations - the height is the number of decisions you need to make to traverse from root to any leaf.</p>
 <hr>
 <h2 id="binary-search-trees-olog-n-with-a-condition">Binary Search Trees: O(log n) with a Condition</h2>
-<p>A binary search tree (BST) adds one invariant to the binary tree structure: for every node, all keys in its left subtree are smaller than the node&rsquo;s key, and all keys in its right subtree are larger.</p>
+<p>A binary search tree (BST) adds one invariant: for every node, all keys in the left subtree are smaller, and all keys in the right subtree are larger. This simple rule transforms search from $O(n)$ to $O(\log n)$.</p>
 <div class="mermaid">
 flowchart TD
     A["8"] --> B["3"] & C["12"]
@@ -158,23 +163,49 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p>This invariant makes searching simple. To find key $k$: start at the root. If $k$ equals the root&rsquo;s key, you&rsquo;re done. If $k$ is smaller, recurse into the left subtree. If $k$ is larger, recurse into the right subtree. Each comparison eliminates one subtree entirely.</p>
-<p>The time is $O(h)$ where $h$ is the height of the tree. For a balanced tree, $h = O(\log n)$, giving $O(\log n)$ search. This is binary search, but on a dynamic structure that supports insertion and deletion efficiently.</p>
-<p>Insertion is similar: search for where the key would be, then insert a new leaf there.</p>
-<p>Before discussing deletion, it helps to know the three standard ways to visit all nodes of a tree:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BST</span>:
+    <span style="color:#66d9ef">def</span> __init__(self):
+        self<span style="color:#f92672">.</span>root: TreeNode <span style="color:#f92672">|</span> <span style="color:#66d9ef">None</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">insert</span>(self, val: int) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> self<span style="color:#f92672">.</span>root:
+            self<span style="color:#f92672">.</span>root <span style="color:#f92672">=</span> TreeNode(val)
+        <span style="color:#66d9ef">else</span>:
+            self<span style="color:#f92672">.</span>_insert(self<span style="color:#f92672">.</span>root, val)
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_insert</span>(self, node: TreeNode, val: int) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+        <span style="color:#66d9ef">if</span> val <span style="color:#f92672">&lt;</span> node<span style="color:#f92672">.</span>val:
+            <span style="color:#66d9ef">if</span> node<span style="color:#f92672">.</span>left <span style="color:#f92672">is</span> <span style="color:#66d9ef">None</span>:
+                node<span style="color:#f92672">.</span>left <span style="color:#f92672">=</span> TreeNode(val)
+            <span style="color:#66d9ef">else</span>:
+                self<span style="color:#f92672">.</span>_insert(node<span style="color:#f92672">.</span>left, val)
+        <span style="color:#66d9ef">else</span>:
+            <span style="color:#66d9ef">if</span> node<span style="color:#f92672">.</span>right <span style="color:#f92672">is</span> <span style="color:#66d9ef">None</span>:
+                node<span style="color:#f92672">.</span>right <span style="color:#f92672">=</span> TreeNode(val)
+            <span style="color:#66d9ef">else</span>:
+                self<span style="color:#f92672">.</span>_insert(node<span style="color:#f92672">.</span>right, val)
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">search</span>(self, val: int) <span style="color:#f92672">-&gt;</span> bool:
+        node <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
+        <span style="color:#66d9ef">while</span> node:
+            <span style="color:#66d9ef">if</span> val <span style="color:#f92672">==</span> node<span style="color:#f92672">.</span>val:
+                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">True</span>
+            node <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>left <span style="color:#66d9ef">if</span> val <span style="color:#f92672">&lt;</span> node<span style="color:#f92672">.</span>val <span style="color:#66d9ef">else</span> node<span style="color:#f92672">.</span>right
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
+</code></pre></div><p>The search is elegant: at each node, compare the target against the current value. Go left if smaller, right if larger. Each comparison eliminates the entire other subtree. This is binary search, except the structure enforces the ordering rather than requiring a pre-sorted array.</p>
+<p><strong>Deletion</strong> has three cases:</p>
 <ul>
-<li><strong>In-order</strong> (left → node → right): visits nodes in sorted order for a BST. If you read off the keys during an in-order traversal of a BST, you get them smallest to largest.</li>
-<li><strong>Pre-order</strong> (node → left → right): visits the node before its subtrees. Used to copy or serialize a tree.</li>
-<li><strong>Post-order</strong> (left → right → node): visits the node after its subtrees. Used to delete a tree or evaluate expression trees.</li>
+<li><strong>Leaf node</strong>: remove it directly.</li>
+<li><strong>One child</strong>: splice it out by linking its parent to its child.</li>
+<li><strong>Two children</strong>: find the in-order successor (the leftmost node in the right subtree). Copy that key into the current node and delete the in-order successor, which has at most one child.</li>
 </ul>
-<p>Deletion is the tricky case. Three scenarios:</p>
-<ul>
-<li><strong>Node is a leaf</strong>: remove it directly.</li>
-<li><strong>Node has one child</strong>: splice it out by linking its parent to its child.</li>
-<li><strong>Node has two children</strong>: find the in-order successor (the smallest key in the right subtree - the leftmost node going right). Copy that key into the current node and delete the in-order successor (which has at most one child, so it&rsquo;s an easier case).</li>
-</ul>
-<p>The problem: the $O(h)$ complexity is only $O(\log n)$ if the tree is balanced. Feed a BST elements in sorted order and it degenerates into a linked list, with every left subtree empty and the tree having height $n - 1$. Searching this takes $O(n)$.</p>
-<div class="mermaid">
+<p><strong>The dark secret of BSTs.</strong> The $O(\log n)$ guarantee only holds when the tree is balanced. Feed a BST elements in sorted order and it degenerates into a linked list:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">bst <span style="color:#f92672">=</span> BST()
+<span style="color:#66d9ef">for</span> val <span style="color:#f92672">in</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">7</span>]:   <span style="color:#75715e"># sorted insertion</span>
+    bst<span style="color:#f92672">.</span>insert(val)
+<span style="color:#75715e"># Result: a chain 1 → 2 → 3 → 4 → 5 → 6 → 7</span>
+<span style="color:#75715e"># Search is now O(n), not O(log n)</span>
+</code></pre></div><div class="mermaid">
 flowchart TD
     A["1"] --> B["2"]
     B --> C["3"]
@@ -187,11 +218,48 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
+<p>This is not a rare edge case - any nearly-sorted input triggers significant degradation.</p>
+<hr>
+<h2 id="tree-traversal-three-ways-to-visit-every-node">Tree Traversal: Three Ways to Visit Every Node</h2>
+<p>Three recursive orderings dominate:</p>
+<ul>
+<li><strong>In-order</strong> (left → node → right): visits BST nodes in sorted order. If you read off the keys during an in-order traversal of a BST, you get them smallest to largest.</li>
+<li><strong>Pre-order</strong> (node → left → right): visits the node before its subtrees. Used to copy or serialize a tree.</li>
+<li><strong>Post-order</strong> (left → right → node): visits children before parents. Used to evaluate expression trees and safe deletion (free children before the parent).</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">inorder</span>(node: TreeNode <span style="color:#f92672">|</span> <span style="color:#66d9ef">None</span>) <span style="color:#f92672">-&gt;</span> list[int]:
+    <span style="color:#66d9ef">if</span> node <span style="color:#f92672">is</span> <span style="color:#66d9ef">None</span>:
+        <span style="color:#66d9ef">return</span> []
+    <span style="color:#66d9ef">return</span> inorder(node<span style="color:#f92672">.</span>left) <span style="color:#f92672">+</span> [node<span style="color:#f92672">.</span>val] <span style="color:#f92672">+</span> inorder(node<span style="color:#f92672">.</span>right)
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">preorder</span>(node: TreeNode <span style="color:#f92672">|</span> <span style="color:#66d9ef">None</span>) <span style="color:#f92672">-&gt;</span> list[int]:
+    <span style="color:#66d9ef">if</span> node <span style="color:#f92672">is</span> <span style="color:#66d9ef">None</span>:
+        <span style="color:#66d9ef">return</span> []
+    <span style="color:#66d9ef">return</span> [node<span style="color:#f92672">.</span>val] <span style="color:#f92672">+</span> preorder(node<span style="color:#f92672">.</span>left) <span style="color:#f92672">+</span> preorder(node<span style="color:#f92672">.</span>right)
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">postorder</span>(node: TreeNode <span style="color:#f92672">|</span> <span style="color:#66d9ef">None</span>) <span style="color:#f92672">-&gt;</span> list[int]:
+    <span style="color:#66d9ef">if</span> node <span style="color:#f92672">is</span> <span style="color:#66d9ef">None</span>:
+        <span style="color:#66d9ef">return</span> []
+    <span style="color:#66d9ef">return</span> postorder(node<span style="color:#f92672">.</span>left) <span style="color:#f92672">+</span> postorder(node<span style="color:#f92672">.</span>right) <span style="color:#f92672">+</span> [node<span style="color:#f92672">.</span>val]
+</code></pre></div><p>Compilers use postorder traversal of expression trees to generate code - evaluate operands first, then apply the operator. Build systems use a form of topological sort (essentially postorder on a dependency graph) to determine build order.</p>
+<blockquote>
+<p><strong>Recursion depth in practice.</strong> Recursive traversal hits Python&rsquo;s recursion limit (default 1000) on deep trees. For production code on potentially deep trees, use iterative traversal with an explicit stack:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">inorder_iterative</span>(root: TreeNode <span style="color:#f92672">|</span> <span style="color:#66d9ef">None</span>) <span style="color:#f92672">-&gt;</span> list[int]:
+    result, stack, current <span style="color:#f92672">=</span> [], [], root
+    <span style="color:#66d9ef">while</span> current <span style="color:#f92672">or</span> stack:
+        <span style="color:#66d9ef">while</span> current:
+            stack<span style="color:#f92672">.</span>append(current)
+            current <span style="color:#f92672">=</span> current<span style="color:#f92672">.</span>left
+        current <span style="color:#f92672">=</span> stack<span style="color:#f92672">.</span>pop()
+        result<span style="color:#f92672">.</span>append(current<span style="color:#f92672">.</span>val)
+        current <span style="color:#f92672">=</span> current<span style="color:#f92672">.</span>right
+    <span style="color:#66d9ef">return</span> result
+</code></pre></div></blockquote>
 <hr>
 <h2 id="avl-and-red-black-trees-keeping-the-promise">AVL and Red-Black Trees: Keeping the Promise</h2>
-<p>The fix for BST degeneration is balancing: enforce that the height stays $O(\log n)$ through rotations that restructure the tree.</p>
-<p><strong>AVL trees</strong> maintain the invariant that for every node, the heights of its left and right subtrees differ by at most 1. After any insertion or deletion, walk back up the tree checking this invariant. If a node violates it, apply a rotation - a local restructuring operation that rearranges a small subtree without breaking the BST property.</p>
-<p>There are four rotation cases: left-left, right-right, left-right, and right-left (the last two are double rotations). To track imbalance, each node stores a <strong>balance factor (bf)</strong> - the height of its right subtree minus the height of its left subtree. An AVL tree requires every node&rsquo;s balance factor to be -1, 0, or +1. A value of -2 means the left side is two levels deeper than the right - a violation that triggers a rotation. Here is the simplest case - a right rotation fixing a left-left imbalance, where inserting A caused C&rsquo;s balance factor to hit -2:</p>
+<p>The fix for BST degeneration is self-balancing: after each insert or delete, the tree restructures itself through rotations to maintain $O(\log n)$ height.</p>
+<p><strong>AVL trees</strong> maintain the invariant that for every node, the heights of its left and right subtrees differ by at most 1. After any insertion or deletion, walk back up the tree checking this invariant. Each node stores a <strong>balance factor</strong> - the height of its right subtree minus the height of its left subtree. A value outside ${-1, 0, +1}$ triggers a rotation.</p>
+<p>There are four rotation cases (left-left, right-right, left-right, right-left). Here is a right rotation fixing a left-left imbalance:</p>
 <div class="mermaid">
 flowchart LR
     subgraph after["After rotation"]
@@ -208,12 +276,12 @@ flowchart LR
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p>The key insight is that a single or double rotation is always enough to fix a violation at one node, and at most $O(\log n)$ nodes need checking after an insertion. This keeps all operations at $O(\log n)$.</p>
+<p>A single or double rotation is always enough to fix a violation, and at most $O(\log n)$ nodes need checking after an insertion.</p>
 <blockquote>
-<p>Seeing rotations happen interactively makes them much easier to understand than reading about them. Try inserting a few values into this <a href="https://www.cs.usfca.edu/~galles/visualization/AVLtree.html" target="_blank" rel="noopener noreferrer">AVL tree visualizer</a>
+<p>Seeing rotations interactively makes them far clearer. Try inserting a few values into this <a href="https://www.cs.usfca.edu/~galles/visualization/AVLtree.html" target="_blank" rel="noopener noreferrer">AVL tree visualizer</a>
  and watch the rotations fire.</p>
 </blockquote>
-<p><strong>Red-black trees</strong> use a different invariant: each node is colored red or black, with four rules that together ensure the tree&rsquo;s height is at most $2 \log_2(n+1)$. The key rules are: no two consecutive red nodes on any path, and every path from root to a null leaf has the same number of black nodes. This is what prevents the tree from becoming lopsided.</p>
+<p><strong>Red-black trees</strong> use a weaker invariant: each node is colored red or black, no two consecutive red nodes on any path, and every path from root to null has the same number of black nodes. This limits the tree to height at most $2\log_2(n+1)$.</p>
 <div class="mermaid">
 flowchart TD
     A["7"]:::black --> B["3"]:::red & C["18"]:::red
@@ -228,19 +296,18 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p>Red-black trees require fewer rotations per insertion and deletion than AVL trees, making them faster in write-heavy workloads. They&rsquo;re used in C++&rsquo;s <code>std::map</code>, Java&rsquo;s <code>TreeMap</code>, and the Linux kernel&rsquo;s process scheduler.</p>
-<p>You don&rsquo;t need to memorize the rotation cases. What matters is the guarantee: balanced BSTs give $O(\log n)$ for search, insert, and delete, always, regardless of insertion order.</p>
+<p>Red-black trees require fewer rotations per insertion than AVL trees, making them faster in write-heavy workloads. They are used in C++&rsquo;s <code>std::map</code>, Java&rsquo;s <code>TreeMap</code>, and the Linux kernel&rsquo;s process scheduler.</p>
+<p>You do not need to memorize the rotation cases. What matters is the guarantee: balanced BSTs give $O(\log n)$ for search, insert, and delete, always, regardless of insertion order.</p>
+<p><strong>In Python:</strong> the standard library has no balanced BST. <code>sortedcontainers.SortedList</code> is the practical answer - it gives $O(\log n)$ operations and preserves sorted order. For most applications, you reach for that rather than implementing rotations from scratch.</p>
 <hr>
 <h2 id="heaps-trees-stored-in-arrays">Heaps: Trees Stored in Arrays</h2>
-<p>A binary heap is a complete binary tree satisfying the heap property: every parent is greater than or equal to both its children (max-heap), or every parent is less than or equal to both its children (min-heap).</p>
-<p>The most practically important fact about heaps is how they&rsquo;re stored.</p>
-<p>Because heaps are complete binary trees, we can store them in an array without any pointers. For a 1-indexed array $A[1..n]$:</p>
+<p>A binary heap is a complete binary tree satisfying the heap property: every parent is greater than or equal to both its children (max-heap), or less than or equal (min-heap). The root is always the maximum (or minimum) element.</p>
+<p><strong>The array representation.</strong> Because heaps are complete binary trees, they can be stored in a plain array with no pointers. For a 1-indexed array:</p>
 <ul>
 <li>Node $i$ has its parent at $\lfloor i/2 \rfloor$</li>
 <li>Node $i$ has its left child at $2i$</li>
 <li>Node $i$ has its right child at $2i + 1$</li>
 </ul>
-<p>The root is at index 1. The last element is at index $n$. No pointer traversal needed - just arithmetic.</p>
 <div class="mermaid">
 flowchart TD
     A["[1] 16"] --> B["[2] 14"] & C["[3] 10"]
@@ -253,29 +320,61 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<blockquote>
-<p><strong>Discomfort check.</strong> &ldquo;If a heap is a tree, why represent it as an array?&rdquo; Because the array representation is dramatically faster in practice. Pointer-based trees require one memory allocation per node, and traversing them causes cache misses (jumping between nodes scattered across the heap). An array-based heap stores all nodes contiguously - the parent-child relationships are computed in one instruction, and the data is all nearby in memory. For the same operations, an array heap can be 3-5 times faster than a pointer-based equivalent.</p>
-</blockquote>
-<hr>
+<p>No pointer traversal - just arithmetic. This is cache-friendly, memory-efficient, and requires no dynamic allocation. An array heap can be 3-5x faster than a pointer-based equivalent because all nodes are contiguous in memory.</p>
+<p>Python&rsquo;s <code>heapq</code> module implements a min-heap on a plain list:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> heapq
+
+heap <span style="color:#f92672">=</span> []
+heapq<span style="color:#f92672">.</span>heappush(heap, <span style="color:#ae81ff">5</span>)
+heapq<span style="color:#f92672">.</span>heappush(heap, <span style="color:#ae81ff">1</span>)
+heapq<span style="color:#f92672">.</span>heappush(heap, <span style="color:#ae81ff">3</span>)
+
+print(heapq<span style="color:#f92672">.</span>heappop(heap))   <span style="color:#75715e"># 1 - always the minimum</span>
+print(heapq<span style="color:#f92672">.</span>heappop(heap))   <span style="color:#75715e"># 3</span>
+
+<span style="color:#75715e"># Priority queue example</span>
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TaskScheduler</span>:
+    <span style="color:#66d9ef">def</span> __init__(self):
+        self<span style="color:#f92672">.</span>_queue: list[tuple[int, str]] <span style="color:#f92672">=</span> []
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">add_task</span>(self, priority: int, name: str) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+        heapq<span style="color:#f92672">.</span>heappush(self<span style="color:#f92672">.</span>_queue, (priority, name))
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">run_next</span>(self) <span style="color:#f92672">-&gt;</span> str <span style="color:#f92672">|</span> <span style="color:#66d9ef">None</span>:
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> self<span style="color:#f92672">.</span>_queue:
+            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">None</span>
+        _, name <span style="color:#f92672">=</span> heapq<span style="color:#f92672">.</span>heappop(self<span style="color:#f92672">.</span>_queue)
+        <span style="color:#66d9ef">return</span> name
+</code></pre></div><hr>
 <h2 id="heap-operations">Heap Operations</h2>
-<p><strong>Heapify (sift down):</strong> given a node that may violate the heap property (but whose children&rsquo;s subtrees are valid heaps), fix it by swapping it with the larger child and recursing. This takes $O(\log n)$ time - one path from node to leaf.</p>
-<p><strong>Insert:</strong> place the new element at the end of the array (next available position in the complete binary tree), then sift it upward until the heap property is restored. Each swap moves it one level up. Time: $O(\log n)$.</p>
-<p><strong>Extract-max:</strong> the maximum is always at the root (index 1). Remove it, move the last element to the root position, then sift it down to restore the heap property. Time: $O(\log n)$.</p>
-<p><strong>Build-heap:</strong> given an arbitrary array, convert it into a valid heap. The naive approach is to insert each element one by one: $O(n \log n)$. But there&rsquo;s a better way.</p>
-<p>Start at the last internal node (index $\lfloor n/2 \rfloor$) and sift down toward the root, calling heapify at each node. Why does this work in $O(n)$ instead of $O(n \log n)$?</p>
-<p>Consider the cost of each heapify call. A node at height $h$ from the bottom needs at most $h$ swaps. In a heap of $n$ nodes, there are roughly $n/2^{h+1}$ nodes at height $h$. The total cost is:</p>
-<p>$$\sum_{h=0}^{\lfloor \log n \rfloor} \frac{n}{2^{h+1}} \cdot h = \frac{n}{2} \sum_{h=0}^{\infty} \frac{h}{2^h}$$</p>
-<p>The sum $\sum_{h=0}^{\infty} h x^h = x/(1-x)^2$. At $x = 1/2$ this equals 2. So the total cost is $\frac{n}{2} \cdot 2 = n = O(n)$.</p>
-<p>Intuitively: most nodes are near the leaves, where heapify is cheap. Only a few nodes near the root need to travel far. The work is concentrated where nodes are scarce, so the total remains linear.</p>
+<p><strong>Insert:</strong> place the new element at the end of the array, then sift it upward until the heap property is restored. Time: $O(\log n)$.</p>
+<p><strong>Extract-max/min:</strong> the extremum is always at the root (index 1). Remove it, move the last element to the root, then sift it down. Time: $O(\log n)$.</p>
+<p><strong>Build-heap:</strong> given an arbitrary array, convert it to a valid heap. The naive approach is to insert each element: $O(n \log n)$. The smarter way: start at the last internal node (index $\lfloor n/2 \rfloor$) and sift down toward the root. This is $O(n)$.</p>
+<p>Why $O(n)$? A node at height $h$ needs at most $h$ swaps when sifted down. There are roughly $n/2^{h+1}$ nodes at height $h$. Total cost:</p>
+<p>$$\sum_{h=0}^{\lfloor \log n \rfloor} \frac{n}{2^{h+1}} \cdot h = \frac{n}{2} \sum_{h=0}^{\infty} \frac{h}{2^h} = \frac{n}{2} \cdot 2 = O(n)$$</p>
+<p>using the identity $\sum_{h=0}^{\infty} h x^h = x/(1-x)^2$ at $x = 1/2$. Intuitively: most nodes are near the leaves where sifting is cheap. Only a few nodes near the root need to travel far, and those are scarce.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">data <span style="color:#f92672">=</span> [<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">9</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">7</span>]
+heapq<span style="color:#f92672">.</span>heapify(data)   <span style="color:#75715e"># O(n) in-place</span>
+print(data[<span style="color:#ae81ff">0</span>])        <span style="color:#75715e"># 1 - the minimum</span>
+</code></pre></div><p><strong>Heaps in algorithms.</strong> Dijkstra&rsquo;s shortest-path algorithm uses a min-heap as its priority queue - always extract the unvisited node with the smallest tentative distance. Without a heap, Dijkstra&rsquo;s is $O(V^2)$; with a binary heap it is $O((V + E) \log V)$.</p>
 <hr>
 <h2 id="heapsort">Heapsort</h2>
-<p>Build-heap converts the array to a max-heap in $O(n)$. Then: repeatedly swap the root (the current maximum) with the last element of the heap, shrink the heap size by 1, and heapify the root. After $n-1$ such extractions, the array is sorted.</p>
-<p>Total: $O(n)$ for build-heap plus $n \cdot O(\log n)$ for extractions = $O(n \log n)$, in-place, no auxiliary memory. The sort is not stable (heap operations can swap equal elements past each other), and it&rsquo;s slower than quicksort in practice due to poor cache behavior - the heap&rsquo;s jumpy access pattern doesn&rsquo;t benefit from cache prefetching.</p>
+<p>Build-heap converts the array to a max-heap in $O(n)$. Then repeatedly swap the root (current maximum) with the last element of the heap, shrink the heap by 1, and sift the new root down. After $n-1$ such extractions, the array is sorted.</p>
+<p>Total: $O(n)$ for build-heap plus $n \cdot O(\log n)$ for extractions = $O(n \log n)$, in-place, no auxiliary memory. The sort is not stable, and it is slower than quicksort in practice due to poor cache behavior - the heap&rsquo;s jumpy access pattern does not benefit from cache prefetching.</p>
+<hr>
+<h2 id="expression-trees">Expression Trees</h2>
+<p>When a compiler encounters <code>(3 + 4) * 2</code>, it builds an expression tree:</p>
+<pre tabindex="0"><code>    *
+   / \
+  +   2
+ / \
+3   4
+</code></pre><p>Postorder traversal evaluates this correctly: visit 3, visit 4, apply +, visit 2, apply *. The tree structure naturally encodes operator precedence - the shape of the tree dictates which operations apply first, eliminating the need for explicit parentheses once the tree is built. This intermediate representation is easy to evaluate, transform, and optimize, which is why compilers use it universally.</p>
 <hr>
 <h2 id="b-trees">B-Trees</h2>
-<p>Binary search trees work well when data fits in RAM. But what happens when you have a billion records on disk? Disk reads are roughly 100,000 times slower than RAM reads. Every time you follow a pointer to a new node, you might be paying that cost. A balanced BST with a billion records has height around 30 - meaning 30 disk reads per lookup. That is unacceptably slow.</p>
-<p>The fix is to make each node fat. Instead of holding one key and two children, a B-tree node holds up to $2t - 1$ keys and up to $2t$ children, where $t$ is called the minimum degree. You size the node so that it fits exactly in one disk block (typically 4KB or 16KB). With hundreds of keys per node, the tree height collapses - a B-tree over a billion records might have height 3 or 4, meaning 3-4 disk reads per lookup.</p>
-<p>Every node except the root has between $t - 1$ and $2t - 1$ keys. The keys within a node are sorted. The children of a node interleave with its keys: the $i$-th child subtree contains all keys between the $(i-1)$-th and $i$-th keys of the node. This is the BST property generalized to many children.</p>
+<p>Binary search trees work well when data fits in RAM. But a billion records on disk changes the problem entirely. Disk reads are roughly 100,000 times slower than RAM reads. A balanced BST over a billion records has height around 30 - meaning 30 disk reads per lookup. Unacceptable.</p>
+<p>The fix: make each node fat. A B-tree node holds up to $2t - 1$ keys and up to $2t$ children, where $t$ is the minimum degree. Size the node to fit exactly one disk block (typically 4KB or 16KB). With hundreds of keys per node, a B-tree over a billion records has height 3 or 4 - meaning 3-4 disk reads per lookup.</p>
+<p>Every internal node has between $t-1$ and $2t-1$ keys, sorted. The $i$-th child subtree contains all keys between the $(i-1)$-th and $i$-th keys of the node - the BST property generalized to many children.</p>
 <div class="mermaid">
 flowchart TD
     A["10 | 20 | 30"] --> B["3 | 7"] & C["13 | 17"] & D["23 | 27"] & E["35 | 40"]
@@ -286,16 +385,11 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p><strong>Search</strong> works exactly like BST search, generalized: at each node, binary search the sorted keys to find which child to descend into. Each node visit is one disk read. Time: $O(\log_t n)$ disk reads, or $O(t \log_t n)$ key comparisons.</p>
-<p><strong>Insertion</strong> always happens at a leaf. Search down to the correct leaf and insert the key. If the leaf has room (fewer than $2t - 1$ keys), you&rsquo;re done. If it&rsquo;s full, <strong>split</strong> it: push the median key up to the parent and divide the node into two nodes of $t - 1$ keys each. If the parent is also full, split it too. Splits can cascade up to the root. When the root splits, the tree grows taller by one level - the only way a B-tree gains height.</p>
-<p><strong>B+ trees</strong> are a variant used by almost every database. Before explaining the difference, here is how a database index actually works.</p>
-<p>Your table is just rows stored on disk in no particular order - a flat file. To answer &ldquo;find all users where age = 30,&rdquo; the database would normally read every single row and check the age field. With a million rows, that is a million disk reads.</p>
-<p>An index on the <code>age</code> column is a B+ tree built separately, where each key in the tree is an age value, and each key points to a list of disk locations - one for every row with that age value. There could be one such row or ten thousand; the leaf node holds all their pointers. To answer the query, the database walks down the B+ tree - at each node it reads one disk block and follows the right branch - arriving at the leaf node that holds age 30 and the list of pointers to every matching row. Instead of a million reads to find them, it takes three or four to reach the leaf, then one read per matching row.</p>
-<p>For a range query like &ldquo;age BETWEEN 25 AND 35,&rdquo; the database finds the leaf containing 25, then follows the linked chain of leaf nodes rightward until it passes 35, collecting row pointers along the way. The leaf chain is why B+ trees are used over regular B-trees for this purpose.</p>
-<p>B+ trees are the standard index structure. The difference from regular B-trees: internal nodes store only keys (no data), and all actual data lives in the leaf nodes. The leaves are also linked together in a sorted linked list. This makes range queries fast - find the start key, then scan the leaf chain without going back up the tree. B+ trees are what PostgreSQL, MySQL, and SQLite use for their indexes.</p>
+<p><strong>Insertion</strong> always happens at a leaf. If the leaf is full ($2t-1$ keys), split it: push the median key up to the parent, divide the node into two. Splits can cascade up. When the root splits, the tree grows taller - the only way a B-tree gains height.</p>
+<p><strong>B+ trees</strong> are the variant used by almost every database. Internal nodes store only keys; all actual data lives in the leaf nodes, which are also linked in a sorted chain. This makes range queries fast: find the start key, then scan the leaf chain without going back up the tree.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BTreeNode</span>:
     <span style="color:#66d9ef">def</span> __init__(self, t, leaf<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>):
-        self<span style="color:#f92672">.</span>t <span style="color:#f92672">=</span> t          <span style="color:#75715e"># minimum degree</span>
+        self<span style="color:#f92672">.</span>t <span style="color:#f92672">=</span> t
         self<span style="color:#f92672">.</span>leaf <span style="color:#f92672">=</span> leaf
         self<span style="color:#f92672">.</span>keys <span style="color:#f92672">=</span> []
         self<span style="color:#f92672">.</span>children <span style="color:#f92672">=</span> []
@@ -320,7 +414,6 @@ flowchart TD
     <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">insert</span>(self, k):
         root <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
         <span style="color:#66d9ef">if</span> len(root<span style="color:#f92672">.</span>keys) <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>t <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>:
-            <span style="color:#75715e"># root is full - split it and grow the tree</span>
             new_root <span style="color:#f92672">=</span> BTreeNode(self<span style="color:#f92672">.</span>t)
             new_root<span style="color:#f92672">.</span>children<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>root)
             self<span style="color:#f92672">.</span>_split_child(new_root, <span style="color:#ae81ff">0</span>)
@@ -350,20 +443,18 @@ flowchart TD
         full <span style="color:#f92672">=</span> parent<span style="color:#f92672">.</span>children[i]
         new_node <span style="color:#f92672">=</span> BTreeNode(t, leaf<span style="color:#f92672">=</span>full<span style="color:#f92672">.</span>leaf)
         mid <span style="color:#f92672">=</span> t <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
-        <span style="color:#75715e"># push median key up to parent</span>
         parent<span style="color:#f92672">.</span>keys<span style="color:#f92672">.</span>insert(i, full<span style="color:#f92672">.</span>keys[mid])
         parent<span style="color:#f92672">.</span>children<span style="color:#f92672">.</span>insert(i <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>, new_node)
-        <span style="color:#75715e"># divide keys and children</span>
         new_node<span style="color:#f92672">.</span>keys <span style="color:#f92672">=</span> full<span style="color:#f92672">.</span>keys[mid <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>:]
         full<span style="color:#f92672">.</span>keys <span style="color:#f92672">=</span> full<span style="color:#f92672">.</span>keys[:mid]
         <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> full<span style="color:#f92672">.</span>leaf:
             new_node<span style="color:#f92672">.</span>children <span style="color:#f92672">=</span> full<span style="color:#f92672">.</span>children[t:]
             full<span style="color:#f92672">.</span>children <span style="color:#f92672">=</span> full<span style="color:#f92672">.</span>children[:t]
-</code></pre></div><hr>
+</code></pre></div><p>PostgreSQL, MySQL, and SQLite all use B+ trees for their primary indexes.</p>
+<hr>
 <h2 id="tries">Tries</h2>
-<p>A trie (from &ldquo;re<strong>trie</strong>val&rdquo;, pronounced either &ldquo;try&rdquo; or &ldquo;tree&rdquo;) is a tree built for string lookups. The key idea: instead of storing whole strings at nodes and comparing them, you store one character per edge. Every path from the root to a marked node spells out a stored string.</p>
-<p>This gives you $O(L)$ lookup for a string of length $L$, completely independent of how many strings are in the trie. A hash table also gives $O(L)$ average lookup (since hashing the string takes $O(L)$ time), but a trie also gives you things a hash table cannot: find all strings with a given prefix, find the longest prefix match, enumerate strings in lexicographic order.</p>
-<p>Here is a trie storing &ldquo;cat&rdquo;, &ldquo;car&rdquo;, &ldquo;can&rdquo;, and &ldquo;dog&rdquo;:</p>
+<p>A trie (from &ldquo;re<strong>trie</strong>val&rdquo;) is a tree built for string lookups. Instead of storing whole strings at nodes, you store one character per edge. Every path from the root to a marked node spells out a stored string.</p>
+<p>This gives $O(L)$ lookup for a string of length $L$, independent of how many strings are stored. A hash table also gives $O(L)$ average lookup (hashing takes $O(L)$), but a trie additionally supports: find all strings with a given prefix, find the longest prefix match, enumerate strings in lexicographic order.</p>
 <div class="mermaid">
 flowchart TD
     R["root"] --> C["c"] & D["d"]
@@ -378,8 +469,7 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p>Notice that &ldquo;cat&rdquo;, &ldquo;car&rdquo;, and &ldquo;can&rdquo; all share the prefix &ldquo;ca&rdquo; - they follow the same path for the first two characters and only diverge at the third. This shared prefix storage is what makes tries memory-efficient for large collections of strings with common prefixes (like all URLs on a website, or all words in a dictionary).</p>
-<p>Each node stores an array (or dictionary) of children indexed by character, and a flag indicating whether that node marks the end of a valid word.</p>
+<p>&ldquo;cat&rdquo;, &ldquo;car&rdquo;, and &ldquo;can&rdquo; all share the prefix &ldquo;ca&rdquo; - they follow the same path for the first two characters and only diverge at the third. This shared prefix storage makes tries memory-efficient for large collections with common prefixes (all words in a dictionary, all URLs on a site).</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TrieNode</span>:
     <span style="color:#66d9ef">def</span> __init__(self):
         self<span style="color:#f92672">.</span>children <span style="color:#f92672">=</span> {}
@@ -405,17 +495,7 @@ flowchart TD
             node <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>children[ch]
         <span style="color:#66d9ef">return</span> node<span style="color:#f92672">.</span>is_end
 
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">starts_with</span>(self, prefix):
-        <span style="color:#e6db74">&#34;&#34;&#34;Returns True if any stored word starts with this prefix.&#34;&#34;&#34;</span>
-        node <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
-        <span style="color:#66d9ef">for</span> ch <span style="color:#f92672">in</span> prefix:
-            <span style="color:#66d9ef">if</span> ch <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>children:
-                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
-            node <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>children[ch]
-        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">True</span>
-
     <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">all_with_prefix</span>(self, prefix):
-        <span style="color:#e6db74">&#34;&#34;&#34;Returns all stored words that start with the given prefix.&#34;&#34;&#34;</span>
         node <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>root
         <span style="color:#66d9ef">for</span> ch <span style="color:#f92672">in</span> prefix:
             <span style="color:#66d9ef">if</span> ch <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>children:
@@ -430,7 +510,11 @@ flowchart TD
             results<span style="color:#f92672">.</span>append(current)
         <span style="color:#66d9ef">for</span> ch, child <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>children<span style="color:#f92672">.</span>items():
             self<span style="color:#f92672">.</span>_collect(child, current <span style="color:#f92672">+</span> ch, results)
-</code></pre></div><p>The <code>all_with_prefix</code> method is what powers autocomplete: given the prefix the user has typed so far, return every word in the dictionary that starts with it. This is $O(L + k)$ where $L$ is the prefix length and $k$ is the number of results returned.</p>
+</code></pre></div><p><code>all_with_prefix</code> powers autocomplete: given what the user has typed, return every word in the dictionary that starts with it. This is $O(L + k)$ where $L$ is the prefix length and $k$ is the number of results.</p>
+<hr>
+<h2 id="when-not-to-use-these-structures">When Not to Use These Structures</h2>
+<p><strong>BSTs in Python:</strong> for most applications, a balanced BST is overkill. If you need frequent lookups, a <code>dict</code> is faster. If you need a sorted sequence you rarely modify, sort once and use <code>bisect</code> for $O(\log n)$ binary search on a plain list. If you need sorted order with frequent insertion, <code>sortedcontainers.SortedList</code> is the right call.</p>
+<p><strong>Heaps vs <code>sorted()</code>:</strong> if you need the top $k$ elements from a list, <code>heapq.nlargest(k, items)</code> is simpler. If you need frequent &ldquo;give me the minimum while also inserting&rdquo; (the online/streaming case), a heap is exactly right. If you need arbitrary removal or full sorted iteration, a different structure is cleaner - heaps only efficiently support extracting the extremum.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -445,15 +529,8 @@ flowchart TD
 </thead>
 <tbody>
 <tr>
-<td>Binary tree (unsorted)</td>
-<td>$O(n)$</td>
-<td>$O(1)$ at leaf</td>
-<td>$O(n)$</td>
-<td>No ordering guarantee</td>
-</tr>
-<tr>
 <td>BST (unbalanced)</td>
-<td>$O(h)$ avg $O(\log n)$</td>
+<td>$O(h)$</td>
 <td>$O(h)$</td>
 <td>$O(h)$</td>
 <td>Degenerates on sorted input</td>
@@ -463,7 +540,7 @@ flowchart TD
 <td>$O(\log n)$</td>
 <td>$O(\log n)$</td>
 <td>$O(\log n)$</td>
-<td>Strictly balanced; more rotations</td>
+<td>Strict balance; more rotations</td>
 </tr>
 <tr>
 <td>Red-black tree</td>
@@ -474,17 +551,17 @@ flowchart TD
 </tr>
 <tr>
 <td>Max-heap</td>
-<td>$O(n)$ arbitrary, $O(1)$ max</td>
+<td>$O(1)$ max, $O(n)$ arbitrary</td>
 <td>$O(\log n)$</td>
 <td>$O(\log n)$ extract-max</td>
 <td>Build from array in $O(n)$</td>
 </tr>
 <tr>
 <td>B-tree (order $t$)</td>
+<td>$O(\log_t n)$ disk reads</td>
 <td>$O(\log_t n)$</td>
 <td>$O(\log_t n)$</td>
-<td>$O(\log_t n)$</td>
-<td>Minimizes disk reads; used in databases</td>
+<td>Minimizes disk seeks; used in databases</td>
 </tr>
 <tr>
 <td>Trie</td>
@@ -499,6 +576,8 @@ flowchart TD
 <p><strong>Read next:</strong></p>
 <ul>
 <li><a href="/posts/searching-algorithms-binary-search/" target="_blank" rel="noopener noreferrer">Searching Algorithms - Twenty Steps Through a Million Entries</a>
+</li>
+<li><a href="/posts/databases-indexes/" target="_blank" rel="noopener noreferrer">Databases &amp; Indexes - How Data Is Actually Stored and Found</a>
 </li>
 </ul>
 
