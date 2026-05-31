@@ -145,8 +145,18 @@ You flip a coin ten times. You don&rsquo;t care about the exact sequence of head
 <p><strong>Example: Binomial random variable.</strong> Flip a fair coin $n$ times. Let $X$ be the number of heads. Here $X$ can take values $0, 1, 2, \ldots, n$. The PMF is:</p>
 <p>$$p(k) = P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}.$$</p>
 <p>Why this formula? There are $\binom{n}{k}$ ways to choose which $k$ of the $n$ flips land heads. Each such arrangement has probability $p^k(1-p)^{n-k}$. The binomial is just $n$ independent Bernoulli trials glued together, with $X$ counting the successes.</p>
-<p><strong>Example: Poisson random variable.</strong> Suppose events occur randomly over time at a constant average rate - buses arriving, emails landing in your inbox, radioactive atoms decaying. If the average rate is $\lambda$ events per unit time, and events occur independently of one another, then the number of events $X$ in one unit of time follows a <strong>Poisson distribution</strong>:</p>
+<p><strong>Example: Poisson random variable.</strong> Suppose events occur randomly over time at a constant average rate - buses arriving, emails landing in your inbox, radioactive atoms decaying. If the average rate is $\lambda$ events per unit time, and events occur independently of one another, then the number of events $X$ in one unit of time follows a <strong>Poisson distribution</strong>. Here is where the PMF comes from.</p>
+<p>Divide the unit time interval into $n$ tiny sub-intervals, each of length $1/n$. Assume at most one event can happen in each sub-interval (true when $n$ is large enough), and each sub-interval independently has probability $p = \lambda/n$ of containing an event. The total count is then Binomial$(n, \lambda/n)$, so:</p>
+<p>$$P(X = k) = \binom{n}{k} \left(\frac{\lambda}{n}\right)^k \left(1 - \frac{\lambda}{n}\right)^{n-k}.$$</p>
+<p>Now let $n \to \infty$ - make the sub-intervals infinitely fine. Three things happen:</p>
+<ul>
+<li>$\displaystyle\frac{n(n-1)\cdots(n-k+1)}{n^k} \to 1$ (the $k$ factors each approach 1)</li>
+<li>$\displaystyle\left(1 - \frac{\lambda}{n}\right)^n \to e^{-\lambda}$ (the definition of $e$)</li>
+<li>$\displaystyle\left(1 - \frac{\lambda}{n}\right)^{-k} \to 1$</li>
+</ul>
+<p>Multiplying through gives exactly:</p>
 <p>$$p(k) = P(X = k) = \frac{\lambda^k e^{-\lambda}}{k!} \quad \text{for } k = 0, 1, 2, \ldots$$</p>
+<p>The $e^{-\lambda}$ is not magic - it is the limit of the Binomial&rsquo;s $(1 - \lambda/n)^n$ term as the sub-intervals get infinitely fine. The Poisson distribution is simply the Binomial distribution taken to the limit of infinitely many trials, each with infinitesimally small probability.</p>
 <p>The parameter $\lambda$ is called the <strong>Poisson rate</strong> - the average number of events per unit time. Small $\lambda$ means rare events; large $\lambda$ means a steady stream. The Poisson distribution shows up whenever you&rsquo;re counting occurrences of independent events over a fixed window of time or space: emails arriving per hour, buses per afternoon, radioactive decays per second.</p>
 <p>A less obvious example: <strong>database backups within a backup window</strong>. Even though backups are &ldquo;scheduled,&rdquo; they typically run within a window (say, 2am - 6am) rather than at a precise instant. Within that window, the exact moment each backup starts depends on how long the previous one took, resource availability, and queue ordering - all sources of genuine randomness. Multiple independent systems are running their backups in the same window. The number of backups completing in any given 10-minute sub-interval of that window behaves like a Poisson random variable: events are approximately independent, the average rate is roughly constant throughout the window, and you&rsquo;re counting how many land in a fixed slice of time.</p>
 <hr>
