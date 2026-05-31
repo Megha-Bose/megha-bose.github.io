@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          7 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -116,6 +116,21 @@
 <hr>
 <p>Every programming language you&rsquo;ve ever used is defined by a context-free grammar. When Python tells you <code>SyntaxError: invalid syntax</code>, a parser running a CFG found that your code doesn&rsquo;t match the grammar. When your browser renders HTML, it&rsquo;s parsing a context-free structure. When a compiler figures out that <code>2 + 3 * 4</code> means <code>2 + (3 * 4)</code> and not <code>(2 + 3) * 4</code>, it&rsquo;s using the precedence hierarchy baked into the grammar.</p>
 <p>Context-free grammars are the theory of <em>syntax</em>: what strings are &ldquo;valid&rdquo; programs, documents, or mathematical expressions. We already know finite automata can&rsquo;t handle counting - they can&rsquo;t recognize $\{0^n 1^n\}$. CFGs can, and that extra power is exactly what&rsquo;s needed to describe nested structures like balanced parentheses or properly matched function calls.</p>
+<hr>
+<h2 id="the-wall-that-finite-automata-hit">The Wall That Finite Automata Hit</h2>
+<p>Finite automata are surprisingly powerful for pattern matching. An email validator, a lexer that recognizes keywords, a regex engine - all are finite automata. The defining feature of a DFA is that it works on finite memory: at any point, only the current state matters. The entire history of input that led to this state is forgotten.</p>
+<p>That forgetting is the wall.</p>
+<p>Consider the language $\{0^n 1^n : n \geq 1\}$ - strings of zeros followed by the same number of ones. A DFA attempting to recognize this must count how many zeros it has seen, then verify an equal number of ones follows. But counting requires memory, and the DFA has only a fixed number of states. Feed it 100 zeros, and by the pigeonhole principle, some state must repeat - the machine has no way to distinguish &ldquo;I have seen 73 zeros&rdquo; from &ldquo;I have seen 74 zeros.&rdquo; Any DFA fails on inputs long enough to loop.</p>
+<p>This isn&rsquo;t a quirk of the particular language; it&rsquo;s a fundamental ceiling. The <strong>Myhill-Nerode theorem</strong> makes it precise: a language is regular exactly when its strings can be partitioned into finitely many equivalence classes based on what suffixes complete them. For $\{0^n 1^n\}$, the prefix $0^n$ requires the suffix $1^n$ and nothing else - each $n$ defines a distinct class, of which there are infinitely many. No finite automaton can represent infinitely many distinct classes.</p>
+<p>The same ceiling shows up everywhere in programming languages:</p>
+<ul>
+<li>Balanced parentheses: <code>((()))</code> requires matching the first <code>(</code> with the last <code>)</code> - but how deep is the nesting? The automaton can&rsquo;t track depth.</li>
+<li>Properly nested function calls: <code>f(g(h(x)))</code> must match each opening <code>(</code> to the right <code>)</code>.</li>
+<li>Block structure: every <code>if</code> has a matching <code>end</code>, every <code>{</code> a matching <code>}</code>, recursively.</li>
+<li>Arithmetic precedence: <code>2 + 3 * 4</code> is <code>2 + (3 * 4)</code>, which requires a tree structure.</li>
+</ul>
+<p>All of these share the same underlying shape: an opening token at depth $d$, arbitrary content inside, then a closing token at the same depth $d$. To check this, you need to remember depth - which can be arbitrarily large - which requires unbounded memory.</p>
+<p>The solution is a stack. A stack tracks depth perfectly: push on open, pop on close, accept when both input and stack are empty. And the formalism that describes exactly what a stack lets you compute is the context-free grammar.</p>
 <hr>
 <h2 id="production-rules-and-derivations">Production Rules and Derivations</h2>
 <p>A context-free grammar is a set of <strong>production rules</strong> that describe how to generate strings. Each rule takes one <strong>non-terminal</strong> symbol (a placeholder) and expands it into a sequence of terminals and non-terminals.</p>
@@ -164,6 +179,24 @@
 <p>Just as regular languages correspond to finite automata, context-free languages correspond to a more powerful machine: the <strong>pushdown automaton (PDA)</strong>.</p>
 <p>A PDA is an NFA with a stack. At each step it can read an input symbol (or not), look at the top of the stack, pop from the stack, push onto the stack, and change state. The stack is the memory that finite automata lack - it&rsquo;s what lets a PDA match opening symbols with closing symbols.</p>
 <p>The equivalence is exact: a language is context-free if and only if some PDA recognizes it. The PDA for $\{0^n 1^n\}$ is obvious: push each <code>0</code> onto the stack, and pop one stack symbol for each <code>1</code>, accepting when input and stack are both empty.</p>
+<hr>
+<h2 id="why-context-free">Why &ldquo;Context-Free&rdquo;?</h2>
+<p>The name comes from the <strong>Chomsky hierarchy</strong> - a classification of all possible grammars published by Noam Chomsky in 1956. He was working on formal linguistics, trying to characterize the structure of natural languages, and found that different levels of grammatical complexity correspond to different levels of computational power.</p>
+<p>The hierarchy has four levels. Written from least to most restrictive:</p>
+<p><strong>Type 0 - Unrestricted (Turing machines).</strong> Rules can have any form: $\alpha \to \beta$, where $\alpha$ and $\beta$ are any strings of terminals and non-terminals. No constraint on what $\alpha$ looks like.</p>
+<p><strong>Type 1 - Context-sensitive (linear-bounded automata).</strong> Rules have the form $\alpha A \beta \to \alpha \gamma \beta$. The non-terminal $A$ can only be replaced by $\gamma$ when it appears in the specific <em>context</em> of $\alpha$ on its left and $\beta$ on its right. The context - what surrounds $A$ - determines whether the rule applies.</p>
+<p><strong>Type 2 - Context-free (pushdown automata).</strong> Rules have the form $A \to \gamma$. The non-terminal $A$ can be replaced by $\gamma$ regardless of what surrounds it. No context required - the rule applies anywhere $A$ appears.</p>
+<p><strong>Type 3 - Regular (finite automata).</strong> Rules are restricted further to $A \to aB$ or $A \to a$ (right-linear).</p>
+<p>The name &ldquo;context-free&rdquo; is directly contrasting with &ldquo;context-sensitive.&rdquo; In a context-sensitive grammar, the string to the left and right of a non-terminal can gate whether a rule fires - the context controls the expansion. Strip that constraint away - allow any non-terminal to expand anywhere, unconditionally - and you get a context-free grammar.</p>
+<p>This has a practical consequence. Because a non-terminal expands the same way everywhere, you can reason about substructures independently: a function body has the same valid structure whether it appears at the top level or nested inside a loop. This composability is why CFGs work so well for describing programming languages.</p>
+<p><strong>Why $\{a^n b^n c^n\}$ is not context-free.</strong> Matching three counts at once requires knowing, when you are in the middle of the $b$-block, how many $a$s came before - the context of what&rsquo;s to the left constrains the rule. A context-free grammar cannot impose this cross-block dependency because its rules fire unconditionally. The pumping lemma for CFLs formalizes this: any long string in a CFL can have pieces pumped independently, and pumping two pieces in a three-block string necessarily breaks one of the three balances.</p>
+<hr>
+<h2 id="how-we-got-here-the-historical-path">How We Got Here: The Historical Path</h2>
+<p>In 1943, Warren McCulloch and Walter Pitts formalized the first neural model that gave rise to finite automata. By the early 1950s, Kleene had characterized exactly which languages finite automata could describe - the regular languages.</p>
+<p>The gap was noticed almost immediately. Regular expressions can describe fixed patterns, but natural language and mathematical notation have structure that goes beyond patterns - nesting, recursion, hierarchy. In 1956, Noam Chomsky introduced the hierarchy that bears his name. He was trying to describe the syntactic structure of human languages, not computers. His insight was that phrase-structure grammars - what we now call CFGs - were the right formalism for capturing recursive embedding: the fact that a noun phrase can contain another noun phrase (the cat [that the dog [that the mouse bit] chased] fled).</p>
+<p>In 1959, John Backus independently invented what became <strong>Backus-Naur Form (BNF)</strong> to specify the syntax of ALGOL 60. BNF is essentially CFG notation. Backus was a computer scientist solving a practical problem: how do you formally specify a programming language so that compilers across different machines produce the same behavior? The answer turned out to be the same formalism a linguist had invented three years earlier for completely different reasons.</p>
+<p>This convergence - linguistics and computer science arriving at identical mathematics from opposite directions - was not a coincidence. Both fields needed to describe hierarchically nested structure with recursive rules. Chomsky&rsquo;s formal grammar and Backus&rsquo;s language specification notation are two independent rediscoveries of the same mathematical object.</p>
+<p>Donald Knuth&rsquo;s 1965 paper &ldquo;On the translation of languages from left to right&rdquo; introduced LR parsing - the basis for most production compilers. By the late 1960s, the theory of CFGs was largely complete, and the tools (yacc, later ANTLR) made it practical. Every compiler you have ever used traces a direct line to this work.</p>
 <hr>
 <h2 id="what-cfls-cannot-do">What CFLs Cannot Do</h2>
 <p>The language $\{a^n b^n c^n : n \geq 0\}$ - equal numbers of $a$s, $b$s, and $c$s - is not context-free.</p>
