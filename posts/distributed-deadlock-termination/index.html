@@ -1,71 +1,116 @@
-<!doctype html><html lang="en-us">
-<head>
-<title>Distributed Deadlock - When Systems Wait for Each Other Forever // Megha Bose</title>
-<link rel="shortcut icon" href="/favicon.ico">
-<meta charset="utf-8">
-<meta name="generator" content="Hugo 0.92.2">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="author" content="Megha Bose">
-<meta name="description" content>
-<link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Distributed Deadlock - When Systems Wait for Each Other Forever">
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Distributed Deadlock - When Systems Wait for Each Other Forever // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Distributed Deadlock - When Systems Wait for Each Other Forever"/>
 <meta name="twitter:description" content="Helpful context:
- Logical Clocks & Global State - Ordering Events When There Is No Global Clock  Distributed Mutual Exclusion - One at a Time, Without a Referee    In a distributed system, a process may wait for a message that will never arrive because the sender is waiting for a reply from a third process, which is waiting for the first. No central entity observes this cycle - each process sees only its own blocked state.">
-<meta property="og:title" content="Distributed Deadlock - When Systems Wait for Each Other Forever">
+ Logical Clocks &amp; Global State - Ordering Events When There Is No Global Clock  Distributed Mutual Exclusion - One at a Time, Without a Referee    In a distributed system, a process may wait for a message that will never arrive because the sender is waiting for a reply from a third process, which is waiting for the first. No central entity observes this cycle - each process sees only its own blocked state."/>
+
+    <meta property="og:title" content="Distributed Deadlock - When Systems Wait for Each Other Forever" />
 <meta property="og:description" content="Helpful context:
- Logical Clocks & Global State - Ordering Events When There Is No Global Clock  Distributed Mutual Exclusion - One at a Time, Without a Referee    In a distributed system, a process may wait for a message that will never arrive because the sender is waiting for a reply from a third process, which is waiting for the first. No central entity observes this cycle - each process sees only its own blocked state.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://megha-bose.github.io/posts/distributed-deadlock-termination/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2024-08-15T00:00:00+00:00">
-<meta property="article:modified_time" content="2024-08-15T00:00:00+00:00">
-<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
-</head>
-<body>
-<header class="app-header">
-<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
-<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-<nav class="app-header-menu">
-<a class="app-header-menu-item" href="/about/">About Me</a>
-<br>
-<a class="app-header-menu-item" href="/resume/"> Resume</a>
-<br>
-<a class="app-header-menu-item" href="/categories/">Topics</a>
-<br>
-<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-</nav>
-<div class="app-header-social">
-<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
-</a>
-<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</a>
-<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-</a>
-<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-</a>
-</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-<span class="theme-toggle-icon"></span>
-</button>
-</header>
-<main class="app-container">
-<article class="post">
-<header class="post-header">
-<h1 class="post-title">Distributed Deadlock - When Systems Wait for Each Other Forever</h1>
-<div class="post-meta">
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-Aug 15, 2024
-</div>
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-9 min read
-</div>
-</div>
-</header>
-<div class="post-content">
-<p><strong>Helpful context:</strong></p>
+ Logical Clocks &amp; Global State - Ordering Events When There Is No Global Clock  Distributed Mutual Exclusion - One at a Time, Without a Referee    In a distributed system, a process may wait for a message that will never arrive because the sender is waiting for a reply from a third process, which is waiting for the first. No central entity observes this cycle - each process sees only its own blocked state." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/distributed-deadlock-termination/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-08-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-08-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Distributed Deadlock - When Systems Wait for Each Other Forever</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Aug 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
 <ul>
-<li><a href="/posts/logical-clocks-global-state/" target="_blank" rel="noopener noreferrer">Logical Clocks & Global State - Ordering Events When There Is No Global Clock</a>
+<li><a href="/posts/logical-clocks-global-state/" target="_blank" rel="noopener noreferrer">Logical Clocks &amp; Global State - Ordering Events When There Is No Global Clock</a>
 </li>
 <li><a href="/posts/distributed-mutual-exclusion/" target="_blank" rel="noopener noreferrer">Distributed Mutual Exclusion - One at a Time, Without a Referee</a>
 </li>
@@ -86,7 +131,7 @@ Aug 15, 2024
 <hr>
 <h2 id="phantom-deadlocks">Phantom Deadlocks</h2>
 <p>A <strong>phantom deadlock</strong> is a false positive: the deadlock detection algorithm reports a cycle, but by the time the detection message is processed, the deadlock has been resolved (a process received what it was waiting for and is no longer blocked).</p>
-<p>Phantom deadlocks arise because the WFG is observed asynchronously. The detection algorithm sees a snapshot of the WFG, but that snapshot may not correspond to any consistent global state: one process&rsquo;s state is recorded at time $T_1$ and another&rsquo;s at time $T_2 > T_1$, and between $T_1$ and $T_2$ a message was delivered that broke the cycle.</p>
+<p>Phantom deadlocks arise because the WFG is observed asynchronously. The detection algorithm sees a snapshot of the WFG, but that snapshot may not correspond to any consistent global state: one process&rsquo;s state is recorded at time $T_1$ and another&rsquo;s at time $T_2 &gt; T_1$, and between $T_1$ and $T_2$ a message was delivered that broke the cycle.</p>
 <p>Two-phase algorithms and diffusion-based algorithms reduce (but cannot eliminate under all models) phantom deadlocks by ensuring the observed state is consistent.</p>
 <hr>
 <h2 id="one-phase-vs-two-phase-detection">One-Phase vs Two-Phase Detection</h2>
@@ -138,7 +183,7 @@ Aug 15, 2024
 <li><code>SV[i]</code>: the sequence vector - <code>SV[i][j]</code> is the sequence number of the last information process $P_i$ sent about process $P_j$.</li>
 <li><code>RV[i]</code>: the receive vector - <code>RV[i][j]</code> is the sequence number of the last information $P_i$ received about $P_j$.</li>
 </ul>
-<p>When $P_i$ sends information to the controller (or in a diffusion computation), it sends only the changes since last time - the edges where $SV[i][j] > RV[\text{receiver}][j]$. The receiver updates $RV$ accordingly.</p>
+<p>When $P_i$ sends information to the controller (or in a diffusion computation), it sends only the changes since last time - the edges where $SV[i][j] &gt; RV[\text{receiver}][j]$. The receiver updates $RV$ accordingly.</p>
 <p><strong>Why this was needed for CMH.</strong> CMH in its original form sends probes through the full WFG. In large systems with many processes and many WFG edges, each probe message carries excessive data. The differential technique reduces each message to carry only the edges that have changed since the last communication between those two processes - turning a $O(n)$-per-message overhead into an $O(\delta)$-per-message overhead where $\delta$ is the number of changed edges.</p>
 <hr>
 <h2 id="mitchell-merritt-algorithm-1984---single-resource">Mitchell-Merritt Algorithm (1984) - Single Resource</h2>
@@ -222,20 +267,51 @@ Aug 15, 2024
 <ul>
 <li><a href="/posts/distributed-mutual-exclusion/" target="_blank" rel="noopener noreferrer">Distributed Mutual Exclusion - One at a Time, Without a Referee</a>
 </li>
-<li><a href="/posts/logical-clocks-global-state/" target="_blank" rel="noopener noreferrer">Logical Clocks & Global State - Ordering Events When There Is No Global Clock</a>
+<li><a href="/posts/logical-clocks-global-state/" target="_blank" rel="noopener noreferrer">Logical Clocks &amp; Global State - Ordering Events When There Is No Global Clock</a>
 </li>
 <li><a href="/posts/fault-tolerance/" target="_blank" rel="noopener noreferrer">Fault Tolerance - Building Systems That Survive Their Own Failures</a>
 </li>
-<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency & CAP - The Tradeoff Distributed Systems Cannot Escape</a>
+<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape</a>
 </li>
 </ul>
-</div>
-<div class="post-footer">
-</div>
-</article>
-</main>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
-<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
-</body>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>
