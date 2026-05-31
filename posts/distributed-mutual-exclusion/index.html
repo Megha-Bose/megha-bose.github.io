@@ -14,10 +14,12 @@
     
     <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Distributed Mutual Exclusion - One at a Time, Without a Referee"/>
-<meta name="twitter:description" content="In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS. A process entering a critical section must somehow convince every other process in the network that it has exclusive access - without any entity having global visibility."/>
+<meta name="twitter:description" content="Helpful context:
+ Logical Clocks &amp; Global State - Ordering Events When There Is No Global Clock  Time in Distributed Systems - Why Clocks Disagree and What to Do About It    In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS."/>
 
     <meta property="og:title" content="Distributed Mutual Exclusion - One at a Time, Without a Referee" />
-<meta property="og:description" content="In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS. A process entering a critical section must somehow convince every other process in the network that it has exclusive access - without any entity having global visibility." />
+<meta property="og:description" content="Helpful context:
+ Logical Clocks &amp; Global State - Ordering Events When There Is No Global Clock  Time in Distributed Systems - Why Clocks Disagree and What to Do About It    In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://megha-bose.github.io/posts/distributed-mutual-exclusion/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2024-08-10T00:00:00+00:00" />
@@ -106,7 +108,14 @@
       </div>
     </header>
     <div class="post-content">
-      <hr>
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/logical-clocks-global-state/" target="_blank" rel="noopener noreferrer">Logical Clocks &amp; Global State - Ordering Events When There Is No Global Clock</a>
+</li>
+<li><a href="/posts/distributed-time-clocks/" target="_blank" rel="noopener noreferrer">Time in Distributed Systems - Why Clocks Disagree and What to Do About It</a>
+</li>
+</ul>
+<hr>
 <p>In a single machine, mutual exclusion is enforced by the operating system: a mutex, a semaphore, a spinlock - all implemented using atomic hardware instructions that can compare-and-swap a memory location. In a distributed system, there is no shared memory and no central OS. A process entering a critical section must somehow convince every other process in the network that it has exclusive access - without any entity having global visibility. The history of distributed mutual exclusion is a sequence of algorithms, each reducing message complexity or eliminating a bottleneck, while maintaining safety (at most one process in the CS at a time) and liveness (every request is eventually granted).</p>
 <p>Each algorithm in this sequence responds to a concrete deficiency in the previous one. Lamport gave the first correct solution but sent one message too many. Ricart and Agrawala noticed that the extra message was redundant and eliminated it. Maekawa asked why every process needed to hear from every other process, and showed that a carefully chosen quorum of $\sqrt{n}$ sufficed. Token-based algorithms took a different approach entirely - instead of asking for permission, they pass a token, reducing the steady-state cost to near zero. Understanding why each design choice was made requires understanding the cost model it was optimizing against.</p>
 <p>The correctness argument for all of these algorithms rests on the same underlying insight: two processes can only enter the critical section simultaneously if they somehow both receive permission without the other knowing. Every algorithm below prevents this by constructing an intersection property - either in the set of processes that must reply, or in the structure of a voting quorum, or in the uniqueness of a token. The differences are entirely in how efficiently that intersection is enforced.</p>
