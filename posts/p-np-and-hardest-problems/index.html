@@ -105,7 +105,7 @@ Personally, I suspect anyone capable of actually solving this wouldn&rsquo;t be 
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          7 min read
+          9 min read
         </div>
       </div>
     </header>
@@ -142,8 +142,10 @@ Personally, I suspect anyone capable of actually solving this wouldn&rsquo;t be 
 <p>These are the &ldquo;tractable&rdquo; problems. Given enough data, these algorithms finish in reasonable time.</p>
 <hr>
 <h2 id="np-problems-where-you-can-check-an-answer">NP: Problems Where You Can Check an Answer</h2>
-<p><strong>NP</strong> is the class of problems where, if someone hands you a solution, you can <em>verify</em> it in polynomial time.</p>
-<p>To check whether a proposed solution to a problem is correct is much easier than finding a solution in the first place. If I claim the 100-city traveling salesman tour costs at most 10,000 miles, you can verify this in $O(n)$ time (add up the edge weights). But finding the cheapest tour seems to require checking all $100!$ possible orderings.</p>
+<p><strong>NP</strong> stands for <em>Nondeterministic Polynomial</em> - not &ldquo;Not Polynomial,&rdquo; as many people assume. It is the class of problems where, if someone hands you a proposed solution, you can <em>verify</em> it in polynomial time.</p>
+<p>The intuition: checking someone else&rsquo;s work is far easier than doing the work yourself. A concrete example makes this vivid.</p>
+<p><strong>The Traveling Salesman Problem (TSP):</strong> Given a set of cities and the road distance between every pair, find the shortest route that visits every city exactly once and returns to the starting city. With 10 cities there are already $10!/2 \approx 1.8$ million possible routes to check. With 30 cities, more routes than grains of sand on Earth. With 100 cities, more than atoms in the observable universe. No computer can enumerate them all. Yet if someone hands you a specific tour and claims it covers fewer than $B$ miles total, you can verify this in seconds - just add up the distances. Verification takes $O(n)$ time. Finding the optimum seems to take exponential time. This gap - easy to check, hard to find - is exactly what NP captures.</p>
+<p>The &ldquo;Nondeterministic&rdquo; in the name formalizes the same idea: a nondeterministic Turing machine can &ldquo;guess&rdquo; the right answer instantly and then verify it in polynomial time. A real machine has no magic guessing - it must actually search.</p>
 <p>Formally: $L \in \mathbf{NP}$ if there exists a polynomial-time verifier $V$ such that</p>
 <p>$$w \in L \iff \text{there exists a certificate } c \text{ with } |c| \leq \text{poly}(|w|) \text{ and } V(w, c) \text{ accepts}$$</p>
 <p>The certificate is the &ldquo;proof&rdquo; or &ldquo;witness&rdquo; - the proposed solution that the verifier checks.</p>
@@ -169,7 +171,9 @@ Personally, I suspect anyone capable of actually solving this wouldn&rsquo;t be 
 <h2 id="np-hard-and-np-complete">NP-Hard and NP-Complete</h2>
 <p>Some problems in NP are the <em>hardest</em> problems in NP: if you could solve any one of them in polynomial time, you could solve every problem in NP in polynomial time.</p>
 <p>A problem $X$ is <strong>NP-hard</strong> if every problem in NP reduces to $X$ in polynomial time. A problem is <strong>NP-complete</strong> if it is NP-hard and also in NP.</p>
+<p>&ldquo;Reduces to&rdquo; means there is a polynomial-time translation: given any instance of any NP problem, you can convert it into an instance of $X$ such that $X$&rsquo;s answer gives you the original answer. If you can solve $X$ efficiently, you can solve everything in NP efficiently. So $X$ is at least as hard as every NP problem at once.</p>
 <p>NP-complete problems are the hardest problems in NP. If any one NP-complete problem has a polynomial-time algorithm, then P = NP and every NP problem becomes tractable. Conversely, if P $\neq$ NP, no NP-complete problem has a polynomial-time algorithm.</p>
+<p>The remarkable fact - proved by Cook and Karp in the early 1970s - is that thousands of problems from scheduling, graph theory, biology, and cryptography are all NP-complete. They form a web of reductions: 3-SAT reduces to Graph Coloring reduces to Clique reduces to TSP. Solve any one efficiently and you solve all of them. NP-complete problems are all secretly the same problem wearing different clothes.</p>
 <p>The canonical NP-complete problems include:</p>
 <ul>
 <li><strong>3-SAT</strong>: Boolean satisfiability with 3-literal clauses</li>
@@ -180,6 +184,25 @@ Personally, I suspect anyone capable of actually solving this wouldn&rsquo;t be 
 <li><strong>Scheduling</strong>: can jobs be assigned to machines meeting all deadlines?</li>
 </ul>
 <p>These problems are all interconnected: a polynomial algorithm for any one of them would immediately give polynomial algorithms for all of them. That&rsquo;s what &ldquo;NP-complete&rdquo; means.</p>
+<hr>
+<h2 id="the-landscape">The Landscape</h2>
+<div style="text-align:center; margin: 2em 0;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 285" style="max-width:520px; display:inline-block;">
+  <ellipse cx="205" cy="142" rx="196" ry="118" fill="#dbeafe" stroke="#3b82f6" stroke-width="2.5"/>
+  <ellipse cx="368" cy="142" rx="155" ry="104" fill="rgba(254,202,202,0.75)" stroke="#ef4444" stroke-width="2.5"/>
+  <ellipse cx="115" cy="150" rx="83" ry="60" fill="#bbf7d0" stroke="#22c55e" stroke-width="2.5"/>
+  <text x="115" y="156" text-anchor="middle" font-size="17" font-weight="bold" fill="#166534">P</text>
+  <text x="230" y="52" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e40af">NP</text>
+  <text x="490" y="52" text-anchor="middle" font-size="13" font-weight="bold" fill="#b91c1c">NP-hard</text>
+  <text x="298" y="136" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#6d28d9">NP-complete</text>
+  <text x="298" y="154" text-anchor="middle" font-size="10.5" fill="#7c3aed">NP ∩ NP-hard</text>
+  <text x="456" y="138" text-anchor="middle" font-size="10" fill="#991b1b">e.g. HALT</text>
+  <text x="456" y="153" text-anchor="middle" font-size="10" fill="#991b1b">(undecidable,</text>
+  <text x="456" y="168" text-anchor="middle" font-size="10" fill="#991b1b">yet NP-hard)</text>
+  <text x="270" y="277" text-anchor="middle" font-size="10" fill="#888" font-style="italic">Assuming P ≠ NP. If P = NP, the green circle expands to fill all of NP.</text>
+</svg>
+</div>
+<p>P is inside NP - anything solvable quickly can also be verified quickly. NP-complete problems live at the hard edge of NP, where NP and NP-hard overlap. NP-hard extends beyond NP to include problems like the halting problem - undecidable, yet at least as hard as every NP problem.</p>
 <hr>
 <h2 id="what-np-hardness-means-in-practice">What NP-Hardness Means in Practice</h2>
 <p>When you prove your problem is NP-hard, it&rsquo;s not a defeat - it&rsquo;s information. You know:</p>
