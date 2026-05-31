@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic"/>
+<meta name="twitter:description" content="Helpful context:
+ Latency, Throughput &amp; Queues - The Physics of System Performance  Load Balancing &amp; Proxies - Distributing Traffic So No One Server Drowns  Multi-Tenancy &amp; The Noisy Neighbor Problem - Sharing Hardware Without Sharing Problems    On April 3, 2021, a change to a downstream API at a major social platform caused a cascade of retries. Clients got errors, retried immediately, got more errors, retried again."/>
+
+    <meta property="og:title" content="Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic" />
+<meta property="og:description" content="Helpful context:
+ Latency, Throughput &amp; Queues - The Physics of System Performance  Load Balancing &amp; Proxies - Distributing Traffic So No One Server Drowns  Multi-Tenancy &amp; The Noisy Neighbor Problem - Sharing Hardware Without Sharing Problems    On April 3, 2021, a change to a downstream API at a major social platform caused a cascade of retries. Clients got errors, retried immediately, got more errors, retried again." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/rate-limiting-throttling/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-05-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-31T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          May 31, 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/latency-throughput-queues/" target="_blank" rel="noopener noreferrer">Latency, Throughput &amp; Queues - The Physics of System Performance</a>
+</li>
+<li><a href="/posts/load-balancing-proxies/" target="_blank" rel="noopener noreferrer">Load Balancing &amp; Proxies - Distributing Traffic So No One Server Drowns</a>
+</li>
+<li><a href="/posts/multi-tenancy-noisy-neighbors/" target="_blank" rel="noopener noreferrer">Multi-Tenancy &amp; The Noisy Neighbor Problem - Sharing Hardware Without Sharing Problems</a>
+</li>
+</ul>
+<hr>
+<p>On April 3, 2021, a change to a downstream API at a major social platform caused a cascade of retries. Clients got errors, retried immediately, got more errors, retried again. Within minutes, the number of requests to the API was forty times normal volume - not from external attackers, but from the platform&rsquo;s own clients responding rationally to failures. The service that could handle a million requests per minute was receiving forty million, failing at every one, receiving forty million retries, and failing at those too. The feedback loop ran until someone manually intervened.</p>
+<p>This is the retry storm, one of the most common ways that distributed systems destroy themselves. Rate limiting is the control mechanism that prevents it - and it is also what keeps a single badly behaved client from consuming resources that belong to everyone.</p>
+<hr>
+<h2 id="why-services-need-rate-limits">Why Services Need Rate Limits</h2>
+<p>A service without rate limits has an implicit assumption baked in: that every client will be reasonable. This assumption is violated constantly, usually without malice.</p>
+<p>A client that is misconfigured might hammer an API in a tight loop. A client written by a new engineer might not implement exponential backoff. A legitimate client running a bulk operation - exporting a year of data, reindexing a search corpus - might make millions of requests that are individually valid but collectively starve interactive users. A client that is being attacked might forward the attacker&rsquo;s requests directly.</p>
+<p>Rate limits are not punishment for misbehavior. They are a contract: here is how fast you can call this API, and here is what happens when you exceed it. This contract protects the service, protects other clients, and - by returning a clear signal (HTTP 429: Too Many Requests) instead of slow failures - actually helps well-behaved clients handle overload gracefully.</p>
+<hr>
+<h2 id="token-bucket">Token Bucket</h2>
+<p>The most widely used rate limiting algorithm is the <strong>token bucket</strong>. The intuition is almost literal: imagine a bucket that holds tokens, refilled at a fixed rate. To make a request, a client must spend a token. If the bucket is empty, the request is rejected.</p>
+<p>The parameters:</p>
+<ul>
+<li><strong>Capacity</strong>: the maximum number of tokens the bucket can hold</li>
+<li><strong>Refill rate</strong>: how many tokens are added per second (or per minute)</li>
+</ul>
+<p>A bucket with capacity 100 and refill rate 10/second allows bursts of up to 100 requests, then sustains exactly 10 requests per second indefinitely. The bucket absorbs short bursts - if a client has been idle for 10 seconds and then sends 100 requests at once, all 100 go through. But it cannot sustain a rate higher than the refill rate over any long interval.</p>
+<p>This is the behavior most APIs want. Interactive users generate bursts - a user clicks several things in quick succession - then go quiet. Sustained high-rate requests are the ones that need limiting.</p>
+<p>Implementation is simple: each client identifier (API key, IP address, user ID) has its own bucket. On each request, check whether the bucket has a token; if so, decrement and allow; if not, return 429. Periodically add tokens up to the capacity ceiling.</p>
+<p>In Redis or Memcached: store the current token count and the last refill timestamp. On each request, compute how many tokens to add based on elapsed time, cap at capacity, then check and decrement atomically. Atomic operations prevent the race condition where two concurrent requests both observe a non-empty bucket and both succeed when only one should.</p>
+<hr>
+<h2 id="leaky-bucket">Leaky Bucket</h2>
+<p>The <strong>leaky bucket</strong> algorithm is related but inverts the metaphor. Requests flow into a bucket (a queue); the bucket leaks at a fixed rate regardless of how fast requests arrive. If the bucket is full, incoming requests are dropped.</p>
+<p>The difference from token bucket is that leaky bucket enforces a smooth output rate. No matter how fast requests arrive, they are processed at exactly the configured rate. This is useful when you need to protect a downstream system that cannot handle bursty load - a database that saturates at 100 writes per second, for instance.</p>
+<p>Token bucket allows bursts up to the bucket capacity. Leaky bucket smooths all bursts into a constant rate. The choice depends on whether your backend can tolerate short bursts.</p>
+<hr>
+<h2 id="sliding-window">Sliding Window</h2>
+<p>Token bucket and leaky bucket both have an edge case: a client can double their effective rate around bucket reset boundaries. With a fixed window of &ldquo;1000 requests per hour, resetting at the top of the hour,&rdquo; a client can make 1000 requests at 11:59 and another 1000 at 12:00 - 2000 requests in two minutes while technically respecting the limit.</p>
+<p><strong>Sliding window</strong> eliminates this by maintaining a count over a rolling time window rather than a fixed one. At any point in time, the count is the number of requests in the last N seconds. This prevents the boundary burst at the cost of slightly more bookkeeping.</p>
+<p>A practical implementation: store a sorted list of request timestamps for each client, and count how many fall within the last window. On each request, discard expired timestamps, count the remaining ones, and reject if the count exceeds the limit. This gets expensive for high-traffic clients because the list of timestamps grows large. A compromise is the <strong>sliding window counter</strong>: divide time into fixed buckets (1-minute buckets for an hourly limit), keep the last two buckets, and interpolate: current count = current bucket + previous bucket * (elapsed fraction of current period).</p>
+<hr>
+<h2 id="where-rate-limits-live">Where Rate Limits Live</h2>
+<p>Rate limiting can happen at multiple layers, and which layer is appropriate depends on what you are protecting.</p>
+<p><strong>At the edge (API gateway or load balancer):</strong> the first line of defense against external clients. An API gateway like Kong, Envoy, or Google Cloud API Gateway can apply per-API-key rate limits before the request reaches any application server. This is where you enforce quotas for paying tiers - free users get 1000 requests per day, paid users get 100,000. It is also where you block IP addresses or API keys that are obviously misbehaving.</p>
+<p><strong>At the service level:</strong> a service enforcing its own limits against callers, including internal callers. A search service might limit how many concurrent queries a single upstream service can issue, regardless of whether the caller is external or internal. This prevents a single misbehaving upstream from degrading search for everyone.</p>
+<p><strong>At the client level:</strong> clients can rate-limit themselves, which sounds counterintuitive until you consider why. A batch job that needs to read a million rows from a database benefits from self-imposed rate limiting because it prevents the batch from overwhelming the database and affecting interactive queries. A well-written client should have a configurable request rate and respect it.</p>
+<hr>
+<h2 id="distributed-rate-limiting">Distributed Rate Limiting</h2>
+<p>Rate limiting a single server is trivial. Rate limiting across a cluster of servers is harder.</p>
+<p>The simplest approach is to store rate limit state in a shared cache like Redis. Every server in your fleet checks and updates the same bucket for each client. This is correct but introduces a dependency on Redis: if Redis is unavailable, you cannot rate limit. The choice is to fail open (allow all requests) or fail closed (reject all requests). For most rate limiting scenarios, failing open is safer - a brief window of unthrottled traffic is acceptable, but rejecting all traffic during a Redis outage is not.</p>
+<p>A more resilient approach is approximate distributed rate limiting: each server maintains a local counter and syncs with a central store periodically. Between syncs, a client can exceed the limit by a factor proportional to the number of servers and the sync interval. If you have 10 servers with 5-second sync intervals and a limit of 100 requests per second, a client can burst to 1000 requests per 5 seconds (100 per server) before the central count catches up. Whether this approximation is acceptable depends on how strict the limit needs to be.</p>
+<hr>
+<h2 id="throttling-vs-rate-limiting">Throttling vs Rate Limiting</h2>
+<p>These terms are often used interchangeably, but they describe different behaviors.</p>
+<p><strong>Rate limiting</strong> rejects requests that exceed a threshold - the client gets a 429 and must retry later. The service does no work on the rejected request.</p>
+<p><strong>Throttling</strong> slows down requests rather than rejecting them - the service accepts the request but delays its processing. A throttled request waits in a queue; a rate-limited request is turned away immediately.</p>
+<p>Throttling is useful when you want to protect a service without forcing clients to implement retry logic. The client experiences slowness rather than errors. But throttling requires space to queue the requests, and a queue that grows without bound is just a delayed crash. Effective throttling requires both a rate limit on how fast you process and a capacity limit on how many requests you will queue.</p>
+<hr>
+<h2 id="responding-to-429s-backoff-with-jitter">Responding to 429s: Backoff with Jitter</h2>
+<p>A client that receives a 429 should wait before retrying. How long?</p>
+<p><strong>Exponential backoff</strong> is the standard: after the first failure, wait 1 second. After the second, wait 2 seconds. After the third, 4 seconds. After the fourth, 8 seconds, and so on. This prevents a client from hammering a struggling service with constant retries.</p>
+<p>The problem with pure exponential backoff across many clients is synchronization. If 1000 clients all back off after the same overload event, they will all retry at almost the same time, creating the same overload spike that caused the failure. This is the thundering herd.</p>
+<p><strong>Jitter</strong> is the fix: instead of waiting exactly 8 seconds, wait a random amount between 0 and 8 seconds. The clients spread their retries across the backoff window, smoothing out the retry wave. AWS&rsquo;s retry logic for SDK clients uses &ldquo;full jitter&rdquo; by default: random between 0 and the full backoff ceiling.</p>
+<p>The rule: whenever you implement a retry loop, add jitter. A retry loop without jitter is a thundering herd waiting to happen.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Behavior</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Token bucket</td>
+<td>Allows bursts up to capacity; refills at fixed rate</td>
+<td>Most APIs - absorbs natural burstiness</td>
+</tr>
+<tr>
+<td>Leaky bucket</td>
+<td>Enforces smooth output rate regardless of input</td>
+<td>Protecting backends that cannot tolerate bursts</td>
+</tr>
+<tr>
+<td>Sliding window</td>
+<td>Rolling count; no reset boundary artifacts</td>
+<td>Strict per-window limits</td>
+</tr>
+<tr>
+<td>Distributed (central store)</td>
+<td>Exact cross-server limits with Redis dependency</td>
+<td>Correctness-critical quotas</td>
+</tr>
+<tr>
+<td>Distributed (approximate)</td>
+<td>Local counters with periodic sync; may over-allow</td>
+<td>High-volume, tolerates small overages</td>
+</tr>
+</tbody>
+</table>
+<p>Rate limiting is not defensive programming for edge cases. It is table stakes for any service that accepts requests from clients you do not fully control - which is every production service. The clients that benefit most from clear rate limits are the well-behaved ones, because rate limits give them a signal they can act on rather than opaque degradation that is impossible to diagnose.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/reliability-patterns/" target="_blank" rel="noopener noreferrer">Reliability Patterns - How Services Stay Up When Everything Around Them Falls Apart</a>
+</li>
+<li><a href="/posts/sre-slos-error-budgets/" target="_blank" rel="noopener noreferrer">SRE &amp; Error Budgets - Reliability Is a Feature, Not an Afterthought</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

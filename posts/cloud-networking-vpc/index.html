@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Cloud Networking &amp; VPC - The Private Network Inside the Public Cloud // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Cloud Networking &amp; VPC - The Private Network Inside the Public Cloud"/>
+<meta name="twitter:description" content="Helpful context:
+ Networking, IP, TCP &amp; HTTP - How Data Gets From Here to There  Cloud Storage Models - Block, File, and Object Storage  Security Fundamentals - How Systems Protect Themselves and Their Data    When you spin up a virtual machine in GCP or AWS, it does not go directly onto the public internet. It lives inside a private network - a network that you define, that only your resources can see by default, and that you control: what can communicate with what, what can reach the internet, and what stays entirely isolated."/>
+
+    <meta property="og:title" content="Cloud Networking &amp; VPC - The Private Network Inside the Public Cloud" />
+<meta property="og:description" content="Helpful context:
+ Networking, IP, TCP &amp; HTTP - How Data Gets From Here to There  Cloud Storage Models - Block, File, and Object Storage  Security Fundamentals - How Systems Protect Themselves and Their Data    When you spin up a virtual machine in GCP or AWS, it does not go directly onto the public internet. It lives inside a private network - a network that you define, that only your resources can see by default, and that you control: what can communicate with what, what can reach the internet, and what stays entirely isolated." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/cloud-networking-vpc/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-05-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-31T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Cloud Networking &amp; VPC - The Private Network Inside the Public Cloud</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          May 31, 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/networking-ip-tcp-http/" target="_blank" rel="noopener noreferrer">Networking, IP, TCP &amp; HTTP - How Data Gets From Here to There</a>
+</li>
+<li><a href="/posts/cloud-storage-models/" target="_blank" rel="noopener noreferrer">Cloud Storage Models - Block, File, and Object Storage</a>
+</li>
+<li><a href="/posts/security-fundamentals/" target="_blank" rel="noopener noreferrer">Security Fundamentals - How Systems Protect Themselves and Their Data</a>
+</li>
+</ul>
+<hr>
+<p>When you spin up a virtual machine in GCP or AWS, it does not go directly onto the public internet. It lives inside a private network - a network that you define, that only your resources can see by default, and that you control: what can communicate with what, what can reach the internet, and what stays entirely isolated.</p>
+<p>This private network is the <strong>Virtual Private Cloud (VPC)</strong>. Understanding how it works is not optional if you are building anything that needs to run reliably and securely in a cloud environment. Misconfigured networks are one of the most common sources of both security incidents and mysterious connectivity failures.</p>
+<hr>
+<h2 id="the-problem-vpcs-solve">The Problem VPCs Solve</h2>
+<p>In the early days of AWS, before VPCs existed (2006-2009), every EC2 instance went into a flat shared network. Your instances were on the same network as other customers' instances. The only isolation was security groups - firewall rules that controlled which traffic could reach your instances. There was no concept of a private network that only your resources could see.</p>
+<p>This was obviously inadequate for serious workloads. A database server and a web server should not be on the same network segment as machines belonging to strangers. The principle of least privilege - give each component access only to what it needs - requires a network topology where isolation is possible.</p>
+<p>VPCs, introduced in AWS in 2009 and the default mode of GCP from the start, give you a private network that is logically isolated from other customers' networks. The isolation is enforced by the cloud provider&rsquo;s networking infrastructure - your instances are physically on shared hardware, but the virtual network layer ensures that traffic from your VPC cannot reach another customer&rsquo;s VPC and vice versa.</p>
+<hr>
+<h2 id="ip-addresses-subnets-and-cidr">IP Addresses, Subnets, and CIDR</h2>
+<p>A VPC is defined by an <strong>IP address range</strong> in CIDR notation. CIDR (Classless Inter-Domain Routing) is a compact way to express a range of IP addresses. The notation <code>10.0.0.0/8</code> means: the network with IP address <code>10.0.0.0</code>, with a prefix length of 8 bits. The first 8 bits are fixed; the remaining 24 bits can vary. That is $2^{24} = 16{,}777{,}216$ addresses, from <code>10.0.0.0</code> to <code>10.255.255.255</code>.</p>
+<p>A <code>/16</code> gives you 65,536 addresses. A <code>/24</code> gives you 256. A <code>/28</code> gives you 16. In practice, VPCs are often defined as <code>/16</code> networks (large enough for substantial growth) and divided into subnets.</p>
+<p>A <strong>subnet</strong> is a sub-range of the VPC&rsquo;s address space, scoped to a single zone. If the VPC is <code>10.0.0.0/16</code>, you might create:</p>
+<ul>
+<li>Subnet for us-central1-a: <code>10.0.1.0/24</code> (256 addresses)</li>
+<li>Subnet for us-central1-b: <code>10.0.2.0/24</code> (256 addresses)</li>
+<li>Subnet for us-central1-c: <code>10.0.3.0/24</code> (256 addresses)</li>
+</ul>
+<p>Each VM placed in a zone gets an IP address from that zone&rsquo;s subnet. VMs in the same subnet can communicate directly. VMs in different subnets in the same VPC can communicate through the VPC&rsquo;s internal routing.</p>
+<p>The key design decision is <strong>subnet purpose</strong>. It is common to separate:</p>
+<ul>
+<li>Public subnets for resources that need to be internet-accessible (load balancers, NAT gateways)</li>
+<li>Private subnets for resources that should only be accessible from inside the network (databases, application servers, Kubernetes worker nodes)</li>
+</ul>
+<p>A database in a private subnet has no direct route to or from the internet. An attacker who compromises the public internet cannot directly connect to it - they would first need to compromise something inside the private subnet.</p>
+<hr>
+<h2 id="routing">Routing</h2>
+<p>Within a VPC, traffic between instances is routed by the cloud provider&rsquo;s virtual network fabric. You do not need to configure routing for intra-VPC traffic; it just works.</p>
+<p>Traffic to and from the internet is different. A <strong>route table</strong> defines where traffic goes based on its destination. Every subnet has a route table. The default route table has:</p>
+<ul>
+<li>A local route: traffic to any address in the VPC goes to the VPC&rsquo;s internal network</li>
+<li>An internet route (if the subnet is public): traffic to <code>0.0.0.0/0</code> (all other addresses) goes to the internet gateway</li>
+</ul>
+<p>Instances in public subnets have public IP addresses and can communicate directly with the internet. Instances in private subnets cannot be reached from the internet, but they also cannot reach the internet by default - they have no route to the internet gateway. This is usually intentional for databases, but application servers in private subnets still need to reach the internet: to download software updates, call external APIs, pull container images.</p>
+<p>The solution is a <strong>Cloud NAT (Network Address Translation) gateway</strong>. A NAT gateway sits in a public subnet and translates outbound traffic from private instances: the private instance sends a packet to <code>1.2.3.4</code>, the NAT gateway rewrites the source address to its own public IP, forwards the packet, receives the response, and forwards it back to the private instance. The internet sees only the NAT gateway&rsquo;s IP, not the private instance&rsquo;s. Inbound connections from the internet to the private instance are not possible - the NAT gateway does not maintain state for connections it did not initiate.</p>
+<hr>
+<h2 id="firewall-rules">Firewall Rules</h2>
+<p>VPC firewall rules control which traffic is allowed into and out of VM instances. They operate on the VPC level (not the subnet level) and apply to VMs based on <strong>network tags</strong> or <strong>service accounts</strong> rather than IP addresses.</p>
+<p>A firewall rule specifies:</p>
+<ul>
+<li><strong>Direction</strong>: ingress (incoming) or egress (outgoing)</li>
+<li><strong>Priority</strong>: lower number = higher priority; the first matching rule applies</li>
+<li><strong>Match criteria</strong>: source/destination IP ranges, protocols, ports</li>
+<li><strong>Target</strong>: which VMs this rule applies to (via network tag or service account)</li>
+<li><strong>Action</strong>: allow or deny</li>
+</ul>
+<p>Example: to allow HTTP traffic to web servers tagged <code>webserver</code>, create a rule: ingress, priority 1000, source <code>0.0.0.0/0</code>, TCP port 80, target tag <code>webserver</code>, action allow.</p>
+<p>GCP&rsquo;s implicit default rules deny all ingress and allow all egress. If you have no rules, nothing can reach your instances from outside (including from the internet) and your instances can reach anything. You add allow rules to open specific ports to specific sources.</p>
+<p>The tag-based model is useful because it decouples firewall rules from IP addresses. IP addresses change when instances are replaced. Tags persist. A new web server that is tagged <code>webserver</code> automatically inherits the firewall rules for that tag, without needing a firewall rule update.</p>
+<hr>
+<h2 id="vpc-peering">VPC Peering</h2>
+<p>By default, two VPCs cannot communicate with each other - even within the same account. If you want resources in VPC A to communicate with resources in VPC B (perhaps because different teams or environments live in different VPCs), you connect them with <strong>VPC peering</strong>.</p>
+<p>A VPC peering connection is a direct, private network connection between two VPCs. Traffic between peered VPCs travels over the cloud provider&rsquo;s private network backbone, not the public internet. Latency is low, and there are no data transfer costs for traffic within the same region (cross-region peering does incur costs).</p>
+<p>The constraint: <strong>VPC peering is not transitive.</strong> If VPC A peers with VPC B, and VPC B peers with VPC C, VPC A cannot reach VPC C. You would need to also peer A with C. This becomes unwieldy with many VPCs.</p>
+<hr>
+<h2 id="shared-vpc">Shared VPC</h2>
+<p>GCP&rsquo;s <strong>Shared VPC</strong> (called Transit Gateway in AWS) addresses the scalability problem of peering. Instead of each team having its own VPC and peering them all together, one <strong>host project</strong> owns the VPC, and multiple <strong>service projects</strong> (owned by different teams) can use subnets in that VPC.</p>
+<p>Resources in different service projects can communicate within the same Shared VPC without peering. Network administration is centralized - the platform team controls the network; individual teams deploy workloads but cannot modify the network configuration. This is the pattern large organizations use to enforce consistent network security policies across many teams without requiring them to manage networking themselves.</p>
+<hr>
+<h2 id="private-service-connect-and-private-google-access">Private Service Connect and Private Google Access</h2>
+<p>Your application running in a private subnet might need to access GCP services - Cloud Storage, BigQuery, Pub/Sub. By default, these services are accessible at public IP addresses. Traffic from a private instance would need to go through the internet to reach them.</p>
+<p><strong>Private Google Access</strong> enables private subnet instances to reach GCP APIs and services using internal IP addresses rather than routing through the internet. Enable it on the subnet, and instances in that subnet can access <code>storage.googleapis.com</code> over Google&rsquo;s internal network without a NAT gateway.</p>
+<p><strong>Private Service Connect</strong> goes further: it lets you create a private endpoint inside your VPC that represents a managed service (including third-party services). Instead of <code>storage.googleapis.com</code>, you reach Cloud Storage at <code>storage.my-project.internal</code> - an IP address inside your VPC. Traffic never traverses the public internet, and the endpoint can be locked down with firewall rules.</p>
+<hr>
+<h2 id="cloud-interconnect">Cloud Interconnect</h2>
+<p>For workloads where internet connectivity is inadequate - too much latency, bandwidth, or security risk - GCP offers direct physical connections.</p>
+<p><strong>Dedicated Interconnect</strong> is a direct physical connection between your on-premises network and Google&rsquo;s network at a colocation facility. Traffic flows over a private circuit with no public internet traversal. Suitable for bulk data transfer, latency-sensitive workloads, or compliance requirements that prohibit data traversal over shared internet infrastructure.</p>
+<p><strong>Partner Interconnect</strong> provides similar benefits through a network service provider (like AT&amp;T or Equinix) rather than a direct connection. Easier to procure than Dedicated Interconnect, slightly higher latency, appropriate for organizations that cannot afford or do not need the capacity of a direct connection.</p>
+<p><strong>Cloud VPN</strong> is the software-based alternative: an encrypted tunnel over the public internet between your on-premises network and your VPC. Simpler and cheaper than Interconnect, but dependent on public internet reliability and bandwidth.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VPC</td>
+<td>Isolated private network for your cloud resources</td>
+</tr>
+<tr>
+<td>Subnet</td>
+<td>IP address range within a VPC, scoped to a zone</td>
+</tr>
+<tr>
+<td>Route table</td>
+<td>Defines where traffic for a destination IP should go</td>
+</tr>
+<tr>
+<td>Cloud NAT</td>
+<td>Enables private instances to initiate outbound internet connections</td>
+</tr>
+<tr>
+<td>Firewall rules</td>
+<td>Allow/deny traffic to VMs by tag, port, and source</td>
+</tr>
+<tr>
+<td>VPC peering</td>
+<td>Private network connection between two VPCs (not transitive)</td>
+</tr>
+<tr>
+<td>Shared VPC</td>
+<td>One host project&rsquo;s network used by multiple service projects</td>
+</tr>
+<tr>
+<td>Private Google Access</td>
+<td>Private subnet access to GCP services without internet traversal</td>
+</tr>
+<tr>
+<td>Cloud Interconnect</td>
+<td>Dedicated or partnered physical link to Google&rsquo;s network</td>
+</tr>
+</tbody>
+</table>
+<p>The networking layer is invisible when it works and catastrophic when it does not. A service that cannot reach its database, or a private subnet that is accidentally internet-accessible, or a firewall rule that silently blocks legitimate traffic - all of these are network configuration failures, not application failures, and they are harder to debug precisely because they are invisible to the application. Getting the network design right upfront - separating public and private subnets, applying firewall rules based on tags, using Private Google Access - is much easier than retrofitting it onto a running system.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/security-fundamentals/" target="_blank" rel="noopener noreferrer">Security Fundamentals - How Systems Protect Themselves and Their Data</a>
+</li>
+<li><a href="/posts/kubernetes-container-orchestration/" target="_blank" rel="noopener noreferrer">Kubernetes - What Happens When You Have Too Many Containers</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Kubernetes - What Happens When You Have Too Many Containers // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Kubernetes - What Happens When You Have Too Many Containers"/>
+<meta name="twitter:description" content="Helpful context:
+ Docker &amp; Containerization - Packaging Code So It Runs the Same Everywhere  Operating Systems - The Software That Runs All Other Software  Microservices - Small Services, Large Coordination Problems    Docker solved the &ldquo;it works on my machine&rdquo; problem. You package an application and all its dependencies into a container image, and that image runs identically on any machine with a container runtime. This is genuinely useful, and for a single service on a single server, Docker is enough."/>
+
+    <meta property="og:title" content="Kubernetes - What Happens When You Have Too Many Containers" />
+<meta property="og:description" content="Helpful context:
+ Docker &amp; Containerization - Packaging Code So It Runs the Same Everywhere  Operating Systems - The Software That Runs All Other Software  Microservices - Small Services, Large Coordination Problems    Docker solved the &ldquo;it works on my machine&rdquo; problem. You package an application and all its dependencies into a container image, and that image runs identically on any machine with a container runtime. This is genuinely useful, and for a single service on a single server, Docker is enough." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/kubernetes-container-orchestration/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-05-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-31T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Kubernetes - What Happens When You Have Too Many Containers</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          May 31, 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/docker-containerization/" target="_blank" rel="noopener noreferrer">Docker &amp; Containerization - Packaging Code So It Runs the Same Everywhere</a>
+</li>
+<li><a href="/posts/operating-systems-fundamentals/" target="_blank" rel="noopener noreferrer">Operating Systems - The Software That Runs All Other Software</a>
+</li>
+<li><a href="/posts/microservices-architecture/" target="_blank" rel="noopener noreferrer">Microservices - Small Services, Large Coordination Problems</a>
+</li>
+</ul>
+<hr>
+<p>Docker solved the &ldquo;it works on my machine&rdquo; problem. You package an application and all its dependencies into a container image, and that image runs identically on any machine with a container runtime. This is genuinely useful, and for a single service on a single server, Docker is enough.</p>
+<p>But production systems are not a single service on a single server. They are dozens of services, hundreds of containers, spread across many machines, restarting when they crash, scaling up when traffic spikes, scaling down when it subsides, updating continuously without downtime. Docker tells you how to package and run a container. It does not tell you which machine to run it on, what to do when it crashes, how to route traffic to healthy instances, or how to roll out a new version to 50 containers without taking them all offline at once.</p>
+<p>These are orchestration problems. Kubernetes solves them.</p>
+<hr>
+<h2 id="where-kubernetes-came-from">Where Kubernetes Came From</h2>
+<p>Google had been running containerized workloads at massive scale since 2003, on an internal system called <strong>Borg</strong>. Borg scheduled containers across Google&rsquo;s fleet of machines, handled failures, managed resource allocation, and did all of this for services serving billions of users. By the time containers became popular outside Google, the engineering team had a decade of hard-won lessons about what container orchestration needs to do.</p>
+<p>In 2014, Google open-sourced a reimplementation of Borg&rsquo;s core ideas under the name Kubernetes (from the Greek for &ldquo;helmsman&rdquo; or &ldquo;governor&rdquo; - the person who steers the ship). It was donated to the Cloud Native Computing Foundation in 2016. Today it is the default way to run containerized workloads in production, supported by every major cloud provider (GKE on GCP, EKS on AWS, AKS on Azure).</p>
+<p>The design reflects Google&rsquo;s decade of operational experience. Some of its concepts feel over-engineered for small deployments. They are sized for operating at Google scale, made available to everyone.</p>
+<hr>
+<h2 id="the-mental-model-desired-state">The Mental Model: Desired State</h2>
+<p>The central idea in Kubernetes is <strong>desired state</strong>. You tell Kubernetes what you want - &ldquo;I want three copies of this container running, each with 2 vCPUs and 4 GB of RAM, accessible on port 8080&rdquo; - and Kubernetes makes it happen and keeps it that way. If one copy crashes, Kubernetes starts a new one. If a machine fails, Kubernetes reschedules the containers that were running on it onto healthy machines. You do not issue commands (&ldquo;start this container&rdquo;). You declare intent (&ldquo;the desired state is three running copies&rdquo;) and Kubernetes continuously reconciles reality with that intent.</p>
+<p>This <strong>reconciliation loop</strong> is the heart of Kubernetes. Every component in the system is a controller that watches the current state, compares it to the desired state, and takes action to close the gap.</p>
+<hr>
+<h2 id="the-physical-architecture">The Physical Architecture</h2>
+<p>A Kubernetes cluster has two kinds of machines: the <strong>control plane</strong> and <strong>worker nodes</strong>.</p>
+<p>The <strong>control plane</strong> (historically called the master) runs the components that make decisions for the cluster:</p>
+<ul>
+<li><strong>API server</strong>: the single entry point for all commands. Every interaction with Kubernetes - from you, from other components, from automation - goes through the API server. It is stateless and horizontally scalable.</li>
+<li><strong>etcd</strong>: a distributed key-value store that holds all cluster state. The desired configuration, the current list of running pods, service definitions - everything is in etcd. It is the source of truth.</li>
+<li><strong>Scheduler</strong>: watches for newly created pods that have not been assigned to a node, and assigns them to one. The assignment considers resource requests, node capacity, affinity rules, and taints.</li>
+<li><strong>Controller manager</strong>: runs the reconciliation loops. The ReplicaSet controller ensures the right number of pod copies exist. The Node controller detects when nodes fail. The Endpoints controller keeps service routing tables up to date.</li>
+</ul>
+<p><strong>Worker nodes</strong> are the machines that actually run your application containers. Each node runs:</p>
+<ul>
+<li><strong>kubelet</strong>: an agent that receives pod assignments from the control plane and ensures those pods are running and healthy.</li>
+<li><strong>kube-proxy</strong>: maintains network rules on the node so pods can communicate with services.</li>
+<li>A <strong>container runtime</strong> (containerd or CRI-O) that actually starts and stops containers.</li>
+</ul>
+<hr>
+<h2 id="the-core-objects">The Core Objects</h2>
+<p><strong>Pod</strong>: the smallest deployable unit in Kubernetes. A pod wraps one or more containers that share a network namespace and storage. Containers in the same pod communicate via localhost. In practice, most pods contain a single container; multi-container pods are used for sidecars (logging agents, service mesh proxies) that need to be co-located with the main container.</p>
+<p>Pods are ephemeral. When a pod dies, it is gone. Any data stored inside it is lost (unless mounted to a persistent volume). Never depend on a specific pod being alive.</p>
+<p><strong>Deployment</strong>: manages a set of identical pod replicas. You specify the container image, the number of replicas, and resource requirements. The Deployment controller ensures exactly that many pods are running. When you update the image (a new release), the Deployment performs a rolling update by default: it starts new pods with the new image before terminating old ones, so there is always some healthy capacity serving traffic.</p>
+<p><strong>Service</strong>: a stable network endpoint in front of a set of pods. Pods come and go; their IP addresses change. A Service gets a stable DNS name and IP, and load-balances traffic across all healthy pods that match its selector. When you deploy a new version and pods are replaced, the Service automatically updates to route only to the new pods. External traffic enters through a Service of type LoadBalancer, which provisions a cloud load balancer in front of the cluster.</p>
+<p><strong>ConfigMap and Secret</strong>: configuration separate from the container image. A ConfigMap holds non-sensitive configuration (database hostnames, feature flags). A Secret holds sensitive data (database passwords, API keys) encoded separately and accessible only to pods that need them. This is why you do not bake configuration into images.</p>
+<p><strong>Namespace</strong>: a logical partition within a cluster. Different teams or environments (staging, production) can run in different namespaces with their own resource quotas and access controls. This is Kubernetes&rsquo;s answer to multi-tenancy within a single cluster.</p>
+<hr>
+<h2 id="resources-requests-and-limits">Resources: Requests and Limits</h2>
+<p>Every container in Kubernetes should declare what resources it needs:</p>
+<p><strong>Requests</strong> are what the container is guaranteed. The scheduler only places a pod on a node that has enough unreserved capacity to satisfy the requests. If a pod requests 1 vCPU, the scheduler finds a node with at least 1 vCPU of unallocated capacity.</p>
+<p><strong>Limits</strong> are the maximum the container is allowed to use. A container that tries to exceed its CPU limit is throttled. A container that exceeds its memory limit is killed and restarted.</p>
+<p>Setting requests too low means the scheduler can overcommit nodes, leading to noisy neighbor effects (see the multi-tenancy post). Setting them too high means pods cannot be scheduled because no node appears to have capacity - a phantom resource shortage.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">resources</span>:
+  <span style="color:#f92672">requests</span>:
+    <span style="color:#f92672">memory</span>: <span style="color:#e6db74">&#34;512Mi&#34;</span>
+    <span style="color:#f92672">cpu</span>: <span style="color:#e6db74">&#34;500m&#34;</span>      <span style="color:#75715e"># 500 millicores = 0.5 vCPU</span>
+  <span style="color:#f92672">limits</span>:
+    <span style="color:#f92672">memory</span>: <span style="color:#e6db74">&#34;1Gi&#34;</span>
+    <span style="color:#f92672">cpu</span>: <span style="color:#e6db74">&#34;1000m&#34;</span>
+</code></pre></div><p>Getting these numbers right requires profiling your actual workload. The Vertical Pod Autoscaler can recommend values based on observed usage.</p>
+<hr>
+<h2 id="autoscaling">Autoscaling</h2>
+<p>Kubernetes provides scaling at two levels.</p>
+<p><strong>Horizontal Pod Autoscaler (HPA)</strong> scales the number of pod replicas based on observed metrics - CPU utilization, memory, custom metrics from your monitoring system. If average CPU across all replicas exceeds 70%, HPA adds more replicas. If CPU drops, it removes them. This handles traffic spikes without manual intervention.</p>
+<p><strong>Cluster Autoscaler</strong> scales the number of nodes in the cluster. If pods cannot be scheduled because all nodes are full, Cluster Autoscaler provisions a new node from the cloud provider. If nodes have been underutilized for a period, it drains pods from them and terminates the nodes to reduce cost.</p>
+<p>The two autoscalers work together: HPA adds pods when load increases, and Cluster Autoscaler adds nodes when there is nowhere to put those pods.</p>
+<hr>
+<h2 id="health-checks">Health Checks</h2>
+<p>Kubernetes monitors container health through probes.</p>
+<p><strong>Liveness probe</strong>: is this container alive? If the liveness probe fails, Kubernetes kills the container and restarts it. Use this for detecting deadlocks or corrupted state that the container cannot recover from on its own.</p>
+<p><strong>Readiness probe</strong>: is this container ready to receive traffic? If the readiness probe fails, Kubernetes removes the pod from the Service&rsquo;s load-balancing pool but does not kill it. Use this during startup (the application is still initializing) or when a pod is temporarily overloaded.</p>
+<p>Without readiness probes, Kubernetes sends traffic to pods the moment they start - before your application has finished loading its configuration, warming its caches, or establishing database connections. This causes errors during deployments that readiness probes prevent.</p>
+<hr>
+<h2 id="gke-kubernetes-as-a-cloud-service">GKE: Kubernetes as a Cloud Service</h2>
+<p>Running Kubernetes yourself is complex. The control plane is stateful, must be highly available, and requires careful upgrades. Google Kubernetes Engine (GKE) manages the control plane for you. GCP handles etcd, upgrades the API server, and provides SLAs for control plane availability. You manage worker nodes and workloads.</p>
+<p>GKE adds cloud-native integrations: Autopilot mode removes node management entirely (you pay per pod, not per node), Cloud Load Balancing integrates with Kubernetes Services, Cloud Armor provides DDoS protection, and Workload Identity replaces static service account keys with short-lived credentials.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pod</td>
+<td>Smallest deployable unit; one or more co-located containers</td>
+</tr>
+<tr>
+<td>Deployment</td>
+<td>Manages a set of pod replicas; handles rolling updates</td>
+</tr>
+<tr>
+<td>Service</td>
+<td>Stable network endpoint; load-balances across healthy pods</td>
+</tr>
+<tr>
+<td>Namespace</td>
+<td>Logical cluster partition for multi-tenancy</td>
+</tr>
+<tr>
+<td>Resource requests</td>
+<td>Guaranteed resources; used for scheduling decisions</td>
+</tr>
+<tr>
+<td>Resource limits</td>
+<td>Hard cap; triggers throttling (CPU) or OOM kill (memory)</td>
+</tr>
+<tr>
+<td>HPA</td>
+<td>Scales replica count based on metrics</td>
+</tr>
+<tr>
+<td>Cluster Autoscaler</td>
+<td>Scales node count based on pod scheduling pressure</td>
+</tr>
+<tr>
+<td>Liveness probe</td>
+<td>Restarts unhealthy containers</td>
+</tr>
+<tr>
+<td>Readiness probe</td>
+<td>Removes unready pods from traffic rotation</td>
+</tr>
+</tbody>
+</table>
+<p>Kubernetes is complex because the problems it solves are complex. Running hundreds of containers across dozens of machines, continuously, without downtime, with automatic failure recovery, is not a trivial problem. Kubernetes makes it a declarative one: you describe what you want, and it figures out how to get there and how to keep it that way.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/multi-tenancy-noisy-neighbors/" target="_blank" rel="noopener noreferrer">Multi-Tenancy &amp; The Noisy Neighbor Problem - Sharing Hardware Without Sharing Problems</a>
+</li>
+<li><a href="/posts/sre-slos-error-budgets/" target="_blank" rel="noopener noreferrer">SRE &amp; Error Budgets - Reliability Is a Feature, Not an Afterthought</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

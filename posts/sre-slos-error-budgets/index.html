@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>SRE &amp; Error Budgets - Reliability Is a Feature, Not an Afterthought // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="SRE &amp; Error Budgets - Reliability Is a Feature, Not an Afterthought"/>
+<meta name="twitter:description" content="Helpful context:
+ Monitoring &amp; Observability - Knowing What Your System Is Doing Without Looking at Every Line  Fault Tolerance - Building Systems That Survive Their Own Failures  Microservices - Small Services, Large Coordination Problems    In 2003, Google was growing fast enough that the gap between what software engineers built and what the operations team could run was becoming a crisis. The operations team - the people responsible for keeping systems running - was drowning in manual work: provisioning servers, responding to alerts, managing deployments."/>
+
+    <meta property="og:title" content="SRE &amp; Error Budgets - Reliability Is a Feature, Not an Afterthought" />
+<meta property="og:description" content="Helpful context:
+ Monitoring &amp; Observability - Knowing What Your System Is Doing Without Looking at Every Line  Fault Tolerance - Building Systems That Survive Their Own Failures  Microservices - Small Services, Large Coordination Problems    In 2003, Google was growing fast enough that the gap between what software engineers built and what the operations team could run was becoming a crisis. The operations team - the people responsible for keeping systems running - was drowning in manual work: provisioning servers, responding to alerts, managing deployments." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/sre-slos-error-budgets/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-05-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-31T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">SRE &amp; Error Budgets - Reliability Is a Feature, Not an Afterthought</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          May 31, 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/monitoring-observability/" target="_blank" rel="noopener noreferrer">Monitoring &amp; Observability - Knowing What Your System Is Doing Without Looking at Every Line</a>
+</li>
+<li><a href="/posts/fault-tolerance/" target="_blank" rel="noopener noreferrer">Fault Tolerance - Building Systems That Survive Their Own Failures</a>
+</li>
+<li><a href="/posts/microservices-architecture/" target="_blank" rel="noopener noreferrer">Microservices - Small Services, Large Coordination Problems</a>
+</li>
+</ul>
+<hr>
+<p>In 2003, Google was growing fast enough that the gap between what software engineers built and what the operations team could run was becoming a crisis. The operations team - the people responsible for keeping systems running - was drowning in manual work: provisioning servers, responding to alerts, managing deployments. The software engineers, meanwhile, were shipping features that made the operations problem harder. The two groups had different incentives and no shared language for the tension between them.</p>
+<p>Ben Treynor Sloss, a software engineer at Google, was handed a small operations team and told to figure it out. His answer was to staff the team entirely with software engineers, give them an explicit mandate to automate themselves out of repetitive work, and hold them to engineering standards rather than operations conventions. He called this <strong>Site Reliability Engineering (SRE)</strong>.</p>
+<p>The insight was deceptively simple: if the people running systems are engineers who hate repetitive work, they will automate repetitive work. And if you measure reliability in the same rigorous way you measure feature delivery, you can make rational decisions about how much reliability you need and what you are willing to sacrifice to get more features faster.</p>
+<hr>
+<h2 id="the-three-layers-of-reliability-agreements">The Three Layers of Reliability Agreements</h2>
+<p>Before SRE had language for reliability, agreements about uptime were fuzzy. &ldquo;The system should be reliable&rdquo; meant different things to different people, and when something went wrong there was no objective basis for deciding whether a response was adequate.</p>
+<p>SRE introduced three increasingly specific levels:</p>
+<p><strong>SLI (Service Level Indicator):</strong> a quantitative measurement of some aspect of the service&rsquo;s behavior. Not a target, just a measurement. Examples: the fraction of HTTP requests that return a successful response (availability), the fraction of requests that respond within 200ms (latency), the fraction of storage writes that persist correctly (durability). The SLI is a number you compute from your monitoring data.</p>
+<p><strong>SLO (Service Level Objective):</strong> a target for an SLI over a time window. &ldquo;99.9% of requests should succeed over any 28-day rolling window.&rdquo; &ldquo;The 95th percentile latency should be under 200ms over any calendar week.&rdquo; The SLO is what you actually aim for. It is an internal target, not a customer commitment.</p>
+<p><strong>SLA (Service Level Agreement):</strong> a contractual commitment to customers, usually with financial consequences if violated. The SLA is set lower than the SLO - the SLO is what you aim for internally, and you only commit externally to something you are confident you can exceed. If your SLO is 99.9%, your SLA might be 99.5%. This gives you room to miss your internal target without breaching a contract.</p>
+<p>The hierarchy matters: you measure SLIs, you target SLOs, and you contractually commit to SLAs that are looser than your SLOs.</p>
+<hr>
+<h2 id="error-budgets-reliability-as-a-resource">Error Budgets: Reliability as a Resource</h2>
+<p>The SLO sets a target. The <strong>error budget</strong> is what you can afford to spend before breaching it.</p>
+<p>If your SLO is 99.9% availability over 28 days, you are allowed 0.1% of requests to fail. For a service handling 1 million requests per day over 28 days - 28 million requests total - that is 28,000 failed requests before you breach the SLO. That is the error budget.</p>
+<p>The critical insight is that error budgets make reliability a shared resource with a clear accounting. They answer the question that was previously a perpetual argument: how much reliability do we need, and whose fault is it when we do not have enough?</p>
+<p>With error budgets:</p>
+<ul>
+<li>If the budget is healthy (mostly unspent), the development team can ship faster and take more risk. New deployments, infrastructure changes, experimental features - all of these burn error budget, but that is acceptable when there is budget to burn.</li>
+<li>If the budget is nearly exhausted, the team shifts priorities toward reliability: deferring risky deployments, fixing known sources of failures, increasing test coverage. Not because someone mandated it, but because deploying now would breach the SLO.</li>
+<li>If a postmortem reveals that most budget was burned by a single class of incident, the error budget provides objective evidence that fixing that class of incident should take priority over new features.</li>
+</ul>
+<p>The error budget converts the argument &ldquo;are we reliable enough?&rdquo; into an accounting problem. It also aligns incentives: neither software engineers nor SREs want to burn the budget, because exhausting it means no new features until reliability is restored.</p>
+<hr>
+<h2 id="choosing-the-right-slis">Choosing the Right SLIs</h2>
+<p>Not every measurement makes a useful SLI. The SLIs that matter are the ones that track how users actually experience the service.</p>
+<p>Google&rsquo;s SRE book identifies a small set of useful SLI categories:</p>
+<p><strong>Availability:</strong> what fraction of requests succeed? Defined precisely by what &ldquo;succeed&rdquo; means for your service. For HTTP services, a 200-class response. For a batch pipeline, a job that completes without errors. For storage, a read that returns correct data.</p>
+<p><strong>Latency:</strong> how long do requests take? Almost always measured at a percentile (P99, P95) rather than an average. Averages are misleading because they hide tail latency: a service where 99% of requests take 10ms and 1% take 10 seconds has an average of ~110ms, which sounds reasonable. The P99 of 10 seconds is what users actually experience when they are unlucky.</p>
+<p><strong>Throughput:</strong> for data processing systems, how many records or bytes are processed per second? An SLI for a pipeline might be &ldquo;at least 95% of events are processed within 5 minutes of ingestion.&rdquo;</p>
+<p><strong>Correctness:</strong> does the service return the right answer? Harder to measure than the others, because you need a reference to compare against. Sometimes approximated by testing a sample of requests against a known-good oracle.</p>
+<p>The common mistake is measuring too many things. An SLO with seventeen SLIs becomes noise. Start with the one or two measurements that most directly reflect the user experience, and add more only when evidence shows that the existing ones miss important failure modes.</p>
+<hr>
+<h2 id="toil-the-enemy-of-progress">Toil: The Enemy of Progress</h2>
+<p>SRE gives a specific name to a specific kind of work: <strong>toil</strong>. Toil is manual, repetitive, automatable work that scales with service growth, produces no lasting improvement, and has no intrinsic value beyond doing it.</p>
+<p>Examples: manually restarting a service when it hangs, manually adding capacity when traffic spikes, manually triaging the same class of alert every week, manually rotating credentials on a schedule.</p>
+<p>The distinction between toil and other operational work matters. <strong>Engineering work</strong> - designing a system, writing automation, building observability - produces lasting improvements that compound. Toil produces nothing lasting; the same work must be done again next time. If an SRE team spends most of its time on toil, it cannot invest in the engineering work that would reduce future toil.</p>
+<p>SRE teams at Google target keeping toil under 50% of their time. The rest is engineering: automation, reliability improvements, architectural changes that eliminate classes of incident. The 50% figure is a policy, not a natural law, but it enforces the principle that an SRE team should be getting better at its job over time, not just running faster on a treadmill.</p>
+<p>The automation target also explains why SRE is staffed with engineers who could be writing product code. The opportunity cost of their time is high enough that keeping them on manual operations work is obviously wasteful. If a task is worth automating, put someone capable of automation on it.</p>
+<hr>
+<h2 id="incident-management">Incident Management</h2>
+<p>When a significant incident occurs - a widespread outage, major data loss, a sustained SLO breach - SRE uses a structured response.</p>
+<p>The <strong>incident commander</strong> is a single person responsible for coordinating the response. Not the most senior engineer in the room, but whoever is designated. Having a single coordinator prevents the chaos of everyone making independent decisions about what to try next.</p>
+<p>The incident commander delegates: one person investigates the symptoms, one person handles communications (to stakeholders, to customers), one person manages the runbook if there is one. The commander keeps a live incident document updating in real time with what is being tried and what is known.</p>
+<p>The guiding principle during an incident is <strong>mitigate first, diagnose second</strong>. If you can stop the bleeding by rolling back a recent deployment, do that before you fully understand why the deployment caused a problem. Understanding why is for the postmortem. The incident response is about restoring service.</p>
+<hr>
+<h2 id="blameless-postmortems">Blameless Postmortems</h2>
+<p>After an incident is resolved, the team writes a <strong>postmortem</strong> - a structured document that explains what happened, why it happened, and what will be done to prevent it from happening again.</p>
+<p>The word <strong>blameless</strong> is deliberate and important. When an incident is caused by a human error - someone clicked the wrong button, someone deployed untested code, someone misread a dashboard - the human error is the proximate cause, not the root cause. The root cause is the system design that made it possible for that human error to occur.</p>
+<p>If you fire or blame the engineer who made the error, you learn nothing. The same error will happen again, committed by a different engineer, because the system still permits it. If instead you ask &ldquo;why was it possible to click the wrong button?&rdquo; you might discover that the interface does not ask for confirmation, or that staging and production look identical, or that there is no automated check before deployment. These are fixable. They will prevent the error from recurring regardless of which engineer is on call next time.</p>
+<p>Blameless postmortems create an environment where engineers report incidents honestly and completely, because they know the purpose is learning, not punishment. This is not soft management. It is the only way to get accurate data about what is actually going wrong in a complex system.</p>
+<p>A good postmortem includes: a timeline of events, the contributing factors (not just &ldquo;human error&rdquo; but the system conditions that enabled it), the impact (SLO burn, user impact, financial cost), action items with owners and due dates, and lessons learned that apply beyond this specific incident.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SLI</td>
+<td>A measurement: the fraction of requests that succeeded</td>
+</tr>
+<tr>
+<td>SLO</td>
+<td>A target: 99.9% of requests should succeed over 28 days</td>
+</tr>
+<tr>
+<td>SLA</td>
+<td>A contract: 99.5% guaranteed, with financial penalties</td>
+</tr>
+<tr>
+<td>Error budget</td>
+<td>The allowed failure quota before breaching the SLO</td>
+</tr>
+<tr>
+<td>Toil</td>
+<td>Manual, repetitive work that scales with service growth</td>
+</tr>
+<tr>
+<td>Postmortem</td>
+<td>A blameless analysis of what caused an incident</td>
+</tr>
+</tbody>
+</table>
+<p>The key shift SRE introduced is treating reliability as an engineering problem with measurable objectives, rather than a vague aspiration maintained by human vigilance. Error budgets create shared accountability between teams. Toil budgets force investment in automation. Blameless postmortems produce honest data. Together, these practices make it possible to run systems that actually meet their reliability commitments, at scale, without burning out the engineers responsible for them.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/reliability-patterns/" target="_blank" rel="noopener noreferrer">Reliability Patterns - How Services Stay Up When Everything Around Them Falls Apart</a>
+</li>
+<li><a href="/posts/rate-limiting-throttling/" target="_blank" rel="noopener noreferrer">Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

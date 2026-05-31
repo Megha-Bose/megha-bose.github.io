@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Multi-Region Architecture - Building for a World That Can Catch Fire // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Multi-Region Architecture - Building for a World That Can Catch Fire"/>
+<meta name="twitter:description" content="Helpful context:
+ Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape  Sharding &amp; Replication - Splitting Data So No Single Machine Drowns  Fault Tolerance - Building Systems That Survive Their Own Failures    On March 2, 2021, a fire broke out at an OVHcloud data center in Strasbourg, France. The building that burned housed SBG2, one of four data centers on the site. Within hours, millions of websites were offline - not because they lacked servers, but because all their servers were in SBG2."/>
+
+    <meta property="og:title" content="Multi-Region Architecture - Building for a World That Can Catch Fire" />
+<meta property="og:description" content="Helpful context:
+ Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape  Sharding &amp; Replication - Splitting Data So No Single Machine Drowns  Fault Tolerance - Building Systems That Survive Their Own Failures    On March 2, 2021, a fire broke out at an OVHcloud data center in Strasbourg, France. The building that burned housed SBG2, one of four data centers on the site. Within hours, millions of websites were offline - not because they lacked servers, but because all their servers were in SBG2." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/multi-region-architecture/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-05-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-31T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Multi-Region Architecture - Building for a World That Can Catch Fire</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          May 31, 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          8 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape</a>
+</li>
+<li><a href="/posts/sharding-data-replication/" target="_blank" rel="noopener noreferrer">Sharding &amp; Replication - Splitting Data So No Single Machine Drowns</a>
+</li>
+<li><a href="/posts/fault-tolerance/" target="_blank" rel="noopener noreferrer">Fault Tolerance - Building Systems That Survive Their Own Failures</a>
+</li>
+</ul>
+<hr>
+<p>On March 2, 2021, a fire broke out at an OVHcloud data center in Strasbourg, France. The building that burned housed SBG2, one of four data centers on the site. Within hours, millions of websites were offline - not because they lacked servers, but because all their servers were in SBG2. The customers who had been warned, who had set up backups, who had configured replication to a second site, recovered in hours. The ones who had not lost data they would never recover.</p>
+<p>The OVHcloud fire is not the only story like this. Flooding, power grid failures, fiber cable cuts, software bugs that cascade through an entire region&rsquo;s infrastructure - every few years, something takes down a geographic area. The question is not whether it will happen to your systems. The question is how much of your data and traffic can survive when it does.</p>
+<p>This is what multi-region architecture is built to answer.</p>
+<hr>
+<h2 id="the-vocabulary-of-geography">The Vocabulary of Geography</h2>
+<p>Before building across regions, the terms need to be precise, because cloud providers use them consistently and conflating them leads to incorrect assumptions about what survives what.</p>
+<p>A <strong>zone</strong> (or availability zone) is an isolated failure domain within a data center campus. It has its own power supplies, cooling systems, and network connections. A failure in one zone - a power trip, a cooling malfunction, a software bug that corrupts infrastructure management - does not propagate to other zones. Within a single GCP region, there are typically three zones (us-central1-a, us-central1-b, us-central1-c). They are physically close enough that network latency between them is under 1ms, but independent enough that simultaneous failure is very unlikely.</p>
+<p>A <strong>region</strong> is a geographic area - a city or cluster of cities - that contains multiple zones. GCP&rsquo;s <code>us-central1</code> is in Iowa. <code>europe-west1</code> is in Belgium. <code>asia-east1</code> is in Taiwan. Regions are far enough apart that a single physical event (earthquake, regional power grid failure, hurricane) cannot simultaneously affect two regions. Network latency between regions is in the tens to hundreds of milliseconds depending on geography.</p>
+<p>A <strong>dual-region</strong> is a pairing of two nearby regions, offered by some cloud providers as a managed abstraction with synchronous or near-synchronous replication between them. GCP&rsquo;s Cloud Storage dual-region, for example, stores data redundantly across two specific regions (e.g., <code>us-central1</code> and <code>us-east1</code>) with strong consistency guarantees.</p>
+<p>A <strong>multi-region</strong> deployment spans three or more regions, typically across continents. This is the configuration for globally distributed services that must tolerate regional failures anywhere in the world.</p>
+<hr>
+<h2 id="what-you-are-actually-protecting-against">What You Are Actually Protecting Against</h2>
+<p>The choice of how many regions to use comes down to what failure scenarios you are designing for.</p>
+<p><strong>Single zone</strong> deployment protects against individual machine failures (the cloud handles this transparently). It does not protect against zone failures.</p>
+<p><strong>Multi-zone, single region</strong> deployment (the minimum for any production system) protects against zone failures. A power outage in us-central1-a does not take down your service if your replicas are spread across -a, -b, and -c. Network latency between zones is low enough that synchronous replication is practical. This adds minimal complexity and is the baseline for production workloads.</p>
+<p><strong>Multi-region</strong> deployment protects against regional disasters. It introduces latency challenges (tens of milliseconds between regions), data consistency challenges (do you replicate synchronously, accepting latency, or asynchronously, accepting potential data loss?), and cost (cross-region data transfer is billed separately). The decision is not &ldquo;multi-region is better&rdquo; - it is &ldquo;does my business require surviving a regional outage, and what am I willing to pay in complexity and cost to achieve that?&rdquo;</p>
+<hr>
+<h2 id="rpo-and-rto-the-two-questions-that-define-your-architecture">RPO and RTO: The Two Questions That Define Your Architecture</h2>
+<p>Before choosing an architecture, you need answers to two questions.</p>
+<p><strong>Recovery Point Objective (RPO):</strong> How much data can you afford to lose? If your database fails and you restore from the last backup, you lose everything since that backup. An RPO of zero means you can lose no data - every write must be committed to a durable location before you acknowledge it to the user. An RPO of one hour means you can tolerate losing the last hour of writes.</p>
+<p><strong>Recovery Time Objective (RTO):</strong> How long can your service be down before the business consequences become unacceptable? An RTO of five minutes means you must be able to detect the failure, trigger failover, and resume serving traffic within five minutes.</p>
+<p>RPO drives replication strategy. RTO drives failover automation and health checking.</p>
+<p>An RPO of zero forces synchronous replication: every write must be committed in two regions before the user receives an acknowledgment. This works but adds latency to every write equal to the round-trip time between regions. For <code>us-central1</code> to <code>us-east1</code>, that is roughly 30ms - acceptable for some workloads, fatal for others (high-frequency trading, real-time gaming).</p>
+<p>A relaxed RPO (seconds to minutes) allows asynchronous replication: writes commit locally, then stream to the secondary region. Writes are cheaper and faster. If the primary region fails, you lose the last few seconds of writes - the replication lag at the moment of failure.</p>
+<hr>
+<h2 id="cross-region-replication-synchronous-vs-asynchronous">Cross-Region Replication: Synchronous vs Asynchronous</h2>
+<p><strong>Synchronous replication</strong> gives you RPO = 0 but costs latency on every write. It is practical for dual-region configurations where regions are geographically close. Google Cloud Spanner offers globally synchronous replication across multiple regions using the TrueTime API (GPS and atomic clocks) to order transactions without a central coordinator. It achieves this at the cost of somewhat higher write latency than a single-region database.</p>
+<p><strong>Asynchronous replication</strong> accepts some data loss in exchange for write performance. The primary region acknowledges the write immediately; the secondary region receives it moments later. This is how most database replication works by default. The replication lag - the gap between primary and secondary - is the RPO window. In steady state it may be milliseconds. Under load or during network congestion it may grow.</p>
+<hr>
+<h2 id="active-active-vs-active-passive">Active-Active vs Active-Passive</h2>
+<p><strong>Active-passive</strong>: one region serves all traffic. The other sits warm, replicating data but not serving requests. On failure of the primary, a failover procedure promotes the passive region to primary. Traffic is redirected by DNS or global load balancer. This is simpler to reason about (no conflict resolution, no split-brain risk) but wastes the passive region&rsquo;s compute capacity during normal operation.</p>
+<p><strong>Active-active</strong>: all regions serve traffic simultaneously. A user in Europe hits the European region; a user in the US hits the US region. Writes may happen in any region and must be replicated to others. This is more efficient (capacity is never idle) and more complex (what happens if two regions accept conflicting writes to the same record? who wins?). Active-active requires either a globally consistent database (Spanner) or careful domain partitioning (European users only write to the European database, never to the US one).</p>
+<hr>
+<h2 id="global-load-balancing">Global Load Balancing</h2>
+<p>Routing users to the right region requires load balancing at a global level - above the level of any single region&rsquo;s infrastructure.</p>
+<p>GCP&rsquo;s <strong>Global Load Balancer</strong> uses <strong>Anycast</strong>: a single IP address is advertised from multiple PoPs (Points of Presence) worldwide. When a user makes a DNS request for your service, they receive that same IP. Their traffic is routed by the internet&rsquo;s routing protocols to the nearest PoP where it enters Google&rsquo;s private network backbone and is forwarded to the nearest healthy region&rsquo;s backend.</p>
+<p>This means users naturally hit the geographically closest region (lowest latency), and if a region goes unhealthy, the load balancer stops routing traffic to it within seconds - no DNS TTL propagation delay, no manual intervention.</p>
+<hr>
+<h2 id="data-residency-and-compliance">Data Residency and Compliance</h2>
+<p>Multi-region architecture is not purely a reliability decision. For many businesses, it is a compliance requirement. GDPR requires that personal data of EU residents be stored within the EU (or in countries with equivalent protections). Healthcare data in the US is subject to HIPAA. Financial data in various jurisdictions is subject to local regulations.</p>
+<p>This creates constraints on where data can live. A truly global database that replicates everywhere may inadvertently store EU user data in a US data center. Cloud providers offer <strong>data residency controls</strong> - policies that restrict which regions data can be written to and replicated in, with audit logging to prove compliance.</p>
+<p>The tension: global replication improves reliability and reduces latency for global users. Data residency requirements restrict where data can go. The engineering problem is designing a system that satisfies both.</p>
+<hr>
+<h2 id="the-cost-of-going-multi-region">The Cost of Going Multi-Region</h2>
+<p>Multi-region is not free. Cross-region data transfer (egress) is billed per gigabyte in most cloud providers. A database that replicates 100 GB/day across regions pays for that transfer. At GCP&rsquo;s pricing, cross-region replication within the US runs around $0.01-$0.08 per GB; cross-continent egress is higher. For data-intensive workloads, this cost can be substantial.</p>
+<p>Beyond egress, multi-region adds operational complexity: more infrastructure to provision, more failure modes to test, more runbooks to write. The added reliability must be worth the added complexity and cost. For a startup, multi-zone is almost always sufficient. For a service with contractual SLAs measured in nines, multi-region is often the only way to meet them.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Configuration</th>
+<th>Survives</th>
+<th>Latency impact</th>
+<th>Complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single zone</td>
+<td>Machine failure</td>
+<td>None</td>
+<td>Minimal</td>
+</tr>
+<tr>
+<td>Multi-zone, single region</td>
+<td>Zone failure</td>
+<td>&lt;1ms between zones</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>Dual-region</td>
+<td>One region failure</td>
+<td>~30ms sync or near-zero async</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>Multi-region active-passive</td>
+<td>Regional disaster</td>
+<td>Write latency + failover time</td>
+<td>High</td>
+</tr>
+<tr>
+<td>Multi-region active-active</td>
+<td>Regional disaster</td>
+<td>Minimal for reads, complex writes</td>
+<td>Very high</td>
+</tr>
+</tbody>
+</table>
+<p>The architecture you need is the one that meets your RPO and RTO requirements at acceptable cost. Starting with multi-zone is the right default. Adding regions is a deliberate decision, made when the business consequences of regional failure justify the engineering investment.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/sre-slos-error-budgets/" target="_blank" rel="noopener noreferrer">SRE &amp; Error Budgets - Reliability Is a Feature, Not an Afterthought</a>
+</li>
+<li><a href="/posts/reliability-patterns/" target="_blank" rel="noopener noreferrer">Reliability Patterns - How Services Stay Up When Everything Around Them Falls Apart</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

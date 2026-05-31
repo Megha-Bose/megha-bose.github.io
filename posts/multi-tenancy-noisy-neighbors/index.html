@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Multi-Tenancy &amp; The Noisy Neighbor Problem - Sharing Hardware Without Sharing Problems // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Multi-Tenancy &amp; The Noisy Neighbor Problem - Sharing Hardware Without Sharing Problems"/>
+<meta name="twitter:description" content="Helpful context:
+ Operating Systems - The Software That Runs All Other Software  Docker &amp; Containerization - Packaging Code So It Runs the Same Everywhere  Latency, Throughput &amp; Queues - The Physics of System Performance    The cloud pitch is simple: rent what you need, pay for what you use, and don&rsquo;t worry about hardware. But there is a detail in the fine print that matters enormously in practice."/>
+
+    <meta property="og:title" content="Multi-Tenancy &amp; The Noisy Neighbor Problem - Sharing Hardware Without Sharing Problems" />
+<meta property="og:description" content="Helpful context:
+ Operating Systems - The Software That Runs All Other Software  Docker &amp; Containerization - Packaging Code So It Runs the Same Everywhere  Latency, Throughput &amp; Queues - The Physics of System Performance    The cloud pitch is simple: rent what you need, pay for what you use, and don&rsquo;t worry about hardware. But there is a detail in the fine print that matters enormously in practice." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/multi-tenancy-noisy-neighbors/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-05-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-31T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Multi-Tenancy &amp; The Noisy Neighbor Problem - Sharing Hardware Without Sharing Problems</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          May 31, 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          7 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/operating-systems-fundamentals/" target="_blank" rel="noopener noreferrer">Operating Systems - The Software That Runs All Other Software</a>
+</li>
+<li><a href="/posts/docker-containerization/" target="_blank" rel="noopener noreferrer">Docker &amp; Containerization - Packaging Code So It Runs the Same Everywhere</a>
+</li>
+<li><a href="/posts/latency-throughput-queues/" target="_blank" rel="noopener noreferrer">Latency, Throughput &amp; Queues - The Physics of System Performance</a>
+</li>
+</ul>
+<hr>
+<p>The cloud pitch is simple: rent what you need, pay for what you use, and don&rsquo;t worry about hardware. But there is a detail in the fine print that matters enormously in practice. The machine you are renting is not yours. It is shared with anywhere from a handful to hundreds of other customers, all running workloads you know nothing about, at times you cannot predict. The server is a hotel, not a house. And sometimes the guest next door has a party.</p>
+<p>This is the noisy neighbor problem, and it is one of the most common sources of mysterious performance degradation in cloud environments.</p>
+<hr>
+<h2 id="what-multi-tenancy-actually-means">What Multi-Tenancy Actually Means</h2>
+<p>Multi-tenancy means that multiple customers - tenants - share the same underlying physical infrastructure. This sharing happens at multiple layers simultaneously.</p>
+<p>At the bottom is a physical server: a machine with real CPUs, real DRAM, real NIC ports, and real disk spindles. Above that sits a <strong>hypervisor</strong> - software that partitions the physical machine into virtual machines, each believing it has exclusive access to hardware that it is in fact sharing. Above the hypervisor are VMs, and inside VMs you often find containers, themselves partitioned by the OS kernel.</p>
+<p>Each layer of sharing introduces a different class of resource contention. The resources being shared are not interchangeable. CPU time is shared by time-slicing: one vCPU runs your process for a millisecond, then runs a neighbor&rsquo;s for the next millisecond. Memory is partitioned: your VM gets a fixed allocation and (usually) cannot use more. Network bandwidth is shared across all VMs on the same physical NIC. The CPU&rsquo;s last-level cache (LLC) is shared across all cores on the same physical chip, and this one cannot be partitioned - it is shared at the hardware level with no isolation knob.</p>
+<p>The noisy neighbor problem arises when one tenant&rsquo;s workload saturates any of these shared resources, degrading performance for co-located tenants who are not doing anything wrong.</p>
+<hr>
+<h2 id="the-four-dimensions-of-noise">The Four Dimensions of Noise</h2>
+<p><strong>CPU noise.</strong> A neighbor running a compute-intensive job can starve your processes of CPU time during scheduling windows. Modern hypervisors use fair schedulers that guarantee a long-run average, but short-run bursts matter for latency-sensitive workloads. A tail latency spike in your service may be a CPU-scheduling artifact from next door.</p>
+<p><strong>Memory noise.</strong> Most cloud providers provision VMs with hard memory limits enforced by the hypervisor. A neighbor cannot directly consume your memory. But at the chip level, memory controllers and DRAM buses are shared. Heavy memory access patterns on one VM can increase memory latency for all VMs on the same host, a subtler form of contention.</p>
+<p><strong>Cache noise.</strong> This is the hardest to defend against. The L3 cache on a modern server chip is shared among all cores. A neighbor that performs large array scans or random-access memory workloads will evict your data from the cache, forcing your CPU to refetch from DRAM. This is called <strong>cache thrashing</strong> and it can double or triple memory access latency for your workload with no warning and no visibility.</p>
+<p><strong>I/O and network noise.</strong> Disk I/O goes through shared controllers and storage backends. Network traffic goes through shared physical ports and switches. A neighbor streaming terabytes of data will eat into your available network bandwidth and increase your I/O latency. Cloud providers apply <strong>QoS (Quality of Service)</strong> policies - rate limits on disk IOPS and network throughput - to prevent the worst cases, but they are not perfect.</p>
+<hr>
+<h2 id="how-cloud-providers-respond">How Cloud Providers Respond</h2>
+<p>The primary tool is <strong>cgroups</strong> (control groups), a Linux kernel feature that limits and accounts for resource usage by groups of processes. A container or VM&rsquo;s cgroup can be configured with:</p>
+<ul>
+<li>CPU quota: this process group may use at most X% of CPU time per 100ms period</li>
+<li>Memory limit: this group may not exceed Y GB of RAM; allocating more triggers the OOM killer</li>
+<li>Block I/O limit: this group may issue at most Z IOPS or MB/s to disk</li>
+<li>Network bandwidth: enforced at the virtual NIC level by traffic shaping</li>
+</ul>
+<p>These limits put a ceiling on how noisy any one tenant can be. A tenant who hits their CPU quota does not slow down neighbors - their own processes get throttled. This is why CPU throttling is one of the most common performance issues in containerized environments: your application is not slow because the CPU is busy, it is slow because the kernel is deliberately pausing it to enforce the configured quota.</p>
+<p>For network, the hypervisor uses <strong>traffic shaping</strong> - token bucket or leaky bucket algorithms - to enforce per-VM bandwidth limits. A VM configured for 10 Gbps of egress cannot burst beyond that regardless of what the physical NIC supports.</p>
+<p>Cache isolation remains largely unsolved in commodity cloud. Some cloud providers offer <strong>cache partitioning</strong> via Intel CAT (Cache Allocation Technology) on dedicated host offerings, but this is not available in standard shared tenancy.</p>
+<hr>
+<h2 id="the-spectrum-of-isolation">The Spectrum of Isolation</h2>
+<p>Cloud providers offer a spectrum of isolation options, trading cost for guarantees.</p>
+<p><strong>Shared tenancy</strong> (default): your VM runs on a physical host alongside unknown neighbors. Cheapest. Most exposure to noisy neighbor effects.</p>
+<p><strong>Sole-tenant nodes (GCP) / Dedicated Hosts (AWS)</strong>: you rent the entire physical server. No neighbors. Your VM gets all cache, all memory bandwidth, all NIC capacity. Used for licensing compliance (some software licenses are per physical core), for regulatory requirements, or for workloads where performance consistency matters more than cost.</p>
+<p><strong>Dedicated instances</strong>: your VM runs on hardware not shared with other customers, but may share the physical host with other VMs from your own account. Middle ground.</p>
+<hr>
+<h2 id="designing-around-the-neighbor">Designing Around the Neighbor</h2>
+<p>Accepting that some noise exists, the question becomes how to build systems that are resilient to it.</p>
+<p><strong>Measure tail latency, not just median.</strong> Noisy neighbor effects appear in P99 and P999 latency, not in P50. A system that looks healthy at median may be serving 1% of requests ten times slower than expected because of cache eviction spikes.</p>
+<p><strong>Overprovision for bursts.</strong> If your workload needs 2 vCPUs under normal conditions, configure 4 and set CPU requests and limits accordingly. This gives you headroom when a neighbor&rsquo;s burst affects your scheduling.</p>
+<p><strong>Use availability zones strategically.</strong> Noisy neighbors are on the same physical host. Spreading replicas across multiple zones spreads them across different physical machines - at minimum, a neighbor&rsquo;s noise affects only some of your capacity, not all of it.</p>
+<p><strong>Benchmark on cloud hardware.</strong> Performance characteristics on cloud VMs differ from bare metal in ways that matter. Benchmarks run on a laptop will not capture cache contention or I/O throttling that appears in production.</p>
+<p><strong>Monitor CPU throttling explicitly.</strong> Container runtimes expose CPU throttling metrics. If your service shows high throttling, the symptom is latency, and the fix is adjusting resource limits - not optimizing the application code.</p>
+<hr>
+<h2 id="the-multi-tenant-architecture-beyond-the-vm">The Multi-Tenant Architecture Beyond the VM</h2>
+<p>Multi-tenancy shows up at the application layer too, not just the infrastructure layer. A SaaS product serving thousands of customers from a shared database is multi-tenant at the application level. One customer running a heavy report can lock tables, spike query latency, and degrade response times for every other customer on that database instance.</p>
+<p>The patterns are the same: per-tenant resource limits (query timeouts, connection pool limits, rate limits on API endpoints), isolation of heavy workloads onto separate infrastructure (dedicated database replicas for reporting queries), and observability per tenant so you can identify which customer is causing problems.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Shared via</th>
+<th>Isolation mechanism</th>
+<th>What breaks through</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU</td>
+<td>Time-slicing by hypervisor/OS</td>
+<td>cgroup CPU quota</td>
+<td>Short-burst scheduling unfairness</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>Partitioned by hypervisor</td>
+<td>Hard memory limits</td>
+<td>Memory bus contention, NUMA effects</td>
+</tr>
+<tr>
+<td>L3 cache</td>
+<td>Shared at hardware level</td>
+<td>Intel CAT (rare)</td>
+<td>Cache thrashing from neighbor scans</td>
+</tr>
+<tr>
+<td>Disk I/O</td>
+<td>Shared storage backend</td>
+<td>cgroup IOPS limits</td>
+<td>I/O queue saturation</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>Shared physical NIC</td>
+<td>Traffic shaping, per-VM limits</td>
+<td>Bandwidth exhaustion, increased latency</td>
+</tr>
+</tbody>
+</table>
+<p>Multi-tenancy is not a flaw - it is what makes cloud economics work. The per-unit cost of hardware falls dramatically when it is shared. But designing as if you have the machine to yourself will lead to performance surprises. Understanding what is shared, how it is isolated, and where the isolation breaks down is what separates a cloud engineer who debugs performance issues from one who merely observes them.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/kubernetes-container-orchestration/" target="_blank" rel="noopener noreferrer">Kubernetes - What Happens When You Have Too Many Containers</a>
+</li>
+<li><a href="/posts/rate-limiting-throttling/" target="_blank" rel="noopener noreferrer">Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

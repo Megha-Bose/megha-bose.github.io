@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Cloud Storage Models - Block, File, and Object Storage (and When to Use Which) // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Cloud Storage Models - Block, File, and Object Storage (and When to Use Which)"/>
+<meta name="twitter:description" content="Helpful context:
+ Operating Systems - The Software That Runs All Other Software  Databases &amp; Indexes - How Data Is Actually Stored and Found  Multi-Region Architecture - Building for a World That Can Catch Fire    A new engineer building their first cloud service tends to think of storage as one thing. You put data somewhere, you get it back. The cloud gives you several ways to do this, and the choice between them has significant consequences for performance, cost, scalability, and what your application can actually do with the data."/>
+
+    <meta property="og:title" content="Cloud Storage Models - Block, File, and Object Storage (and When to Use Which)" />
+<meta property="og:description" content="Helpful context:
+ Operating Systems - The Software That Runs All Other Software  Databases &amp; Indexes - How Data Is Actually Stored and Found  Multi-Region Architecture - Building for a World That Can Catch Fire    A new engineer building their first cloud service tends to think of storage as one thing. You put data somewhere, you get it back. The cloud gives you several ways to do this, and the choice between them has significant consequences for performance, cost, scalability, and what your application can actually do with the data." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/cloud-storage-models/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-05-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-31T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Cloud Storage Models - Block, File, and Object Storage (and When to Use Which)</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          May 31, 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          8 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/operating-systems-fundamentals/" target="_blank" rel="noopener noreferrer">Operating Systems - The Software That Runs All Other Software</a>
+</li>
+<li><a href="/posts/databases-indexes/" target="_blank" rel="noopener noreferrer">Databases &amp; Indexes - How Data Is Actually Stored and Found</a>
+</li>
+<li><a href="/posts/multi-region-architecture/" target="_blank" rel="noopener noreferrer">Multi-Region Architecture - Building for a World That Can Catch Fire</a>
+</li>
+</ul>
+<hr>
+<p>A new engineer building their first cloud service tends to think of storage as one thing. You put data somewhere, you get it back. The cloud gives you several ways to do this, and the choice between them has significant consequences for performance, cost, scalability, and what your application can actually do with the data.</p>
+<p>The three fundamental models are block storage, file storage, and object storage. They are not interchangeable. Each one reflects a different set of tradeoffs, and understanding those tradeoffs is what lets you make the right choice rather than defaulting to whatever is familiar.</p>
+<hr>
+<h2 id="block-storage">Block Storage</h2>
+<p>A block storage volume looks exactly like a hard drive. The operating system sees a raw device - a sequence of fixed-size blocks, addressable by offset. The OS formats it with a filesystem, mounts it, and applications read and write files as if the disk were physically attached to the machine.</p>
+<p>This is what GCP&rsquo;s <strong>Persistent Disk</strong> and AWS&rsquo;s <strong>EBS (Elastic Block Store)</strong> provide. Underneath, the actual storage is network-attached rather than local, but the interface is indistinguishable from a local disk.</p>
+<p>The characteristics:</p>
+<p><strong>Low latency.</strong> Block storage provides the lowest latency of the three models - typically sub-millisecond for reads and writes on SSD-backed volumes. Reads and writes go through a high-speed network path optimized for the block access pattern. This matters for databases, which do random small reads and writes at high volume.</p>
+<p><strong>Attached to one instance.</strong> A standard persistent disk volume can be attached to exactly one VM at a time (GCP&rsquo;s ReadWriteOnce mode). You cannot mount the same block device on two VMs simultaneously and have both writing to it. There are multi-attach modes, but coordinating concurrent writes from multiple machines to a raw block device is the application&rsquo;s problem - there is no filesystem-level coordination.</p>
+<p><strong>Sized at creation.</strong> You provision a block volume with a specific capacity. Running out of space means resizing the volume (which may require a brief outage depending on the OS and filesystem) or migrating data. You pay for the provisioned capacity even if you use only half of it.</p>
+<p><strong>What it is used for:</strong> databases (MySQL, PostgreSQL, MongoDB) that need low latency random I/O. Boot volumes for virtual machines. Any workload that requires POSIX filesystem semantics with strict latency requirements.</p>
+<p>On GCP, block storage comes in tiers: standard (hard disk, cheaper, higher latency), balanced (SSD, good balance of cost and performance), SSD (highest IOPS and throughput), and Hyperdisk (newer generation, dynamically configurable IOPS and throughput independent of capacity).</p>
+<hr>
+<h2 id="file-storage">File Storage</h2>
+<p>File storage presents a shared filesystem that multiple VMs can mount simultaneously. The abstraction is a directory tree with files - POSIX semantics including permissions, directory listings, and file locking. Multiple machines mount the same filesystem and see the same files.</p>
+<p>On GCP this is <strong>Filestore</strong>; on AWS it is <strong>EFS (Elastic File System)</strong>. Under the covers, a managed NFS (Network File System) or SMB server serves the filesystem over the network. The clients believe they are accessing a local filesystem; they are issuing network requests.</p>
+<p>The characteristics:</p>
+<p><strong>Shared access.</strong> Multiple VMs can mount the same Filestore instance simultaneously with read-write access. This is the defining feature that block storage cannot provide without application-level coordination.</p>
+<p><strong>POSIX semantics.</strong> File locking, directory listing, permissions - applications written to expect a normal filesystem work without modification. This is important for lifting and shifting legacy applications that were written for shared network storage.</p>
+<p><strong>Higher latency than block storage.</strong> NFS adds network overhead even when optimized. For latency-sensitive database operations, file storage is noticeably slower than block storage. For applications that read and write files at moderate frequency, the difference is acceptable.</p>
+<p><strong>Throughput scales with capacity.</strong> Filestore&rsquo;s throughput is tied to provisioned capacity - a larger share gives more throughput. This is different from block storage, where IOPS and throughput are more directly configurable.</p>
+<p><strong>What it is used for:</strong> shared media directories (image uploads that multiple application servers need to read), shared code repositories in CI/CD pipelines, ML training data that multiple training workers need to read from simultaneously, legacy applications that require shared filesystem access.</p>
+<hr>
+<h2 id="object-storage">Object Storage</h2>
+<p>Object storage is the most radical departure from traditional storage models. There is no filesystem, no directory tree (directories are simulated by naming conventions), no random access to parts of a file, no POSIX semantics. Instead, there are <strong>objects</strong> - blobs of data of arbitrary size, each with a globally unique key and associated metadata. Operations are simple: put an object, get an object, delete an object, list objects by key prefix.</p>
+<p>On GCP this is <strong>Cloud Storage (GCS)</strong>; on AWS it is <strong>S3</strong>. The interface is an HTTP API - you PUT a file to a URL and GET it back by the same URL.</p>
+<p>The characteristics:</p>
+<p><strong>Massive scale.</strong> Object storage is designed for virtually unlimited capacity. You do not provision a specific amount of space; you pay for what you use, per byte per month. A bucket can hold a single small text file or petabytes of data - the interface is the same either way.</p>
+<p><strong>Global accessibility.</strong> Objects are accessible via HTTPS from anywhere - your application servers, external users, other cloud services. No mounting required. Any process with the right credentials can access any object directly.</p>
+<p><strong>High durability.</strong> GCS standard class provides 99.999999999% (eleven nines) annual durability. The storage system distributes data across multiple zones and replicates it multiple times. Data loss from hardware failure is, for practical purposes, not something you plan for.</p>
+<p><strong>Higher latency for small random I/O.</strong> Object storage is optimized for large object reads and writes, not random small I/O. An application that issues thousands of small random reads and writes to object storage will see far worse performance than one using block storage. Object storage is not a database substitute.</p>
+<p><strong>Eventual consistency for operations.</strong> Historically, object storage systems offered eventual consistency - a write might not be immediately visible on a subsequent read. GCS (and modern S3) now offer strong consistency for most operations: after a successful write, the next read returns the new data. But this is at the object level; there is no cross-object transaction support.</p>
+<p><strong>What it is used for:</strong> storing and serving static assets (images, videos, CSS, JavaScript) for web applications. Data lake storage for analytics and ML - raw data is stored as files (Parquet, CSV, Avro) and queried by systems like BigQuery, Spark, or Dataflow. Backups and archives. Distributing build artifacts. Anything that needs to be stored at large scale and accessed occasionally via API.</p>
+<hr>
+<h2 id="storage-classes-trading-cost-for-access-speed">Storage Classes: Trading Cost for Access Speed</h2>
+<p>Within object storage, GCP and other providers offer multiple storage classes at different price points. The underlying durability is the same; what changes is the cost per GB per month and the cost of data access.</p>
+<p><strong>Standard:</strong> the highest-cost storage tier, no retrieval fees, designed for frequently accessed data. Serving images to a web application, storing a dataset you query daily.</p>
+<p><strong>Nearline:</strong> lower monthly cost, a retrieval fee per byte accessed, designed for data accessed roughly once per month. Infrequent backups, monthly reports.</p>
+<p><strong>Coldline:</strong> lower monthly cost than Nearline, higher per-access cost, designed for data accessed roughly once per quarter. Disaster recovery data you hope never to need.</p>
+<p><strong>Archive:</strong> the cheapest monthly storage cost, the highest access cost, and a minimum 365-day storage commitment. Long-term regulatory archives, historical data that might be needed for a compliance audit in five years.</p>
+<p><strong>Object Lifecycle Management</strong> automates moving objects between classes. You define rules: &ldquo;move to Nearline after 30 days; move to Coldline after 90 days; delete after 1 year.&rdquo; The system applies the rules automatically as objects age. This is how you achieve cost-efficient storage without manually managing thousands of objects.</p>
+<hr>
+<h2 id="how-they-compare">How They Compare</h2>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Block</th>
+<th>File</th>
+<th>Object</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Access pattern</td>
+<td>Random I/O via filesystem</td>
+<td>POSIX filesystem, shareable</td>
+<td>HTTP API, key-value</td>
+</tr>
+<tr>
+<td>Latency</td>
+<td>Sub-millisecond</td>
+<td>Milliseconds</td>
+<td>Tens to hundreds of milliseconds</td>
+</tr>
+<tr>
+<td>Concurrent writers</td>
+<td>One (usually)</td>
+<td>Many</td>
+<td>Many (object-level)</td>
+</tr>
+<tr>
+<td>Capacity limit</td>
+<td>Provisioned size</td>
+<td>Provisioned size</td>
+<td>Effectively unlimited</td>
+</tr>
+<tr>
+<td>Pricing model</td>
+<td>Pay for provisioned GB</td>
+<td>Pay for provisioned GB</td>
+<td>Pay per GB stored</td>
+</tr>
+<tr>
+<td>Best for</td>
+<td>Databases, boot volumes</td>
+<td>Shared app data, NFS workloads</td>
+<td>Static assets, data lakes, backups</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="the-decision-in-practice">The Decision in Practice</h2>
+<p><strong>Use block storage when</strong> your workload requires the lowest latency or POSIX filesystem semantics on a single machine. Databases almost always need block storage. If you are running MySQL, PostgreSQL, or Cassandra, block storage is not optional.</p>
+<p><strong>Use file storage when</strong> multiple machines need to share access to the same files with standard filesystem semantics. Shared upload directories, CI/CD artifact sharing, legacy applications that require NFS - these are the file storage use cases.</p>
+<p><strong>Use object storage for almost everything else.</strong> Storing user-uploaded images, distributing ML training data, keeping backups, serving large files to clients, archiving logs - object storage is cheaper, more durable, more scalable, and globally accessible. The constraint is that it is not a filesystem and is not appropriate for random small I/O workloads.</p>
+<p>In practice, most cloud applications use all three: object storage for user data and static assets, block storage for the database, and potentially file storage for a shared configuration or media directory that multiple application servers read.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/cloud-networking-vpc/" target="_blank" rel="noopener noreferrer">Cloud Networking &amp; VPC - The Private Network Inside the Public Cloud</a>
+</li>
+<li><a href="/posts/multi-region-architecture/" target="_blank" rel="noopener noreferrer">Multi-Region Architecture - Building for a World That Can Catch Fire</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Reliability Patterns - How Services Stay Up When Everything Around Them Falls Apart // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Reliability Patterns - How Services Stay Up When Everything Around Them Falls Apart"/>
+<meta name="twitter:description" content="Helpful context:
+ Fault Tolerance - Building Systems That Survive Their Own Failures  Microservices - Small Services, Large Coordination Problems  Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic  Latency, Throughput &amp; Queues - The Physics of System Performance    On August 19, 2012, Netflix experienced an outage. Not because Netflix&rsquo;s own services failed, but because an Amazon Web Services Elastic Load Balancing service in us-east-1 had a problem."/>
+
+    <meta property="og:title" content="Reliability Patterns - How Services Stay Up When Everything Around Them Falls Apart" />
+<meta property="og:description" content="Helpful context:
+ Fault Tolerance - Building Systems That Survive Their Own Failures  Microservices - Small Services, Large Coordination Problems  Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic  Latency, Throughput &amp; Queues - The Physics of System Performance    On August 19, 2012, Netflix experienced an outage. Not because Netflix&rsquo;s own services failed, but because an Amazon Web Services Elastic Load Balancing service in us-east-1 had a problem." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/reliability-patterns/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-05-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-05-31T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Reliability Patterns - How Services Stay Up When Everything Around Them Falls Apart</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          May 31, 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          11 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/fault-tolerance/" target="_blank" rel="noopener noreferrer">Fault Tolerance - Building Systems That Survive Their Own Failures</a>
+</li>
+<li><a href="/posts/microservices-architecture/" target="_blank" rel="noopener noreferrer">Microservices - Small Services, Large Coordination Problems</a>
+</li>
+<li><a href="/posts/rate-limiting-throttling/" target="_blank" rel="noopener noreferrer">Rate Limiting &amp; Throttling - Protecting Services From Their Own Traffic</a>
+</li>
+<li><a href="/posts/latency-throughput-queues/" target="_blank" rel="noopener noreferrer">Latency, Throughput &amp; Queues - The Physics of System Performance</a>
+</li>
+</ul>
+<hr>
+<p>On August 19, 2012, Netflix experienced an outage. Not because Netflix&rsquo;s own services failed, but because an Amazon Web Services Elastic Load Balancing service in us-east-1 had a problem. Netflix was running in a single region, and when ELB had issues, Netflix went down with it.</p>
+<p>What Netflix did next was interesting. They did not just fix the immediate problem. They built a system called Chaos Monkey - software that randomly terminates instances in their production environment, every day, on purpose. The reasoning: if we know our system can fail at any time, and we keep breaking it in controlled ways, we will be forced to build services that survive failures. A system that is never broken in testing will eventually be broken in production, at the worst possible time.</p>
+<p>This is the philosophy behind reliability patterns: build systems that assume failure is constant, not exceptional.</p>
+<hr>
+<h2 id="cascading-failures-how-small-problems-become-big-ones">Cascading Failures: How Small Problems Become Big Ones</h2>
+<p>In a monolith, a failure is usually contained. The service is down, everything it does is down, you restart it. In a microservices architecture, a failure in one service can cascade through the system in ways that are hard to predict.</p>
+<p>The pattern is this: Service A calls Service B. Service B starts responding slowly - not failing, just slow. Service A&rsquo;s thread pool fills up with requests waiting on B. New requests to A arrive and find no available threads. A starts timing out. Services that call A start filling up their thread pools. The slowness in B has propagated upward through the call chain until the entire system is degraded, even though most services are individually healthy.</p>
+<p>The failure mode is amplification: a small problem in a leaf service becomes a large problem in the services that depend on it, and a larger problem in the services that depend on those. This is the <strong>cascading failure</strong> pattern, and it is the primary reason that distributed systems need reliability patterns beyond what a monolith needs.</p>
+<hr>
+<h2 id="timeouts-setting-an-upper-bound-on-waiting">Timeouts: Setting an Upper Bound on Waiting</h2>
+<p>The first and most important reliability primitive is the <strong>timeout</strong>. Every network call should have a timeout. If you call a service and it does not respond within N milliseconds, stop waiting and treat the call as a failure.</p>
+<p>Without timeouts, threads wait indefinitely for responses that may never come. A slow dependency brings the caller to a halt - threads pile up, memory fills, the service grinds down.</p>
+<p>Choosing a timeout value is not arbitrary. Too aggressive (1ms) and you reject valid slow requests. Too conservative (30 seconds) and threads queue up for 30 seconds before being released. The right value comes from measuring the actual latency distribution of the dependency. A service whose P99 latency is 200ms should have a timeout somewhere around 500ms-1000ms - far enough past the P99 to not trip on normal variation, close enough to release threads promptly on actual failures.</p>
+<p><strong>Cascading timeouts</strong> are a subtlety: if Service A has a 5-second timeout calling Service B, and Service B has a 4-second timeout calling Service C, and Service C has a 3-second timeout calling Service D - when D starts being slow, B&rsquo;s request to D will time out after 3 seconds, then C&rsquo;s request to B will time out after 4 seconds, then A&rsquo;s request to B will time out after 5 seconds. The total wait for A is up to 5 seconds even though the actual failure was at D. Set timeouts at each layer to add up to less than the timeout the layer above is expecting.</p>
+<hr>
+<h2 id="circuit-breaker">Circuit Breaker</h2>
+<p>The <strong>circuit breaker</strong> is named after the electrical device. An electrical circuit breaker detects excessive current and opens the circuit, stopping the flow of electricity rather than allowing a surge to damage equipment. A software circuit breaker detects excessive failures from a dependency and stops sending requests to it.</p>
+<p>The circuit breaker has three states:</p>
+<p><strong>Closed</strong> (normal operation): requests flow through normally. The breaker tracks the failure rate. If failures stay below the threshold, the circuit stays closed.</p>
+<p><strong>Open</strong> (dependency failing): the failure rate exceeded the threshold. The breaker stops sending requests to the dependency immediately and returns a fast failure to callers. This is key: a fast failure, not a slow one. The caller gets an error quickly rather than waiting for a timeout. Threads are not held waiting. The call chain does not cascade.</p>
+<p><strong>Half-open</strong> (recovery probe): after a configured cooldown period, the breaker allows a single test request through. If that request succeeds, the breaker closes and normal traffic resumes. If it fails, the breaker returns to open and the cooldown resets.</p>
+<p>The circuit breaker serves two purposes. First, it protects the caller from slow failures - instead of waiting 30 seconds for a timeout, you get an immediate error you can handle. Second, it gives the failing dependency space to recover. A dependency that is failing under load gets fewer requests when the circuit is open, which may be exactly what it needs.</p>
+<p>Netflix&rsquo;s Hystrix library popularized circuit breakers in the JVM ecosystem. In modern microservices, circuit breaker logic often lives in a service mesh like Envoy or Istio, which implements it transparently without requiring each service to implement it in code.</p>
+<hr>
+<h2 id="bulkhead">Bulkhead</h2>
+<p>A <strong>bulkhead</strong> in a ship is a wall that divides the hull into compartments. If one compartment is breached and floods, the bulkhead prevents the flooding from reaching other compartments. The ship can survive partial flooding that would sink it without bulkheads.</p>
+<p>The software pattern is the same: isolate resource pools so that failure in one does not drain resources from others.</p>
+<p>The most common implementation is separate thread pools for different dependencies. If your service calls three external APIs - authentication, inventory, and payment - give each a separate thread pool. When inventory is slow and its thread pool fills up, authentication and payment are unaffected. Without bulkheads, all three share a single thread pool, and a slow inventory API fills the entire pool, starving authentication and payment even though they are healthy.</p>
+<p>Bulkheads also apply to connection pools to databases and downstream services, to request rate limiters (different rate limits for different clients), and to resource limits in Kubernetes (different resource quotas for different workloads). The principle is the same: partition shared resources so that one consumer&rsquo;s failure mode is contained.</p>
+<hr>
+<h2 id="retry-with-exponential-backoff-and-jitter">Retry with Exponential Backoff and Jitter</h2>
+<p>Some failures are transient - a brief network hiccup, a momentary overload spike, a restarting instance. For these, retrying the request after a short wait often succeeds. But naive retry logic can make failures worse.</p>
+<p>The two failure modes of naive retries:</p>
+<p><strong>Immediate retry loops:</strong> a client that retries immediately on failure issues 100 requests per second instead of 1, turning a service that is slightly overloaded into one that is massively overloaded. The retry storm described in the rate limiting post.</p>
+<p><strong>Synchronized retries:</strong> if many clients back off for the same fixed interval (say, all retry after 5 seconds), they all send their requests at the same moment, creating a load spike every 5 seconds.</p>
+<p><strong>Exponential backoff with jitter</strong> addresses both. The wait time grows exponentially with each retry (1s, 2s, 4s, 8s, 16s&hellip;) and is randomized within the interval (wait between 0 and 8 seconds, not exactly 8). This reduces load during outages and desynchronizes retries across clients.</p>
+<p>Retries should also respect a maximum attempt count. A request that has failed five times in a row is not going to succeed on the sixth attempt if the underlying failure is persistent. Stop retrying and surface the error.</p>
+<hr>
+<h2 id="backpressure">Backpressure</h2>
+<p>When a consumer cannot keep up with a producer, what should the producer do?</p>
+<p>Without backpressure, the producer keeps producing. Requests queue up. The queue grows. Eventually something crashes - the consumer&rsquo;s memory is exhausted, the queue overflows, or the consumer gets so far behind that requests time out before they are processed.</p>
+<p><strong>Backpressure</strong> is the mechanism by which a consumer signals to a producer to slow down. In synchronous systems, this is simple: the producer calls the consumer and waits for a response, so a slow consumer naturally throttles the producer. In asynchronous systems - queues, event streams - the producer and consumer are decoupled, and backpressure requires explicit signaling.</p>
+<p>Reactive programming frameworks (Rx, Akka Streams, Project Reactor) build backpressure into their abstractions. A consumer signals how many items it can handle; a producer respects that signal and does not emit faster than the consumer can absorb. Kafka&rsquo;s consumer group lag is a visible manifestation of backpressure: if lag is growing, the consumer is behind the producer, and something needs to change.</p>
+<p>In a simpler form: if your queue depth is growing beyond a threshold, start rejecting new items at the producer side rather than continuing to enqueue. It is better to reject new requests cleanly than to accept them into a queue that will deliver them too late or not at all.</p>
+<hr>
+<h2 id="graceful-degradation">Graceful Degradation</h2>
+<p>When a dependency is unavailable, there are often two options: fail the entire request, or degrade gracefully and return something less than optimal.</p>
+<p>A search service that depends on a recommendation engine for personalized results might return generic results when the recommendation engine is down, rather than returning an error. Users get slightly worse results instead of no results. A shopping cart that depends on a discount service for pricing might show full prices when the discount service is down, rather than blocking checkout. A social feed that depends on a content ranking service might return unranked chronological posts instead of nothing.</p>
+<p>Graceful degradation requires thinking through the &ldquo;what can we still do without this dependency?&rdquo; question for each dependency. Not all dependencies have a good degraded mode - payment processing cannot be gracefully degraded away. But many can, and identifying which ones changes a complete outage into a partial degradation.</p>
+<p>The implementation requires: knowing which dependencies each feature needs, having a fallback behavior defined for each optional dependency, and actually testing the fallback paths. A fallback that was defined in code eighteen months ago and never tested since is not a reliable fallback.</p>
+<hr>
+<h2 id="chaos-engineering">Chaos Engineering</h2>
+<p>The practices above are easier to build if you know your failure modes. The problem is that failure modes in distributed systems are not obvious from reading the code. They emerge from the interaction of services, network conditions, load patterns, and timing in ways no single engineer can reason about completely.</p>
+<p><strong>Chaos engineering</strong> is the practice of deliberately introducing failures into a system to discover its failure modes before they are discovered by a production incident.</p>
+<p>Netflix&rsquo;s Chaos Monkey randomly terminates EC2 instances in production. Chaos Gorilla terminates entire availability zones. Chaos Kong takes out entire regions. The idea is that if your system is always experiencing a controlled version of these failures, the team is always working to fix the failures they observe, and the system becomes genuinely resilient rather than theoretically resilient.</p>
+<p>The prerequisite is good monitoring and a stable enough system that you can distinguish &ldquo;normal chaos experiment behavior&rdquo; from &ldquo;actual new problem.&rdquo; Chaos engineering on a system that is already unstable is not useful.</p>
+<p>Lesser forms of chaos engineering are accessible to any team: kill a service instance and watch how other services respond. Block a network connection and verify the circuit breaker opens. Fill a disk and verify the service degrades gracefully. These are not exotic experiments - they are basic hygiene for systems that need to be reliable.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>What it does</th>
+<th>Failure it prevents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Timeout</td>
+<td>Abandons slow calls after N ms</td>
+<td>Thread exhaustion from waiting indefinitely</td>
+</tr>
+<tr>
+<td>Circuit breaker</td>
+<td>Stops sending to a failing dependency</td>
+<td>Cascading failures; wasted resources on known-bad calls</td>
+</tr>
+<tr>
+<td>Bulkhead</td>
+<td>Isolates resource pools per dependency</td>
+<td>One slow dependency exhausting shared resources</td>
+</tr>
+<tr>
+<td>Retry + backoff + jitter</td>
+<td>Retries transient failures with growing delay</td>
+<td>Retry storms; synchronized thundering herds</td>
+</tr>
+<tr>
+<td>Backpressure</td>
+<td>Consumer signals producer to slow down</td>
+<td>Queue overflow; consumer crash from overload</td>
+</tr>
+<tr>
+<td>Graceful degradation</td>
+<td>Returns reduced functionality instead of errors</td>
+<td>Total outage when optional dependency fails</td>
+</tr>
+<tr>
+<td>Chaos engineering</td>
+<td>Deliberately introduces failures</td>
+<td>Undiscovered failure modes that appear only in production</td>
+</tr>
+</tbody>
+</table>
+<p>None of these patterns is a silver bullet. A system that uses circuit breakers but not timeouts still fails when threads pile up waiting for slow dependencies. A system with bulkheads but no retry logic fails on transient errors that retries would have handled. Reliability comes from combining these patterns thoughtfully, based on understanding which failure modes your specific system faces.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/multi-region-architecture/" target="_blank" rel="noopener noreferrer">Multi-Region Architecture - Building for a World That Can Catch Fire</a>
+</li>
+<li><a href="/posts/sre-slos-error-budgets/" target="_blank" rel="noopener noreferrer">SRE &amp; Error Budgets - Reliability Is a Feature, Not an Afterthought</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
