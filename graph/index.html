@@ -329,6 +329,13 @@
       <span>${label}</span>
     </div>`;
   });
+  legendEl.innerHTML += `<div class="legend-item" style="margin-top:4px;opacity:0.7">
+    <svg width="14" height="14" style="flex-shrink:0">
+      <circle cx="7" cy="7" r="5" fill="#fff" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+      <circle cx="7" cy="7" r="8.5" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" stroke-dasharray="3 2"/>
+    </svg>
+    <span>Proofread</span>
+  </div>`;
 
   /* ── filter pill colours ── */
   document.querySelectorAll('.filter-btn[data-cat]').forEach(btn => {
@@ -430,6 +437,19 @@
     .attr('marker-end', 'url(#arr-default)');
 
    
+  const haloG = g.append('g').attr('class', 'halos');
+  let haloEls = haloG.selectAll('circle')
+    .data(nodes)
+    .enter().append('circle')
+    .attr('r', 10)
+    .attr('fill', 'none')
+    .attr('stroke', d => CAT[d.category]?.color || '#888')
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '3 2')
+    .attr('stroke-opacity', d => completed.has(d.id) ? 0.7 : 0)
+    .attr('pointer-events', 'none');
+
+   
   const nodeG = g.append('g').attr('class', 'nodes');
   let nodeEls = nodeG.selectAll('circle')
     .data(nodes)
@@ -474,6 +494,9 @@
       .attr('y1', d => d.source.y)
       .attr('x2', d => d.target.x)
       .attr('y2', d => d.target.y);
+    haloEls
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y);
     nodeEls
       .attr('cx', d => d.x)
       .attr('cy', d => d.y);
@@ -602,7 +625,22 @@
     return 0.4;
   }
 
+  function haloOpacity(d) {
+    if (!completed.has(d.id)) return 0;
+    if (!activeNode && !searchQ) return 0.7;
+    if (activeNode === d) return 1;
+    if (activeNode) {
+      if (prereqsOf[activeNode.id]?.has(d.id)) return 0.9;
+      if (unlocksFor[activeNode.id]?.has(d.id)) return 0.9;
+      return 0.1;
+    }
+    return d._match ? 0.7 : 0.05;
+  }
+
   function refreshVisuals() {
+    haloEls
+      .attr('r', d => activeNode === d ? 13 : 10)
+      .attr('stroke-opacity', haloOpacity);
     nodeEls
       .attr('r', nodeRadius)
       .attr('fill', nodeFill)
@@ -732,6 +770,8 @@
       d._visible = catMatch && !doneHidden;
       d._match   = catMatch && searchMatch && !doneHidden;
     });
+    haloEls
+      .attr('display', d => (d._visible && completed.has(d.id)) ? null : 'none');
     nodeEls
       .attr('display', d => d._visible ? null : 'none')
       .attr('r', d => d._match ? (d._match && q ? 8 : 5) : 5)
@@ -753,6 +793,7 @@
       return (sv && tv) ? null : 'none';
     });
     labelEls.attr('display', d => d._visible ? null : 'none');
+    haloEls.attr('display', d => (d._visible && completed.has(d.id)) ? null : 'none');
     noResults.style.display = (q && !nodes.some(n => n._match)) ? 'block' : 'none';
   }
 
