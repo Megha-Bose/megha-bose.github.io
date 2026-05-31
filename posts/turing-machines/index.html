@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          8 min read
+          9 min read
         </div>
       </div>
     </header>
@@ -177,6 +177,15 @@
 <p>When the text says &ldquo;a Turing machine takes another Turing machine as input,&rdquo; it is easy to picture something circular - like running a <code>.py</code> file inside another Python interpreter. But the mechanism is simpler and more concrete than that.</p>
 <p>A Turing machine is fully described by its transition table: a finite list of rules of the form &ldquo;if in state $q$ reading symbol $s$, then write $s'$, move left/right, go to state $q'$.&rdquo; That table is just a string of symbols. You can write it out as text - say, a numbered list of rows. That text is a valid input string, and any Turing machine can read it off its tape the way it reads any other input.</p>
 <p>So &ldquo;giving a TM as input&rdquo; means: encode the transition table as a string and put that string on the tape. The UTM reads this encoding, rebuilds the described machine&rsquo;s rules in its own working memory, and then steps through what that machine would do on the rest of the tape - character by character, state by state, as if it were the described machine running.</p>
+<p><strong>A tiny example.</strong> Say you have a very simple machine $M$ with just two rules:</p>
+<ul>
+<li>If in state $q_0$ reading <code>0</code>, accept.</li>
+<li>If in state $q_0$ reading <code>1</code>, reject.</li>
+</ul>
+<p>You encode $M$ as the string <code>(q0,0,ACCEPT)(q0,1,REJECT)</code> and put it on the UTM&rsquo;s tape, followed by a separator <code>#</code> and the actual input - say <code>0</code>. The tape looks like:</p>
+<p><code>(q0,0,ACCEPT)(q0,1,REJECT) # 0</code></p>
+<p>The UTM now runs. It first reads everything before <code>#</code>, learning the two rules. Then it moves to the input section, sees <code>0</code>, and looks up: &ldquo;my simulated machine is in state $q_0$ and reading <code>0</code> - rule says ACCEPT.&rdquo; So the UTM accepts. If the input were <code>1</code>, it would look up the second rule and reject. The UTM itself never &ldquo;knew&rdquo; anything about accepting or rejecting on <code>0</code> vs <code>1</code> - it learned that behavior by reading $M$&rsquo;s description.</p>
+<p>This is exactly what happens when you run <code>python script.py</code>. The Python interpreter (UTM) reads <code>script.py</code> (the encoding of $M$), then processes <code>sys.argv</code> (the input $w$). The interpreter has no built-in knowledge of what your script does - it learns by reading the file.</p>
 <p>Is this the same as programs we write on computers? Yes, exactly. A Python script is a text description of what a virtual machine should do. Python&rsquo;s interpreter reads that text and executes it. Your CPU is a physical UTM: it reads machine-code instructions (an encoding of &ldquo;what to compute&rdquo;) from memory and carries them out. The theoretical result from 1936 is the conceptual foundation of the stored-program computer - the idea that the program and the data live in the same place, that code is just a special kind of data, and that one general-purpose machine can run any program you hand it.</p>
 </blockquote>
 <p>The UTM also enables the diagonalization argument that makes the halting problem undecidable - which is the subject of the next post.</p>
