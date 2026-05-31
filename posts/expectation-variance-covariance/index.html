@@ -107,7 +107,7 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -131,10 +131,12 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
 <p>$$E[X] = \int_{-\infty}^\infty x \cdot f(x),dx.$$</p>
 <p><strong>Center of mass.</strong> Think of the PDF as a density of material spread along the real line. The expected value is the point where you&rsquo;d balance the distribution on a fulcrum - the center of mass. If the distribution is symmetric around some point $\mu$, then $E[X] = \mu$.</p>
 <p>Expectation doesn&rsquo;t have to be a value $X$ can actually take. A fair die has $E[X] = 3.5$, but a die never shows 3.5. The expectation is a property of the distribution, not a prediction of a single outcome.</p>
+<p><strong>Single trial vs. long run.</strong> This is worth being precise about. The expected value tells you nothing guaranteed about any single roll. You could roll the die once and get 1 (win 2 dollars, lose 5). But if you roll 10,000 times, the law of large numbers guarantees the average payout will be very close to 7. Expectation is a long-run average, not a per-trial promise. This matters enormously in practice: a game with positive expected value can still bankrupt you if you run out of money before the long run arrives. Expected value answers &ldquo;is this a good game to play repeatedly?&rdquo; not &ldquo;will I win this time?&rdquo;</p>
 <hr>
 <h2 id="the-law-of-the-unconscious-statistician">The Law of the Unconscious Statistician</h2>
 <p>What if you want $E[g(X)]$ for some function $g$, like $E[X^2]$ or $E[\sqrt{X}]$?</p>
-<p>You could find the distribution of $g(X)$ first, then take expectation. But there&rsquo;s a shortcut - the <strong>Law of the Unconscious Statistician (LOTUS)</strong>. You can compute $E[g(X)]$ directly from the distribution of $X$ without finding the distribution of $g(X)$:</p>
+<p>You could find the distribution of $g(X)$ first, then take expectation. But there&rsquo;s a shortcut - the <strong>Law of the Unconscious Statistician (LOTUS)</strong>. You can compute $E[g(X)]$ directly from the distribution of $X$ without finding the distribution of $g(X)$.</p>
+<p>The name is a joke. A &ldquo;conscious&rdquo; statistician would first derive the PMF or PDF of $g(X)$ - the proper, careful procedure. An &ldquo;unconscious&rdquo; statistician just applies $g$ to each value of $X$ and averages using the original probabilities, without thinking about whether this is valid. It turns out to be valid, and the reason is just what you&rsquo;d expect: a weighted average of $g(x)$ values, weighted by $P(X=x)$, is the right thing to compute.</p>
 <p>$$E[g(X)] = \sum_x g(x) \cdot p(x) \quad \text{(discrete)}, \qquad E[g(X)] = \int_{-\infty}^\infty g(x) \cdot f(x),dx \quad \text{(continuous)}.$$</p>
 <p><strong>Example.</strong> If a fair die shows $X$, what&rsquo;s $E[X^2]$?</p>
 <p>$$E[X^2] = \frac{1}{6}(1^2 + 2^2 + 3^2 + 4^2 + 5^2 + 6^2) = \frac{1}{6}(1 + 4 + 9 + 16 + 25 + 36) = \frac{91}{6} \approx 15.17.$$</p>
@@ -145,6 +147,7 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
 <p><strong>Theorem.</strong> For any random variables $X$ and $Y$, and constants $a, b$:</p>
 <p>$$E[aX + bY] = a,E[X] + b,E[Y].$$</p>
 <p>The extraordinary thing is: this holds <strong>whether or not $X$ and $Y$ are independent</strong>. It holds even if $X$ and $Y$ are perfectly correlated, or negatively correlated, or related in some complicated nonlinear way. Expectation is always linear.</p>
+<p>Why? Because expectation is a weighted average, and weighted averages are always linear. Formally: $E[X+Y] = \sum_{x,y}(x+y)P(X=x, Y=y)$, and you can split this sum into $\sum_{x,y} x \cdot P(X=x, Y=y) + \sum_{x,y} y \cdot P(X=x, Y=y) = E[X] + E[Y]$. No independence was used anywhere in that algebra - the joint probabilities just cancel into marginals.</p>
 <p>Contrast this with variance, which is not linear in general (we&rsquo;ll get there).</p>
 <p><strong>Example: Expected number of heads in $n$ fair coin flips.</strong></p>
 <p>Method 1 (hard way): define $X \sim \text{Binomial}(n, 1/2)$ and compute $E[X] = \sum_{k=0}^n k \binom{n}{k} (1/2)^n$. You&rsquo;d need to work through a somewhat tedious calculation.</p>
@@ -153,6 +156,7 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
 <p>$$E[X] = E[X_1] + E[X_2] + \cdots + E[X_n] = n \cdot \frac{1}{2} = \frac{n}{2}.$$</p>
 <p>No combinatorics required. The $X_i$&rsquo;s are independent here, but the calculation didn&rsquo;t use that - it just used linearity.</p>
 <p>The indicator trick is a universal strategy: to find the expected count of events that occur, write the count as a sum of indicators, and use linearity plus $E[\mathbf{1}_A] = P(A)$.</p>
+<p><strong>A harder example: expected number of fixed points in a random shuffle.</strong> Shuffle a deck of 52 cards. A fixed point is a card that ends up in its original position. What is the expected number of fixed points? The variables $X_i = \mathbf{1}[\text{card } i \text{ is in position } i]$ are highly dependent - knowing card 1 is in place affects the probability that card 2 is in place. But linearity doesn&rsquo;t care. $E[X_i] = P(\text{card } i \text{ is in position } i) = 1/52$ for each $i$. So the expected number of fixed points is $52 \cdot \frac{1}{52} = 1$. Exactly 1, regardless of deck size. The dependence between the $X_i$&rsquo;s is completely irrelevant to the calculation.</p>
 <hr>
 <h2 id="variance-measuring-spread">Variance: Measuring Spread</h2>
 <p>Two distributions can have the same expected value but be very different. Consider:</p>
@@ -162,8 +166,10 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
 </ul>
 <p>Both have $E[X] = E[Y] = 5$. But $Y$ is wildly unpredictable while $X$ is perfectly predictable. Expected value alone doesn&rsquo;t capture this. What we need is a measure of spread.</p>
 <p><strong>Variance</strong> measures how far $X$ tends to deviate from its mean $\mu = E[X]$:</p>
-<p>$$\text{Var}(X) = E!\left[(X - \mu)^2\right].$$</p>
+<p>$$\text{Var}(X) = E\left[(X - \mu)^2\right].$$</p>
 <p>We square the deviation $(X - \mu)$ to make it positive (deviations above and below the mean shouldn&rsquo;t cancel out), and then take the expectation. Variance is the average squared distance from the mean.</p>
+<p>Why square rather than just take the absolute value $|X - \mu|$? Both prevent cancellation. The practical answer is that squaring is mathematically tractable - it is differentiable, it works cleanly with the algebra of expectations, and as we&rsquo;ll see, it connects directly to the covariance formula. The absolute value creates corners that make calculus harder. The cost is that variance lives in squared units: if $X$ is a temperature in degrees, variance is in degrees-squared, which has no physical interpretation. Standard deviation fixes this by taking the square root.</p>
+<p><strong>Risk interpretation.</strong> Variance is the mathematician&rsquo;s measure of risk. Two investments with the same expected return but different variances have the same long-run average but very different experiences along the way. High variance means some outcomes are much better and some much worse than the mean - a riskier ride. Low variance means outcomes cluster tightly around the mean - predictable. This is literally how portfolio theory works: you optimize the trade-off between expected return (which you want high) and variance (which you want low).</p>
 <p><strong>Computational shortcut.</strong> Expanding $(X - \mu)^2 = X^2 - 2\mu X + \mu^2$ and taking expectations:</p>
 <p>$$\text{Var}(X) = E[X^2] - 2\mu \cdot E[X] + \mu^2 = E[X^2] - 2\mu^2 + \mu^2 = E[X^2] - (E[X])^2.$$</p>
 <p>This is almost always easier than using the definition directly. For the die:</p>
@@ -178,11 +184,12 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
 <h2 id="covariance-how-two-variables-move-together">Covariance: How Two Variables Move Together</h2>
 <p>When you have two random variables $X$ and $Y$, you might want to know: do they tend to be large at the same time? Do they move in opposite directions? Are they unrelated?</p>
 <p>The <strong>covariance</strong> captures this:</p>
-<p>$$\text{Cov}(X, Y) = E!\left[(X - \mu_X)(Y - \mu_Y)\right].$$</p>
+<p>$$\text{Cov}(X, Y) = E\left[(X - \mu_X)(Y - \mu_Y)\right].$$</p>
 <p>When $X$ is above its mean and $Y$ is also above its mean, the product $(X - \mu_X)(Y - \mu_Y)$ is positive. When both are below, it&rsquo;s also positive (negative times negative). When they move in opposite directions - one high while the other is low - the product is negative. So covariance is positive when $X$ and $Y$ tend to go up and down together, negative when they tend to move oppositely, and zero when there&rsquo;s no linear relationship.</p>
 <p><strong>Computational shortcut:</strong></p>
 <p>$$\text{Cov}(X, Y) = E[XY] - E[X],E[Y].$$</p>
 <p>Note that $\text{Cov}(X, X) = E[X^2] - (E[X])^2 = \text{Var}(X)$. Variance is a special case of covariance.</p>
+<p><strong>Concrete examples.</strong> Temperature and ice cream sales have positive covariance: hot days are above the mean in both. Temperature and heating bills have negative covariance: hot days are above the mean temperature and below the mean heating bill. The height and weight of a random person have positive covariance: taller people tend to be heavier. Two stocks in the same industry sector typically have positive covariance - they get hit by the same economic conditions. A bond and a stock often have negative covariance - bonds go up when stocks fall, which is why a portfolio with both has lower total variance than a portfolio with only one.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> This is the key place where people get confused: $E[X \cdot Y] \neq E[X] \cdot E[Y]$ in general. Covariance measures exactly this gap: $\text{Cov}(X,Y) = E[XY] - E[X]E[Y]$. Only when $X$ and $Y$ are independent does the product formula hold - and then covariance is zero. Don&rsquo;t assume $E[XY] = E[X]E[Y]$ without first checking independence.</p>
 </blockquote>
@@ -200,6 +207,7 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
 <p>By the Cauchy-Schwarz inequality, $\rho$ always satisfies:</p>
 <p>$$-1 \leq \rho(X,Y) \leq 1.$$</p>
 <p>The endpoints are achieved exactly when $Y = aX + b$ for some constants $a \neq 0$ and $b$ - i.e., when one variable is an exact linear function of the other. $\rho = 1$ means perfect positive linear relationship; $\rho = -1$ means perfect negative linear relationship; $\rho = 0$ means no linear relationship.</p>
+<p><strong>What different values of $\rho$ look like.</strong> Imagine a scatter plot of $(X, Y)$ pairs. At $\rho = 1$, all points fall exactly on an upward-sloping line - no scatter at all. At $\rho = 0.9$, points cluster tightly around an upward line with a little scatter. At $\rho = 0.5$, you can see the upward trend but the cloud is wide. At $\rho = 0.1$, the trend is barely visible - nearly a random cloud. At $\rho = 0$, a circular or otherwise shapeless cloud. A common mistake is treating $\rho = 0.3$ as &ldquo;correlated&rdquo; when it explains only $0.3^2 = 9%$ of the variance ($\rho^2$ is the fraction of variance in $Y$ explained by a linear relationship with $X$). Strong correlation in practice typically means $|\rho| &gt; 0.7$.</p>
 <hr>
 <h2 id="independence-vs-zero-covariance">Independence vs. Zero Covariance</h2>
 <p>Independence implies zero covariance. Here&rsquo;s why: if $X$ and $Y$ are independent, then $E[XY] = E[X] \cdot E[Y]$ (expectations factor for independent random variables), so $\text{Cov}(X,Y) = E[XY] - E[X]E[Y] = 0$.</p>
@@ -210,6 +218,14 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
 <p>$$\text{Cov}(X,Y) = E[XY] - E[X]E[Y] = 0 - 0 \cdot E[Y] = 0.$$</p>
 <p>So $X$ and $Y$ are uncorrelated. But they are far from independent: knowing $X$ completely determines $Y = X^2$. If $|X| = 1$ then $Y = 1$; if $X = 0$ then $Y = 0$.</p>
 <p>The issue is that covariance only measures linear relationships. $Y = X^2$ is a nonlinear relationship - the parabola has no upward or downward linear trend. Covariance is blind to it.</p>
+<hr>
+<h2 id="markovs-inequality-concentration-from-the-mean-alone">Markov&rsquo;s Inequality: Concentration from the Mean Alone</h2>
+<p>Before Chebyshev, there is a simpler and more primitive bound that only uses the mean.</p>
+<p><strong>Markov&rsquo;s inequality.</strong> For any non-negative random variable $X$ and any $a &gt; 0$:</p>
+<p>$$P(X \geq a) \leq \frac{E[X]}{a}.$$</p>
+<p>The intuition: if the average value of $X$ is $\mu$, it cannot be the case that a large fraction of the probability sits far above $\mu$ - that would push the average too high. More precisely: if $P(X \geq a) = p$, then $E[X] \geq p \cdot a$ (since the contribution from that region alone is at least $p \cdot a$), which rearranges to $p \leq E[X]/a$.</p>
+<p><strong>Proof.</strong> Write $E[X] = \int_0^\infty x,f(x),dx \geq \int_a^\infty x,f(x),dx \geq a \int_a^\infty f(x),dx = a \cdot P(X \geq a)$. Dividing both sides by $a$ gives the result.</p>
+<p>The bound is distribution-free: it holds for any non-negative $X$ with finite mean, no other assumptions. It is also tight - there are distributions that achieve equality. The cost is that it is often quite loose. If $E[X] = 1$, Markov says $P(X \geq 100) \leq 0.01$. For many distributions the actual probability is astronomically smaller. Markov&rsquo;s inequality is useful when you know almost nothing about the distribution; when you know more (like the variance), you can do better.</p>
 <hr>
 <h2 id="chebyshevs-inequality-concentration-from-variance-alone">Chebyshev&rsquo;s Inequality: Concentration from Variance Alone</h2>
 <p>The mean and variance together give you a weak but universal bound on how often $X$ deviates far from its mean.</p>
@@ -297,9 +313,14 @@ Think about it intuitively. The die shows 1 through 6, each with probability 1/6
 <td>Cov detects only linear relationships</td>
 </tr>
 <tr>
+<td>Markov</td>
+<td>$P(X \geq a) \leq E[X]/a$</td>
+<td>Concentration for non-negative $X$, mean only</td>
+</tr>
+<tr>
 <td>Chebyshev</td>
 <td>$P(|X-\mu| \geq k\sigma) \leq 1/k^2$</td>
-<td>Concentration, distribution-free</td>
+<td>Concentration using variance; follows from Markov</td>
 </tr>
 </tbody>
 </table>
