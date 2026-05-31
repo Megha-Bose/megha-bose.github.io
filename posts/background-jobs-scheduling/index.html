@@ -1,0 +1,262 @@
+<!doctype html><html lang="en-us">
+<head>
+<title>Background Jobs and Scheduling - Who Counts the 24 Hours? // Megha Bose</title>
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.edde8336ed5eb91775f350ce69ec87869d18014e9964f457e88c794cc444fc60.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Background Jobs and Scheduling - Who Counts the 24 Hours?">
+<meta name="twitter:description" content="Helpful context:
+ Message Queues - Decoupling Services by Delaying Their Conversations  Rate Limiting - Protecting Services from Overload    Instagram stories disappear after exactly 24 hours. There is no timer running in the app. There is no user counting down. The story was uploaded, the server returned &ldquo;upload successful,&rdquo; and the HTTP connection closed. Yet 86,400 seconds later, the story is gone.
+Who counted?
+The answer to this question is also the answer to how IRCTC finalizes reservation charts 8 hours before departure, how your weekly digest email arrives on schedule, how password reset tokens expire in 15 minutes, and how a hundred other time-driven behaviors in software actually work.">
+<meta property="og:title" content="Background Jobs and Scheduling - Who Counts the 24 Hours?">
+<meta property="og:description" content="Helpful context:
+ Message Queues - Decoupling Services by Delaying Their Conversations  Rate Limiting - Protecting Services from Overload    Instagram stories disappear after exactly 24 hours. There is no timer running in the app. There is no user counting down. The story was uploaded, the server returned &ldquo;upload successful,&rdquo; and the HTTP connection closed. Yet 86,400 seconds later, the story is gone.
+Who counted?
+The answer to this question is also the answer to how IRCTC finalizes reservation charts 8 hours before departure, how your weekly digest email arrives on schedule, how password reset tokens expire in 15 minutes, and how a hundred other time-driven behaviors in software actually work.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/background-jobs-scheduling/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
+<br>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
+<br>
+<a class="app-header-menu-item" href="/categories/">Topics</a>
+<br>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+</nav>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
+</button>
+</header>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Background Jobs and Scheduling - Who Counts the 24 Hours?</h1>
+<div class="post-meta">
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 15, 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 min read
+</div>
+</div>
+</header>
+<div class="post-content">
+<p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/message-queues-event-driven/" target="_blank" rel="noopener noreferrer">Message Queues - Decoupling Services by Delaying Their Conversations</a>
+</li>
+<li><a href="/posts/rate-limiting-throttling/" target="_blank" rel="noopener noreferrer">Rate Limiting - Protecting Services from Overload</a>
+</li>
+</ul>
+<hr>
+<p>Instagram stories disappear after exactly 24 hours. There is no timer running in the app. There is no user counting down. The story was uploaded, the server returned &ldquo;upload successful,&rdquo; and the HTTP connection closed. Yet 86,400 seconds later, the story is gone.</p>
+<p>Who counted?</p>
+<p>The answer to this question is also the answer to how IRCTC finalizes reservation charts 8 hours before departure, how your weekly digest email arrives on schedule, how password reset tokens expire in 15 minutes, and how a hundred other time-driven behaviors in software actually work. None of these are magic. They are all variations of a small set of well-understood patterns.</p>
+<h2 id="what-scheduling-actually-means">What &ldquo;Scheduling&rdquo; Actually Means</h2>
+<p>The word &ldquo;scheduling&rdquo; covers four distinct problems that require different solutions. Mixing them up leads to choosing the wrong tool.</p>
+<p><strong>Run on a fixed schedule</strong>: send a daily digest at 8am, clean up temp files every hour, generate monthly reports at midnight. The key characteristic: the time is known in advance and repeats.</p>
+<p><strong>Run once at a future time determined at runtime</strong>: delete this story at exactly 2025-01-01T14:32:00Z (24 hours after the upload happened). The time is computed when the event occurs, not in advance.</p>
+<p><strong>Run after a delay</strong>: send a re-engagement email 3 days after a user signs up if they have not returned. Same idea as &ldquo;future time&rdquo; but expressed as a delay from now.</p>
+<p><strong>Run in the background, not on a schedule</strong>: process this image after the upload response returns. No specific time, just &ldquo;not in this HTTP request.&rdquo;</p>
+<p>Most of what looks like &ldquo;scheduling&rdquo; in job descriptions and design interviews is one of these four. Figure out which one you have before choosing a tool.</p>
+<h2 id="cron-fifty-years-old-and-still-running-most-of-the-worlds-jobs">Cron: Fifty Years Old and Still Running Most of the World&rsquo;s Jobs</h2>
+<p>Unix <code>cron</code> is a daemon that reads a configuration file (the crontab), and fires commands at the specified times. It is as old as Unix itself and still handles the majority of scheduled work in production systems worldwide.</p>
+<pre tabindex="0"><code># Format: minute  hour  day  month  weekday  command
+# Send the daily digest at 8am every day
+0 8 * * * python /app/send_digest.py
+
+# Run cleanup every 15 minutes
+*/15 * * * * python /app/cleanup.py
+
+# Generate the monthly report on the first of each month at midnight
+0 0 1 * * python /app/monthly_report.py
+</code></pre><p>Each <code>*</code> means &ldquo;any value.&rdquo; <code>*/15</code> means &ldquo;every 15.&rdquo; The pattern <code>0 8 * * *</code> means &ldquo;when minute=0 and hour=8 and any day and any month and any weekday&rdquo; - daily at 8am.</p>
+<p>Cron works perfectly on one server. The problem appears as soon as you run more than one application server: every server has its own crontab, so the same job fires on every server simultaneously. Your daily digest sends once per server - five servers means five emails per user.</p>
+<h3 id="distributed-cron-making-it-work-at-scale">Distributed Cron: Making It Work at Scale</h3>
+<p>The solution is ensuring only one machine runs a cron job at a given time. Several approaches:</p>
+<p><strong>Redis-based locking</strong>: before the job runs, acquire a Redis lock with a short expiry:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">run_with_lock</span>(job_name, fn, timeout<span style="color:#f92672">=</span><span style="color:#ae81ff">300</span>):
+    lock_key <span style="color:#f92672">=</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;cron:lock:</span><span style="color:#e6db74">{</span>job_name<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+    acquired <span style="color:#f92672">=</span> redis<span style="color:#f92672">.</span>set(lock_key, <span style="color:#e6db74">&#34;1&#34;</span>, nx<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, ex<span style="color:#f92672">=</span>timeout)
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> acquired:
+        <span style="color:#66d9ef">return</span>  <span style="color:#75715e"># another server is already running this job</span>
+    <span style="color:#66d9ef">try</span>:
+        fn()
+    <span style="color:#66d9ef">finally</span>:
+        redis<span style="color:#f92672">.</span>delete(lock_key)
+</code></pre></div><p><strong>Kubernetes CronJob</strong>: Kubernetes has a first-class CronJob resource that creates a Pod on schedule. With <code>concurrencyPolicy: Forbid</code>, Kubernetes refuses to start a new Job if the previous one is still running. With <code>concurrencyPolicy: Replace</code>, it kills the old one and starts fresh. The cluster handles the &ldquo;only one instance runs&rdquo; guarantee.</p>
+<p><strong>AWS EventBridge Scheduler</strong>: a managed service that fires exactly once per schedule trigger, delivering to a target (SQS queue, Lambda function, any AWS service). No servers to manage, no locking to implement. The scheduler fires once regardless of how many instances of your application are running.</p>
+<h2 id="redis-ttl-the-automatic-eviction-clock">Redis TTL: The Automatic Eviction Clock</h2>
+<p>Redis lets you attach an expiry to any key:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e"># Store a story, expire after 24 hours</span>
+redis<span style="color:#f92672">.</span>setex(<span style="color:#e6db74">&#34;story:user-42:post-99&#34;</span>, <span style="color:#ae81ff">86400</span>, json<span style="color:#f92672">.</span>dumps(story_data))
+
+<span style="color:#75715e"># Or set expiry on an existing key</span>
+redis<span style="color:#f92672">.</span>set(<span style="color:#e6db74">&#34;story:user-42:post-99&#34;</span>, json<span style="color:#f92672">.</span>dumps(story_data))
+redis<span style="color:#f92672">.</span>expire(<span style="color:#e6db74">&#34;story:user-42:post-99&#34;</span>, <span style="color:#ae81ff">86400</span>)
+
+<span style="color:#75715e"># See how much time remains</span>
+remaining <span style="color:#f92672">=</span> redis<span style="color:#f92672">.</span>ttl(<span style="color:#e6db74">&#34;story:user-42:post-99&#34;</span>)  <span style="color:#75715e"># seconds until expiry</span>
+</code></pre></div><p>When the TTL reaches zero, Redis deletes the key. The story is no longer in Redis. Any code that checks <code>redis.get("story:user-42:post-99")</code> finds nothing and treats the story as expired.</p>
+<p>This handles the fast-path: the story disappears from the live serving layer automatically without any job needing to run. But it does not clean up related data. When <code>story:user-42:post-99</code> expires, the media file in S3 still exists. The database row still exists. The entry in the follower feed index still exists. TTL evicts the key; it does not execute cleanup logic.</p>
+<p>For the cleanup, two approaches:</p>
+<p><strong>Redis keyspace notifications</strong>: subscribe to events that fire when keys expire. Redis emits a notification whenever a key is deleted due to TTL expiry.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e"># Enable in redis.conf: notify-keyspace-events Ex</span>
+pubsub <span style="color:#f92672">=</span> redis<span style="color:#f92672">.</span>pubsub()
+pubsub<span style="color:#f92672">.</span>psubscribe(<span style="color:#e6db74">&#34;__keyevent@0__:expired&#34;</span>)
+<span style="color:#66d9ef">for</span> message <span style="color:#f92672">in</span> pubsub<span style="color:#f92672">.</span>listen():
+    key <span style="color:#f92672">=</span> message[<span style="color:#e6db74">&#34;data&#34;</span>]<span style="color:#f92672">.</span>decode()
+    <span style="color:#66d9ef">if</span> key<span style="color:#f92672">.</span>startswith(<span style="color:#e6db74">&#34;story:&#34;</span>):
+        handle_story_expiry(key)
+</code></pre></div><p>The limitation: Redis keyspace notifications are at-most-once. If your subscriber is down or slow when a key expires, the notification is missed and the cleanup does not happen. This makes them appropriate only as an optimization, not as the sole cleanup mechanism.</p>
+<p><strong>Periodic cleanup job</strong>: a cron job runs every few minutes, queries the database for records where <code>expires_at &lt; NOW() AND deleted = false</code>, and cleans them up. This is reliable - the cleanup eventually runs even if it is delayed - and it catches any keys that Redis evicted without triggering a notification.</p>
+<p>Most production systems use both: Redis TTL for the fast-path serving layer, and a periodic cleanup job for the slow-path persistence cleanup. Instagram stories almost certainly work this way.</p>
+<h2 id="delayed-job-queues">Delayed Job Queues</h2>
+<p>What if the work needs to happen at a time that is not a fixed schedule - a time determined at runtime?</p>
+<p>At user signup, you want to send a re-engagement email exactly 3 days later if they have not come back. The &ldquo;3 days from now&rdquo; is a different time for every user. A fixed cron expression cannot handle this.</p>
+<p><strong>AWS SQS with <code>DelaySeconds</code></strong>: SQS lets you set a delay up to 15 minutes (900 seconds) on any message. The message sits invisible in the queue and becomes visible to consumers after the delay:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">sqs<span style="color:#f92672">.</span>send_message(
+    QueueUrl<span style="color:#f92672">=</span>queue_url,
+    MessageBody<span style="color:#f92672">=</span>json<span style="color:#f92672">.</span>dumps({<span style="color:#e6db74">&#34;user_id&#34;</span>: user_id, <span style="color:#e6db74">&#34;action&#34;</span>: <span style="color:#e6db74">&#34;send_reengagement&#34;</span>}),
+    DelaySeconds<span style="color:#f92672">=</span><span style="color:#ae81ff">900</span>  <span style="color:#75715e"># 15 minutes max</span>
+)
+</code></pre></div><p>For delays longer than 15 minutes, combine SQS with EventBridge Scheduler: at signup time, create a one-time EventBridge schedule for 3 days from now that sends a message to SQS. EventBridge supports schedules up to one year in the future.</p>
+<p><strong>Celery (Python)</strong>: the most common Python task queue. Celery workers pick up tasks from a broker (Redis or RabbitMQ). Tasks can be delayed with <code>countdown</code> (seconds from now) or <code>eta</code> (specific datetime):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> celery <span style="color:#f92672">import</span> Celery
+<span style="color:#f92672">from</span> datetime <span style="color:#f92672">import</span> datetime, timedelta
+
+app <span style="color:#f92672">=</span> Celery(<span style="color:#e6db74">&#34;tasks&#34;</span>, broker<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;redis://localhost:6379&#34;</span>)
+
+<span style="color:#a6e22e">@app</span><span style="color:#f92672">.</span>task
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">send_reengagement_email</span>(user_id):
+    <span style="color:#75715e"># fetch user, check if they&#39;ve logged in, send email if not</span>
+    <span style="color:#66d9ef">pass</span>
+
+<span style="color:#75715e"># Schedule the task for 3 days from now</span>
+eta <span style="color:#f92672">=</span> datetime<span style="color:#f92672">.</span>utcnow() <span style="color:#f92672">+</span> timedelta(days<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)
+send_reengagement_email<span style="color:#f92672">.</span>apply_async(args<span style="color:#f92672">=</span>[user_id], eta<span style="color:#f92672">=</span>eta)
+</code></pre></div><p>Celery stores scheduled tasks in the broker. A separate Celery beat process wakes up periodically, checks which tasks are due, and enqueues them for workers to execute.</p>
+<p><strong>DynamoDB TTL as a scheduler</strong>: a creative pattern for AWS-native systems. Store the job in DynamoDB with a <code>ttl</code> attribute set to the Unix timestamp when it should execute. When DynamoDB&rsquo;s TTL process deletes the item (at or after that timestamp), it emits a deletion event to DynamoDB Streams. A Lambda function subscribed to the stream picks up the event and executes the job.</p>
+<p>This turns DynamoDB&rsquo;s garbage collection into a job scheduler. It requires no separate scheduler infrastructure - just the DynamoDB table, Streams, and Lambda. The trade-off: DynamoDB TTL deletion can be delayed by up to 48 hours under load, so it is appropriate for jobs where &ldquo;approximately on time&rdquo; is acceptable, not for exact-millisecond scheduling.</p>
+<h2 id="how-irctc-actually-works">How IRCTC Actually Works</h2>
+<p>When you book an Indian Railways ticket, your seat is in one of three states: Confirmed, Waitlisted (WL), or one of several regional waitlist categories. The final chart is prepared 4-8 hours before departure.</p>
+<p>The mechanics:</p>
+<ol>
+<li>
+<p><strong>At booking time</strong>: your reservation is recorded in the database. If confirmed, you get a seat. If waitlisted, you get a WL number (WL1, WL2, &mldr;) that represents your position in the queue. The system also schedules a &ldquo;prepare chart&rdquo; job at exactly (departure datetime - 4 to 8 hours), stored as a delayed job.</p>
+</li>
+<li>
+<p><strong>As passengers cancel</strong>: every cancellation immediately triggers re-evaluation of the waitlist. WL1 moves to confirmed; WL2 becomes WL1. This is event-driven - it happens synchronously when a cancellation is processed, not on a schedule.</p>
+</li>
+<li>
+<p><strong>At T-4 to T-8 hours</strong>: the scheduled &ldquo;prepare chart&rdquo; job runs. It processes all remaining waitlisted passengers in WL order against available seats (from cancellations since booking). Those who can be confirmed are confirmed; the rest are dropped from the waitlist. The reservation chart is locked - no further changes.</p>
+</li>
+<li>
+<p>The finalized chart is distributed to station staff.</p>
+</li>
+</ol>
+<p>Two different mechanisms coexist here. The waitlist re-evaluation in step 2 is event-driven - triggered immediately by a specific action. The chart finalization in step 3 is time-based - triggered by a scheduled job. Most real systems are a combination of both.</p>
+<h2 id="idempotency-the-non-negotiable-property-of-scheduled-jobs">Idempotency: The Non-Negotiable Property of Scheduled Jobs</h2>
+<p>Scheduled jobs fail. They time out, get retried, and sometimes fire twice due to race conditions in distributed schedulers. A cron job on a server that gets restarted mid-execution might run twice. A Kubernetes CronJob with <code>concurrencyPolicy: Allow</code> might overlap.</p>
+<p>Any scheduled job that is not idempotent - meaning running it twice produces a different (wrong) result compared to running it once - is a correctness bug that will eventually manifest in production at the worst time.</p>
+<p>Sending the weekly digest: check whether you already sent it for this week before sending.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">send_weekly_digest</span>(user_id):
+    week_key <span style="color:#f92672">=</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;digest:sent:</span><span style="color:#e6db74">{</span>user_id<span style="color:#e6db74">}</span><span style="color:#e6db74">:</span><span style="color:#e6db74">{</span>get_iso_week()<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+    <span style="color:#66d9ef">if</span> redis<span style="color:#f92672">.</span>get(week_key):
+        <span style="color:#66d9ef">return</span>  <span style="color:#75715e"># already sent this week</span>
+    send_email(user_id, build_digest(user_id))
+    redis<span style="color:#f92672">.</span>setex(week_key, <span style="color:#ae81ff">86400</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">8</span>, <span style="color:#e6db74">&#34;1&#34;</span>)  <span style="color:#75715e"># mark as sent, keep for 8 days</span>
+</code></pre></div><p>Deleting expired stories: query <code>WHERE expires_at &lt; NOW() AND status != 'deleted'</code>. Running twice just finds an empty result set the second time.</p>
+<p>Finalizing the chart: write <code>chart_status = 'finalized'</code> to the database. If the job runs twice, the second run sees the status is already finalized and exits early.</p>
+<p>The pattern is always: read current state, check if work is still needed, act if needed, make the final state idempotent to repeated application.</p>
+<h2 id="choosing-the-right-tool">Choosing the Right Tool</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Right mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repeat on a fixed schedule (every 5 minutes, daily at 8am)</td>
+<td>Cron, Kubernetes CronJob, or EventBridge Scheduler</td>
+</tr>
+<tr>
+<td>Prevent duplicate execution on multiple servers</td>
+<td>Redis SETNX lock before running</td>
+</tr>
+<tr>
+<td>Automatically expire a cached value</td>
+<td>Redis TTL</td>
+</tr>
+<tr>
+<td>Trigger cleanup code when a value expires</td>
+<td>Redis keyspace notifications + periodic cleanup job</td>
+</tr>
+<tr>
+<td>Run a job at a runtime-determined future time (delays up to 15 min)</td>
+<td>SQS DelaySeconds</td>
+</tr>
+<tr>
+<td>Run a job at a runtime-determined future time (any delay)</td>
+<td>EventBridge Scheduler one-time schedule</td>
+</tr>
+<tr>
+<td>Python task queue with delay support</td>
+<td>Celery with beat scheduler</td>
+</tr>
+<tr>
+<td>Complex pipeline with task dependencies and retry logic</td>
+<td>Apache Airflow</td>
+</tr>
+<tr>
+<td>Serverless with no infrastructure to manage</td>
+<td>EventBridge Scheduler + Lambda</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/reliability-patterns/" target="_blank" rel="noopener noreferrer">Reliability Patterns - Timeouts, Retries, and Circuit Breakers</a>
+</li>
+<li><a href="/posts/message-queues-event-driven/" target="_blank" rel="noopener noreferrer">Message Queues - Decoupling Services by Delaying Their Conversations</a>
+</li>
+</ul>
+</div>
+<div class="post-footer">
+</div>
+</article>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
+</html>
