@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          12 min read
+          14 min read
         </div>
       </div>
     </header>
@@ -152,7 +152,23 @@
 <p>This grammar is <strong>ambiguous</strong>. For a programming language parser, this is a disaster - the parser doesn&rsquo;t know which interpretation the programmer intended, so it can&rsquo;t generate the right code.</p>
 <p>In practice, language designers eliminate ambiguity by restructuring the grammar to encode precedence and associativity. The unambiguous grammar for arithmetic expressions separates addition from multiplication:</p>
 <p>$$E \to E + T \mid T \qquad T \to T \times F \mid F \qquad F \to (E) \mid a$$</p>
-<p>This grammar is unambiguous: every expression has exactly one parse tree, and multiplication always binds tighter than addition.</p>
+<p><strong>What E, T, F actually mean.</strong> The three non-terminals form a hierarchy of binding strength:</p>
+<ul>
+<li><strong>F (Factor)</strong> is the atomic unit - either a literal <code>a</code>, or an entire expression wrapped in parentheses. Nothing can break it apart at this level.</li>
+<li><strong>T (Term)</strong> is a product of factors. Its only operator is <code>×</code>. It has no rule that produces <code>+</code> at its top level.</li>
+<li><strong>E (Expression)</strong> is a sum of terms. Its only operator is <code>+</code>.</li>
+</ul>
+<p>The trick is that each level can only produce operators at its own level - it &ldquo;borrows&rdquo; tighter structure from the level below. To derive something with a top-level <code>+</code>, you must use <code>E → E + T</code>. To derive something with a top-level <code>×</code>, you must use <code>T → T × F</code>. There is no rule that allows <code>×</code> to appear at the level of <code>E</code>, so multiplication can never sit above addition in any parse tree.</p>
+<p><strong>Tracing <code>a + a × a</code>.</strong> The only rule with <code>+</code> is <code>E → E + T</code>, so the root must split there:</p>
+<pre tabindex="0"><code>E
+├── E → T → F → a           (left of +)
+└── T → T × F               (right of +)
+    ├── T → F → a
+    └── F → a
+</code></pre><p>The <code>×</code> is nested inside the right-hand <code>T</code>, one level below the <code>+</code>. The tree encodes <code>a + (a × a)</code>. There is no other derivation.</p>
+<p><strong>Why <code>(a + a) × a</code> requires parentheses.</strong> To get <code>×</code> at the root, you need <code>T → T × F</code>. The left operand must be a <code>T</code>. Can a <code>T</code> derive <code>a + a</code>? Trace the rules: <code>T → T × F | F</code> and <code>F → (E) | a</code> - neither <code>T</code> nor <code>F</code> can produce a bare <code>+</code>. The only way to get addition inside a multiplication is through <code>F → (E)</code>, which requires writing the parentheses explicitly. The grammar structurally prevents the ambiguity: the &ldquo;wrong&rdquo; interpretation is simply not derivable.</p>
+<p><strong>Left recursion and associativity.</strong> Both <code>E → E + T</code> and <code>T → T × F</code> are left-recursive - the non-terminal appears at the left of the right-hand side. This enforces left-associativity: <code>a + a + a</code> must parse as <code>(a + a) + a</code>, not <code>a + (a + a)</code>, because the only way to apply <code>E → E + T</code> twice is to have the first application be the left child of the second.</p>
+<p>This grammar is unambiguous: every expression has exactly one parse tree, and the tree structure directly encodes both precedence (depth in the hierarchy) and associativity (left recursion).</p>
 <p>Some languages are <strong>inherently ambiguous</strong> - no matter what grammar you write for them, ambiguity is unavoidable. These are a small but theoretically important class.</p>
 <hr>
 <h2 id="chomsky-normal-form">Chomsky Normal Form</h2>
