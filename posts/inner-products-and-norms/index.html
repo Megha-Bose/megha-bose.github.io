@@ -159,7 +159,16 @@ $$\cos\theta = \frac{\mathbf{u} \cdot \mathbf{v}}{|\mathbf{u}||\mathbf{v}|} = \f
 <p>$$\theta = \arccos(0.1297) \approx 82.5°$$</p>
 <p>These vectors are nearly but not quite orthogonal.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> The formula $\cos\theta = \frac{\mathbf{u} \cdot \mathbf{v}}{|\mathbf{u}||\mathbf{v}|}$ requires $|\cos\theta| \leq 1$, which in turn requires $|\mathbf{u} \cdot \mathbf{v}| \leq |\mathbf{u}||\mathbf{v}|$. Is this always true? Yes - this is the Cauchy-Schwarz inequality, which we prove rigorously in Section 3. For now, trust that the inequality holds; its proof is the single most important computation in this entire post.</p>
+<p><strong>Cauchy-Schwarz inequality.</strong> For any vectors $\mathbf{u}, \mathbf{v}$ in $\mathbb{R}^n$:
+$$|\mathbf{u} \cdot \mathbf{v}| \leq |\mathbf{u}||\mathbf{v}|$$
+<em>Proof.</em> For any real $t$, the squared norm $|\mathbf{u} - t\mathbf{v}|^2 \geq 0$. Expanding:
+$$|\mathbf{u}|^2 - 2t(\mathbf{u} \cdot \mathbf{v}) + t^2|\mathbf{v}|^2 \geq 0$$
+This is a quadratic in $t$ that is always non-negative, so its discriminant must be $\leq 0$:
+$$4(\mathbf{u} \cdot \mathbf{v})^2 - 4|\mathbf{u}|^2|\mathbf{v}|^2 \leq 0$$
+Rearranging gives $|\mathbf{u} \cdot \mathbf{v}| \leq |\mathbf{u}||\mathbf{v}|$. $\square$</p>
+</blockquote>
+<blockquote>
+<p><strong>Discomfort check.</strong> The formula $\cos\theta = \frac{\mathbf{u} \cdot \mathbf{v}}{|\mathbf{u}||\mathbf{v}|}$ requires $|\cos\theta| \leq 1$, which in turn requires $|\mathbf{u} \cdot \mathbf{v}| \leq |\mathbf{u}||\mathbf{v}|$. The box above proves exactly this. Section 3 revisits the proof in the abstract inner product setting with full detail on the equality condition.</p>
 </blockquote>
 <hr>
 <h2 id="section-2-norms---measuring-size">Section 2: Norms - Measuring Size</h2>
@@ -175,8 +184,8 @@ $$\cos\theta = \frac{\mathbf{u} \cdot \mathbf{v}}{|\mathbf{u}||\mathbf{v}|} = \f
 <li><strong>$L^2$ (Euclidean norm):</strong> $|\mathbf{v}|<em>2 = \sqrt{\sum</em>{i=1}^n v_i^2}$. Straight-line distance. The only $L^p$ norm that comes from an inner product.</li>
 <li><strong>$L^\infty$ (Chebyshev norm):</strong> $|\mathbf{v}|_\infty = \max_i |v_i|$. The size of the largest component. Controls the worst-case error.</li>
 </ul>
-<p>For $\mathbf{v} = (3, -4)$:
-$$|\mathbf{v}|_1 = 7, \qquad |\mathbf{v}|<em>2 = 5, \qquad |\mathbf{v}|</em>\infty = 4$$</p>
+<p>For $\mathbf{v} = (3, -4)$:</p>
+<div>$$\|\mathbf{v}\|_1 = 7, \qquad \|\mathbf{v}\|_2 = 5, \qquad \|\mathbf{v}\|_\infty = 4$$</div>
 <h3 id="geometry-of-unit-balls">Geometry of Unit Balls</h3>
 <p>The <strong>unit ball</strong> in norm $|\cdot|$ is the set of all vectors with $|\mathbf{v}| \leq 1$. Its shape reveals the geometry of the norm:</p>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 190" width="480" height="190" style="display:block;margin:1.2em 0;font-family:inherit">
@@ -254,7 +263,7 @@ $$|\mathbf{v}|_1 = 7, \qquad |\mathbf{v}|<em>2 = 5, \qquad |\mathbf{v}|</em>\inf
 \end{aligned}$$</p>
 <p>Taking square roots: $|\mathbf{u} + \mathbf{v}| \leq |\mathbf{u}| + |\mathbf{v}|$. The triangle inequality follows from Cauchy-Schwarz - it is not assumed but derived.</p>
 <p><strong>Cosine similarity in machine learning.</strong> Define:</p>
-<p>$$\text{cosine_sim}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{|\mathbf{u}||\mathbf{v}|}$$</p>
+<div>$$\text{cosine\_sim}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|\|\mathbf{v}\|}$$</div>
 <p>By Cauchy-Schwarz, this always lies in $[-1, 1]$. It equals $\cos\theta$ - it measures directional agreement while ignoring magnitude. Word vectors in NLP are compared by cosine similarity: the direction encodes meaning, while the magnitude reflects frequency. &ldquo;King&rdquo; and &ldquo;Queen&rdquo; have high cosine similarity. &ldquo;King&rdquo; and &ldquo;Banana&rdquo; do not.</p>
 <hr>
 <h2 id="section-4-abstract-inner-products">Section 4: Abstract Inner Products</h2>
@@ -349,7 +358,7 @@ $$|\mathbf{v}|_1 = 7, \qquad |\mathbf{v}|<em>2 = 5, \qquad |\mathbf{v}|</em>\inf
 <h2 id="section-7-applications">Section 7: Applications</h2>
 <h3 id="word-embeddings-and-semantic-similarity">Word Embeddings and Semantic Similarity</h3>
 <p>Modern NLP represents each word as a vector in $\mathbb{R}^d$ (typically $d = 100$ to $d = 1000$). These vectors are trained so that semantically related words have high dot products (or cosine similarities). The intuition:</p>
-<p>$$\text{sim}(\text{&ldquo;King&rdquo;}, \text{&ldquo;Queen&rdquo;}) = \frac{\mathbf{w}<em>{\text{King}} \cdot \mathbf{w}</em>{\text{Queen}}}{|\mathbf{w}<em>{\text{King}}||\mathbf{w}</em>{\text{Queen}}|} \gg \text{sim}(\text{&ldquo;King&rdquo;}, \text{&ldquo;Banana&rdquo;})$$</p>
+<div>$$\text{sim}(\text{"King"}, \text{"Queen"}) = \frac{\mathbf{w}_{\text{King}} \cdot \mathbf{w}_{\text{Queen}}}{\|\mathbf{w}_{\text{King}}\|\|\mathbf{w}_{\text{Queen}}\|} \gg \text{sim}(\text{"King"}, \text{"Banana"})$$</div>
 <p>The famous &ldquo;King - Man + Woman $\approx$ Queen&rdquo; arithmetic is really arithmetic in the inner product space: the inner product structure encodes semantic relationships as geometric relationships.</p>
 <h3 id="least-squares-as-orthogonal-projection">Least Squares as Orthogonal Projection</h3>
 <p>When you fit a linear model $A\mathbf{x} \approx \mathbf{b}$, the least squares solution $\hat{\mathbf{x}}$ produces the <strong>orthogonal projection</strong> of $\mathbf{b}$ onto the column space of $A$. The residual $\mathbf{b} - A\hat{\mathbf{x}}$ is orthogonal to every column of $A$ - this is precisely the normal equations.</p>
@@ -372,8 +381,8 @@ $$|\mathbf{v}|_1 = 7, \qquad |\mathbf{v}|<em>2 = 5, \qquad |\mathbf{v}|</em>\inf
 <p>$$|\mathbf{u} + \mathbf{v}|^2 + |\mathbf{u} - \mathbf{v}|^2 = 2|\mathbf{u}|^2 + 2|\mathbf{v}|^2 \quad \text{for all } \mathbf{u}, \mathbf{v}$$</p>
 <p>Geometrically: the sum of the squares of the diagonals of a parallelogram equals twice the sum of the squares of its sides.</p>
 <p>For the $L^p$ norms, only $p = 2$ satisfies the parallelogram law. Let us verify the $L^1$ norm fails in $\mathbb{R}^2$ with $\mathbf{u} = (1,0)$, $\mathbf{v} = (0,1)$:</p>
-<p>$$|\mathbf{u} + \mathbf{v}|_1^2 + |\mathbf{u} - \mathbf{v}|_1^2 = |(1,1)|_1^2 + |(1,-1)|_1^2 = 4 + 4 = 8$$</p>
-<p>$$2|\mathbf{u}|_1^2 + 2|\mathbf{v}|_1^2 = 2(1)^2 + 2(1)^2 = 4$$</p>
+<div>$$\|\mathbf{u} + \mathbf{v}\|_1^2 + \|\mathbf{u} - \mathbf{v}\|_1^2 = \|(1,1)\|_1^2 + \|(1,-1)\|_1^2 = 4 + 4 = 8$$</div>
+<div>$$2\|\mathbf{u}\|_1^2 + 2\|\mathbf{v}\|_1^2 = 2(1)^2 + 2(1)^2 = 4$$</div>
 <p>Since $8 \neq 4$, the $L^1$ norm does not come from any inner product. This is why LASSO behaves differently from ridge regression at a fundamental structural level - it is working in a space without a natural inner product.</p>
 <p>If the parallelogram law holds, the inner product can be recovered from the norm via the <strong>polarization identity</strong>:</p>
 <p>$$\langle\mathbf{u},\mathbf{v}\rangle = \frac{1}{4}\left(|\mathbf{u}+\mathbf{v}|^2 - |\mathbf{u}-\mathbf{v}|^2\right)$$</p>
@@ -399,12 +408,12 @@ $$|\mathbf{v}|_1 = 7, \qquad |\mathbf{v}|<em>2 = 5, \qquad |\mathbf{v}|</em>\inf
 </blockquote>
 <h3 id="norm-equivalence-in-finite-dimensions">Norm Equivalence in Finite Dimensions</h3>
 <p>In a finite-dimensional space, all norms are <strong>equivalent</strong>: for any two norms $|\cdot|<em>\alpha$ and $|\cdot|</em>\beta$, there exist constants $0 &lt; c \leq C &lt; \infty$ such that:</p>
-<p>$$c|\mathbf{v}|<em>\alpha \leq |\mathbf{v}|</em>\beta \leq C|\mathbf{v}|_\alpha \quad \text{for all } \mathbf{v}$$</p>
+<div>$$c\|\mathbf{v}\|_\alpha \leq \|\mathbf{v}\|_\beta \leq C\|\mathbf{v}\|_\alpha \quad \text{for all } \mathbf{v}$$</div>
 <p>This means all norms on $\mathbb{R}^n$ induce the same topology - the same notion of convergence. A sequence converges in one norm if and only if it converges in all norms.</p>
 <p><strong>Proof sketch.</strong> The unit sphere $S = \{\mathbf{v} : |\mathbf{v}|<em>\alpha = 1\}$ is compact (closed and bounded in $\mathbb{R}^n$). The function $\mathbf{v} \mapsto |\mathbf{v}|</em>\beta$ is continuous on $S$. A continuous function on a compact set attains its minimum and maximum, say $c$ and $C$. Positive definiteness forces $c &gt; 0$. By homogeneity, the inequality extends to all $\mathbf{v}$. $\square$</p>
 <p>Explicit equivalence constants between $L^p$ norms on $\mathbb{R}^n$:</p>
-<p>$$|\mathbf{v}|_2 \leq |\mathbf{v}|_1 \leq \sqrt{n}|\mathbf{v}|_2$$</p>
-<p>$$|\mathbf{v}|_\infty \leq |\mathbf{v}|<em>2 \leq \sqrt{n}|\mathbf{v}|</em>\infty$$</p>
+<div>$$\|\mathbf{v}\|_2 \leq \|\mathbf{v}\|_1 \leq \sqrt{n}\|\mathbf{v}\|_2$$</div>
+<div>$$\|\mathbf{v}\|_\infty \leq \|\mathbf{v}\|_2 \leq \sqrt{n}\|\mathbf{v}\|_\infty$$</div>
 <p>In infinite dimensions, this theorem fails entirely: different norms can give genuinely different topologies, and the correct choice of norm is a substantive analytic question.</p>
 <hr>
 <h2 id="summary">Summary</h2>
