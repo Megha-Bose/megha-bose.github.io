@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          29 min read
+          33 min read
         </div>
       </div>
     </header>
@@ -309,37 +309,78 @@
 <p>The rule is clean: <strong>if elimination on $[A \mid I]$ ever reaches a column where the entire sub-column at and below the pivot position is zero - so no row swap can rescue it - then $A$ is singular and has no inverse.</strong> A zero at the pivot position alone is not enough; that might just require a row swap. Singularity is confirmed only when there is no nonzero entry anywhere below (or at) that pivot position, leaving that column without a pivot no matter what.</p>
 <hr>
 <h2 id="what-elimination-actually-does-a--lu">What Elimination Actually Does: $A = LU$</h2>
-<p>Here is an observation that transforms Gaussian elimination from a solving procedure into a matrix factorization.</p>
-<p>Look at the three multipliers from the first example: $m_{21} = 2$, $m_{31} = 1$, $m_{32} = 3$. Record them in a lower triangular matrix with 1s on the diagonal:</p>
-<p>$$L = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 2 &amp; 1 &amp; 0 \\ 1 &amp; 3 &amp; 1 \end{pmatrix}$$</p>
-<p>And the triangular form we reached is $U$:</p>
+<h3 id="the-intuition">The Intuition</h3>
+<p>Every time Gaussian elimination subtracts a multiple of one row from another, it is doing something reversible: it is recording exactly how to undo that step. The central insight of $LU$ factorization is that these &ldquo;undo instructions&rdquo; - the multipliers - assemble into a lower triangular matrix $L$, and the result of elimination is the upper triangular matrix $U$. Together: $A = LU$.</p>
+<p>Why is this useful? Because solving $A\mathbf{x} = \mathbf{b}$ requires only forward elimination and back substitution - $O(n^3)$ work. But once you have $L$ and $U$, you can solve for any new $\mathbf{b}$ in $O(n^2)$: no elimination needed again. For a problem with hundreds of right-hand sides and the same $A$, this is a massive saving. It is also the reason $LU$ factorization is what numerical libraries (NumPy, LAPACK, MATLAB) actually store when you &ldquo;solve a linear system.&rdquo;</p>
+<h3 id="where-l-comes-from">Where $L$ Comes From</h3>
+<p>Each elimination step subtracts $m_{ij}$ times row $i$ from row $j$ to zero out position $(j, i)$. The multiplier $m_{ji}$ is just the ratio:</p>
+<p>$$m_{ji} = \frac{a_{ji}}{a_{ii}}$$</p>
+<p>where $a_{ii}$ is the current pivot. After using row $i$ to clear column $i$ in all rows below, that multiplier is set aside. At the end of all elimination, build a matrix $L$ by placing each multiplier $m_{ji}$ at position $(j, i)$ below the diagonal, and putting 1s on the diagonal:</p>
+<p>$$L_{ji} = m_{ji} \quad (j &gt; i), \qquad L_{ii} = 1, \qquad L_{ji} = 0 \quad (j &lt; i).$$</p>
+<p>The claim is that this $L$, multiplied by the triangular result $U$, exactly reconstructs $A$. The rest of this section builds this up step by step.</p>
+<h3 id="step-by-step-tracking-one-elimination-as-a-matrix-operation">Step-by-Step: Tracking One Elimination as a Matrix Operation</h3>
+<p>From the earlier section on elementary matrices: subtracting $m$ times row $i$ from row $j$ is left-multiplication by:</p>
+<p>$$E_{ji}(m) = I \text{ with } -m \text{ at position } (j,i).$$</p>
+<p>The inverse of this operation (add $m$ times row $i$ back to row $j$) is:</p>
+<p>$$E_{ji}(m)^{-1} = I \text{ with } +m \text{ at position } (j,i).$$</p>
+<p>Applying a sequence of such operations reduces $A$ to $U$:</p>
+<p>$$E_k \cdots E_2 E_1 , A = U.$$</p>
+<p>Multiply both sides on the left by $E_1^{-1}, E_2^{-1}, \ldots, E_k^{-1}$ in order:</p>
+<p>$$A = E_1^{-1} E_2^{-1} \cdots E_k^{-1} , U.$$</p>
+<p>Define $L = E_1^{-1} E_2^{-1} \cdots E_k^{-1}$. The key fact: when there are no row swaps and the operations are applied left to right column by column, the inverses multiply together cleanly - each $+m_{ji}$ just drops into position $(j,i)$ of $L$ without disturbing any other entry. The product of all the inverses is exactly the lower triangular matrix with the multipliers below the diagonal and 1s on the diagonal.</p>
+<h3 id="worked-example-in-full-detail">Worked Example in Full Detail</h3>
+<p>We eliminate $A$ from earlier:</p>
+<p>$$A = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 2 &amp; 5 &amp; 2 \\ 1 &amp; 5 &amp; 9 \end{pmatrix}$$</p>
+<p><strong>Step 1: Zero out column 1, rows 2 and 3.</strong></p>
+<p>Multiplier for row 2: $m_{21} = 2/1 = 2$. Operation: $R_2 \leftarrow R_2 - 2 R_1$.</p>
+<p>Multiplier for row 3: $m_{31} = 1/1 = 1$. Operation: $R_3 \leftarrow R_3 - 1 R_1$.</p>
+<p>As elementary matrices:</p>
+<p>$$E_{21} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ -2 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}, \qquad E_{31} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ -1 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>After both operations, the matrix becomes:</p>
+<p>$$\begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 3 &amp; 9 \end{pmatrix}$$</p>
+<p>Record: $m_{21} = 2$ goes to position $(2,1)$ of $L$. $m_{31} = 1$ goes to position $(3,1)$ of $L$.</p>
+<p><strong>Step 2: Zero out column 2, row 3.</strong></p>
+<p>The current pivot for column 2 is the $(2,2)$ entry, which is 1.</p>
+<p>Multiplier for row 3: $m_{32} = 3/1 = 3$. Operation: $R_3 \leftarrow R_3 - 3 R_2$.</p>
+<p>As an elementary matrix:</p>
+<p>$$E_{32} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; -3 &amp; 1 \end{pmatrix}$$</p>
+<p>After this operation:</p>
 <p>$$U = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 0 &amp; 3 \end{pmatrix}$$</p>
-<p><strong>Claim:</strong> $A = LU$.</p>
-<p>Verify: multiply $L$ and $U$:</p>
-<p>$$LU = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 2 &amp; 1 &amp; 0 \\ 1 &amp; 3 &amp; 1 \end{pmatrix} \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 0 &amp; 3 \end{pmatrix} = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 2 &amp; 5 &amp; 2 \\ 1 &amp; 5 &amp; 9 \end{pmatrix} = A$$</p>
-<p>The multipliers you compute during elimination are exactly the entries of $L$ below the diagonal, placed at position $(row, column)$ of the operation: the multiplier used to eliminate row $j$ using row $i$ goes into $L_{ji}$.</p>
-<p><strong>Why this matters: multiple right-hand sides.</strong></p>
-<p>Suppose you need to solve $A\mathbf{x} = \mathbf{b}$ for ten different choices of $\mathbf{b}$ (the same $A$ each time). Computing the $LU$ factorization once costs about $\frac{2}{3}n^3$ operations for an $n \times n$ matrix. Each subsequent solve costs only $O(n^2)$: forward-substitute through $L$, then back-substitute through $U$.</p>
-<p>Given $A = LU$, solve $A\mathbf{x} = \mathbf{b}$ in two steps:</p>
+<p>Record: $m_{32} = 3$ goes to position $(3,2)$ of $L$.</p>
+<p><strong>Assembling $L$.</strong></p>
+<p>Place all three multipliers below the diagonal, 1s on the diagonal, 0s above:</p>
+<p>$$L = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 2 &amp; 1 &amp; 0 \\ 1 &amp; 3 &amp; 1 \end{pmatrix}$$</p>
+<p>The 2 is at $(2,1)$ because it was the multiplier used to clear row 2 using row 1. The 1 is at $(3,1)$ for the same reason on row 3. The 3 is at $(3,2)$ because it cleared row 3 using row 2.</p>
+<p><strong>Verifying $A = LU$.</strong></p>
+<p>$$LU = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 2 &amp; 1 &amp; 0 \\ 1 &amp; 3 &amp; 1 \end{pmatrix} \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 0 &amp; 3 \end{pmatrix}$$</p>
+<p>Row 1 of $LU$: $(1)(1,2,0) + (0)(\cdots) + (0)(\cdots) = (1, 2, 0)$. Matches row 1 of $A$.</p>
+<p>Row 2 of $LU$: $(2)(1,2,0) + (1)(0,1,2) + (0)(\cdots) = (2,4,0) + (0,1,2) = (2, 5, 2)$. Matches row 2 of $A$.</p>
+<p>Row 3 of $LU$: $(1)(1,2,0) + (3)(0,1,2) + (1)(0,0,3) = (1,2,0) + (0,3,6) + (0,0,3) = (1, 5, 9)$. Matches row 3 of $A$.</p>
+<p>$$LU = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 2 &amp; 5 &amp; 2 \\ 1 &amp; 5 &amp; 9 \end{pmatrix} = A \checkmark$$</p>
+<p>Why does this work out so cleanly? The row 2 of $L$ says: row 2 of $A$ is $2 \times$ (row 1 of $U$) $+ 1 \times$ (row 2 of $U$). That is exactly what we did during elimination - row 2 of $A$ was row 1 scaled by 2 (the part we subtracted) plus the result row 2 of $U$ (what remained). $L$ encodes the &ldquo;recipe&rdquo; for reconstructing each row of $A$ from the rows of $U$, using the multipliers as the coefficients.</p>
+<h3 id="using-lu-to-solve-multiple-right-hand-sides">Using $LU$ to Solve Multiple Right-Hand Sides</h3>
+<p>Given $A = LU$, the system $A\mathbf{x} = \mathbf{b}$ becomes $LU\mathbf{x} = \mathbf{b}$. Let $\mathbf{y} = U\mathbf{x}$. Then:</p>
 <ol>
-<li><strong>Forward substitution:</strong> Solve $L\mathbf{y} = \mathbf{b}$ for $\mathbf{y}$.</li>
-<li><strong>Back substitution:</strong> Solve $U\mathbf{x} = \mathbf{y}$ for $\mathbf{x}$.</li>
+<li><strong>Forward substitution:</strong> Solve $L\mathbf{y} = \mathbf{b}$. Since $L$ is lower triangular, this goes top to bottom: $y_1$ is immediate from row 1, then $y_2$ from row 2 using $y_1$, and so on.</li>
+<li><strong>Back substitution:</strong> Solve $U\mathbf{x} = \mathbf{y}$. Since $U$ is upper triangular, go bottom to top.</li>
 </ol>
-<p>For the example with $\mathbf{b} = (5, 14, 20)^T$:</p>
-<p><strong>Forward sub ($L\mathbf{y} = \mathbf{b}$):</strong></p>
+<p>Each stage costs $O(n^2)$. Factoring $A$ into $LU$ costs $O(n^3)$ once. Every subsequent solve for a new $\mathbf{b}$ costs only $O(n^2)$.</p>
+<p><strong>Worked forward substitution</strong> for $\mathbf{b} = (5, 14, 20)^T$:</p>
+<p>$$L\mathbf{y} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 2 &amp; 1 &amp; 0 \\ 1 &amp; 3 &amp; 1 \end{pmatrix} \begin{pmatrix} y_1 \\ y_2 \\ y_3 \end{pmatrix} = \begin{pmatrix} 5 \\ 14 \\ 20 \end{pmatrix}$$</p>
 <ul>
-<li>$y_1 = 5$</li>
-<li>$2y_1 + y_2 = 14 \Rightarrow y_2 = 4$</li>
-<li>$y_1 + 3 y_2 + y_3 = 20 \Rightarrow y_3 = 3$</li>
+<li>Row 1: $y_1 = 5$.</li>
+<li>Row 2: $2(5) + y_2 = 14 \Rightarrow y_2 = 4$.</li>
+<li>Row 3: $1(5) + 3(4) + y_3 = 20 \Rightarrow y_3 = 3$.</li>
 </ul>
-<p>So $\mathbf{y} = (5, 4, 3)^T$.</p>
-<p><strong>Back sub ($U\mathbf{x} = \mathbf{y}$):</strong></p>
+<p>So $\mathbf{y} = (5, 4, 3)^T$. Notice: these are exactly the right-hand side values that appeared during forward elimination earlier. That is not a coincidence - forward substitution through $L$ is just replaying the elimination steps on $\mathbf{b}$.</p>
+<p><strong>Worked back substitution</strong> for $U\mathbf{x} = (5, 4, 3)^T$:</p>
+<p>$$U\mathbf{x} = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 0 &amp; 3 \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \\ x_3 \end{pmatrix} = \begin{pmatrix} 5 \\ 4 \\ 3 \end{pmatrix}$$</p>
 <ul>
-<li>$3 x_3 = 3 \Rightarrow x_3 = 1$</li>
-<li>$x_2 + 2(1) = 4 \Rightarrow x_2 = 2$</li>
-<li>$x_1 + 2(2) = 5 \Rightarrow x_1 = 1$</li>
+<li>Row 3: $3 x_3 = 3 \Rightarrow x_3 = 1$.</li>
+<li>Row 2: $x_2 + 2(1) = 4 \Rightarrow x_2 = 2$.</li>
+<li>Row 1: $x_1 + 2(2) + 0(1) = 5 \Rightarrow x_1 = 1$.</li>
 </ul>
-<p>Same answer, same work - but now the structure is explicit. The $LU$ factorization stores the complete elimination process.</p>
+<p>Solution: $(x_1, x_2, x_3) = (1, 2, 1)$, matching what direct elimination gave. The $LU$ factorization stores the complete elimination process so it never needs to be repeated.</p>
 <hr>
 <h2 id="the-connection-back-to-vector-spaces">The Connection Back to Vector Spaces</h2>
 <p>Gaussian elimination is not just a solving algorithm. It reveals the complete structure of a linear map.</p>
