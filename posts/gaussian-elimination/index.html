@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          33 min read
+          35 min read
         </div>
       </div>
     </header>
@@ -397,39 +397,61 @@
 <hr>
 <h2 id="the-rigorous-underpinning">The Rigorous Underpinning</h2>
 <h3 id="elementary-matrices-what-they-are">Elementary Matrices: What They Are</h3>
-<p>An <strong>elementary matrix</strong> is the identity matrix $I$ with exactly one modification - one row changed to encode a single row operation. There are three types, one per row operation.</p>
-<p><strong>The core intuition first.</strong> Recall how matrix multiplication works: the $i$-th row of the product $EA$ equals the $i$-th row of $E$ dotted with each column of $A$. Equivalently, it is the linear combination of rows of $A$ with weights given by the $i$-th row of $E$:</p>
-<p>$$\text{row } i \text{ of } EA = \sum_k E_{ik} \cdot (\text{row } k \text{ of } A).$$</p>
-<p>The identity matrix has row $i$ equal to the standard basis vector $e_i^T = (0, \ldots, 0, 1, 0, \ldots, 0)$ - it selects exactly row $i$ of $A$ unchanged. An elementary matrix is the identity with one row replaced by a different selector. That one changed row produces the desired combination; all other rows copy $A$ directly.</p>
-<p><strong>Left-multiplication acts on rows. Right-multiplication acts on columns.</strong> Elementary matrices work on the left precisely because row operations are operations on rows.</p>
+<p>An <strong>elementary matrix</strong> is the identity matrix $I$ with exactly one modification - one column changed to encode a single row operation. There are three types, one per row operation.</p>
+<h3 id="the-column-interpretation-why-left-multiplication-performs-a-row-operation">The Column Interpretation: Why Left-Multiplication Performs a Row Operation</h3>
+<p>Before defining the three types, we need the right lens to see why left-multiplication works. The key is the <strong>column interpretation of matrix multiplication</strong>.</p>
+<p>When you multiply a matrix $E$ by a vector $\mathbf{b} = (b_1, b_2, \ldots, b_n)^T$, the result is a linear combination of the columns of $E$, with the entries of $\mathbf{b}$ as the weights:</p>
+<p>$$E\mathbf{b} = b_1 \mathbf{c}_1 + b_2 \mathbf{c}_2 + \cdots + b_n \mathbf{c}_n$$</p>
+<p>where $\mathbf{c}_k$ denotes column $k$ of $E$.</p>
+<p>Now, the product $EA$ is just $E$ applied to each column of $A$ separately. Column $k$ of $EA$ = $E \times$ (column $k$ of $A$). So the formula above governs every column of the result simultaneously.</p>
+<p><strong>Why the identity matrix does nothing.</strong> The identity matrix has $\mathbf{c}_k = \mathbf{e}_k$ (the $k$-th standard basis vector: 1 at position $k$, zeros elsewhere). So $I\mathbf{b} = b_1 \mathbf{e}_1 + \cdots + b_n \mathbf{e}_n$. Each term $b_k \mathbf{e}_k$ puts $b_k$ at position $k$ and zeros everywhere else. Summing: position $k$ gets exactly $b_k$. The vector is unchanged.</p>
+<p><strong>What changes when we modify one column.</strong> An elementary matrix is $I$ with exactly one column altered. All terms in the sum $b_1 \mathbf{c}_1 + \cdots + b_n \mathbf{c}_n$ behave exactly like the identity - except the one term involving the modified column. That single term carries all the action.</p>
 <hr>
 <p><strong>Type 1: Row addition</strong> (subtract $m$ times row $j$ from row $i$, i.e., $R_i \leftarrow R_i - m R_j$).</p>
-<p>Start with $I$ and replace the $(i,j)$ off-diagonal entry with $-m$. For a $3 \times 3$ matrix, subtracting $m$ times row 1 from row 2 gives:</p>
-<p>$$E_{21}(m) = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ -m &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
-<p><strong>Why does left-multiplication by this give the row operation?</strong></p>
+<p>Start with $I$ and replace column $j$ with $\mathbf{e}_j - m\mathbf{e}_i$: keep the 1 at position $j$, but add $-m$ at position $i$. For a $3 \times 3$ matrix, subtracting $m$ times row 2 from row 1 ($R_1 \leftarrow R_1 - m R_2$) gives:</p>
+<p>$$E = \begin{pmatrix} 1 &amp; -m &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>Column 1 = $\mathbf{e}_1$, column 2 = $\mathbf{e}_2 - m\mathbf{e}_1$, column 3 = $\mathbf{e}_3$.</p>
+<p><strong>Why does left-multiplication by this perform the row operation?</strong> Take any column of $A$ and call its entries $b_1, b_2, b_3$. Compute $E\mathbf{b}$ using the column interpretation:</p>
+<p>$$E\mathbf{b} = b_1 \mathbf{e}_1 + b_2 (\mathbf{e}_2 - m\mathbf{e}_1) + b_3 \mathbf{e}_3$$</p>
+<p>Expand and collect by position:</p>
 <ul>
-<li>Row 1 of $E_{21}(m)$ is $(1,0,0)$, so row 1 of $E_{21}(m)A$ = $1 \cdot (\text{row 1 of } A) + 0 + 0$ = row 1 of $A$. Unchanged.</li>
-<li>Row 2 of $E_{21}(m)$ is $(-m,1,0)$, so row 2 of $E_{21}(m)A$ = $-m \cdot (\text{row 1 of }A) + 1 \cdot (\text{row 2 of }A) + 0$ = (row 2) $-m \cdot$ (row 1). Exactly the operation.</li>
-<li>Row 3 of $E_{21}(m)$ is $(0,0,1)$: row 3 copies over unchanged.</li>
+<li>The $b_1 \mathbf{e}_1$ term puts $b_1$ at position 1 and zeros elsewhere.</li>
+<li>The $b_2(\mathbf{e}_2 - m\mathbf{e}_1)$ term puts $b_2$ at position 2, but also $-m b_2$ at position 1.</li>
+<li>The $b_3 \mathbf{e}_3$ term puts $b_3$ at position 3 and zeros elsewhere.</li>
 </ul>
-<p><strong>Inverse:</strong> replace $-m$ with $+m$. The operation &ldquo;subtract $m$ times row $j$&rdquo; is undone by &ldquo;add $m$ times row $j$&quot;:</p>
-<p>$$E_{21}(m)^{-1} = E_{21}(-m) = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ m &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
-<p>Note the inverse is obtained by just flipping the sign of the off-diagonal entry. No matrix inversion needed.</p>
+<p>Sum everything up position by position:</p>
+<ul>
+<li><strong>Position 1:</strong> $b_1 + (-m b_2) = b_1 - m b_2$. This is the modified row.</li>
+<li><strong>Position 2:</strong> $b_2$. Unchanged.</li>
+<li><strong>Position 3:</strong> $b_3$. Unchanged.</li>
+</ul>
+<p>Position 1 became $b_1 - m b_2$ - which is exactly entry 1 of (row 1) $- m \times$ (row 2). The $-m b_2$ came entirely from the modified column: the only term that places anything at position 1 beyond $b_1$ is $b_2 \cdot (\mathbf{e}_2 - m\mathbf{e}_1)$, because that column has a $-m$ at position 1.</p>
+<p>Since this holds for every column of $A$ (with $b_1, b_2, b_3$ being the entries of whichever column we pick), every column of $EA$ has its first entry equal to (original first entry) $- m \times$ (original second entry). That is precisely the row operation $R_1 \leftarrow R_1 - m R_2$ applied to all columns at once - which is the same as applying it to the matrix $A$.</p>
+<p><strong>Inverse:</strong> replace $-m$ with $+m$ in column $j$. The modified column becomes $\mathbf{e}_j + m\mathbf{e}_i$, which undoes the subtraction by adding back $m$ times row $j$:</p>
+<p>$$E^{-1} = \begin{pmatrix} 1 &amp; m &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>The inverse is obtained by flipping the sign of the single off-diagonal entry. No matrix inversion needed.</p>
 <hr>
 <p><strong>Type 2: Row swap</strong> (exchange rows $i$ and $j$).</p>
-<p>Start with $I$ and swap its rows $i$ and $j$. For swapping rows 2 and 3:</p>
+<p>Start with $I$ and swap columns $i$ and $j$. For swapping rows 2 and 3:</p>
 <p>$$P_{23} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 1 \\ 0 &amp; 1 &amp; 0 \end{pmatrix}$$</p>
+<p>Column 1 = $\mathbf{e}_1$, column 2 = $\mathbf{e}_3$, column 3 = $\mathbf{e}_2$.</p>
+<p>For any column of $A$ with entries $(b_1, b_2, b_3)$:</p>
+<p>$$P_{23}\mathbf{b} = b_1\mathbf{e}_1 + b_2\mathbf{e}_3 + b_3\mathbf{e}_2$$</p>
 <ul>
-<li>Row 2 of $P_{23}$ is $(0,0,1)$, so row 2 of $P_{23}A$ = row 3 of $A$.</li>
-<li>Row 3 of $P_{23}$ is $(0,1,0)$, so row 3 of $P_{23}A$ = row 2 of $A$.</li>
+<li>Position 1 gets $b_1$. Unchanged.</li>
+<li>Position 2 gets $b_3$ (came from $b_3 \mathbf{e}_2$, whose component at position 2 is 1). This is the old row 3.</li>
+<li>Position 3 gets $b_2$ (came from $b_2 \mathbf{e}_3$, whose component at position 3 is 1). This is the old row 2.</li>
 </ul>
-<p>Rows 2 and 3 swap. Row 1 is untouched.</p>
-<p><strong>Inverse:</strong> swap again. $P_{23}^{-1} = P_{23}$ - swapping twice returns to the original. Every row-swap matrix is its own inverse. (Formally, swap matrices are orthogonal: $P^T = P^{-1}$.)</p>
+<p>Rows 2 and 3 swapped. Every column of $A$ gets the same treatment, so the entire matrix has rows 2 and 3 exchanged.</p>
+<p><strong>Inverse:</strong> swap again. $P_{23}^{-1} = P_{23}$ - swapping twice returns to the original. Every row-swap matrix is its own inverse.</p>
 <hr>
 <p><strong>Type 3: Row scaling</strong> (multiply row $i$ by a nonzero scalar $c$).</p>
-<p>Start with $I$ and replace the $(i,i)$ diagonal entry with $c$. Scaling row 2 by $c$:</p>
+<p>Start with $I$ and replace column $i$&rsquo;s entry at position $i$ (the diagonal) with $c$. Scaling row 2 by $c$:</p>
 <p>$$D_2(c) = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; c &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
-<p>Row 2 of $D_2(c)$ is $(0,c,0)$, so row 2 of $D_2(c)A$ = $c \cdot$ (row 2 of $A$).</p>
+<p>Column 2 = $c\mathbf{e}_2$ (scaled standard basis vector).</p>
+<p>For any column of $A$ with entries $(b_1, b_2, b_3)$:</p>
+<p>$$D_2(c)\mathbf{b} = b_1\mathbf{e}_1 + b_2 (c\mathbf{e}_2) + b_3\mathbf{e}_3$$</p>
+<p>Position 2 gets $c b_2$; everything else is unchanged. Row 2 of every column is scaled by $c$, so row 2 of $A$ is scaled by $c$.</p>
 <p><strong>Inverse:</strong> scale by $1/c$. The condition $c \neq 0$ (required for this operation to be legal) is exactly the condition needed for the inverse to exist.</p>
 <hr>
 <h3 id="stringing-operations-together-a--lu">Stringing Operations Together: $A = LU$</h3>
