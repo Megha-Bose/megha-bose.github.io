@@ -58,7 +58,7 @@
 Dec 11, 2020
 </div>
 <div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-16 min read
+21 min read
 </div>
 </div>
 </header>
@@ -73,6 +73,14 @@ Dec 11, 2020
 <p>What we have not answered is the practical question: <strong>given a concrete $A$ and $\mathbf{b}$, how do you actually find $\mathbf{x}$?</strong></p>
 <p>For a $2 \times 2$ system with small numbers, you can subtract one equation from another and get the answer in two steps. But what about a $100 \times 100$ system? What about $1000 \times 1000$? The method needs to be systematic - a procedure that works every time, never gets confused, and along the way tells you whether there is one solution, no solution, or infinitely many.</p>
 <p>That procedure is Gaussian elimination. It is the foundation of computational linear algebra. Every serious linear system solver - whether in Python&rsquo;s NumPy, MATLAB, or the software guiding a spacecraft - is, at its core, a carefully engineered version of the same idea you are about to see.</p>
+<h2 id="the-intuition-simplify-until-obvious">The Intuition: Simplify Until Obvious</h2>
+<p>Before any formalism, here is the core idea in one sentence: <strong>repeatedly use one equation to kill a variable in all the others, until what remains is trivially solvable.</strong></p>
+<p>Say you have three equations in three unknowns and the first equation involves $x_1$. Use it to eliminate $x_1$ from equations 2 and 3 - subtract appropriate multiples. Now equations 2 and 3 involve only $x_2$ and $x_3$. Take equation 2 and use it to eliminate $x_2$ from equation 3. Now equation 3 involves only $x_3$: solve it. Plug $x_3$ into equation 2: solve for $x_2$. Plug both into equation 1: solve for $x_1$.</p>
+<p>That is it. The rest of this post is just making that idea precise, tracking what can go wrong, and understanding what it reveals about the structure of the system.</p>
+<h2 id="a-brief-history">A Brief History</h2>
+<p>The method is named after Carl Friedrich Gauss, but the idea is considerably older. Chinese mathematicians used essentially the same procedure in <em>The Nine Chapters on the Mathematical Art</em> (九章算術), compiled around 200 BCE. The text describes arranging counting rods in a table and performing column operations to solve systems - what we would recognize today as row reduction on an augmented matrix. The method was rediscovered in Europe over the following millennia, and Gauss himself described a refined version in his 1809 work on least squares. The name &ldquo;Gaussian elimination&rdquo; became standard only in the 20th century, after numerical analysts recognized it as the right foundation for computational linear algebra.</p>
+<p>The word <strong>echelon</strong> comes from the French <em>échelon</em>, meaning a rung of a ladder. A row echelon form looks like a staircase: each row&rsquo;s leading nonzero entry (the pivot) sits strictly to the right of the pivot in the row above, creating a stepped pattern down the matrix. The military used &ldquo;echelon formation&rdquo; to describe troops arranged in a diagonal staggered pattern - the same staircase shape. The pivot itself takes its name from French as well: <em>pivot</em> meaning the pin on which a lever turns, the fixed point everything else rotates around. In a row operation, the pivot is exactly that: the fixed entry you use to rotate away (zero out) all the entries below it.</p>
+<p><strong>Where did pivots come from conceptually?</strong> The key insight, present in the Chinese rod-arithmetic method and made explicit by Gauss, is that you only need one nonzero entry per column to drive the elimination of that variable from all other rows. That entry - whatever it happens to be - does all the work. Calling it the pivot captures this: everything in its column below it gets zeroed by subtracting the right multiple of its row.</p>
 <hr>
 <h2 id="what-operations-are-allowed">What Operations Are Allowed?</h2>
 <p>The question is: what can you do to a system of equations without changing its solutions?</p>
@@ -209,6 +217,38 @@ Dec 11, 2020
 <p>$$\left(\begin{array}{ccc|c} 1 & 0 & 0 & 1 \\ 0 & 1 & 0 & 2 \\ 0 & 0 & 1 & 1 \end{array}\right)$$</p>
 <p>The right-hand column reads off the solution directly: $x_1 = 1$, $x_2 = 2$, $x_3 = 1$. No back substitution needed.</p>
 <p>For systems with free variables, RREF makes the null space explicit. The columns without pivots are free variables; each pivot variable is expressed directly as a linear combination of free variables plus a constant.</p>
+<hr>
+<h2 id="computing-the-matrix-inverse">Computing the Matrix Inverse</h2>
+<p>Gaussian elimination does not just solve $A\mathbf{x} = \mathbf{b}$ for one $\mathbf{b}$. With a small extension, it computes $A^{-1}$ directly.</p>
+<p><strong>The idea.</strong> The matrix $A^{-1}$ satisfies $A \cdot A^{-1} = I$. Reading this column by column: the $j$-th column of $A^{-1}$, call it $\mathbf{p}_j$, must satisfy</p>
+<p>$$A \mathbf{p}_j = \mathbf{e}_j, \quad j = 1, \ldots, n,$$</p>
+<p>where $\mathbf{e}_j$ is the $j$-th standard basis vector. Finding $A^{-1}$ means solving $n$ systems, all with the same coefficient matrix $A$ but different right-hand sides $\mathbf{e}_1, \ldots, \mathbf{e}_n$. We can solve all $n$ simultaneously by augmenting $A$ with the full identity matrix and reducing to RREF:</p>
+<p>$$[A \mid I] \xrightarrow{\text{RREF}} [I \mid A^{-1}].$$</p>
+<p><strong>Why this works.</strong> Each row operation is left-multiplication by an invertible elementary matrix $E_k$. If the sequence of operations reduces $A$ to $I$: $E_r \cdots E_1 A = I$, then $E_r \cdots E_1 = A^{-1}$. Applying those same operations to the right block: $E_r \cdots E_1 \cdot I = A^{-1}$. The right block becomes $A^{-1}$.</p>
+<h3 id="worked-example">Worked Example</h3>
+<p>Let $A = \begin{pmatrix} 1 & 0 & 1 \\ 0 & 2 & 1 \\ 1 & 1 & 1 \end{pmatrix}$. Form the augmented matrix:</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 & 0 & 1 & 1 & 0 & 0 \\ 0 & 2 & 1 & 0 & 1 & 0 \\ 1 & 1 & 1 & 0 & 0 & 1 \end{array}\right)$$</p>
+<p>$R_3 \leftarrow R_3 - R_1$ (zero out position $(3,1)$):</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 & 0 & 1 & 1 & 0 & 0 \\ 0 & 2 & 1 & 0 & 1 & 0 \\ 0 & 1 & 0 & -1 & 0 & 1 \end{array}\right)$$</p>
+<p>$R_2 \leftrightarrow R_3$ (bring the simpler pivot into position):</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 & 0 & 1 & 1 & 0 & 0 \\ 0 & 1 & 0 & -1 & 0 & 1 \\ 0 & 2 & 1 & 0 & 1 & 0 \end{array}\right)$$</p>
+<p>$R_3 \leftarrow R_3 - 2R_2$:</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 & 0 & 1 & 1 & 0 & 0 \\ 0 & 1 & 0 & -1 & 0 & 1 \\ 0 & 0 & 1 & 2 & 1 & -2 \end{array}\right)$$</p>
+<p>$R_1 \leftarrow R_1 - R_3$ (eliminate above the third pivot):</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 & 0 & 0 & -1 & -1 & 2 \\ 0 & 1 & 0 & -1 & 0 & 1 \\ 0 & 0 & 1 & 2 & 1 & -2 \end{array}\right)$$</p>
+<p>The left block is $I$, so the right block is:</p>
+<p>$$A^{-1} = \begin{pmatrix} -1 & -1 & 2 \\ -1 & 0 & 1 \\ 2 & 1 & -2 \end{pmatrix}.$$</p>
+<p>Verify: $A \cdot (-1, -1, 2)^T = ((-1+0+2),; (0-2+2),; (-1-1+2))^T = (1, 0, 0)^T = \mathbf{e}_1$. ✓</p>
+<h3 id="when-no-inverse-exists">When No Inverse Exists</h3>
+<p>If $A$ is singular, forward elimination will produce a zero row in the left block while the corresponding row in the right block is nonzero. That row represents the equation $0 = c$ for some $c \neq 0$: the sub-system $A\mathbf{x} = \mathbf{e}_j$ has no solution, and no $j$-th column of $A^{-1}$ can be constructed.</p>
+<p><strong>Example:</strong> $A = \begin{pmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{pmatrix}$ (each row is an arithmetic progression with common difference 3; rank 2).</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 & 2 & 3 & 1 & 0 & 0 \\ 4 & 5 & 6 & 0 & 1 & 0 \\ 7 & 8 & 9 & 0 & 0 & 1 \end{array}\right)$$</p>
+<p>$R_2 \leftarrow R_2 - 4R_1$, $R_3 \leftarrow R_3 - 7R_1$:</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 & 2 & 3 & 1 & 0 & 0 \\ 0 & -3 & -6 & -4 & 1 & 0 \\ 0 & -6 & -12 & -7 & 0 & 1 \end{array}\right)$$</p>
+<p>$R_3 \leftarrow R_3 - 2R_2$:</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 & 2 & 3 & 1 & 0 & 0 \\ 0 & -3 & -6 & -4 & 1 & 0 \\ 0 & 0 & 0 & 1 & -2 & 1 \end{array}\right)$$</p>
+<p>Row 3&rsquo;s left block is all zeros - no third pivot. But row 3&rsquo;s right block is $(1, -2, 1) \neq \mathbf{0}$. For each of the three sub-systems this row says $0 = 1$, $0 = -2$, $0 = 1$ respectively - each a contradiction. None of the three columns of $A^{-1}$ can be solved for; $A^{-1}$ does not exist.</p>
+<p>The rule is clean: <strong>if elimination on $[A \mid I]$ produces a zero pivot in the left block at any point, $A$ is singular and has no inverse.</strong></p>
 <hr>
 <h2 id="what-elimination-actually-does-a--lu">What Elimination Actually Does: $A = LU$</h2>
 <p>Here is an observation that transforms Gaussian elimination from a solving procedure into a matrix factorization.</p>
