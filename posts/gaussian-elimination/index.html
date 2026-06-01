@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          23 min read
+          27 min read
         </div>
       </div>
     </header>
@@ -275,11 +275,14 @@
 <hr>
 <h2 id="computing-the-matrix-inverse">Computing the Matrix Inverse</h2>
 <p>Gaussian elimination does not just solve $A\mathbf{x} = \mathbf{b}$ for one $\mathbf{b}$. With a small extension, it computes $A^{-1}$ directly.</p>
-<p><strong>The idea.</strong> The matrix $A^{-1}$ satisfies $A \cdot A^{-1} = I$. Reading this column by column: the $j$-th column of $A^{-1}$, call it $\mathbf{p}_j$, must satisfy</p>
-<p>$$A \mathbf{p}_j = \mathbf{e}_j, \quad j = 1, \ldots, n,$$</p>
-<p>where $\mathbf{e}_j$ is the $j$-th standard basis vector. Finding $A^{-1}$ means solving $n$ systems, all with the same coefficient matrix $A$ but different right-hand sides $\mathbf{e}_1, \ldots, \mathbf{e}_n$. We can solve all $n$ simultaneously by augmenting $A$ with the full identity matrix and reducing to RREF:</p>
+<p><strong>The idea, from first principles.</strong> Notice what RREF does to $[A \mid \mathbf{b}]$: it transforms the left block into $I$ and the right block into the solution $\mathbf{x}$. The left side went from $A$ to $I$; the right side went from $\mathbf{b}$ to the answer. This is not a coincidence - whatever row operations turned the left block into identity had to be applied equally to the right block, and the right block absorbed exactly the effect of $A^{-1}$ being applied to $\mathbf{b}$.</p>
+<p>Now run the same process but put $I$ on the right instead of a single $\mathbf{b}$:</p>
+<p>$$[A \mid I] \xrightarrow{\text{RREF}} [I \mid ,?]$$</p>
+<p>The left block becomes $I$ by the same elimination. The right block, starting as $I$, absorbs the same operations - and ends up as $A^{-1}$, for exactly the same reason: whatever turned $A$ into $I$ is, by definition, $A^{-1}$, and applying it to $I$ gives $A^{-1} \cdot I = A^{-1}$.</p>
+<p>Reading it column by column makes this concrete. The $j$-th column of $I$ is $\mathbf{e}_j$. So the $j$-th column of $[A \mid I]$ on the right is just $\mathbf{e}_j$ - a single right-hand side. After RREF, that column becomes the solution $\mathbf{p}_j$ to $A\mathbf{p}_j = \mathbf{e}_j$. And $A^{-1}$ is precisely the matrix whose $j$-th column is the solution to $A\mathbf{p}_j = \mathbf{e}_j$. So the right block after reduction is $A^{-1}$, column by column.</p>
+<p>The matrix $A^{-1}$ satisfies $A \cdot A^{-1} = I$. We can solve all $n$ columns simultaneously by augmenting $A$ with the full identity matrix and reducing to RREF:</p>
 <p>$$[A \mid I] \xrightarrow{\text{RREF}} [I \mid A^{-1}].$$</p>
-<p><strong>Why this works.</strong> Each row operation is left-multiplication by an invertible elementary matrix $E_k$. If the sequence of operations reduces $A$ to $I$: $E_r \cdots E_1 A = I$, then $E_r \cdots E_1 = A^{-1}$. Applying those same operations to the right block: $E_r \cdots E_1 \cdot I = A^{-1}$. The right block becomes $A^{-1}$.</p>
+<p><strong>Why this works (algebraically).</strong> Each row operation is left-multiplication by an invertible elementary matrix $E_k$. If the sequence of operations reduces $A$ to $I$: $E_r \cdots E_1 A = I$, then $E_r \cdots E_1 = A^{-1}$. Applying those same operations to the right block: $E_r \cdots E_1 \cdot I = A^{-1}$. The right block becomes $A^{-1}$.</p>
 <h3 id="worked-example">Worked Example</h3>
 <p>Let $A = \begin{pmatrix} 1 &amp; 0 &amp; 1 \\ 0 &amp; 2 &amp; 1 \\ 1 &amp; 1 &amp; 1 \end{pmatrix}$. Form the augmented matrix:</p>
 <p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 \\ 0 &amp; 2 &amp; 1 &amp; 0 &amp; 1 &amp; 0 \\ 1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 1 \end{array}\right)$$</p>
@@ -346,12 +349,51 @@
 <p><strong>Invertibility.</strong> $A$ is invertible if and only if every column has a pivot - i.e., rank equals $n$. In that case there are no free variables, the null space is $\{\mathbf{0}\}$, and every $\mathbf{b}$ has a unique solution. The $LU$ factorization has no zero pivots.</p>
 <hr>
 <h2 id="the-rigorous-underpinning">The Rigorous Underpinning</h2>
-<p><strong>Elementary row operations as matrix multiplication.</strong> Each elementary row operation corresponds to multiplying on the left by an elementary matrix $E$. For example, subtracting 2 times row 1 from row 2 is multiplication by:</p>
-<p>$$E_{21} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ -2 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
-<p>Each $E_{ij}$ is invertible (undo the operation by using the negative multiplier). Applying a sequence of operations to $A$ is the same as multiplying $A$ by their product: $E_k \cdots E_2 E_1 A = U$. Inverting: $A = E_1^{-1} E_2^{-1} \cdots E_k^{-1} U = LU$.</p>
-<p><strong>Why operations preserve solutions (formal).</strong> $A\mathbf{x} = \mathbf{b}$ and $EA\mathbf{x} = E\mathbf{b}$ have identical solution sets, because $E$ is invertible: $\mathbf{x}$ satisfies the first iff $E\mathbf{x}$ (wait - iff $E$ applied to both sides preserves equality, and $E$ invertible means we can recover the original). More precisely: $EA\mathbf{x} = E\mathbf{b}$ iff $A\mathbf{x} = E^{-1}(E\mathbf{b}) = \mathbf{b}$.</p>
-<p><strong>Pivoting and $PA = LU$.</strong> When row swaps are needed, the factorization becomes $PA = LU$ where $P$ is a permutation matrix (a matrix with exactly one 1 per row and column, encoding the swaps). Every matrix has a $PA = LU$ factorization with nonzero pivots, provided $A$ is invertible. For singular $A$, some pivots are zero, and the factorization still exists but reflects the rank deficiency.</p>
-<p><strong>Uniqueness of RREF.</strong> Every matrix has exactly one RREF. This is a non-trivial fact: no matter what sequence of row operations you apply, if you reduce to RREF, you always get the same result. This makes RREF a canonical form for linear systems.</p>
+<h3 id="elementary-matrices-what-they-are">Elementary Matrices: What They Are</h3>
+<p>An <strong>elementary matrix</strong> is the identity matrix $I$ with exactly one modification - one row changed to encode a single row operation. There are three types, one per row operation.</p>
+<p><strong>The core intuition first.</strong> Recall how matrix multiplication works: the $i$-th row of the product $EA$ equals the $i$-th row of $E$ dotted with each column of $A$. Equivalently, it is the linear combination of rows of $A$ with weights given by the $i$-th row of $E$:</p>
+<p>$$\text{row } i \text{ of } EA = \sum_k E_{ik} \cdot (\text{row } k \text{ of } A).$$</p>
+<p>The identity matrix has row $i$ equal to the standard basis vector $e_i^T = (0, \ldots, 0, 1, 0, \ldots, 0)$ - it selects exactly row $i$ of $A$ unchanged. An elementary matrix is the identity with one row replaced by a different selector. That one changed row produces the desired combination; all other rows copy $A$ directly.</p>
+<p><strong>Left-multiplication acts on rows. Right-multiplication acts on columns.</strong> Elementary matrices work on the left precisely because row operations are operations on rows.</p>
+<hr>
+<p><strong>Type 1: Row addition</strong> (subtract $m$ times row $j$ from row $i$, i.e., $R_i \leftarrow R_i - m R_j$).</p>
+<p>Start with $I$ and replace the $(i,j)$ off-diagonal entry with $-m$. For a $3 \times 3$ matrix, subtracting $m$ times row 1 from row 2 gives:</p>
+<p>$$E_{21}(m) = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ -m &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p><strong>Why does left-multiplication by this give the row operation?</strong></p>
+<ul>
+<li>Row 1 of $E_{21}(m)$ is $(1,0,0)$, so row 1 of $E_{21}(m)A$ = $1 \cdot (\text{row 1 of } A) + 0 + 0$ = row 1 of $A$. Unchanged.</li>
+<li>Row 2 of $E_{21}(m)$ is $(-m,1,0)$, so row 2 of $E_{21}(m)A$ = $-m \cdot (\text{row 1 of }A) + 1 \cdot (\text{row 2 of }A) + 0$ = (row 2) $-m \cdot$ (row 1). Exactly the operation.</li>
+<li>Row 3 of $E_{21}(m)$ is $(0,0,1)$: row 3 copies over unchanged.</li>
+</ul>
+<p><strong>Inverse:</strong> replace $-m$ with $+m$. The operation &ldquo;subtract $m$ times row $j$&rdquo; is undone by &ldquo;add $m$ times row $j$&quot;:</p>
+<p>$$E_{21}(m)^{-1} = E_{21}(-m) = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ m &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>Note the inverse is obtained by just flipping the sign of the off-diagonal entry. No matrix inversion needed.</p>
+<hr>
+<p><strong>Type 2: Row swap</strong> (exchange rows $i$ and $j$).</p>
+<p>Start with $I$ and swap its rows $i$ and $j$. For swapping rows 2 and 3:</p>
+<p>$$P_{23} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 1 \\ 0 &amp; 1 &amp; 0 \end{pmatrix}$$</p>
+<ul>
+<li>Row 2 of $P_{23}$ is $(0,0,1)$, so row 2 of $P_{23}A$ = row 3 of $A$.</li>
+<li>Row 3 of $P_{23}$ is $(0,1,0)$, so row 3 of $P_{23}A$ = row 2 of $A$.</li>
+</ul>
+<p>Rows 2 and 3 swap. Row 1 is untouched.</p>
+<p><strong>Inverse:</strong> swap again. $P_{23}^{-1} = P_{23}$ - swapping twice returns to the original. Every row-swap matrix is its own inverse. (Formally, swap matrices are orthogonal: $P^T = P^{-1}$.)</p>
+<hr>
+<p><strong>Type 3: Row scaling</strong> (multiply row $i$ by a nonzero scalar $c$).</p>
+<p>Start with $I$ and replace the $(i,i)$ diagonal entry with $c$. Scaling row 2 by $c$:</p>
+<p>$$D_2(c) = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; c &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>Row 2 of $D_2(c)$ is $(0,c,0)$, so row 2 of $D_2(c)A$ = $c \cdot$ (row 2 of $A$).</p>
+<p><strong>Inverse:</strong> scale by $1/c$. The condition $c \neq 0$ (required for this operation to be legal) is exactly the condition needed for the inverse to exist.</p>
+<hr>
+<h3 id="stringing-operations-together-a--lu">Stringing Operations Together: $A = LU$</h3>
+<p>Gaussian elimination applies a sequence of Type-1 operations $E_1, E_2, \ldots, E_k$ (plus possible swaps handled separately) to reduce $A$ to upper triangular $U$:</p>
+<p>$$E_k \cdots E_2 E_1 A = U.$$</p>
+<p>Each $E_i$ is invertible, so:</p>
+<p>$$A = E_1^{-1} E_2^{-1} \cdots E_k^{-1} U.$$</p>
+<p>Define $L = E_1^{-1} E_2^{-1} \cdots E_k^{-1}$. Each $E_i^{-1}$ is a Type-1 elementary matrix with the sign of the off-diagonal entry flipped. Multiplying lower-triangular matrices (each with 1s on the diagonal and a single off-diagonal entry) produces a lower-triangular matrix. The multiplier $m_{ij}$ used to zero out position $(i,j)$ ends up sitting at position $(i,j)$ of $L$, with its sign restored. This is why $L$&rsquo;s below-diagonal entries are exactly the multipliers recorded during elimination - no additional computation needed.</p>
+<p><strong>Why operations preserve solutions (formal).</strong> $A\mathbf{x} = \mathbf{b}$ and $EA\mathbf{x} = E\mathbf{b}$ have identical solution sets. If $\mathbf{x}$ satisfies $A\mathbf{x} = \mathbf{b}$, multiply both sides by $E$: $EA\mathbf{x} = E\mathbf{b}$. Conversely, if $\mathbf{x}$ satisfies $EA\mathbf{x} = E\mathbf{b}$, multiply both sides by $E^{-1}$: $A\mathbf{x} = E^{-1}E\mathbf{b} = \mathbf{b}$. Since $E$ is invertible, both directions hold.</p>
+<p><strong>Pivoting and $PA = LU$.</strong> When row swaps are needed, their swap matrices (Type-2 operations) accumulate into a single permutation matrix $P$. The factorization becomes $PA = LU$: first permute the rows of $A$ into the right order, then the remaining elimination runs without any swaps. Every invertible matrix has a $PA = LU$ factorization.</p>
+<p><strong>Uniqueness of RREF.</strong> Every matrix has exactly one RREF. No matter what sequence of row operations you apply, if you reduce to RREF you always get the same result. This makes RREF a canonical form: two matrices have the same RREF if and only if they have the same row space.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
