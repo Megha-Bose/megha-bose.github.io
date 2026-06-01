@@ -1,69 +1,114 @@
-<!doctype html><html lang="en-us">
-<head>
-<title>Debugging & Profiling - Finding What's Wrong and Where It's Slow // Megha Bose</title>
-<link rel="shortcut icon" href="/favicon.ico">
-<meta charset="utf-8">
-<meta name="generator" content="Hugo 0.92.2">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="author" content="Megha Bose">
-<meta name="description" content>
-<link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Debugging & Profiling - Finding What's Wrong and Where It's Slow">
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Debugging &amp; Profiling - Finding What&#39;s Wrong and Where It&#39;s Slow // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Debugging &amp; Profiling - Finding What&#39;s Wrong and Where It&#39;s Slow"/>
 <meta name="twitter:description" content="Helpful context:
- Writing Clean Code - The Art of Making Future-You Grateful    On September 9, 1947, Grace Hopper&rsquo;s team at Harvard found a moth jammed inside relay 70 of the Mark II computer. They taped it into their logbook with the note &ldquo;First actual case of bug being found.&rdquo; The word was already in use - Thomas Edison used it decades earlier - but the moth made it stick.">
-<meta property="og:title" content="Debugging & Profiling - Finding What's Wrong and Where It's Slow">
+ Writing Clean Code - The Art of Making Future-You Grateful    On September 9, 1947, Grace Hopper&rsquo;s team at Harvard found a moth jammed inside relay 70 of the Mark II computer. They taped it into their logbook with the note &ldquo;First actual case of bug being found.&rdquo; The word was already in use - Thomas Edison used it decades earlier - but the moth made it stick."/>
+
+    <meta property="og:title" content="Debugging &amp; Profiling - Finding What&#39;s Wrong and Where It&#39;s Slow" />
 <meta property="og:description" content="Helpful context:
- Writing Clean Code - The Art of Making Future-You Grateful    On September 9, 1947, Grace Hopper&rsquo;s team at Harvard found a moth jammed inside relay 70 of the Mark II computer. They taped it into their logbook with the note &ldquo;First actual case of bug being found.&rdquo; The word was already in use - Thomas Edison used it decades earlier - but the moth made it stick.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://megha-bose.github.io/posts/debugging-and-profiling/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2024-09-15T00:00:00+00:00">
-<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00">
-<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
-</head>
-<body>
-<header class="app-header">
-<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
-<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-<nav class="app-header-menu">
-<a class="app-header-menu-item" href="/about/">About Me</a>
-<br>
-<a class="app-header-menu-item" href="/resume/"> Resume</a>
-<br>
-<a class="app-header-menu-item" href="/categories/">Topics</a>
-<br>
-<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-</nav>
-<div class="app-header-social">
-<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
-</a>
-<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</a>
-<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-</a>
-<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-</a>
-</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-<span class="theme-toggle-icon"></span>
-</button>
-</header>
-<main class="app-container">
-<article class="post">
-<header class="post-header">
-<h1 class="post-title">Debugging & Profiling - Finding What's Wrong and Where It's Slow</h1>
-<div class="post-meta">
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-Sep 15, 2024
-</div>
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-21 min read
-</div>
-</div>
-</header>
-<div class="post-content">
-<p><strong>Helpful context:</strong></p>
+ Writing Clean Code - The Art of Making Future-You Grateful    On September 9, 1947, Grace Hopper&rsquo;s team at Harvard found a moth jammed inside relay 70 of the Mark II computer. They taped it into their logbook with the note &ldquo;First actual case of bug being found.&rdquo; The word was already in use - Thomas Edison used it decades earlier - but the moth made it stick." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/debugging-and-profiling/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Debugging &amp; Profiling - Finding What&#39;s Wrong and Where It&#39;s Slow</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          21 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
 <ul>
 <li><a href="/posts/writing-clean-testable-code/" target="_blank" rel="noopener noreferrer">Writing Clean Code - The Art of Making Future-You Grateful</a>
 </li>
@@ -118,7 +163,7 @@ Sep 15, 2024
   File &quot;main.py&quot;, line 5, in process
     return data[&quot;key&quot;] * 2
 KeyError: 'key'
-</code></pre><p>Bottom up: <code>KeyError: 'key'</code> - a key access failed. One frame up: <code>data["key"]</code> in <code>process</code>. That is the location. Now the question becomes: why does <code>data</code> not have <code>"key"</code>? Is <code>data</code> the wrong object? Did an earlier step fail to populate it? Was it deleted? The traceback gives you location; backtracking gives you cause.</p>
+</code></pre><p>Bottom up: <code>KeyError: 'key'</code> - a key access failed. One frame up: <code>data[&quot;key&quot;]</code> in <code>process</code>. That is the location. Now the question becomes: why does <code>data</code> not have <code>&quot;key&quot;</code>? Is <code>data</code> the wrong object? Did an earlier step fail to populate it? Was it deleted? The traceback gives you location; backtracking gives you cause.</p>
 <p>Common Python exceptions and what they are actually telling you:</p>
 <ul>
 <li><strong><code>KeyError</code></strong>: a dict access used a key that does not exist. The data arriving at that point does not have the shape you expected.</li>
@@ -149,8 +194,8 @@ git bisect run pytest tests/test_regression.py   <span style="color:#75715e"># a
 <hr>
 <h2 id="the-rubber-duck-why-narrating-works">The Rubber Duck: Why Narrating Works</h2>
 <p>There is a technique - often treated as a joke, consistently effective - called rubber duck debugging. You explain your code, out loud, line by line, to a rubber duck, a colleague, or a wall. The explanation itself frequently reveals the bug.</p>
-<p>The duck is not helping. What happens is that narrating forces you to externalize your mental model and compare it, step by step, to what the code actually says. Bugs persist because your brain fills in gaps when you read your own code silently - you read what you intended, not what is written. When you narrate explicitly (&ldquo;and then I take the index and add one, because the array is zero-indexed and I want the second element&mldr;"), you are forced to verify each claim as you say it.</p>
-<p>The moment of recognition often sounds like: &ldquo;&mldr;and then I call this function which should return the user object, but actually wait, this function returns the user ID, not the user object, so when I then call <code>.name</code> on the return value&mldr;&rdquo;</p>
+<p>The duck is not helping. What happens is that narrating forces you to externalize your mental model and compare it, step by step, to what the code actually says. Bugs persist because your brain fills in gaps when you read your own code silently - you read what you intended, not what is written. When you narrate explicitly (&ldquo;and then I take the index and add one, because the array is zero-indexed and I want the second element&hellip;&quot;), you are forced to verify each claim as you say it.</p>
+<p>The moment of recognition often sounds like: &ldquo;&hellip;and then I call this function which should return the user object, but actually wait, this function returns the user ID, not the user object, so when I then call <code>.name</code> on the return value&hellip;&rdquo;</p>
 <p>If you have been staring at a bug for more than thirty minutes, stop and explain the relevant code out loud. This is not a fallback for when the real techniques fail. It is one of the most reliable ways to break out of a stuck state.</p>
 <hr>
 <h2 id="common-bug-patterns">Common Bug Patterns</h2>
@@ -252,8 +297,8 @@ logger <span style="color:#f92672">=</span> logging<span style="color:#f92672">.
 <p><strong>Blame the most recent change first.</strong> If something was working yesterday and is not working today, the bug is almost certainly in what changed between then and now. Before doing anything else, run <code>git diff</code> or check your recent edits. This sounds too simple to mention, but the number of times a programmer spends an hour debugging something that was introduced two commits ago - and would have been visible in 30 seconds of <code>git diff</code> - is embarrassingly high.</p>
 <p><strong>Find the minimal reproducing case.</strong> When you have a failing input, try to reduce it: remove parts of the input one by one and check whether the bug persists. Stop when removing anything more makes the bug disappear. This smallest-possible failing case is valuable in two ways. First, the reduction process itself often reveals the bug - by the time you have stripped the input down to three fields, it is usually obvious which one is causing the problem. Second, a minimal reproducing case is what you need to write a regression test, ask for help, or file a bug report.</p>
 <p><strong>Write down three things you believe are true, then verify each one.</strong> When you are stuck, pick the three assumptions your mental model is most dependent on: &ldquo;the function always receives a non-empty list,&rdquo; &ldquo;the API always returns a string,&rdquo; &ldquo;the database column is UTC.&rdquo; Verify each one explicitly. Bugs routinely live in assumptions everyone thought were obviously true. Saying &ldquo;I know that&rsquo;s not the problem&rdquo; is often exactly wrong.</p>
-<p><strong>Read the library source, not just the docs.</strong> Library documentation is written by humans and is frequently incomplete, outdated, or subtly wrong about edge case behavior. When you are spending more than fifteen minutes wondering &ldquo;does this function do X or Y in this case?&rdquo; - just read the source. On most systems <code>python -c "import library; import inspect; print(inspect.getfile(library))"</code> gives you the path. Five minutes of reading the actual implementation eliminates an entire class of uncertainty that no amount of re-reading the docs will resolve.</p>
-<p><strong>Check for environment differences when &ldquo;it works on my machine."</strong> When code behaves differently between your laptop and a server, the bug is almost always an environment difference, not a logic error. Things to enumerate: Python version (list the exact minor version), timezone (servers often run UTC; dev machines often do not), locale and encoding, installed package versions (<code>pip freeze</code>), environment variables, whether a dependency is mocked vs real. Isolate the environment, not just the code.</p>
+<p><strong>Read the library source, not just the docs.</strong> Library documentation is written by humans and is frequently incomplete, outdated, or subtly wrong about edge case behavior. When you are spending more than fifteen minutes wondering &ldquo;does this function do X or Y in this case?&rdquo; - just read the source. On most systems <code>python -c &quot;import library; import inspect; print(inspect.getfile(library))&quot;</code> gives you the path. Five minutes of reading the actual implementation eliminates an entire class of uncertainty that no amount of re-reading the docs will resolve.</p>
+<p><strong>Check for environment differences when &ldquo;it works on my machine.&quot;</strong> When code behaves differently between your laptop and a server, the bug is almost always an environment difference, not a logic error. Things to enumerate: Python version (list the exact minor version), timezone (servers often run UTC; dev machines often do not), locale and encoding, installed package versions (<code>pip freeze</code>), environment variables, whether a dependency is mocked vs real. Isolate the environment, not just the code.</p>
 <p><strong>Slow down when you are certain.</strong> The most dangerous words in debugging are &ldquo;I know what this does.&rdquo; The certainty is often the blind spot. When you have been staring at code for a while and you find yourself saying &ldquo;there is no way the bug is in this function,&rdquo; that function deserves a closer look. Your confidence is generated by your mental model, and your mental model is what is wrong. Step through the code you &ldquo;know&rdquo; anyway - the act of reading it slowly often reveals the discrepancy.</p>
 <p><strong>Let the test tell you what to look for.</strong> When a test fails, read the assertion message precisely. &ldquo;Expected 5, got 4&rdquo; tells you the off-by-one error is one too few, not one too many - which narrows the search to things that would undercount. &ldquo;Expected list, got None&rdquo; tells you a function returned None when it should have returned a value - backtrack to that function. The test is telling you exactly what went wrong; most programmers read the assertion message as &ldquo;test failed&rdquo; and start guessing, when the message already contains a hypothesis.</p>
 <p><strong>Use a second pair of eyes after 30 minutes stuck.</strong> Pair debugging is underrated. Not because your colleague is more capable, but because they do not have your incorrect mental model baked in. You have been staring at the code convinced that one part is fine and another part is suspicious. They walk in without that prior. They read the &ldquo;fine&rdquo; part and immediately ask &ldquo;wait, why does this function return None here?&rdquo; The value is not their expertise - it is their fresh model. If no colleague is available, writing out the problem to ask for help online often produces the same effect (you answer your own question while writing it).</p>
@@ -322,13 +367,44 @@ logger <span style="color:#f92672">=</span> logging<span style="color:#f92672">.
 <li><a href="/posts/design-patterns/" target="_blank" rel="noopener noreferrer">Design Patterns - Recurring Solutions to Recurring Problems</a>
 </li>
 </ul>
-</div>
-<div class="post-footer">
-</div>
-</article>
-</main>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
-<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
-</body>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>

@@ -1,69 +1,114 @@
-<!doctype html><html lang="en-us">
-<head>
-<title>k-NN & SVMs - Two Classifiers, Two Geometries // Megha Bose</title>
-<link rel="shortcut icon" href="/favicon.ico">
-<meta charset="utf-8">
-<meta name="generator" content="Hugo 0.92.2">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="author" content="Megha Bose">
-<meta name="description" content>
-<link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="k-NN & SVMs - Two Classifiers, Two Geometries">
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>k-NN &amp; SVMs - Two Classifiers, Two Geometries // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="k-NN &amp; SVMs - Two Classifiers, Two Geometries"/>
 <meta name="twitter:description" content="Consider the problem of recognizing handwritten digits. A pixel grid of 28x28 gives 784 numbers. Each image is a point in $\mathbb{R}^{784}$. Nearby points in that space - images that look similar to each other - should belong to the same digit class. This is the geometric intuition behind classification: structure in the input space reflects structure in the labels, and a good classifier exploits that geometry.
-Every classification algorithm is an answer to one question: how do you use that geometry?">
-<meta property="og:title" content="k-NN & SVMs - Two Classifiers, Two Geometries">
+Every classification algorithm is an answer to one question: how do you use that geometry?"/>
+
+    <meta property="og:title" content="k-NN &amp; SVMs - Two Classifiers, Two Geometries" />
 <meta property="og:description" content="Consider the problem of recognizing handwritten digits. A pixel grid of 28x28 gives 784 numbers. Each image is a point in $\mathbb{R}^{784}$. Nearby points in that space - images that look similar to each other - should belong to the same digit class. This is the geometric intuition behind classification: structure in the input space reflects structure in the labels, and a good classifier exploits that geometry.
-Every classification algorithm is an answer to one question: how do you use that geometry?">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://megha-bose.github.io/posts/classical-ml-k-nn-svms/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2024-10-01T00:00:00+00:00">
-<meta property="article:modified_time" content="2024-10-01T00:00:00+00:00">
-<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
-</head>
-<body>
-<header class="app-header">
-<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
-<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-<nav class="app-header-menu">
-<a class="app-header-menu-item" href="/about/">About Me</a>
-<br>
-<a class="app-header-menu-item" href="/resume/"> Resume</a>
-<br>
-<a class="app-header-menu-item" href="/categories/">Topics</a>
-<br>
-<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-</nav>
-<div class="app-header-social">
-<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
-</a>
-<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</a>
-<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-</a>
-<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-</a>
-</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-<span class="theme-toggle-icon"></span>
-</button>
-</header>
-<main class="app-container">
-<article class="post">
-<header class="post-header">
-<h1 class="post-title">k-NN & SVMs - Two Classifiers, Two Geometries</h1>
-<div class="post-meta">
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-Oct 1, 2024
-</div>
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-16 min read
-</div>
-</div>
-</header>
-<div class="post-content">
-<hr>
+Every classification algorithm is an answer to one question: how do you use that geometry?" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/classical-ml-k-nn-svms/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-10-01T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-10-01T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">k-NN &amp; SVMs - Two Classifiers, Two Geometries</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Oct 1, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          16 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <hr>
 <p>Consider the problem of recognizing handwritten digits. A pixel grid of 28x28 gives 784 numbers. Each image is a point in $\mathbb{R}^{784}$. Nearby points in that space - images that look similar to each other - should belong to the same digit class. This is the geometric intuition behind classification: structure in the input space reflects structure in the labels, and a good classifier exploits that geometry.</p>
 <p>Every classification algorithm is an answer to one question: how do you use that geometry? K-nearest neighbors answers it directly - find the training examples closest to the query point and vote. Support vector machines answer it by finding the hyperplane that best separates classes with the widest possible margin. The two approaches are philosophically opposite: KNN stores everything and decides at query time, SVM compresses everything into a boundary and decides at training time. Both approaches turn out to be remarkably principled, and understanding them carefully reveals the major themes of machine learning - overfitting, the curse of dimensionality, the bias-variance tradeoff, and the kernel trick.</p>
 <p>This post develops both classifiers from first principles, starting with the feature space geometry, then building to the full SVM theory including soft margins, the dual problem, kernels, and multiclass extensions. The goal is not just to know how the algorithms work, but to understand why they work and what they are actually doing to the training data.</p>
@@ -110,7 +155,7 @@ Oct 1, 2024
 <p>where $\mathbf{w} \in \mathbb{R}^d$ is the <strong>weight vector</strong> (normal to the hyperplane) and $b \in \mathbb{R}$ is the <strong>bias</strong>. The decision boundary is the hyperplane $\{\mathbf{x} : \mathbf{w} \cdot \mathbf{x} + b = 0\}$.</p>
 <p>The <strong>signed distance</strong> from a point $\mathbf{x}$ to the hyperplane is:</p>
 <p>$$\text{dist}(\mathbf{x}) = \frac{\mathbf{w} \cdot \mathbf{x} + b}{|\mathbf{w}|}$$</p>
-<p>Points with $\mathbf{w} \cdot \mathbf{x} + b > 0$ are classified as $+1$; those with $\mathbf{w} \cdot \mathbf{x} + b &lt; 0$ as $-1$. The magnitude of $\mathbf{w} \cdot \mathbf{x} + b$ measures how far the point is from the boundary - a natural confidence score.</p>
+<p>Points with $\mathbf{w} \cdot \mathbf{x} + b &gt; 0$ are classified as $+1$; those with $\mathbf{w} \cdot \mathbf{x} + b &lt; 0$ as $-1$. The magnitude of $\mathbf{w} \cdot \mathbf{x} + b$ measures how far the point is from the boundary - a natural confidence score.</p>
 <p>Learning a linear classifier means learning $\mathbf{w}$ and $b$. The geometry is fixed (a hyperplane); the question is which hyperplane.</p>
 <h3 id="gradient-descent-and-the-hinge-loss">Gradient Descent and the Hinge Loss</h3>
 <p>A natural loss for linear classifiers is the <strong>hinge loss</strong>: a training point $(\mathbf{x}_i, y_i)$ contributes loss $\max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$. Points correctly classified with confidence at least 1 contribute zero loss. Points close to the boundary or misclassified contribute positive loss proportional to how wrong they are.</p>
@@ -120,7 +165,7 @@ Oct 1, 2024
 <h3 id="the-perceptron">The Perceptron</h3>
 <p>The <strong>Perceptron</strong> is the simplest online learning algorithm for linear classifiers. It initializes $\mathbf{w} = 0$, $b = 0$ and processes one training example at a time. When it makes an error - when $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \leq 0$ - it updates:</p>
 <p>$$\mathbf{w} \leftarrow \mathbf{w} + y_i \mathbf{x}_i, \quad b \leftarrow b + y_i$$</p>
-<p>This update moves $\mathbf{w}$ in the direction of $y_i \mathbf{x}_i$, which increases $y_i(\mathbf{w} \cdot \mathbf{x}_i + b)$ by $y_i^2 |\mathbf{x}_i|^2 = |\mathbf{x}_i|^2 > 0$. The misclassified point is less wrong after the update.</p>
+<p>This update moves $\mathbf{w}$ in the direction of $y_i \mathbf{x}_i$, which increases $y_i(\mathbf{w} \cdot \mathbf{x}_i + b)$ by $y_i^2 |\mathbf{x}_i|^2 = |\mathbf{x}_i|^2 &gt; 0$. The misclassified point is less wrong after the update.</p>
 <p>The <strong>Perceptron convergence theorem</strong> guarantees termination on linearly separable data. Let $R = \max_i |\mathbf{x}_i|$ (radius of the data) and $\gamma$ (the <strong>margin</strong>) be the maximum over all weight vectors $\mathbf{w}$ with $|\mathbf{w}| = 1$ of $\min_i y_i(\mathbf{w} \cdot \mathbf{x}_i + b)$. Then the Perceptron makes at most:</p>
 <p>$$\left(\frac{R}{\gamma}\right)^2 \text{ updates}$$</p>
 <p>before converging to a correct classifier. A large margin means few updates; a small margin can mean many. The proof shows that correct updates increase $\mathbf{w} \cdot \mathbf{w}^<em>$ (alignment with the true separating direction) while bounding the growth of $|\mathbf{w}|$, so the angle between $\mathbf{w}$ and $\mathbf{w}^</em>$ strictly decreases with each update.</p>
@@ -135,9 +180,9 @@ Oct 1, 2024
 <p>$$\min_{\mathbf{w}, b} \frac{1}{2}|\mathbf{w}|^2 \quad \text{subject to} \quad y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \geq 1 \quad \forall i$$</p>
 <p>This requires the data to be linearly separable. When it is not, the constraints are infeasible and the hard-margin SVM has no solution.</p>
 <h3 id="soft-margin-svm">Soft-Margin SVM</h3>
-<p>The <strong>soft-margin SVM</strong> allows constraints to be violated by introducing <strong>slack variables</strong> $\xi_i \geq 0$. Point $i$ violates the margin constraint when $\xi_i > 0$; it is misclassified when $\xi_i > 1$. The optimization becomes:</p>
+<p>The <strong>soft-margin SVM</strong> allows constraints to be violated by introducing <strong>slack variables</strong> $\xi_i \geq 0$. Point $i$ violates the margin constraint when $\xi_i &gt; 0$; it is misclassified when $\xi_i &gt; 1$. The optimization becomes:</p>
 <p>$$\min_{\mathbf{w}, b, \boldsymbol{\xi}} \frac{1}{2}|\mathbf{w}|^2 + C \sum_{i=1}^n \xi_i \quad \text{subject to} \quad y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \geq 1 - \xi_i,; \xi_i \geq 0 \quad \forall i$$</p>
-<p>The hyperparameter $C > 0$ controls the tradeoff: large $C$ penalizes violations heavily (narrow margin, fits training data closely), small $C$ tolerates many violations (wide margin, potentially more robust). In the limit $C \to \infty$, the soft-margin SVM reduces to the hard-margin SVM.</p>
+<p>The hyperparameter $C &gt; 0$ controls the tradeoff: large $C$ penalizes violations heavily (narrow margin, fits training data closely), small $C$ tolerates many violations (wide margin, potentially more robust). In the limit $C \to \infty$, the soft-margin SVM reduces to the hard-margin SVM.</p>
 <p>Substituting the optimal $\xi_i = \max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$, the objective becomes $\frac{1}{2}|\mathbf{w}|^2 + C \sum_i \max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$ - exactly the hinge loss with $\ell_2$ regularization. The SVM primal is regularized empirical risk minimization with the hinge loss.</p>
 <h3 id="dual-formulation">Dual Formulation</h3>
 <p>The primal SVM is a convex quadratic program with $d + n + 1$ variables. For large $d$ (or infinite-dimensional feature maps), the <strong>dual formulation</strong> is more useful.</p>
@@ -145,9 +190,9 @@ Oct 1, 2024
 <p>$$\max_{\boldsymbol{\alpha}} \sum_{i=1}^n \alpha_i - \frac{1}{2} \sum_{i,j} \alpha_i \alpha_j y_i y_j \mathbf{x}_i \cdot \mathbf{x}_j$$</p>
 <p>$$\text{subject to} \quad 0 \leq \alpha_i \leq C \quad \forall i, \quad \sum_{i=1}^n \alpha_i y_i = 0$$</p>
 <p>The dual has $n$ variables (one per training point) and depends on the training data only through inner products $\mathbf{x}_i \cdot \mathbf{x}_j$. This is the key observation that enables the kernel trick.</p>
-<p><strong>KKT conditions</strong> give the primal-dual relationship. At the optimum: $\mathbf{w} = \sum_i \alpha_i y_i \mathbf{x}_i$. Training points with $\alpha_i = 0$ do not contribute to $\mathbf{w}$ at all - they are irrelevant. Training points with $\alpha_i > 0$ are the <strong>support vectors</strong> - they lie on or inside the margin and determine the decision boundary entirely. The solution is sparse: typically only a small fraction of training points are support vectors.</p>
+<p><strong>KKT conditions</strong> give the primal-dual relationship. At the optimum: $\mathbf{w} = \sum_i \alpha_i y_i \mathbf{x}_i$. Training points with $\alpha_i = 0$ do not contribute to $\mathbf{w}$ at all - they are irrelevant. Training points with $\alpha_i &gt; 0$ are the <strong>support vectors</strong> - they lie on or inside the margin and determine the decision boundary entirely. The solution is sparse: typically only a small fraction of training points are support vectors.</p>
 <p>The decision function at test time is:</p>
-<p>$$f(\mathbf{x}) = \text{sign}\left(\sum_{i:\alpha_i > 0} \alpha_i y_i \mathbf{x}_i \cdot \mathbf{x} + b\right)$$</p>
+<p>$$f(\mathbf{x}) = \text{sign}\left(\sum_{i:\alpha_i &gt; 0} \alpha_i y_i \mathbf{x}_i \cdot \mathbf{x} + b\right)$$</p>
 <p>The test point interacts with the training data only through inner products with support vectors. Everything else is discarded.</p>
 <hr>
 <h2 id="the-kernel-trick">The Kernel Trick</h2>
@@ -162,11 +207,11 @@ Oct 1, 2024
 <p>A positive semidefinite kernel guarantees that the dual optimization problem is convex and has a unique solution. Constructing new kernels from existing ones is safe using these facts: sums of valid kernels are valid, products of valid kernels are valid, and a positive constant multiple of a valid kernel is valid.</p>
 <h3 id="why-kernels-enable-non-linear-separation">Why Kernels Enable Non-Linear Separation</h3>
 <p>A dataset that is not linearly separable in $\mathbb{R}^d$ may become linearly separable in $\mathcal{H}$. The kernel SVM finds a linear boundary in $\mathcal{H}$, which corresponds to a non-linear boundary in the original input space. The decision boundary in $\mathbb{R}^d$ is:</p>
-<p>$$\left\{\mathbf{x} : \sum_{i:\alpha_i > 0} \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}) + b = 0\right\}$$</p>
+<p>$$\left\{\mathbf{x} : \sum_{i:\alpha_i &gt; 0} \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}) + b = 0\right\}$$</p>
 <p>For the RBF kernel, this is a sum of Gaussians centered at support vectors. The boundary can be any shape that can be expressed as a weighted combination of such bumps - enormously flexible.</p>
 <hr>
 <h2 id="multi-class-strategies">Multi-Class Strategies</h2>
-<p>Binary SVMs classify into two classes. Extending to $K > 2$ classes requires a strategy for combining binary classifiers.</p>
+<p>Binary SVMs classify into two classes. Extending to $K &gt; 2$ classes requires a strategy for combining binary classifiers.</p>
 <h3 id="one-vs-rest">One-vs-Rest</h3>
 <p><strong>One-vs-Rest (OvR)</strong> trains $K$ binary classifiers. Classifier $k$ is trained to separate class $k$ from all other classes combined (labeled $+1$ and $-1$ respectively). At test time, each classifier produces a score $f_k(\mathbf{x}) = \mathbf{w}_k \cdot \mathbf{x} + b_k$, and the point is assigned the class with the highest score:</p>
 <p>$$\hat{y} = \underset{k}{\arg\max}; f_k(\mathbf{x})$$</p>
@@ -240,16 +285,47 @@ Oct 1, 2024
 </li>
 <li><a href="/posts/logistic-regression/" target="_blank" rel="noopener noreferrer">Logistic Regression - Classification Dressed Up as Regression</a>
 </li>
-<li><a href="/posts/regularization-and-dropout/" target="_blank" rel="noopener noreferrer">Regularization & Dropout - Constraints That Teach You to Generalize</a>
+<li><a href="/posts/regularization-and-dropout/" target="_blank" rel="noopener noreferrer">Regularization &amp; Dropout - Constraints That Teach You to Generalize</a>
 </li>
 </ul>
-</div>
-<div class="post-footer">
-</div>
-</article>
-</main>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
-<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
-</body>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>
