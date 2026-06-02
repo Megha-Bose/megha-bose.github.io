@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Bloom Filters - Answering &#34;Definitely Not&#34; in Constant Space // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Bloom Filters - Answering &#34;Definitely Not&#34; in Constant Space"/>
+<meta name="twitter:description" content="Helpful context:
+ Databases &amp; Indexes - The Structures That Make Queries Fast  LSM Trees - Why Databases Gave Up on Updating in Place    There is a question that systems ask millions of times per day: &ldquo;is this thing in this set?&rdquo; Is this URL on the malware blocklist? Is this username already taken? Is this key in this SSTable? The naive answer is to store the set and check it."/>
+
+    <meta property="og:title" content="Bloom Filters - Answering &#34;Definitely Not&#34; in Constant Space" />
+<meta property="og:description" content="Helpful context:
+ Databases &amp; Indexes - The Structures That Make Queries Fast  LSM Trees - Why Databases Gave Up on Updating in Place    There is a question that systems ask millions of times per day: &ldquo;is this thing in this set?&rdquo; Is this URL on the malware blocklist? Is this username already taken? Is this key in this SSTable? The naive answer is to store the set and check it." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/bloom-filters/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Bloom Filters - Answering &#34;Definitely Not&#34; in Constant Space</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          8 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/databases-indexes/" target="_blank" rel="noopener noreferrer">Databases &amp; Indexes - The Structures That Make Queries Fast</a>
+</li>
+<li><a href="/posts/lsm-trees/" target="_blank" rel="noopener noreferrer">LSM Trees - Why Databases Gave Up on Updating in Place</a>
+</li>
+</ul>
+<hr>
+<p>There is a question that systems ask millions of times per day: &ldquo;is this thing in this set?&rdquo; Is this URL on the malware blocklist? Is this username already taken? Is this key in this SSTable? The naive answer is to store the set and check it. But what if the set contains billions of items and checking it requires a disk read? A bloom filter answers this question differently: it tells you &ldquo;definitely not&rdquo; or &ldquo;possibly yes&rdquo; - and it does so in constant time using a fixed amount of memory, regardless of how many items are in the set. The tradeoff is a controlled probability of being wrong in one direction.</p>
+<p>Burton Bloom introduced this data structure in 1970 in a paper titled &ldquo;Space/Time Trade-offs in Hash Coding with Allowable Errors.&rdquo; The name is his own. The paper is one of the most-cited in computer science, and the idea has turned out to be useful in almost every domain of systems engineering.</p>
+<h2 id="the-problem-it-solves">The Problem It Solves</h2>
+<p>Consider an LSM tree database. When a read arrives for key $k$, the engine checks the memtable (fast, in memory), then checks SSTable files from newest to oldest (slower, on disk). If $k$ does not exist in the database at all, this degenerates into reading every SSTable file to confirm its absence. On a database with dozens or hundreds of SSTables, each potentially requiring a disk seek, this is catastrophically expensive.</p>
+<p>What you want is a way to quickly ask, before touching disk: &ldquo;is key $k$ definitely not in this SSTable?&rdquo; If the answer is yes (definitely not), skip the SSTable entirely. If the answer is maybe (possibly in there), proceed to check.</p>
+<p>A bloom filter gives exactly this. It cannot tell you for certain that a key is present. But it can tell you for certain that a key is absent.</p>
+<h2 id="how-it-works">How It Works</h2>
+<p>A bloom filter is a bit array of $m$ bits, all initialized to 0, combined with $k$ independent hash functions. Each hash function maps an item to one of the $m$ bit positions.</p>
+<p><strong>Adding an item</strong>: hash it with all $k$ hash functions. Set the bit at each resulting position to 1.</p>
+<p><strong>Checking membership</strong>: hash the query item with all $k$ hash functions. If any of the resulting bit positions is 0, the item is definitely not in the set - you would have set all those bits when you added it. If all positions are 1, the item is probably in the set.</p>
+<p>The &ldquo;probably&rdquo; is the core of the tradeoff. It is possible that all $k$ bits for a query item happen to be set by combinations of other items that were added - even though this particular item was never added. This is a <strong>false positive</strong>: the filter says &ldquo;possibly in set&rdquo; but the item is actually absent. False positives are acceptable in many applications. What is not possible is a false negative: if an item was added, all its bits were set, and they remain set (bits are never cleared). A &ldquo;definitely not&rdquo; answer is always correct.</p>
+<h2 id="the-math">The Math</h2>
+<p>The false positive probability $p$ is approximately:</p>
+<p>$$p \approx \left(1 - e^{-kn/m}\right)^k$$</p>
+<p>where $n$ is the number of items inserted, $m$ is the number of bits, and $k$ is the number of hash functions.</p>
+<p>For a given $m$ and $n$, the optimal number of hash functions that minimizes $p$ is:</p>
+<p>$$k = \frac{m}{n} \ln 2 \approx 0.693 \cdot \frac{m}{n}$$</p>
+<p>Substituting back, the minimum false positive rate for a given number of bits per item $b = m/n$ is approximately:</p>
+<p>$$p \approx (0.6185)^b$$</p>
+<p>In concrete terms: 10 bits per element gives a false positive rate of roughly 1%. 20 bits per element gives roughly 0.0001%. A hash set storing the full items takes 64 bits per element (an 8-byte pointer) or more. A bloom filter achieves 1% error with 10 bits - over 6x smaller, and it scales to any set size with zero additional overhead.</p>
+<p>The space is fixed at $m$ bits regardless of how many items you add. This is the killer feature: a bloom filter for a billion-item set uses the same memory as one tuned for that capacity, and inserting the billionth item is exactly as fast as inserting the first.</p>
+<h2 id="where-bloom-filters-are-used">Where Bloom Filters Are Used</h2>
+<p><strong>LSM trees and databases</strong>: Cassandra, RocksDB, HBase, and LevelDB all store a bloom filter per SSTable. Before reading an SSTable from disk, the engine checks the bloom filter. A false-positive rate of 1% means that for keys that don&rsquo;t exist, 99% of SSTable reads are avoided. The entire point of LSM trees is high write throughput - bloom filters are what keep read performance from collapsing.</p>
+<p><strong>Google Chrome and browser security</strong>: Chrome&rsquo;s Safe Browsing feature downloads a bloom filter of millions of known malicious URLs. When you visit a URL, Chrome hashes it and checks the filter locally - no network request needed. Only on a positive (either true or false) does Chrome query Google&rsquo;s servers for confirmation. This reduces network traffic by orders of magnitude and avoids sending your browsing history to Google for the vast majority of safe URLs.</p>
+<p><strong>CDNs and caching</strong>: a CDN does not want to cache every object - caching a resource that is only ever fetched once wastes memory. One strategy: only cache an object on the second request. A bloom filter tracks which URLs have been seen once. First request: not in filter, add it to filter, don&rsquo;t cache. Second request: in filter (true positive), cache it. False positives (caching something on its second &ldquo;apparent&rdquo; visit despite it being a true first) are acceptable - the cost is slightly over-caching, not a correctness issue.</p>
+<p><strong>Databases: &ldquo;username taken&rdquo; checks</strong>: before querying the database to check if a username exists, check a bloom filter. If the filter says &ldquo;definitely not,&rdquo; the username is available without a database round trip. If it says &ldquo;possibly,&rdquo; query the database to confirm. At signup rates of millions per day, this matters.</p>
+<p><strong>Bitcoin SPV nodes</strong>: Simplified Payment Verification nodes do not store the full blockchain. They use bloom filters to tell full nodes which transactions they care about. A full node filters transactions through the SPV node&rsquo;s bloom filter before sending them - drastically reducing bandwidth. False positives result in a few extra transactions being sent; false negatives are impossible.</p>
+<p><strong>Spell checkers</strong>: the original application Bloom described. Store the dictionary as a bloom filter. A word that produces a false positive looks &ldquo;correct&rdquo; to the spell checker when it is not. Acceptable at low false positive rates.</p>
+<p><strong>Akamai</strong>: Akamai uses bloom filters to avoid caching &ldquo;one-hit wonders&rdquo; - items requested exactly once that would displace more popular items from cache. A bloom filter tracks all requested URLs; something is only admitted to cache if it has been seen before (i.e., it is in the filter).</p>
+<h2 id="limitations">Limitations</h2>
+<p><strong>No deletion</strong>: setting bits to 1 is irreversible. Removing an item would require clearing bits, but those bits may be shared with other items. Clearing them creates false negatives - which violate the core guarantee.</p>
+<p><strong>Counting bloom filter</strong>: extends each bit to a counter. Increment on add, decrement on remove. Deletion is now possible. Cost: 4x the memory (4 bits per cell instead of 1). Used where deletion is required.</p>
+<p><strong>Cuckoo filter</strong>: a more recent structure that supports deletion, has comparable false positive rates, and is faster for lookup. It stores fingerprints in a cuckoo hash table. Generally preferred over counting bloom filters when deletion is needed.</p>
+<p><strong>Scalable bloom filter</strong>: when you do not know in advance how many items you will add, a scalable bloom filter dynamically adds new filter layers as the current one fills, maintaining a target false positive rate.</p>
+<p><strong>The false positive rate is not free</strong>: a bloom filter only helps when the false positive cost is acceptable. If a false positive triggers a disk read that returns &ldquo;not found,&rdquo; you have paid for a useless disk read. At 1% false positive rate, 1 in 100 lookups for absent keys does an unnecessary disk read. For 99% of absent key lookups, the disk read is completely avoided. The net win is enormous.</p>
+<h2 id="sizing-in-practice">Sizing in Practice</h2>
+<p>To build a bloom filter:</p>
+<ol>
+<li>Decide on the acceptable false positive rate $p$ (typical: 0.01 to 0.001).</li>
+<li>Know the expected number of items $n$.</li>
+<li>Compute the required bits: $m = -n \ln p / (\ln 2)^2$.</li>
+<li>Compute the optimal number of hash functions: $k = (m/n) \ln 2$.</li>
+</ol>
+<p>For $n = 10^6$ items and $p = 0.01$: $m \approx 9.6 \times 10^6$ bits $\approx$ 1.2 MB. Ten bits per element, roughly six hash functions. Storing the same million items in a hash set (with 8-byte keys) would take 8 MB - nearly 7x more.</p>
+<p>The bloom filter is one of the most elegant data structures in existence: a fixed-size structure that grows in capability (more items) without growing in size, at the cost of a mathematically controlled and tunable error rate. The error is always in the safe direction. &ldquo;Definitely not&rdquo; is always true. &ldquo;Possibly yes&rdquo; sometimes lies. Every production system that cares about avoiding unnecessary I/O has one somewhere.</p>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/caching-strategies/" target="_blank" rel="noopener noreferrer">Caching Strategies - What to Store, Where, and for How Long</a>
+</li>
+<li><a href="/posts/lsm-trees/" target="_blank" rel="noopener noreferrer">LSM Trees - Why Databases Gave Up on Updating in Place</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

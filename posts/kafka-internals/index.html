@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Kafka Internals - The Distributed Log That Became an Ecosystem // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Kafka Internals - The Distributed Log That Became an Ecosystem"/>
+<meta name="twitter:description" content="Helpful context:
+ Message Queues - Decoupling Services by Delaying Their Conversations  Sharding &amp; Replication - Splitting Data So No Single Machine Drowns    Apache Kafka is described as a message queue, a pub/sub system, a streaming platform, and an event store - all at once, all accurately. It is production infrastructure at LinkedIn (where it was built in 2011), Uber, Netflix, Airbnb, and virtually every company that processes large volumes of real-time data."/>
+
+    <meta property="og:title" content="Kafka Internals - The Distributed Log That Became an Ecosystem" />
+<meta property="og:description" content="Helpful context:
+ Message Queues - Decoupling Services by Delaying Their Conversations  Sharding &amp; Replication - Splitting Data So No Single Machine Drowns    Apache Kafka is described as a message queue, a pub/sub system, a streaming platform, and an event store - all at once, all accurately. It is production infrastructure at LinkedIn (where it was built in 2011), Uber, Netflix, Airbnb, and virtually every company that processes large volumes of real-time data." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/kafka-internals/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Kafka Internals - The Distributed Log That Became an Ecosystem</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/message-queues-event-driven/" target="_blank" rel="noopener noreferrer">Message Queues - Decoupling Services by Delaying Their Conversations</a>
+</li>
+<li><a href="/posts/sharding-data-replication/" target="_blank" rel="noopener noreferrer">Sharding &amp; Replication - Splitting Data So No Single Machine Drowns</a>
+</li>
+</ul>
+<hr>
+<p>Apache Kafka is described as a message queue, a pub/sub system, a streaming platform, and an event store - all at once, all accurately. It is production infrastructure at LinkedIn (where it was built in 2011), Uber, Netflix, Airbnb, and virtually every company that processes large volumes of real-time data. Understanding why requires understanding what Kafka actually is underneath: a distributed, replicated, persistent log. Not a queue. A log.</p>
+<p>The distinction is not semantic.</p>
+<h2 id="the-problem-with-traditional-message-queues">The Problem With Traditional Message Queues</h2>
+<p>RabbitMQ and similar brokers deliver messages and then delete them. A consumer receives a message, processes it, and it is gone. This is the right model for task queues: you send a job to a worker, the worker does it, done.</p>
+<p>But consider activity events: every click, every page view, every purchase. You want the analytics service to process these events. You also want the recommendations engine to process them. And the fraud detection system. And the audit log. And you want to be able to replay them if a bug corrupts your analytics database.</p>
+<p>A traditional queue fails at this. When the analytics service consumes a message, it is gone - the recommendations engine cannot see it. You would have to fan out every message to N separate queues for N consumers, which is architecturally ugly and doubles, triples, or N-tuples your storage. And replay is impossible: once consumed, messages are gone.</p>
+<p>Kafka&rsquo;s insight: <strong>the log is the right abstraction for events</strong>. An append-only log keeps everything. Consumers read from whatever position they want. Multiple consumers can read independently. Replaying from any point in history is trivially re-reading from an earlier offset.</p>
+<h2 id="the-anatomy-of-kafka">The Anatomy of Kafka</h2>
+<p><strong>Topic</strong>: a named stream of records. &ldquo;user-clicks,&rdquo; &ldquo;order-placed,&rdquo; &ldquo;payment-processed.&rdquo; A topic is the unit of data organization.</p>
+<p><strong>Partition</strong>: a topic is split into partitions for parallelism and scalability. Each partition is an ordered, immutable sequence of records stored on disk, on one broker. Within a partition, each record has a sequential integer called an <strong>offset</strong>. Partition 0 of the &ldquo;user-clicks&rdquo; topic might have offsets 0 through 4,831,227. Partition 1 has its own independent sequence.</p>
+<p>The number of partitions determines the maximum parallelism for consumers. A topic with 12 partitions can be consumed by up to 12 parallel consumers simultaneously. More partitions = more throughput but more file handles, more ZooKeeper znodes (in older Kafka), and more leader elections.</p>
+<p><strong>Broker</strong>: a Kafka server. A cluster has multiple brokers. Each partition&rsquo;s data lives on one broker (the leader for that partition), with replicas on others.</p>
+<p><strong>Offset</strong>: the position of a record within a partition. The offset is the consumer&rsquo;s bookmark. Unlike a queue (where the broker tracks what has been delivered to each consumer), in Kafka the <strong>consumer tracks its own offset</strong>. This is a fundamental design choice that has enormous implications.</p>
+<p><strong>Consumer group</strong>: a set of consumers that collectively consume a topic. Each partition is assigned to exactly one consumer within the group. If the topic has 12 partitions and there are 4 consumers in the group, each consumer gets 3 partitions. If there are 12 consumers, each gets 1. If there are 13 consumers, one sits idle (you cannot have more consumers than partitions in a group).</p>
+<p>Different consumer groups are completely independent. The analytics service&rsquo;s consumer group and the fraud detection service&rsquo;s consumer group each maintain their own offsets. When analytics reads partition 0 up to offset 5000, fraud detection can still be at offset 3000, and a third group replaying events can be at offset 0. Nobody interferes with anybody.</p>
+<p><strong>Producer</strong>: a client that writes records to a topic. The producer chooses which partition to write to. The default: round-robin. With a partition key: hash(key) mod N. Using a partition key means all records with the same key always go to the same partition, which guarantees ordering within a key (e.g., all events for a specific <code>user_id</code> are in order).</p>
+<h2 id="the-log-on-disk">The Log on Disk</h2>
+<p>Each partition is physically stored as a directory of files on the broker&rsquo;s disk. Within the directory, records are organized into <strong>segments</strong>: files of up to 1GB (configurable). The active segment is the one being written to. Older segments are immutable.</p>
+<p>The internal structure of a segment is simple: records are appended sequentially. Each record has its offset, timestamp, key, value, and headers. Reading record at offset $k$ is finding the right segment (binary search on the index file) and reading from the appropriate position.</p>
+<p>This sequential layout is why Kafka is fast. Writes are always appends to the active segment - sequential disk writes. Reads for a consumer maintaining sequential offsets are sequential reads. The OS page cache aggressively prefetches sequential reads, meaning hot partitions often serve consumers entirely from memory without touching disk. <strong>Kafka uses zero-copy I/O</strong>: <code>sendfile()</code> moves data from the page cache directly to the network socket without copying through user space, eliminating a CPU bottleneck that would otherwise limit throughput.</p>
+<p>A broker with spinning disks can sustain hundreds of MB/s of sequential I/O. A broker with SSDs can push gigabytes per second. At LinkedIn, individual brokers handle millions of writes per second.</p>
+<h2 id="retention-time-based-and-size-based">Retention: Time-Based and Size-Based</h2>
+<p>Unlike a queue, Kafka does not delete records when they are consumed. Records are retained based on time or size.</p>
+<p><strong>Time-based retention</strong>: delete records older than N days. Default: 7 days. With 7-day retention, any consumer can replay up to a week of history.</p>
+<p><strong>Size-based retention</strong>: delete the oldest records when total partition size exceeds N bytes.</p>
+<p><strong>Compact topics</strong>: instead of deleting by time or size, only keep the latest record for each key. This is Kafka&rsquo;s &ldquo;log compaction&rdquo; mode. Useful for topics that represent current state: the compacted topic is eventually a snapshot of the latest value per key, deduplicated by history. Kafka Streams uses compacted topics to maintain KV state.</p>
+<p>Retention policy is per-topic. An event topic might keep 7 days of history. A configuration change topic might use log compaction to keep only the latest config.</p>
+<h2 id="replication-leaders-and-followers">Replication: Leaders and Followers</h2>
+<p>Each partition has a configured replication factor (typically 3). One broker is the <strong>leader</strong> for that partition; the others are <strong>followers</strong> (also called replicas).</p>
+<p>Producers write to the leader. The leader appends to its log and immediately replicates to followers via the followers' fetch requests (followers poll the leader, not the other way). Consumers also read from the leader by default (Kafka 2.4+ supports reading from the nearest replica for latency optimization).</p>
+<p><strong>ISR (In-Sync Replicas)</strong> is the set of replicas that are &ldquo;caught up&rdquo; with the leader - not more than some configurable lag behind. The leader only considers an ISR member eligible to be a new leader if the current leader fails.</p>
+<p><strong><code>acks</code> setting</strong>: producers configure how many replicas must acknowledge a write before it is considered successful.</p>
+<ul>
+<li><code>acks=0</code>: fire and forget. Fastest, no durability guarantee.</li>
+<li><code>acks=1</code>: the leader has received and written the record. Default in older Kafka. Risk: if the leader fails before followers replicate, the record is lost.</li>
+<li><code>acks=all</code> (or <code>acks=-1</code>): all ISR members have written the record. Highest durability. Combined with <code>min.insync.replicas=2</code>, guarantees the record survives the loss of any one broker.</li>
+</ul>
+<p>The throughput-durability tradeoff is explicit and configurable per producer.</p>
+<h2 id="offset-management-and-exactly-once-semantics">Offset Management and Exactly-Once Semantics</h2>
+<p>Consumers commit their offsets back to Kafka (to an internal topic called <code>__consumer_offsets</code>). This is how a consumer group remembers where it left off across restarts. On restart, the consumer fetches its last committed offset and resumes from there.</p>
+<p>This creates at-least-once delivery by default: the consumer processes some records, then commits the offset. If it crashes between processing and committing, it re-reads and reprocesses those records on restart. Idempotent downstream processing (or deduplication on the consumer side) handles duplicates.</p>
+<p>Kafka 0.11 introduced <strong>idempotent producers</strong>: the broker deduplicates retried writes using producer IDs and sequence numbers, guaranteeing exactly-once delivery from producer to broker even under retries.</p>
+<p><strong>Transactions</strong> extend this across multiple partitions: a producer can atomically write to multiple partitions, and a consumer can atomically read-process-write in a consume-transform-produce pipeline. Together these give end-to-end exactly-once semantics, which is what Kafka Streams uses internally.</p>
+<h2 id="consumer-lag-and-monitoring">Consumer Lag and Monitoring</h2>
+<p><strong>Consumer lag</strong> is the difference between the latest offset in a partition and the consumer&rsquo;s current offset. Lag = 0 means the consumer is caught up. Lag = 10,000 means the consumer is 10,000 records behind.</p>
+<p>Consumer lag is the primary health metric for Kafka consumers. Rising lag means: the consumer is too slow (scale it out or optimize), the producer is producing faster than expected (is there a traffic spike?), or the consumer has crashed (lag grows indefinitely without processing). Monitoring consumer lag per consumer group per partition is essential. Tools: Kafka&rsquo;s own consumer-groups.sh, Burrow (LinkedIn&rsquo;s dedicated lag monitoring service), Prometheus exporters.</p>
+<h2 id="kafka-streams-and-ksql">Kafka Streams and KSQL</h2>
+<p>Kafka&rsquo;s ecosystem has grown beyond the broker.</p>
+<p><strong>Kafka Streams</strong> is a Java library for building streaming applications that read from Kafka, process data (filter, aggregate, join, window), and write results back to Kafka. It runs inside your application - no separate cluster. Stream processing operations are compiled to a DAG of processing nodes, each processing one record at a time. State stores (backed by RocksDB locally, compacted Kafka topics remotely) enable stateful aggregations.</p>
+<p><strong>ksqlDB</strong> is a SQL-like interface over Kafka Streams. You write SQL queries against Kafka topics as if they were database tables. Running queries are continuously processing new records. This makes stream processing accessible without writing Java code.</p>
+<p><strong>Kafka Connect</strong> is a framework for streaming data between Kafka and external systems: pull from a MySQL database into Kafka (CDC - change data capture), push from Kafka into Elasticsearch, S3, Snowflake, BigQuery. Connectors are plug-and-play: you configure which tables to pull or which topic to push, and Connect handles parallelism, offset tracking, and restart behavior.</p>
+<h2 id="kafka-vs-everything-else">Kafka vs. Everything Else</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Kafka</th>
+<th>RabbitMQ</th>
+<th>AWS SQS</th>
+<th>Redis Streams</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Message retention</td>
+<td>Time/size based</td>
+<td>Until consumed</td>
+<td>14 days max</td>
+<td>Configurable</td>
+</tr>
+<tr>
+<td>Replay</td>
+<td>Yes, any offset</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Multiple consumers</td>
+<td>Yes, independent groups</td>
+<td>Competing consumers</td>
+<td>Competing consumers</td>
+<td>Yes, groups</td>
+</tr>
+<tr>
+<td>Throughput</td>
+<td>Very high (millions/s)</td>
+<td>High (thousands/s)</td>
+<td>High</td>
+<td>Moderate</td>
+</tr>
+<tr>
+<td>Ordering</td>
+<td>Per partition</td>
+<td>Per queue</td>
+<td>No (FIFO queues: per group)</td>
+<td>Per stream</td>
+</tr>
+<tr>
+<td>Use case</td>
+<td>Event streaming, log aggregation</td>
+<td>Task queues, routing</td>
+<td>Task queues, simple fanout</td>
+<td>Lightweight streaming</td>
+</tr>
+</tbody>
+</table>
+<p>Kafka is not always the right answer. For simple task queues where you do not need replay or multiple independent consumers, RabbitMQ or SQS are simpler to operate. For very low latency (sub-millisecond), neither is suitable - consider Redis or direct RPCs. Kafka&rsquo;s operational complexity (the cluster, ZooKeeper or KRaft, topic partitioning decisions, retention tuning) is justified when you need its specific properties: high throughput, persistence, replay, and multiple independent consumer groups.</p>
+<p><strong>KRaft mode</strong> (Kafka 2.8+): Kafka is replacing ZooKeeper with its own Raft-based metadata management, simplifying the operational model significantly. A KRaft cluster requires no external coordination service.</p>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape</a>
+</li>
+<li><a href="/posts/monitoring-observability/" target="_blank" rel="noopener noreferrer">Monitoring &amp; Observability - Knowing What Your System Is Doing</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

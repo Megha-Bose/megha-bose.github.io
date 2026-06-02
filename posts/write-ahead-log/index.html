@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Write-Ahead Log - The Invisible Guarantee Behind Every Database Write // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Write-Ahead Log - The Invisible Guarantee Behind Every Database Write"/>
+<meta name="twitter:description" content="Helpful context:
+ Databases &amp; Indexes - The Structures That Make Queries Fast  LSM Trees - Why Databases Gave Up on Updating in Place    Every time you insert a row, update a record, or commit a transaction, a database makes you a promise: if it tells you the write succeeded, that write will survive a crash. Not &ldquo;probably survive.&rdquo; Not &ldquo;survive unless the power goes out.&rdquo; Survive."/>
+
+    <meta property="og:title" content="Write-Ahead Log - The Invisible Guarantee Behind Every Database Write" />
+<meta property="og:description" content="Helpful context:
+ Databases &amp; Indexes - The Structures That Make Queries Fast  LSM Trees - Why Databases Gave Up on Updating in Place    Every time you insert a row, update a record, or commit a transaction, a database makes you a promise: if it tells you the write succeeded, that write will survive a crash. Not &ldquo;probably survive.&rdquo; Not &ldquo;survive unless the power goes out.&rdquo; Survive." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/write-ahead-log/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Write-Ahead Log - The Invisible Guarantee Behind Every Database Write</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          8 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/databases-indexes/" target="_blank" rel="noopener noreferrer">Databases &amp; Indexes - The Structures That Make Queries Fast</a>
+</li>
+<li><a href="/posts/lsm-trees/" target="_blank" rel="noopener noreferrer">LSM Trees - Why Databases Gave Up on Updating in Place</a>
+</li>
+</ul>
+<hr>
+<p>Every time you insert a row, update a record, or commit a transaction, a database makes you a promise: if it tells you the write succeeded, that write will survive a crash. Not &ldquo;probably survive.&rdquo; Not &ldquo;survive unless the power goes out.&rdquo; Survive. This guarantee is called durability - the D in ACID - and delivering it without making the database impossibly slow is one of the oldest engineering problems in systems design. The solution, used by virtually every serious database in existence, is the write-ahead log.</p>
+<h2 id="the-problem-memory-is-fast-disk-is-durable-you-need-both">The Problem: Memory Is Fast, Disk Is Durable, You Need Both</h2>
+<p>The naive design is obvious: when a write arrives, update the data on disk and return success. This is durable by definition - the data is on disk. But disk writes are slow: a random write to an HDD takes ~10ms (the disk head must physically seek). A database that wrote every row change directly to its B-tree page on disk would top out at a few hundred writes per second. Unusable.</p>
+<p>The opposite extreme is equally obvious: accept writes into memory and return success immediately. Memory writes are nanoseconds. But if the machine crashes before flushing to disk, everything in memory is gone. You told the user their write succeeded. It didn&rsquo;t. Unacceptable.</p>
+<p>The write-ahead log is the resolution. It gives you disk durability with near-memory write speed by exploiting one key property of disk I/O: <strong>sequential writes are orders of magnitude faster than random writes</strong>.</p>
+<p>Appending to the end of a file is sequential. Updating a B-tree page somewhere in the middle of a large file is random. Sequential writes on an HDD can sustain hundreds of megabytes per second. Random writes on the same disk: a few megabytes per second.</p>
+<h2 id="the-mechanism">The Mechanism</h2>
+<p>The write-ahead log is an append-only file on disk. Before the database applies any change to its primary data structures (the B-tree, the memtable, anything), it first appends a record describing that change to the WAL. Only after the WAL record is durably on disk does the database proceed.</p>
+<p>The term &ldquo;write-ahead&rdquo; means exactly this: write to the log ahead of making the actual change.</p>
+<p>The record in the WAL contains everything needed to reproduce the change: what table, what record, what the old value was, what the new value is, and which transaction it belongs to. In PostgreSQL this is called a WAL record; in MySQL InnoDB it is part of the redo log; in SQLite it is the journal.</p>
+<p>A transaction commit works like this:</p>
+<ol>
+<li>Accumulate changes in memory (the buffer pool / memtable).</li>
+<li>Append WAL records for all changes to the WAL file on disk. <strong>fsync</strong> - wait for the OS to confirm the data has reached stable storage, not just the OS buffer cache.</li>
+<li>Declare the transaction committed. Return success to the client.</li>
+<li>At some later point (asynchronously), write the changed pages to their actual locations in the main data file.</li>
+</ol>
+<p>Step 4 is eventually done - but it is not required before telling the client the write succeeded. Why? Because step 2 already made the change durable. If the database crashes after step 2 but before step 4, the WAL record exists on disk. On restart, the database reads the WAL and re-applies any committed changes that never made it to the main data file. This is crash recovery.</p>
+<h2 id="crash-recovery-replaying-the-log">Crash Recovery: Replaying the Log</h2>
+<p>When a database restarts after a crash, it cannot know which in-memory changes made it to the main data file and which did not. The answer: it does not matter. The WAL is the authoritative record.</p>
+<p>The recovery process reads the WAL from the last known good point and replays every committed transaction that appears in it. This is called <strong>redo recovery</strong>: redo the work that was logged but may not have been applied.</p>
+<p>For uncommitted transactions (transactions that had WAL records but never had a commit record), the database performs <strong>undo recovery</strong>: roll back the partial changes. The WAL contains enough information to reverse them.</p>
+<p>This combination - redo committed transactions, undo uncommitted ones - restores the database to a consistent state regardless of when the crash happened. The algorithm that formalizes this is ARIES (Algorithm for Recovery and Isolation Exploiting Semantics), developed at IBM in the 1990s and still the foundation of most relational database recovery systems.</p>
+<h2 id="checkpointing-keeping-the-log-from-growing-forever">Checkpointing: Keeping the Log from Growing Forever</h2>
+<p>If the WAL is never truncated, crash recovery would require replaying the entire history of the database from the beginning. That would take hours. The solution is checkpointing.</p>
+<p>A checkpoint is a moment when the database guarantees that all changes up to a certain WAL position have been written to the main data file. Once a checkpoint is established, the WAL before that checkpoint is no longer needed for recovery and can be truncated (or the space reused).</p>
+<p>Checkpoints involve flushing all dirty pages from memory to disk - which is a batch of sequential writes if done intelligently. After a checkpoint, recovery only needs to replay the WAL from the checkpoint forward. A database that checkpoints frequently recovers quickly but pays more I/O cost during normal operation. A database that checkpoints rarely has lower I/O overhead but longer recovery time after a crash.</p>
+<h2 id="wal-and-group-commit">WAL and Group Commit</h2>
+<p>The dominant cost of WAL writes is not the bytes written but the <strong>fsync</strong>: the call that forces the OS to flush its write buffers to stable storage. An fsync on modern hardware takes roughly 1-10ms. If you fsync per transaction, you cap throughput at 100-1000 transactions per second. For a high-traffic web service, this is nowhere near enough.</p>
+<p><strong>Group commit</strong> is the solution. Instead of fsyncing after every transaction, the database accumulates multiple transactions' WAL records and issues a single fsync for the batch. All transactions in the batch receive their commit confirmation after that one fsync. This amortizes the fsync latency across many transactions, allowing thousands of transactions per second with the same disk hardware.</p>
+<p>PostgreSQL has had group commit since version 8.3. MySQL InnoDB&rsquo;s <code>innodb_flush_log_at_trx_commit</code> setting controls this tradeoff: at <code>1</code>, fsync per commit (full durability, lower throughput); at <code>2</code>, write to OS buffer per commit but fsync only every second (risk up to one second of data loss); at <code>0</code>, fsync only every second (faster, but data loss on OS crash too).</p>
+<h2 id="the-wal-is-not-just-for-relational-databases">The WAL Is Not Just for Relational Databases</h2>
+<p>The concept is not specific to SQL databases. Any system that needs durability with high write throughput uses the same pattern.</p>
+<p><strong>RocksDB/LSM trees</strong>: the memtable is in memory. Before inserting into the memtable, RocksDB appends to a WAL. If the process crashes, the WAL is replayed on startup to reconstruct the memtable.</p>
+<p><strong>etcd and distributed consensus</strong>: etcd stores Raft log entries on disk using a WAL before applying them to the state machine. The WAL is what makes Raft&rsquo;s guarantees work: a leader can only claim a log entry is committed after it is durably written on a majority of nodes.</p>
+<p><strong>Kafka</strong>: Kafka is essentially a distributed WAL exposed as a service. Producers append to a partition log (sequential writes); consumers read from arbitrary positions. The log is the product, not just an implementation detail.</p>
+<p><strong>Filesystems</strong>: ext4 and other journaling filesystems use a journal (a WAL) to ensure filesystem metadata operations are atomic. Without it, a crash mid-operation could leave directory entries pointing to non-existent blocks.</p>
+<h2 id="wal-in-streaming-replication">WAL in Streaming Replication</h2>
+<p>In PostgreSQL, the WAL is also the mechanism for replication. Standby servers receive WAL records from the primary and replay them in real time, maintaining an identical copy of the data. The standby is always some small number of WAL records behind the primary. When the primary fails, the standby can be promoted - it is in a consistent state and the WAL records it has replayed are durable.</p>
+<p>This means the WAL serves triple duty in a replicated database: crash recovery, streaming replication, and point-in-time recovery (restoring the database to any historical state by replaying the WAL from a base backup up to a specific timestamp).</p>
+<h2 id="what-happens-without-it">What Happens Without It</h2>
+<p>Omitting the WAL - or relaxing durability as a configuration option - is a choice some systems make for performance. Redis, by default, does not fsync the AOF (Append Only File, its WAL equivalent) on every write. It fsyncs every second. The consequence: up to one second of data loss on crash. For a cache, this is acceptable. For a bank, it is not.</p>
+<p>SQLite&rsquo;s WAL mode is actually an inversion of the default journal mode: instead of writing the old page to a rollback journal before modifying the main file, WAL mode appends new versions of pages to the WAL and reads redirect to the WAL when needed. Readers can proceed without locking even during concurrent writes - a significant concurrency improvement.</p>
+<p>The write-ahead log is invisible during normal operation and makes itself known only when something goes wrong. That invisibility is the point. A database that correctly implements WAL-based recovery is one where crashes are a nuisance (a few seconds of recovery) rather than a disaster.</p>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/bloom-filters/" target="_blank" rel="noopener noreferrer">Bloom Filters - Answering &ldquo;Definitely Not&rdquo; in Constant Space</a>
+</li>
+<li><a href="/posts/transactions-2pc-vs-saga/" target="_blank" rel="noopener noreferrer">Transactions - Atomicity Across Services, Two Ways</a>
+</li>
+<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

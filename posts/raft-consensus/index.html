@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Raft - How Distributed Systems Agree on Anything // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Raft - How Distributed Systems Agree on Anything"/>
+<meta name="twitter:description" content="Helpful context:
+ Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape  Fault Tolerance - Building Systems That Survive Their Own Failures    Distributed systems have a fundamental problem: if you want a piece of data to survive node failures, you replicate it across multiple machines. But now you have multiple copies of the data, and they can disagree. If two nodes each think they are the authoritative writer, you get split-brain: conflicting updates, corrupted state, chaos."/>
+
+    <meta property="og:title" content="Raft - How Distributed Systems Agree on Anything" />
+<meta property="og:description" content="Helpful context:
+ Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape  Fault Tolerance - Building Systems That Survive Their Own Failures    Distributed systems have a fundamental problem: if you want a piece of data to survive node failures, you replicate it across multiple machines. But now you have multiple copies of the data, and they can disagree. If two nodes each think they are the authoritative writer, you get split-brain: conflicting updates, corrupted state, chaos." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/raft-consensus/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Raft - How Distributed Systems Agree on Anything</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape</a>
+</li>
+<li><a href="/posts/fault-tolerance/" target="_blank" rel="noopener noreferrer">Fault Tolerance - Building Systems That Survive Their Own Failures</a>
+</li>
+</ul>
+<hr>
+<p>Distributed systems have a fundamental problem: if you want a piece of data to survive node failures, you replicate it across multiple machines. But now you have multiple copies of the data, and they can disagree. If two nodes each think they are the authoritative writer, you get split-brain: conflicting updates, corrupted state, chaos. The question &ldquo;how do distributed nodes reach agreement?&rdquo; has occupied computer scientists since the 1980s. The answer is consensus algorithms. Paxos was the first complete answer. Raft was the readable one.</p>
+<h2 id="the-problem-agreement-in-the-presence-of-failure">The Problem: Agreement in the Presence of Failure</h2>
+<p>Imagine three servers each holding a copy of a counter. A client increments the counter. You want all three servers to agree on the new value, even if one server is temporarily unreachable.</p>
+<p>The naive approach is to write to all three and wait for all three to confirm. But if one server is down, you wait forever. So you write to two out of three and accept that as success - a majority. But now you have a timing problem: what if two clients write simultaneously? What if the network partitions and you have two groups each thinking they are the majority?</p>
+<p>A consensus algorithm guarantees that all nodes agree on the same sequence of values, even in the presence of network delays, partitions, and node failures - as long as a majority of nodes are functioning and reachable to each other.</p>
+<p>The formal requirements are:</p>
+<ul>
+<li><strong>Safety</strong>: all nodes that decide on a value decide on the same value. No two nodes reach different conclusions.</li>
+<li><strong>Liveness</strong>: if a majority of nodes are healthy, the system eventually makes progress. It does not stall forever.</li>
+<li><strong>Durability</strong>: once a value is agreed upon, it stays agreed upon even if some nodes crash.</li>
+</ul>
+<h2 id="paxos-correct-unimplementable">Paxos: Correct, Unimplementable</h2>
+<p>Leslie Lamport published Paxos in 1989 (though the paper was famously difficult to get published and did not appear in print until 1998). Paxos is provably correct. It is also notoriously difficult to understand and even more difficult to implement correctly. Lamport himself wrote that &ldquo;there is only one feasible protocol for implementing a fault-tolerant distributed service: the multi-decree parliament&rdquo; - i.e., Paxos - and then acknowledged in later papers that nobody seemed able to implement it without introducing subtle bugs.</p>
+<p>Google&rsquo;s Chubby lock service, a foundational piece of the Google infrastructure stack, is built on Paxos. The team that built it wrote that despite the algorithm being well-studied, &ldquo;Paxos' opaque description makes it difficult to build correct implementations.&rdquo; Amazon&rsquo;s DynamoDB, etcd, CockroachDB, and most production consensus systems ended up implementing Paxos variants with significant undocumented extensions.</p>
+<p>This is the problem Raft was designed to solve.</p>
+<h2 id="raft-understandability-as-a-design-goal">Raft: Understandability as a Design Goal</h2>
+<p>Diego Ongaro and John Ousterhout published &ldquo;In Search of an Understandable Consensus Algorithm&rdquo; (2014) - the Raft paper. The explicit design goal, stated in the first sentence, was understandability. They decomposed the consensus problem into three semi-independent subproblems: leader election, log replication, and safety. Each has a clean specification.</p>
+<p>They ran user studies comparing Raft and Paxos on graduate students with no prior exposure to either. Raft consistently produced better comprehension. This is the paper that made consensus practical: the algorithm is complete enough to implement from the paper alone, without undocumented extensions.</p>
+<h2 id="core-concept-the-replicated-log">Core Concept: The Replicated Log</h2>
+<p>Raft models distributed consensus as maintaining a <strong>replicated log</strong>: an ordered sequence of commands that all nodes agree on, in the same order. Each command is a log entry. Once an entry is committed (agreed upon by a majority), it is applied to the state machine - the actual data the system is managing.</p>
+<p>The state machine can be anything: a key-value store, a lock table, a counter, a database. The consensus layer only cares about ordering entries in the log; the application layer cares about what the entries mean.</p>
+<p>If every node starts in the same initial state and applies the same log entries in the same order, every node ends in the same state. Consensus on the log gives you consistency of the state machine.</p>
+<h2 id="leader-election">Leader Election</h2>
+<p>Raft uses a strong leader: all writes go through one designated leader. The leader receives client requests, appends them to its log, and replicates them to followers. This simplifies the algorithm enormously compared to Paxos, where any node can propose values.</p>
+<p>Time in Raft is divided into <strong>terms</strong>, numbered sequentially. Each term begins with an election. If a follower does not hear from a leader for a while (the election timeout, randomized between 150ms and 300ms in typical configurations), it assumes the leader has failed, increments the term number, becomes a candidate, and requests votes from other nodes.</p>
+<p>A node grants its vote if: the candidate&rsquo;s term is at least as large as the voter&rsquo;s current term, and the candidate&rsquo;s log is at least as up-to-date as the voter&rsquo;s log (defined precisely). A candidate that receives votes from a majority of nodes becomes the new leader for that term.</p>
+<p>The randomized election timeout is why split votes are rare: if two nodes simultaneously decide to start an election, their random timeouts will usually differ by enough that one gets votes before the other even asks. In the rare case of a tie, both timeout again (with new random delays) and retry.</p>
+<p><strong>One leader per term</strong> is a fundamental safety invariant. Because a node only votes once per term, and majority vote is required, it is impossible for two different nodes to both win an election in the same term.</p>
+<h2 id="log-replication">Log Replication</h2>
+<p>Once elected, the leader accepts client requests. Each request becomes a log entry appended to the leader&rsquo;s log, tagged with the current term. The leader sends AppendEntries RPCs to all followers to replicate the entry.</p>
+<p>When a majority of nodes (including the leader) have written the entry to their logs, the entry is <strong>committed</strong>. The leader applies it to its state machine and returns success to the client. The leader then notifies followers in subsequent AppendEntries messages that the entry is committed; followers apply it to their state machines.</p>
+<p>The client never directly interacts with followers. All reads and writes go to the leader. Followers exist only to preserve durability (the entry is safe on multiple machines) and to be ready to take over if the leader fails.</p>
+<p><strong>What if a follower is slow or temporarily disconnected?</strong> The leader keeps track of how far each follower&rsquo;s log extends. It retries AppendEntries indefinitely for slow followers. When a follower reconnects, it receives all the entries it missed, in order. The log is eventually consistent across all nodes that are reachable.</p>
+<h2 id="safety-why-stale-leaders-cannot-corrupt-state">Safety: Why Stale Leaders Cannot Corrupt State</h2>
+<p>The critical safety property: if an entry is committed, no future leader can overwrite it with a different value.</p>
+<p>This is guaranteed by the <strong>log up-to-date check</strong> in leader election. A candidate must have a log at least as up-to-date as any node it needs a vote from (up-to-date means: higher term on the last entry, or same term and longer log). Any node that voted for a committed entry will only vote for candidates that have that entry. Since a majority is needed to commit and a majority is needed to elect, the winning candidate necessarily intersects with the committed-entry-holders. It therefore has the committed entry.</p>
+<p>This is the key insight that makes Raft safe: the quorum for committing and the quorum for electing always overlap by at least one node.</p>
+<h2 id="network-partitions">Network Partitions</h2>
+<p>What happens when the network splits into two groups?</p>
+<p>If the leader is in the minority partition, it can no longer replicate entries to a majority of nodes. It continues running but cannot commit new entries. The majority partition elects a new leader with a higher term. The old leader, when the partition heals, discovers the higher term in an AppendEntries response and immediately steps down, becoming a follower and catching up its log.</p>
+<p>Any entries the old leader &ldquo;committed&rdquo; (which, by definition, it could not have, since it lacked a majority) would not actually be durable. Entries it accepted from clients but could not commit are overwritten by the new leader&rsquo;s log. Raft handles this by not returning success to the client until the entry is actually committed by a majority.</p>
+<p>If the client retried during the partition, the entry may be submitted twice. This is why operations on a Raft-backed system should be idempotent, or the system should deduplicate by client-provided request IDs.</p>
+<h2 id="raft-in-production">Raft in Production</h2>
+<p><strong>etcd</strong> is the most prominent Raft implementation. It is the distributed key-value store that Kubernetes uses as its database - storing all cluster state (which pods are running, which nodes exist, which services are registered). etcd&rsquo;s correctness is critical: a bug in its consensus layer could corrupt the entire cluster state.</p>
+<p><strong>CockroachDB</strong> uses Raft per-range: the database is partitioned into ranges (typically 64MB each), and each range has its own Raft group. This allows thousands of Raft instances to run in parallel across a cluster, each handling consensus for its slice of the keyspace.</p>
+<p><strong>TiKV</strong> (the storage engine of TiDB) uses multi-Raft, the same architecture: one Raft group per region.</p>
+<p><strong>Consul</strong> (HashiCorp&rsquo;s service mesh and key-value store) uses Raft for its catalog and key-value state.</p>
+<p>The pattern: Raft is used wherever you need a small number of servers to agree on a sequence of values with strong consistency. It is not designed for large clusters (the cost of a round of AppendEntries RPCs scales with the number of nodes). Most production systems run Raft groups of 3 or 5 nodes - enough to tolerate 1 or 2 node failures respectively.</p>
+<h2 id="raft-vs-paxos-vs-multi-paxos">Raft vs Paxos vs Multi-Paxos</h2>
+<p>Paxos as described by Lamport handles agreement on a single value. Multi-Paxos extends this to a sequence of values (a log) by electing a &ldquo;distinguished proposer&rdquo; who acts as the de-facto leader and bypasses the first phase of Paxos for subsequent entries. This is structurally similar to Raft.</p>
+<p>The practical differences are subtle: Raft specifies leader election, log compaction (snapshots), and membership changes explicitly. Multi-Paxos leaves these as implementation details. Raft&rsquo;s prescriptiveness is its advantage: you can implement it from the paper. Paxos variants require each implementer to independently solve the same underdocumented problems.</p>
+<p>Whether you call it Raft or Multi-Paxos, the substance is similar: one leader per term, log replication to a majority, safety guaranteed by quorum intersection. The theoretical foundations are the same. The practical difference is that Raft came with a complete specification, reference implementations, and TLA+ formal proofs. That is why the systems built in the 2010s used Raft.</p>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/sharding-data-replication/" target="_blank" rel="noopener noreferrer">Sharding &amp; Replication - Splitting Data So No Single Machine Drowns</a>
+</li>
+<li><a href="/posts/distributed-time-clocks/" target="_blank" rel="noopener noreferrer">Distributed Time &amp; Clocks - Why Ordering Events Is Hard</a>
+</li>
+<li><a href="/posts/fault-tolerance/" target="_blank" rel="noopener noreferrer">Fault Tolerance - Building Systems That Survive Their Own Failures</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

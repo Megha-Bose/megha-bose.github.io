@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>LSM Trees - Why Databases Gave Up on Updating in Place // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="LSM Trees - Why Databases Gave Up on Updating in Place"/>
+<meta name="twitter:description" content="Helpful context:
+ Databases &amp; Indexes - The Structures That Make Queries Fast    If you have ever wondered why Cassandra handles millions of writes per second while a traditional relational database struggles with a fraction of that, the answer is the data structure underneath: the Log-Structured Merge-tree, or LSM tree. It is the write-optimized storage engine that powers Cassandra, RocksDB, LevelDB, HBase, InfluxDB, and TiKV - and understanding it requires first understanding what it was designed to escape."/>
+
+    <meta property="og:title" content="LSM Trees - Why Databases Gave Up on Updating in Place" />
+<meta property="og:description" content="Helpful context:
+ Databases &amp; Indexes - The Structures That Make Queries Fast    If you have ever wondered why Cassandra handles millions of writes per second while a traditional relational database struggles with a fraction of that, the answer is the data structure underneath: the Log-Structured Merge-tree, or LSM tree. It is the write-optimized storage engine that powers Cassandra, RocksDB, LevelDB, HBase, InfluxDB, and TiKV - and understanding it requires first understanding what it was designed to escape." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/lsm-trees/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">LSM Trees - Why Databases Gave Up on Updating in Place</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          7 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/databases-indexes/" target="_blank" rel="noopener noreferrer">Databases &amp; Indexes - The Structures That Make Queries Fast</a>
+</li>
+</ul>
+<hr>
+<p>If you have ever wondered why Cassandra handles millions of writes per second while a traditional relational database struggles with a fraction of that, the answer is the data structure underneath: the Log-Structured Merge-tree, or LSM tree. It is the write-optimized storage engine that powers Cassandra, RocksDB, LevelDB, HBase, InfluxDB, and TiKV - and understanding it requires first understanding what it was designed to escape.</p>
+<h2 id="the-problem-with-updating-in-place">The Problem With Updating in Place</h2>
+<p>The dominant storage structure for decades has been the B-tree. A B-tree stores data in a balanced tree of pages, each page typically 4KB or 16KB. To update a record, you find the page it lives on, load it into memory, modify it, and write it back to disk.</p>
+<p>This works. But the write pattern is brutal: a single user update might touch one page buried deep in a tree with millions of nodes. That page lives at a random location on disk. The disk head must seek to that location, make a small write (perhaps a few bytes inside a 4KB page), and move on. The next write is to a different random location. Repeat millions of times per second.</p>
+<p>Random I/O is the killer. A spinning hard disk can do roughly 100-200 random seeks per second. Even an SSD, while dramatically faster, has meaningful random write amplification: writes smaller than the flash erase block size get promoted to full-block rewrites internally. A workload of tiny random writes is the worst-case pattern for both storage technologies.</p>
+<p><strong>What if you never did random writes?</strong> What if every write was sequential, always appending to the end of a file? Sequential writes are orders of magnitude faster than random writes. This is the insight behind LSM trees.</p>
+<h2 id="the-core-idea-buffer-sort-merge">The Core Idea: Buffer, Sort, Merge</h2>
+<p>An LSM tree converts random writes into sequential writes through a simple mechanism: buffer writes in memory, sort them, flush to disk as immutable sequential files, and periodically merge those files together.</p>
+<p>The structure has three components:</p>
+<p><strong>The memtable</strong> is an in-memory sorted data structure - typically a red-black tree or a skip list. Every write goes here first. Because it is in memory, writes are fast. Because it is sorted, reads can find keys quickly. The memtable grows until it reaches a size threshold (typically 64MB to 256MB).</p>
+<p><strong>SSTables</strong> (Sorted String Tables) are immutable files on disk. When the memtable fills up, it is flushed to disk as an SSTable - a file where keys are written in sorted order, sequentially. This flush is a single sequential write: no seeking, no updating. The file is written from start to finish and never modified again.</p>
+<p><strong>Compaction</strong> is the background process that merges SSTables. As flushes accumulate, you end up with many SSTable files. Compaction reads multiple SSTables, merges them (like merge sort, leveraging the fact that each is already sorted), discards superseded versions of keys, and writes a new, larger SSTable. Old SSTables are deleted after the merge. Again: all sequential I/O.</p>
+<h2 id="the-write-path">The Write Path</h2>
+<p>When a write arrives:</p>
+<ol>
+<li>It is appended to the <strong>Write-Ahead Log</strong> (WAL) on disk. This is a sequential append that ensures durability: if the process crashes before the memtable is flushed, the WAL can replay the writes.</li>
+<li>It is inserted into the <strong>memtable</strong> in memory.</li>
+<li>The write is acknowledged to the client. Done.</li>
+</ol>
+<p>That is it. No disk seeking, no index updating, no page splitting. The actual work of organizing data on disk happens later, in the background, as flushing and compaction run asynchronously. This is why LSM trees deliver consistently high write throughput even under heavy load.</p>
+<h2 id="the-read-path">The Read Path</h2>
+<p>Reads are more involved, because data is spread across multiple layers.</p>
+<p>When a read arrives for key $k$:</p>
+<ol>
+<li>Check the <strong>current memtable</strong>. If $k$ is there, return it.</li>
+<li>Check any <strong>immutable memtables</strong> that have been flushed but not yet written to disk as SSTables.</li>
+<li>Check <strong>SSTables from newest to oldest</strong>. The newest SSTable has the most recent version of any key. Keep checking older SSTables until found.</li>
+</ol>
+<p>In the worst case, you read every SSTable on disk before concluding a key does not exist. This is the fundamental read tradeoff of LSM trees: reads are more expensive than writes. Two mechanisms mitigate this.</p>
+<p><strong>Bloom filters</strong>: each SSTable has an associated bloom filter - a compact probabilistic data structure that answers &ldquo;is key $k$ definitely not in this SSTable?&rdquo; in $O(1)$ with no disk access. If the bloom filter says the key is absent, you skip the SSTable entirely. Bloom filters eliminate most unnecessary SSTable reads, making not-found lookups cheap.</p>
+<p><strong>Index blocks</strong>: within each SSTable, a sparse index maps keys to byte offsets. Instead of scanning the entire file, you binary search the index to jump to the right region.</p>
+<h2 id="compaction-strategies">Compaction Strategies</h2>
+<p>Compaction determines how SSTables are organized and merged. The strategy matters enormously for the balance between read performance, write performance, and space usage.</p>
+<p><strong>Leveled compaction</strong> (used by RocksDB, LevelDB, and optionally Cassandra) organizes SSTables into levels. Level 0 is where fresh flushes land. Each level $L$ has a size limit roughly 10x that of level $L-1$. When level $L$ exceeds its limit, a compaction merges some of its SSTables with overlapping SSTables in level $L+1$. The key property: except at level 0, SSTables within a level have non-overlapping key ranges. A read therefore touches at most one SSTable per level, bounding read amplification logarithmically. The cost is higher write amplification - a key may be rewritten many times as it migrates through levels.</p>
+<p><strong>Size-tiered compaction</strong> (Cassandra&rsquo;s default) groups SSTables by size and merges them when you have enough of similar size. Fewer, simpler compactions mean lower write amplification, but SSTables at the same tier can have overlapping key ranges, so reads may scan multiple files. Better for write-heavy workloads, worse for read-heavy ones.</p>
+<p><strong>FIFO compaction</strong> simply drops the oldest SSTables when total size exceeds a limit. Useful only for time series data where old data is irrelevant.</p>
+<h2 id="the-three-amplification-factors">The Three Amplification Factors</h2>
+<p>The classic way to compare storage engines is through three amplification factors:</p>
+<p><strong>Write amplification</strong> is the ratio of bytes written to disk to bytes written by the application. Leveled compaction has high write amplification because keys migrate through levels. A key might be rewritten 10-30x across its lifetime. Size-tiered has lower write amplification. B-trees have moderate write amplification (a write touches one page plus the WAL).</p>
+<p><strong>Read amplification</strong> is how many I/Os a single point read may require. Leveled LSM: reads may touch one SSTable per level - $O(\log(\text{total size}))$ files. Size-tiered: potentially many SSTables per read. B-trees: one I/O per level of the tree, usually 3-4 for large datasets. B-trees win on point reads.</p>
+<p><strong>Space amplification</strong> is how much disk space is used relative to actual data size. During compaction, old and new versions of SSTables coexist. Leveled compaction has low space amplification (roughly 1.1x). Size-tiered can temporarily double the space during a merge.</p>
+<p>There is no free lunch: optimizing one factor worsens another. The choice of storage engine and compaction strategy is the choice of which amplification factor matters least for your workload.</p>
+<h2 id="b-tree-versus-lsm-tree">B-tree versus LSM Tree</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>B-tree</th>
+<th>LSM tree</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Write pattern</td>
+<td>Random (update in place)</td>
+<td>Sequential (append only)</td>
+</tr>
+<tr>
+<td>Write throughput</td>
+<td>Moderate</td>
+<td>Very high</td>
+</tr>
+<tr>
+<td>Read throughput</td>
+<td>High (single location per key)</td>
+<td>Moderate (multiple levels)</td>
+</tr>
+<tr>
+<td>Space efficiency</td>
+<td>Good</td>
+<td>Moderate (during compaction)</td>
+</tr>
+<tr>
+<td>Compaction overhead</td>
+<td>None</td>
+<td>Background CPU and I/O</td>
+</tr>
+<tr>
+<td>Worst-case read</td>
+<td>Predictable</td>
+<td>Variable (without bloom filters)</td>
+</tr>
+</tbody>
+</table>
+<p>B-trees are the right choice when reads outnumber writes significantly, latency predictability matters, or the workload involves many updates to existing keys (the key is already in one place). LSM trees are the right choice when writes dominate, throughput matters more than individual read latency, or data is largely append-only (logs, time series, events).</p>
+<h2 id="why-this-matters-in-practice">Why This Matters in Practice</h2>
+<p>RocksDB, which is built on LSM trees, is embedded inside MySQL (as MyRocks at Facebook), TiKV (the storage layer of TiDB), CockroachDB&rsquo;s storage, and dozens of other systems. The reason: at sufficient write scale, the alternative (random I/O into a B-tree) saturates disk bandwidth long before the application saturates CPU or network.</p>
+<p>Cassandra&rsquo;s LSM-based design is why it can ingest millions of events per second from IoT sensors or user activity streams. InfluxDB&rsquo;s TSM (Time Series Merge-tree, an LSM variant) is why it handles billions of data points per day. The pattern - accept writes in memory, flush sequentially, merge in background - is one of the most durable ideas in storage system design.</p>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/write-ahead-log/" target="_blank" rel="noopener noreferrer">Write-Ahead Log - The Invisible Guarantee Behind Every Database Write</a>
+</li>
+<li><a href="/posts/bloom-filters/" target="_blank" rel="noopener noreferrer">Bloom Filters - Answering &ldquo;Definitely Not&rdquo; in Constant Space</a>
+</li>
+<li><a href="/posts/sharding-data-replication/" target="_blank" rel="noopener noreferrer">Sharding &amp; Replication - Splitting Data So No Single Machine Drowns</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
