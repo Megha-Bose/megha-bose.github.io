@@ -124,7 +124,7 @@ What does &ldquo;it&rdquo; refer to? The animal. Not the street. Your brain figu
 <p>$$h_t = \tanh(W_{hh} h_{t-1} + W_{xh} x_t + b_h).$$</p>
 <p>This is the vanilla RNN update. The weight matrices $W_{hh} \in \mathbb{R}^{d \times d}$ and $W_{xh} \in \mathbb{R}^{d \times d_x}$ are shared across all time steps - the same transformation is applied at every position. The hidden state $h_t \in \mathbb{R}^d$ is a summary of the entire history $x_1, \ldots, x_t$.</p>
 <p>If you need an output at each step (as in sequence labeling), add an output layer:</p>
-<p>$$\hat{y}<em>t = g(W</em>{hy} h_t + b_y),$$</p>
+<p>$$\hat{y}_t = g(W_{hy} h_t + b_y),$$</p>
 <p>where $g$ is an appropriate activation (softmax for classification, linear for regression). If you need a single output at the end (as in sentiment classification), use only $\hat{y}_T$.</p>
 <p>The initial hidden state $h_0$ is typically the zero vector.</p>
 <p><strong>Signal processing perspective.</strong> In digital signal processing, a system with no feedback (output depends only on current and past inputs, not past outputs) is called a <strong>Finite Impulse Response (FIR)</strong> filter - its impulse response has finite length. A system with feedback (output depends on past outputs too) is called an <strong>Infinite Impulse Response (IIR)</strong> filter. The vanilla RNN is the neural analog of an IIR filter: the hidden state $h_{t-1}$ is a past output fed back into the current computation, giving the system theoretically infinite memory. A 1D convolutional network with a context window of size $k$ is the neural analog of an FIR filter: it uses only the last $k$ inputs and has no feedback. FIR systems are always stable; IIR systems (and RNNs) can become unstable - this is the geometric meaning of vanishing and exploding gradients.</p>
@@ -167,7 +167,7 @@ What does &ldquo;it&rdquo; refer to? The animal. Not the street. Your brain figu
 <p><strong>Input gate</strong> - what new information to write to the cell state:</p>
 <p>$$i_t = \sigma(W_i [h_{t-1}, x_t] + b_i).$$</p>
 <p><strong>Candidate cell state</strong> - what content to potentially write:</p>
-<p>$$\tilde{C}<em>t = \tanh(W_C [h</em>{t-1}, x_t] + b_C).$$</p>
+<p>$$\tilde{C}_t = \tanh(W_C [h_{t-1}, x_t] + b_C).$$</p>
 <p><strong>Cell state update</strong> - combine forgetting old information with adding new:</p>
 <p>$$C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t.$$</p>
 <p>This is the key equation. The update to $C_t$ is additive: $f_t \odot C_{t-1}$ (old information, gated) plus $i_t \odot \tilde{C}_t$ (new information, gated). No matrix multiplication through time. No squashing nonlinearity on the cell state. Gradients can flow through $C_t$ largely unobstructed.</p>
@@ -185,7 +185,7 @@ What does &ldquo;it&rdquo; refer to? The animal. Not the street. Your brain figu
 <p><strong>Reset gate</strong> - how much of the previous hidden state to use when computing the candidate:</p>
 <p>$$r_t = \sigma(W_r [h_{t-1}, x_t] + b_r).$$</p>
 <p><strong>Candidate hidden state:</strong></p>
-<p>$$\tilde{h}<em>t = \tanh(W [r_t \odot h</em>{t-1}, x_t] + b).$$</p>
+<p>$$\tilde{h}_t = \tanh(W [r_t \odot h_{t-1}, x_t] + b).$$</p>
 <p><strong>Update:</strong></p>
 <p>$$h_t = (1 - z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t.$$</p>
 <p>The GRU has fewer parameters than the LSTM (no separate cell state, no output gate). In practice, GRUs often perform comparably to LSTMs, especially on smaller datasets. The choice between them is often a hyperparameter decision rather than a principled one.</p>

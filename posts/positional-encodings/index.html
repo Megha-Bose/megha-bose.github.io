@@ -132,7 +132,7 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
 <h2 id="absolute-sinusoidal-encodings">Absolute Sinusoidal Encodings</h2>
 <p>The original transformer (Vaswani et al. 2017) uses a fixed, deterministic positional encoding. For a sequence position $\text{pos} \in \{0, 1, 2, \ldots\}$ and an embedding dimension $d$, the positional vector $\text{PE}(\text{pos}) \in \mathbb{R}^d$ has entries:</p>
 <p>$$\text{PE}(\text{pos}, 2i) = \sin\left(\frac{\text{pos}}{10000^{2i/d}}\right), \qquad \text{PE}(\text{pos}, 2i+1) = \cos\left(\frac{\text{pos}}{10000^{2i/d}}\right)$$</p>
-<p>for $i = 0, 1, \ldots, d/2 - 1$. This vector is added to the token embedding: $\tilde{x}<em>{\text{pos}} = x</em>{\text{pos}} + \text{PE}(\text{pos})$.</p>
+<p>for $i = 0, 1, \ldots, d/2 - 1$. This vector is added to the token embedding: $\tilde{x}_{\text{pos}} = x_{\text{pos}} + \text{PE}(\text{pos})$.</p>
 <h3 id="what-this-encodes">What This Encodes</h3>
 <p>Think of the position encoding as a clock with many hands, each ticking at a different frequency.</p>
 <p>Dimension pair $(2i, 2i+1)$ encodes position using frequency $\omega_i = 1 / 10000^{2i/d}$.</p>
@@ -185,9 +185,9 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
 <p>The dominant positional encoding in modern open-source LLMs is <strong>RoPE</strong> (Rotary Position Embedding), introduced by Su et al. (2021) and used in LLaMA, Falcon, Mistral, Qwen, GPT-NeoX, and most recent models.</p>
 <p>The key idea is to encode position by rotating the query and key vectors.</p>
 <p>For a 2D slice $(q_{2i}, q_{2i+1})$ of a query vector at position $m$:</p>
-<p>$$\begin{pmatrix} \tilde{q}<em>{2i} \\ \tilde{q}</em>{2i+1} \end{pmatrix} = \begin{pmatrix} \cos(m\theta_i) &amp; -\sin(m\theta_i) \\ \sin(m\theta_i) &amp; \cos(m\theta_i) \end{pmatrix} \begin{pmatrix} q_{2i} \\ q_{2i+1} \end{pmatrix}$$</p>
+<p>$$\begin{pmatrix} \tilde{q}_{2i} \\ \tilde{q}_{2i+1} \end{pmatrix} = \begin{pmatrix} \cos(m\theta_i) &amp; -\sin(m\theta_i) \\ \sin(m\theta_i) &amp; \cos(m\theta_i) \end{pmatrix} \begin{pmatrix} q_{2i} \\ q_{2i+1} \end{pmatrix}$$</p>
 <p>where $\theta_i = 10000^{-2i/d}$. The same rotation (with position $n$ instead of $m$) is applied to the key vector. The dot product then satisfies:</p>
-<p>$$\tilde{q}_m \cdot \tilde{k}<em>n = q_m^\top R</em>\theta^{(m-n)} k_n$$</p>
+<p>$$\tilde{q}_m \cdot \tilde{k}_n = q_m^\top R_\theta^{(m-n)} k_n$$</p>
 <p>where $R_\theta^{(m-n)}$ is a rotation by angle proportional to the relative offset $m - n$.</p>
 <p>This is the elegant property of RoPE: <strong>absolute positions are encoded in the rotations, but dot products naturally compute relative position</strong>. You encode absolute position, but attention automatically becomes relative. You get both.</p>
 <h3 id="why-rope-won">Why RoPE Won</h3>
