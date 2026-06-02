@@ -153,12 +153,30 @@ similarities <span style="color:#f92672">=</span> [cosine_similarity(query_vec, 
 <h3 id="hierarchy">Hierarchy</h3>
 <p>The problem with a flat proximity graph is that greedy local search can get stuck in local optima - regions where every neighbor is farther from the query than the current node, but you are not actually near the global nearest neighbor. This is the coarse navigation problem: you need long-range connections to quickly cross large distances in the space before using short-range connections for fine-grained search.</p>
 <p>HNSW solves this by building a hierarchy of graphs. At the top layer, every node has long-range connections spanning the whole dataset - you can cross large distances quickly. At the bottom layer, every node has short-range connections to its closest neighbors for fine-grained precision. Intermediate layers have intermediate connection ranges.</p>
-<pre tabindex="0"><code>Layer 2 (sparse, long-range): A ──────────────── E
-                                                   |
-Layer 1 (medium):             A ──── C ──── D ── E
-                              |             |
-Layer 0 (dense, short-range): A─B─C─C'─D─D'─E─E'
-</code></pre><p>Search starts at the top layer, greedily navigates to the node closest to the query, then drops to the next layer and repeats. Each layer refines the result. The final search in layer 0 gives the approximate nearest neighbors.</p>
+<div class="mermaid">
+graph TB
+  subgraph L2["Layer 2 - sparse, long-range"]
+    direction LR
+    A2((A)) --- E2((E))
+  end
+  subgraph L1["Layer 1 - medium-range"]
+    direction LR
+    A1((A)) --- C1((C)) --- D1((D)) --- E1((E))
+  end
+  subgraph L0["Layer 0 - dense, short-range"]
+    direction LR
+    A0((A)) --- B0((B)) --- C0((C)) --- Cp(("C'")) --- D0((D)) --- Dp(("D'")) --- E0((E)) --- Ep(("E'"))
+  end
+  A2 -. search drops .-> A1
+  A1 -. search drops .-> A0
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Search starts at the top layer, greedily navigates to the node closest to the query, then drops to the next layer and repeats. Each layer refines the result. The final search in layer 0 gives the approximate nearest neighbors.</p>
 <p>Construction: nodes are inserted one at a time. Each new node is assigned to a random maximum layer (exponential distribution, so most nodes appear only in layer 0). It is connected to its closest neighbors in every layer up to its maximum.</p>
 <h3 id="the-tradeoffs">The Tradeoffs</h3>
 <p>HNSW has several key parameters:</p>
