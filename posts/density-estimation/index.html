@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Density Estimation - Learning the Shape of Your Data // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Density Estimation - Learning the Shape of Your Data"/>
+<meta name="twitter:description" content="Helpful context:
+ Probability Distributions  Bayesian Inference  Clustering - Finding Structure When Nobody Gave You Labels    Most supervised learning works like this: you have inputs $x$ and outputs $y$, and you learn a function $f(x) \approx y$. The question is always &ldquo;what does this input map to?&rdquo;
+Density estimation asks a different question entirely. You have data points $x_1, x_2, \ldots, x_n$ and you want to learn the probability distribution those points were drawn from."/>
+
+    <meta property="og:title" content="Density Estimation - Learning the Shape of Your Data" />
+<meta property="og:description" content="Helpful context:
+ Probability Distributions  Bayesian Inference  Clustering - Finding Structure When Nobody Gave You Labels    Most supervised learning works like this: you have inputs $x$ and outputs $y$, and you learn a function $f(x) \approx y$. The question is always &ldquo;what does this input map to?&rdquo;
+Density estimation asks a different question entirely. You have data points $x_1, x_2, \ldots, x_n$ and you want to learn the probability distribution those points were drawn from." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/density-estimation/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-10-20T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-10-20T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Density Estimation - Learning the Shape of Your Data</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Oct 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/probability-distributions/" target="_blank" rel="noopener noreferrer">Probability Distributions</a>
+</li>
+<li><a href="/posts/bayesian-inference/" target="_blank" rel="noopener noreferrer">Bayesian Inference</a>
+</li>
+<li><a href="/posts/clustering/" target="_blank" rel="noopener noreferrer">Clustering - Finding Structure When Nobody Gave You Labels</a>
+</li>
+</ul>
+<hr>
+<p>Most supervised learning works like this: you have inputs $x$ and outputs $y$, and you learn a function $f(x) \approx y$. The question is always &ldquo;what does this input map to?&rdquo;</p>
+<p>Density estimation asks a different question entirely. You have data points $x_1, x_2, \ldots, x_n$ and you want to learn the probability distribution those points were drawn from. Not &ldquo;what category does this belong to&rdquo; but &ldquo;how likely is a point like this to exist at all?&rdquo;</p>
+<p>Call this distribution $p(x)$. Density estimation is the problem of recovering $p$ from samples.</p>
+<h2 id="why-this-matters">Why This Matters</h2>
+<p>Knowing $p(x)$ unlocks several things.</p>
+<p><strong>Anomaly detection.</strong> If you know the distribution of your normal data, then any point with very low probability under that distribution is a candidate anomaly. It is not that the point is wrong - it is that it is surprising, given everything you have seen before. Fraud, equipment failure, and network intrusions all share this property: they are low-probability events under the distribution of normal behavior.</p>
+<p><strong>Generative modeling.</strong> If you can learn $p(x)$, you can sample new points from it. These new points look like your training data but are not copies of it. This is what generative models do: VAEs and normalizing flows explicitly learn $p(x)$ and sample from it; GANs learn to sample from it implicitly without ever writing down the density.</p>
+<p><strong>Classification via Bayes' rule.</strong> Suppose you want to classify whether an email is spam or not spam. Bayes' rule says:</p>
+<p>$$p(\text{spam} \mid x) \propto p(x \mid \text{spam}) \cdot p(\text{spam})$$</p>
+<p>Here $p(x \mid \text{spam})$ is the density of emails given that they are spam - a class-conditional density. Estimate it, multiply by the prior probability that any email is spam, and you have a probabilistic classifier. This is exactly what Naive Bayes and Gaussian discriminant analysis do.</p>
+<h2 id="histograms---the-intuitive-starting-point">Histograms - the Intuitive Starting Point</h2>
+<p>The histogram is the simplest density estimator. The procedure:</p>
+<ol>
+<li>Divide the feature space into bins of equal width.</li>
+<li>Count how many data points fall into each bin.</li>
+<li>Normalize so that the total area (count times bin width) sums to 1.</li>
+</ol>
+<p>The result is a piecewise constant function that approximates $p(x)$.</p>
+<p><strong>Worked example.</strong> Five data points: ${1.1, 1.4, 2.0, 2.3, 4.8}$. Using bins $[1,2), [2,3), [3,4), [4,5)$ of width 1: the bin $[1,2)$ contains 2 points, $[2,3)$ contains 2 points, $[3,4)$ contains 0, $[4,5)$ contains 1. Dividing by (total points $\times$ bin width) $= 5 \times 1 = 5$, the estimated densities are $0.4, 0.4, 0.0, 0.2$. The integral over all bins is $0.4 + 0.4 + 0.0 + 0.2 = 1.0$.</p>
+<p>The problems are fundamental. <strong>Bin width sensitivity</strong>: a narrow bin width makes the estimate spiky, following noise in the data. A wide bin width over-smooths, hiding real structure. The &ldquo;right&rdquo; bin width is unclear and must be set by the user. <strong>Discontinuity</strong>: probability jumps at bin boundaries, which is rarely a real feature of the underlying distribution. <strong>Dimensionality</strong>: in $d$ dimensions with $B$ bins per dimension, the total number of bins is $B^d$. With $B=10$ and $d=10$, that is $10^{10}$ bins - most of which will be empty. The histogram becomes useless in more than 2 or 3 dimensions.</p>
+<h2 id="parametric-density-estimation">Parametric Density Estimation</h2>
+<p>The parametric approach assumes the data comes from a known distribution family, then estimates the family&rsquo;s parameters.</p>
+<p>The most common choice is a Gaussian (normal distribution). The Gaussian is described by two parameters: mean $\mu$ and variance $\sigma^2$. To fit a Gaussian density estimator, compute the <strong>sample mean</strong> and <strong>sample variance</strong>:</p>
+<p>$$\hat{\mu} = \frac{1}{n} \sum_{i=1}^n x_i \qquad \hat{\sigma}^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \hat{\mu})^2$$</p>
+<p>The fitted Gaussian $\mathcal{N}(\hat{\mu}, \hat{\sigma}^2)$ is your density estimate. It is smooth, integrates to 1, and is fully described by two numbers.</p>
+<p>The strength: if the true distribution really is Gaussian (or close to it), this estimate is excellent - it uses the data efficiently and generalizes well. The weakness: if the true distribution is not Gaussian - if it is skewed, has heavy tails, or has multiple peaks - the fitted Gaussian will be badly wrong in ways that are hard to detect.</p>
+<p><strong>Gaussian Mixture Models (GMMs)</strong> extend parametric estimation to handle multi-modal distributions. A GMM with $k$ components is:</p>
+<p>$$p(x) = \sum_{j=1}^k \pi_j \cdot \mathcal{N}(x \mid \mu_j, \Sigma_j)$$</p>
+<p>Here $\pi_j$ are the <strong>mixture weights</strong> (how much each component contributes; they sum to 1), $\mu_j$ is the mean of component $j$, and $\Sigma_j$ is its covariance matrix. A GMM with enough components can approximate any smooth distribution. The parameters ${\pi_j, \mu_j, \Sigma_j}$ are fit using the <strong>Expectation-Maximization (EM) algorithm</strong>, which alternates between:</p>
+<ul>
+<li><strong>E-step</strong>: for each data point, compute the probability that it was generated by each component (&ldquo;soft assignments&rdquo;).</li>
+<li><strong>M-step</strong>: update the component parameters to maximize the likelihood, using the soft assignments from the E-step.</li>
+</ul>
+<p>The number of components $k$ is a hyperparameter chosen by cross-validation or the Bayesian information criterion (BIC).</p>
+<h2 id="kernel-density-estimation---the-non-parametric-approach">Kernel Density Estimation - the Non-Parametric Approach</h2>
+<p>What if you do not want to assume a distribution family at all? <strong>Kernel Density Estimation (KDE)</strong> is the non-parametric answer.</p>
+<p>The intuition: for each observed data point, place a small smooth &ldquo;bump&rdquo; centered at that point. Sum all the bumps and normalize so the total integrates to 1. The result is a smooth continuous density estimate that follows the actual data, with no assumption about its shape.</p>
+<p>Formally, with $n$ data points $x_1, \ldots, x_n$ and a kernel function $K$:</p>
+<p>$$\hat{p}(x) = \frac{1}{n h} \sum_{i=1}^n K!\left(\frac{x - x_i}{h}\right)$$</p>
+<p>The kernel $K$ is typically a Gaussian: $K(u) = \frac{1}{\sqrt{2\pi}} e^{-u^2/2}$. Each data point contributes a Gaussian bell curve of width $h$ centered at its location.</p>
+<p>The parameter $h$ is called the <strong>bandwidth</strong>. It plays the same role as bin width in a histogram. A small $h$ produces a spiky estimate that closely tracks individual points - high variance, potentially capturing noise. A large $h$ over-smooths and misses real structure in the distribution.</p>
+<p><strong>Bandwidth selection.</strong> The bandwidth $h$ can be chosen by cross-validation: hold out some data points, fit KDE on the rest, and evaluate the log-likelihood of the held-out points under the estimated density. Repeat for multiple values of $h$ and pick the best. For 1D data with an approximately Gaussian distribution, <strong>Silverman&rsquo;s rule of thumb</strong> gives a quick estimate:</p>
+<p>$$h \approx 1.06 \cdot \hat{\sigma} \cdot n^{-1/5}$$</p>
+<p>Here $\hat{\sigma}$ is the sample standard deviation and $n$ is the number of data points. This rule is derived by minimizing the mean integrated squared error under the assumption that the true distribution is Gaussian - so it works well for near-Gaussian data and less well for strongly multi-modal data.</p>
+<p><strong>Worked example.</strong> Three data points: $x = 1$, $x = 2$, $x = 5$. Using a Gaussian kernel with bandwidth $h = 0.5$, the estimated density at any point $t$ is:</p>
+<p>$$\hat{p}(t) = \frac{1}{3 \cdot 0.5} \left[ \mathcal{N}(t; 1, 0.25) + \mathcal{N}(t; 2, 0.25) + \mathcal{N}(t; 5, 0.25) \right]$$</p>
+<p>At $t = 1.5$ (between the first two points), contributions from $x=1$ and $x=2$ are both high. At $t = 3.5$ (between the cluster and the isolated point), all three contributions are small, producing a valley. At $t = 5$, only the third point contributes significantly, giving a smaller peak. The result: high density near 1 and 2, a valley around 3-4, and a smaller peak near 5.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> sklearn.neighbors <span style="color:#f92672">import</span> KernelDensity
+<span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+
+X <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([[<span style="color:#ae81ff">1</span>], [<span style="color:#ae81ff">2</span>], [<span style="color:#ae81ff">5</span>]])
+kde <span style="color:#f92672">=</span> KernelDensity(kernel<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;gaussian&#34;</span>, bandwidth<span style="color:#f92672">=</span><span style="color:#ae81ff">0.5</span>)
+kde<span style="color:#f92672">.</span>fit(X)
+
+<span style="color:#75715e"># Evaluate log-density on a grid</span>
+t <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linspace(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">500</span>)<span style="color:#f92672">.</span>reshape(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>)
+log_density <span style="color:#f92672">=</span> kde<span style="color:#f92672">.</span>score_samples(t)
+density <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>exp(log_density)
+</code></pre></div><p><strong>The curse of dimensionality in KDE.</strong> In high dimensions, the bandwidth required to capture a smooth estimate grows exponentially with dimension. With $d$ dimensions, you need roughly $n \sim h^{-d}$ data points to populate the neighborhood around each query point. For $d = 10$ and $h = 0.1$, this is $10^{10}$ points - impractical. KDE works well in 1 to 3 dimensions; beyond 5 or so, you need either parametric assumptions or enormous amounts of data.</p>
+<h2 id="applications">Applications</h2>
+<p><strong>Anomaly detection.</strong> Train a KDE (or GMM) on normal data. At inference time, compute $\hat{p}(x_{\text{new}})$. If this value is below a threshold $\tau$, flag the point as anomalous. The threshold $\tau$ is chosen based on the acceptable false positive rate. This approach makes the anomaly score interpretable: it is a probability, not an opaque score from a tree ensemble.</p>
+<p><strong>Generative modeling.</strong> Once you have fit $\hat{p}(x)$, you can sample from it. For a KDE, sampling is easy: pick a data point $x_i$ uniformly at random, then draw a sample from $\mathcal{N}(x_i, h^2 I)$. The result is a new point that looks like your training data but is not a copy. VAEs and normalizing flows are deep learning extensions of this idea - they learn $p(x)$ over complex manifolds like images, where KDE would fail due to dimensionality.</p>
+<p><strong>Bayesian classification.</strong> By Bayes' rule, the posterior probability of class $c$ given input $x$ is:</p>
+<p>$$p(c \mid x) = \frac{p(x \mid c) \cdot p(c)}{\sum_{c'} p(x \mid c') \cdot p(c')}$$</p>
+<p>The class-conditional density $p(x \mid c)$ can be estimated separately for each class using KDE or a GMM. Multiply by the class prior $p(c)$ (the fraction of training examples in each class), normalize, and you have a full probabilistic classifier. This generalizes Naive Bayes (which assumes $p(x \mid c)$ factors over features) to arbitrary class-conditional densities.</p>
+<p>The EM algorithm that fits GMMs has the same structure as the soft k-means clustering algorithm: it alternates between assigning points to clusters and updating cluster parameters. The main difference is that GMM EM uses soft probabilistic assignments and explicitly models the covariance of each cluster, whereas k-means uses hard assignments and implicitly assumes spherical equal-variance clusters.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Density estimation</td>
+<td>Learn $p(x)$ from samples; enables anomaly detection, generation, and Bayesian classification</td>
+</tr>
+<tr>
+<td>Histogram</td>
+<td>Simplest estimator; sensitive to bin width; fails in high dimensions</td>
+</tr>
+<tr>
+<td>Parametric estimation</td>
+<td>Assume a distribution family; efficient when correct; brittle when wrong</td>
+</tr>
+<tr>
+<td>GMM</td>
+<td>Mixture of Gaussians; fit by EM; $k$ is a hyperparameter</td>
+</tr>
+<tr>
+<td>KDE</td>
+<td>Place a kernel bump at each data point; bandwidth $h$ controls smoothness</td>
+</tr>
+<tr>
+<td>Silverman&rsquo;s rule</td>
+<td>$h \approx 1.06 \hat{\sigma} n^{-1/5}$; quick bandwidth for near-Gaussian 1D data</td>
+</tr>
+<tr>
+<td>Curse of dimensionality</td>
+<td>KDE needs exponentially more data as dimension increases</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/anomaly-detection/" target="_blank" rel="noopener noreferrer">Anomaly Detection - Finding the Needles Without Knowing the Haystack</a>
+</li>
+<li><a href="/posts/variational-autoencoders/" target="_blank" rel="noopener noreferrer">Variational Autoencoders - Learning to Generate by Learning to Compress</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

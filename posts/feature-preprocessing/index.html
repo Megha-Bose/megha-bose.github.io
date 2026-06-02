@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Feature Preprocessing - Turning Raw Data Into What Models Actually Need // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Feature Preprocessing - Turning Raw Data Into What Models Actually Need"/>
+<meta name="twitter:description" content="Helpful context:
+ Machine Learning - What It Means to Generalize From Data  Train, Val &amp; Test Splits - The Discipline of Not Peeking    A machine learning model is a mathematical function. It takes a vector of numbers as input and returns a number (or a vector of numbers) as output. Logistic regression computes a weighted sum of input values and passes it through a sigmoid. A neural network multiplies inputs by weight matrices, applies nonlinearities, and repeats."/>
+
+    <meta property="og:title" content="Feature Preprocessing - Turning Raw Data Into What Models Actually Need" />
+<meta property="og:description" content="Helpful context:
+ Machine Learning - What It Means to Generalize From Data  Train, Val &amp; Test Splits - The Discipline of Not Peeking    A machine learning model is a mathematical function. It takes a vector of numbers as input and returns a number (or a vector of numbers) as output. Logistic regression computes a weighted sum of input values and passes it through a sigmoid. A neural network multiplies inputs by weight matrices, applies nonlinearities, and repeats." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/feature-preprocessing/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-10-08T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-10-08T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Feature Preprocessing - Turning Raw Data Into What Models Actually Need</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Oct 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          29 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/machine-learning-first-principles/" target="_blank" rel="noopener noreferrer">Machine Learning - What It Means to Generalize From Data</a>
+</li>
+<li><a href="/posts/train-val-test-splits/" target="_blank" rel="noopener noreferrer">Train, Val &amp; Test Splits - The Discipline of Not Peeking</a>
+</li>
+</ul>
+<hr>
+<p>A machine learning model is a mathematical function. It takes a vector of numbers as input and returns a number (or a vector of numbers) as output. Logistic regression computes a weighted sum of input values and passes it through a sigmoid. A neural network multiplies inputs by weight matrices, applies nonlinearities, and repeats. A k-nearest neighbor classifier computes Euclidean distances between input vectors. Every one of these operations assumes that the input is already a vector of real-valued numbers.</p>
+<p>Raw data is not a vector of real-valued numbers. It is a spreadsheet where one column says &ldquo;red&rdquo;, &ldquo;green&rdquo;, or &ldquo;blue&rdquo;; another column says &ldquo;2023-07-14&rdquo;; another has blanks because the sensor was offline; another has house sizes ranging from 500 to 5000 while another has bedroom counts ranging from 1 to 8. Before any algorithm sees a single training example, you must transform this raw data into something a mathematical function can consume. That transformation pipeline is called <strong>feature preprocessing</strong>, and it is often where machine learning projects succeed or fail.</p>
+<p>This is not a glamorous topic. Most ML tutorials spend ten paragraphs on model architecture and one sentence on preprocessing, usually something like &ldquo;normalize your features.&rdquo; But in practice, a well-preprocessed dataset with a simple model frequently beats a poorly-preprocessed dataset with a sophisticated model. The choice of how to encode a categorical variable, how to handle missing values, or which features to include has direct downstream effects on what the model can and cannot learn. Understanding these choices, why they exist and what goes wrong when you ignore them, is essential before you apply any algorithm.</p>
+<p>This post builds the preprocessing pipeline from the ground up: categorical encoding, feature scaling, missing value imputation, feature selection, and feature engineering. Each section starts with the problem - why raw data in that form breaks the model - before covering the solutions.</p>
+<hr>
+<h2 id="categorical-encoding-the-problem-with-labels">Categorical Encoding: The Problem With Labels</h2>
+<p>Most models operate on numbers. You cannot pass the string &ldquo;blue&rdquo; to a gradient descent optimizer. You cannot compute $\mathbf{x}^T \mathbf{w}$ when $\mathbf{x}$ contains the word &ldquo;Paris&rdquo;. The model has no concept of what a string means. You must map every categorical value to one or more numbers before training begins.</p>
+<p>The challenge is that this mapping is not neutral. Different mappings communicate different structure to the model, and the model will treat that structure as real. If your encoding implies an ordering that does not exist, or implies a distance between categories that is arbitrary, the model will learn from that spurious signal and produce wrong predictions.</p>
+<h3 id="ordinal-encoding">Ordinal Encoding</h3>
+<p>Some categorical variables have a natural order. Temperature can be &ldquo;cold&rdquo;, &ldquo;warm&rdquo;, or &ldquo;hot&rdquo;. Education level can be &ldquo;high school&rdquo;, &ldquo;bachelor&rdquo;, &ldquo;master&rdquo;, &ldquo;PhD&rdquo;. Customer satisfaction can be &ldquo;very dissatisfied&rdquo;, &ldquo;dissatisfied&rdquo;, &ldquo;neutral&rdquo;, &ldquo;satisfied&rdquo;, &ldquo;very satisfied&rdquo;. The ordering is meaningful: hot is more than warm, which is more than cold. A model that assigns integers 1, 2, 3 to these levels is communicating real structure. The numeric gap between 1 and 2 and between 2 and 3 may not be perfectly calibrated - the jump from cold to warm may not be exactly equal to the jump from warm to hot in any physical sense - but the direction is right.</p>
+<p><strong>Ordinal encoding</strong>: assign integer values that respect the natural ordering. Cold = 1, warm = 2, hot = 3. High school = 1, bachelor = 2, master = 3, PhD = 4.</p>
+<p>The model can reason about this. In a linear model, the coefficient on this feature will scale smoothly with the value, reflecting the fact that higher values mean more of something.</p>
+<h3 id="label-encoding-and-why-it-goes-wrong">Label Encoding and Why It Goes Wrong</h3>
+<p>The problem arises when you apply the same integer assignment to a variable with no natural order. Suppose you have a &ldquo;color&rdquo; feature with values red, green, and blue. You write a loop that iterates through unique values and assigns integers: red = 1, green = 2, blue = 3.</p>
+<p>This looks harmless. It is not. The moment you write red = 1, green = 2, blue = 3, you have asserted to the model that green is between red and blue, and that blue is twice red. A linear model will now learn a single coefficient $w$ for this feature, and it will try to find a relationship between the color number and the target. If the target is something like &ldquo;whether a fruit is ripe&rdquo;, and red fruits are ripe while green are not, the model will try to fit a line through the labels 1, 2, 3 - but this is the wrong shape. The model is being asked to reason about an ordering that does not exist.</p>
+<p>More subtly, a decision tree will make splits like &ldquo;color $&lt; 2$&rdquo; which separates red from {green, blue}. This might be useful if the split genuinely makes sense. But the split &ldquo;color $&lt; 1.5$&rdquo; happens to exist only because you arbitrarily assigned 1 to red. If you had assigned green = 1 and red = 2, the tree would split differently with no change in the underlying data. The model&rsquo;s behavior depends on an arbitrary choice you made in preprocessing. That is a sign something is wrong.</p>
+<p><strong>Label encoding</strong> - applying arbitrary integers to unordered categories - should not be used directly as a model input for unordered categories. The exception is tree-based models, which split on individual thresholds and are less sensitive to the arbitrary ordering, though this still depends on the implementation.</p>
+<h3 id="one-hot-encoding">One-Hot Encoding</h3>
+<p>The standard solution for unordered categorical variables is <strong>one-hot encoding</strong>. Instead of representing color with one column, you create one binary column per unique category value:</p>
+<table>
+<thead>
+<tr>
+<th>is_red</th>
+<th>is_green</th>
+<th>is_blue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>Each row has exactly one 1 and the rest are 0s. The model now sees three binary features. There is no implied ordering between red, green, and blue. A linear model can assign separate coefficients to each, learning independently how much each color affects the target. A distance-based model will treat red, green, and blue as equidistant from each other (distance $\sqrt{2}$ in the is_red/is_green/is_blue space), which is the right default when you have no evidence that one color is &ldquo;closer&rdquo; to another.</p>
+<p>One-hot encoding for a variable with $k$ unique values produces $k$ new binary columns and removes the original column.</p>
+<h3 id="the-dummy-variable-trap">The Dummy Variable Trap</h3>
+<p>Here is a subtlety that trips up many practitioners. Consider the three binary columns is_red, is_green, is_blue. These columns are not independent. If you know is_red = 0 and is_green = 0, you already know is_blue = 1. In general, for $k$ one-hot columns, the sum is always exactly 1:</p>
+<p>$$\text{is_red} + \text{is_green} + \text{is_blue} = 1 \text{ for every row}$$</p>
+<p>This is <strong>perfect multicollinearity</strong>: one column is an exact linear combination of the others. For linear models, this makes the coefficient matrix singular and the coefficients are not uniquely determined. The model cannot separate the individual contributions of each color because there is an infinite family of coefficient combinations that produce identical predictions.</p>
+<p>The fix is to drop one column. With $k$ categories, use only $k - 1$ one-hot columns. The dropped category becomes the <strong>reference category</strong> - its effect is absorbed into the intercept. With is_red and is_green in the model, is_red = 0 and is_green = 0 unambiguously means blue. The model can recover the blue coefficient as the intercept&rsquo;s baseline. You get identical predictive power with no multicollinearity.</p>
+<p>In practice, <code>pandas.get_dummies</code> has a <code>drop_first=True</code> parameter. In scikit-learn&rsquo;s <code>OneHotEncoder</code>, the <code>drop</code> parameter serves the same purpose. For tree-based models, multicollinearity does not cause the same mathematical problems, but dropping one column still saves memory and slightly reduces tree complexity.</p>
+<h3 id="high-cardinality-categories">High Cardinality Categories</h3>
+<p>One-hot encoding breaks down when the categorical variable has many unique values. A &ldquo;city&rdquo; column in a real estate dataset might have 10,000 distinct cities. One-hot encoding creates 10,000 binary columns, most of which are nearly always 0. This is an extremely sparse representation. Training becomes slow, models overfit, and the memory footprint becomes impractical.</p>
+<p>There are better alternatives.</p>
+<p><strong>Target encoding</strong> replaces each category value with the mean of the target variable for all training examples with that value. If houses in Boston have an average price of $800,000 and houses in Detroit have an average price of $200,000, then city &ldquo;Boston&rdquo; is replaced by 800,000 and city &ldquo;Detroit&rdquo; by 200,000. The column remains a single numeric column. The model can learn a smooth relationship between the target-encoded value and the output. The danger: target encoding uses the target variable in the feature, which can cause data leakage and severe overfitting if not done carefully. You must compute the encoding statistics on the training fold only, and you often need smoothing for rare categories (a city with only 1 training example has a target encoding equal to that one example&rsquo;s target, which is a noisy estimate). Many implementations use the formula:</p>
+<p>$$\text{encoded}(c) = \frac{n_c \cdot \bar{y}<em>c + m \cdot \bar{y}</em>{\text{global}}}{n_c + m}$$</p>
+<p>where $n_c$ is the count of the category, $\bar{y}<em>c$ is its mean target, $\bar{y}</em>{\text{global}}$ is the global mean target, and $m$ is a smoothing parameter. When $n_c$ is large, the encoding approaches the category mean. When $n_c$ is small, it shrinks toward the global mean.</p>
+<p><strong>Frequency encoding</strong> replaces each category value with the number of times that value appears in the training set. This captures the idea that common values may behave differently from rare values, without requiring $k$ columns or touching the target. It is less expressive than target encoding but carries no leakage risk.</p>
+<p><strong>Learned embeddings</strong> are used extensively in neural networks. Instead of a fixed encoding, you learn a dense vector representation of each category as part of training. A city might be represented as a 16-dimensional vector, learned jointly with the rest of the model. The embedding captures semantic relationships - cities that behave similarly in the data will have nearby embedding vectors. This is the approach used in recommendation systems and language models, and it scales to millions of category values.</p>
+<hr>
+<h2 id="feature-scaling-why-distance-and-gradient-both-care">Feature Scaling: Why Distance and Gradient Both Care</h2>
+<p>Even after you have converted every feature to a number, the numbers may live on wildly different scales. Consider a housing dataset:</p>
+<ul>
+<li>House size: 500 to 5000 square feet</li>
+<li>Number of bedrooms: 1 to 8</li>
+<li>Distance to city center: 0 to 50 km</li>
+</ul>
+<p>These three features are all now numbers, but the house size values are roughly 100 times larger than the bedroom count values. This numerical disparity causes real problems for many learning algorithms.</p>
+<h3 id="why-scaling-matters-for-gradient-descent">Why Scaling Matters for Gradient Descent</h3>
+<p>Gradient descent minimizes a loss function by taking steps proportional to the gradient. Imagine the loss landscape as a 2D surface (ignoring the third feature for a moment). If one axis spans 4500 units (house size) and the other spans 7 units (bedrooms), the loss function has a very different curvature in each direction. Moving one unit in the house-size direction changes the loss very little; moving one unit in the bedroom direction may change it a lot. The loss surface is a long, narrow ellipse rather than a sphere.</p>
+<p>Gradient descent on an elongated ellipse zig-zags. At each step, the gradient points roughly perpendicular to the long axis of the ellipse rather than directly toward the minimum. The algorithm corrects, overshoots in the narrow direction, corrects again, and makes slow progress. The learning rate that is appropriate for the narrow direction causes instability in the wide direction, and vice versa. With spherical loss landscapes - which is what you get when features are scaled to comparable ranges - gradient descent takes direct paths to the minimum and converges much faster.</p>
+<p>More precisely: the condition number of the Hessian matrix of the loss function with respect to the parameters is roughly the ratio of the largest to the smallest curvature. A high condition number (elongated ellipse) makes gradient descent slow. Scaling features reduces the condition number toward 1 (spherical landscape) and makes the problem well-conditioned.</p>
+<h3 id="why-scaling-matters-for-distance-based-methods">Why Scaling Matters for Distance-Based Methods</h3>
+<p>K-nearest neighbors, support vector machines, and k-means clustering all rely on computing distances between points in feature space. The most common distance is Euclidean:</p>
+<p>$$d(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_j (x_j - y_j)^2}$$</p>
+<p>Now consider two houses. House A has 1500 sq ft and 2 bedrooms. House B has 1600 sq ft and 8 bedrooms. The distance between them is:</p>
+<p>$$d = \sqrt{(1600 - 1500)^2 + (8 - 2)^2} = \sqrt{10000 + 36} = \sqrt{10036} \approx 100.2$$</p>
+<p>The bedroom difference contributes 36 to the squared distance. The house-size difference contributes 10,000. Even though 6 extra bedrooms is a huge, meaningful difference in what kind of house this is, the size difference of 100 sq ft completely drowns it out numerically. The model&rsquo;s notion of &ldquo;similarity&rdquo; is being controlled almost entirely by the feature with the largest range, regardless of how important the other features are.</p>
+<p>After scaling, a 100 sq ft difference in a 500-5000 range is about 0.022 in standardized units, and a 6-bedroom difference in a 1-8 range is about 0.86 in standardized units. The bedroom difference now appropriately dominates the distance calculation.</p>
+<h3 id="why-scaling-does-not-matter-for-trees">Why Scaling Does NOT Matter for Trees</h3>
+<p>Decision trees, random forests, and gradient boosting are all tree-based methods. A tree works by splitting one feature at a time: &ldquo;if house size $&lt; 2000$, go left; else go right.&rdquo; The threshold 2000 is chosen by finding the value that best separates the training examples.</p>
+<p>Now suppose you scale house size by dividing by 1000. The same split becomes &ldquo;if house size $&lt; 2.0$, go left.&rdquo; The data is split in exactly the same way. The same examples end up in the left node and the same examples in the right node. The tree structure is identical. The predictions are identical.</p>
+<p>This is why the decision-trees post notes that trees &ldquo;require no preprocessing: no feature scaling, no normalization.&rdquo; The splits are invariant to any monotone transformation of the features. Whether you use raw values or $z$-scores, the tree&rsquo;s behavior is unchanged. This is one of the major practical advantages of tree-based methods.</p>
+<h3 id="standardization-z-score-normalization">Standardization (Z-Score Normalization)</h3>
+<p>The most common scaling method is <strong>standardization</strong>: subtract the mean $\mu$ and divide by the standard deviation $\sigma$:</p>
+<p>$$x' = \frac{x - \mu}{\sigma}$$</p>
+<p>The result has mean 0 and standard deviation 1. A value that was at the mean becomes 0. A value one standard deviation above the mean becomes 1. A value three standard deviations above the mean becomes 3.</p>
+<p>Note what standardization does to outliers: it preserves them. A house at 4900 sq ft in a dataset with mean 2500 and standard deviation 800 gets the standardized value $(4900 - 2500) / 800 = 3.0$. It is still far from the center - three standard deviations out - which is correct. The outlier is extreme in the original data, and it remains extreme in the standardized data.</p>
+<p><strong>Use standardization when</strong>: the algorithm assumes a roughly Gaussian distribution of input features (many linear models, logistic regression, principal component analysis), you want to preserve relative distances between outliers, or there is no natural bounded range for the data.</p>
+<p><strong>Do not use standardization when</strong>: you need the features to live in a specific bounded range (pixel intensities, probabilities, neural network inputs where the activation functions are sensitive to scale).</p>
+<p>Critical implementation note: compute $\mu$ and $\sigma$ on the training set only. Apply the same values to the validation and test sets. If you compute mean and standard deviation on the full dataset before splitting, you are allowing information from the test set to influence the training representation - this is a subtle form of data leakage.</p>
+<h3 id="min-max-normalization">Min-Max Normalization</h3>
+<p><strong>Min-max normalization</strong> rescales every value to the interval $[0, 1]$:</p>
+<p>$$x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}$$</p>
+<p>where $x_{\min}$ and $x_{\max}$ are the minimum and maximum values in the training set. The minimum maps to 0, the maximum maps to 1, and everything else maps linearly in between.</p>
+<p>The strength of min-max is the bounded range. Neural networks with sigmoid or tanh activations, image pixel values, and anything that needs to feed into a bounded input works well with min-max.</p>
+<p>The weakness is sensitivity to outliers. Suppose your house size feature has values mostly in the range 500-3000, but one outlier is a mansion at 25,000 sq ft. The min-max formula uses $x_{\max} = 25000$. All the typical houses now map to very small values clustered near 0. The vast majority of the variation in house sizes is compressed into a tiny slice of the $[0, 1]$ range, and the model loses the ability to distinguish between a 1500 sq ft house and a 2500 sq ft house.</p>
+<p><strong>Use min-max when</strong>: you have a bounded input range you need to respect, the data has no extreme outliers, or the algorithm is specifically sensitive to the magnitude of inputs (pixel values, bounded activation functions).</p>
+<p>Again: compute $x_{\min}$ and $x_{\max}$ on the training set only, and apply those same constants to scale the validation and test sets.</p>
+<h3 id="robust-scaling">Robust Scaling</h3>
+<p>When the data contains significant outliers that you cannot remove or ignore, <strong>robust scaling</strong> uses the median and interquartile range (IQR) instead of the mean and standard deviation:</p>
+<p>$$x' = \frac{x - \text{median}}{Q_3 - Q_1}$$</p>
+<p>where $Q_1$ is the 25th percentile and $Q_3$ is the 75th percentile of the training set. The median and IQR are not affected by extreme values. The mansion at 25,000 sq ft does not shift the median, and it barely affects the IQR. The resulting transformation keeps the bulk of the data on a comparable scale while not letting outliers dominate.</p>
+<p>Robust scaling does not produce a bounded range, and the result does not have unit variance. Its sole purpose is outlier robustness.</p>
+<p><strong>Use robust scaling when</strong>: you have meaningful outliers that should not be discarded, and you want a reasonable scale for the majority of the data.</p>
+<hr>
+<h2 id="missing-values-what-they-mean-and-what-to-do">Missing Values: What They Mean and What to Do</h2>
+<p>Real datasets have missing values. A sensor goes offline. A survey question is left blank. A medical record was not created. A user did not provide their income. Every missing entry is a cell in your data matrix that has no value, and most ML algorithms will refuse to train or will produce errors when they encounter missing values. You must handle them explicitly.</p>
+<p>The critical insight is that missingness is not always meaningless noise. The fact that a value is missing can itself be informative. Before deciding how to fill in missing values, you need to understand why they are missing.</p>
+<h3 id="the-three-types-of-missingness">The Three Types of Missingness</h3>
+<p><strong>Missing Completely At Random (MCAR)</strong> means the probability that a value is missing has nothing to do with any variable in the dataset - observed or unobserved. A survey respondent skipped a question because they were interrupted by a phone call. A sensor failed due to a random hardware glitch. The missing data is a simple random sample of the full data.</p>
+<p>When data is MCAR, you can safely impute with simple statistics (mean, median, mode) and the estimates will be unbiased. You can also drop the rows with missing values without introducing bias, as long as you have enough data left.</p>
+<p><strong>Missing At Random (MAR)</strong> means the probability that a value is missing depends on other observed variables, but not on the missing value itself. For example: younger respondents are less likely to report their income, but among respondents of a given age, whether income is missing does not depend on the income level. The missingness is explainable from the observed data.</p>
+<p>When data is MAR, you can impute using the other features. A model that predicts income from age, education, and employment status will produce good imputations because the missing pattern is explained by these observed features. Simple mean imputation is biased here - you should use the other features.</p>
+<p><strong>Missing Not At Random (MNAR)</strong> is the most dangerous case. The probability that a value is missing depends on the value that is missing. Wealthy people are less likely to report their income precisely because their income is high. Patients with severe symptoms are less likely to complete the end-of-study questionnaire because they are too sick. The missingness is informative about the missing value itself.</p>
+<p>When data is MNAR, no imputation method recovers the true value correctly. The missingness is a signal in its own right. The standard practice is to create an indicator column - a binary feature called <code>is_income_missing</code> - that tells the model which rows had missing income. The model can then learn that &ldquo;income missing&rdquo; is itself a predictor of the target, capturing whatever the missingness signals about income level or health status.</p>
+<h3 id="imputation-strategies">Imputation Strategies</h3>
+<p><strong>Mean and median imputation</strong>: replace every missing value with the mean (for roughly symmetric distributions) or the median (for skewed distributions) of the observed values in that column. This is fast, simple, and often sufficient when data is MCAR and the missingness rate is low (below 5-10%).</p>
+<p>The cost: imputing with the mean reduces the variance of the imputed column, because every imputed value is exactly the mean. Correlations between the imputed column and other columns are also distorted, because the imputed values have no real relationship with the other features - they are all identical. For small amounts of MCAR data, this distortion is minor. For large amounts of missing data, it can meaningfully hurt model performance.</p>
+<p><strong>Mode imputation</strong> is the categorical equivalent: replace missing values with the most common category value. The same caveats apply - it reduces diversity in the column and may distort correlations.</p>
+<p><strong>Indicator column</strong>: whenever you impute, consider whether the missingness itself is a signal. You can create an <code>is_X_missing</code> binary column alongside the imputed column. This lets the model use both the imputed value and the fact that it was imputed. Even if your imputation is not perfectly accurate, the model can learn to discount imputed values (by learning a negative coefficient on the indicator column) or to use the missingness as a feature in its own right. This is particularly important for MNAR data, where the missingness is the real signal.</p>
+<p><strong>Model-based imputation</strong>: train a regression model (or classification model for categorical features) using the non-missing rows, where the target is the feature you are trying to impute and the inputs are all other features. Then use this model to predict the missing values. This is more accurate than mean imputation because it uses the correlations between features. For example, you could predict missing income from age, education, job title, and location. The main cost is complexity - you are now training additional models as preprocessing steps, and these models introduce their own errors and hyperparameters.</p>
+<p>A common variant is <strong>multiple imputation</strong>: generate several different imputed datasets (by sampling from the predictive distribution rather than using just the mean), train your model on each, and combine the results. This propagates imputation uncertainty into the final model&rsquo;s uncertainty. Multiple imputation is the gold standard in statistics but is rarely used in large-scale ML because of the computational cost.</p>
+<p><strong>Dropping rows</strong>: if missingness is MCAR and the missing fraction is small, dropping rows is simple and does not bias your dataset. If missingness is MAR or MNAR, dropping rows introduces bias - the remaining rows are a non-random sample of the true population. If the missing feature is critical and cannot be imputed, dropping rows may be unavoidable, but you should document the decision and check whether the dropped rows are systematically different from the kept rows.</p>
+<p>The order of operations matters: always compute imputation statistics (mean, median, model coefficients) on the training set only. Applying training-set statistics to the test set is correct. Computing statistics on the full dataset including the test set is data leakage.</p>
+<hr>
+<h2 id="feature-selection-not-all-features-help">Feature Selection: Not All Features Help</h2>
+<p>More features is not always better. Irrelevant features add noise. Redundant features waste computation. In high-dimensional spaces, the geometry works against you in ways that are not obvious from low-dimensional intuition.</p>
+<h3 id="the-curse-of-dimensionality">The Curse of Dimensionality</h3>
+<p>Consider $n$ training points uniformly distributed in a $d$-dimensional unit hypercube. To find the $k$ nearest neighbors of a query point, you need to search a hypercube of volume $k/n$ around the query. The side length of this hypercube is $(k/n)^{1/d}$.</p>
+<p>For $n = 1000$, $k = 10$, and $d = 3$: you need a cube of side $(0.01)^{1/3} \approx 0.22$. Reasonable - you are looking locally.</p>
+<p>For the same $n$ and $k$ but $d = 100$: you need a cube of side $(0.01)^{1/100} \approx 0.955$. You have to search nearly the entire space to find 10 neighbors. Nothing is local anymore.</p>
+<p>In high dimensions, every point is approximately as far from every other point as it is possible to be. The concept of &ldquo;nearest neighbor&rdquo; loses meaning. Distance-based algorithms (KNN, SVM with RBF kernel, k-means) degrade sharply. Even gradient-based methods suffer because the loss landscape becomes harder to navigate in high dimensions with many irrelevant directions.</p>
+<p>Adding irrelevant features - features that have no relationship with the target - adds noise in every extra dimension. The signal-to-noise ratio in the distance calculation decreases. The model has to learn that these features should be ignored, which requires more data and more training time.</p>
+<h3 id="filter-methods">Filter Methods</h3>
+<p>Filter methods evaluate each feature independently, without training a model, and rank them by some score. Common scores:</p>
+<p><strong>Pearson correlation</strong> (for regression targets): measures the linear relationship between the feature and the target. A feature with correlation near 0 is not linearly predictive and may not be useful for linear models. This misses nonlinear relationships.</p>
+<p><strong>Mutual information</strong>: measures how much knowing the feature reduces uncertainty about the target. It captures both linear and nonlinear relationships, and works for both regression and classification. More expensive to estimate than correlation, but more general.</p>
+<p><strong>Chi-squared test</strong> (for classification): tests whether the distribution of a categorical feature is independent of the class label. A feature with a high chi-squared statistic has a distribution that varies significantly across classes.</p>
+<p>Filter methods are fast - they run in time proportional to the number of features and examples, not the model training time. The weakness is that they evaluate features independently and miss interactions. A feature might be nearly uncorrelated with the target by itself, but highly predictive in combination with another feature. Filter methods cannot detect this.</p>
+<h3 id="wrapper-methods">Wrapper Methods</h3>
+<p>Wrapper methods treat feature selection as a search problem. You define a subset of features, train your model on that subset, evaluate on a validation set, and compare subsets. The subset with the best validation performance is chosen.</p>
+<p>Exhaustive search over all $2^d$ subsets is infeasible for large $d$. Practical approaches use heuristics:</p>
+<p><strong>Forward selection</strong>: start with no features. At each step, add the feature that improves validation performance the most. Stop when adding features no longer helps.</p>
+<p><strong>Backward elimination</strong>: start with all features. At each step, remove the feature whose removal hurts validation performance the least. Stop when removing any feature would hurt.</p>
+<p><strong>Recursive Feature Elimination (RFE)</strong>: train the model on all features, compute feature importances (e.g., coefficients in a linear model, or tree-based importances), remove the feature with the lowest importance, retrain, and repeat. This is computationally tractable and accounts for feature interactions because the importance at each step is computed in the context of all remaining features.</p>
+<p>Wrapper methods are expensive - they require many training runs. But they directly optimize what you care about (validation performance) and account for feature interactions. They are the right choice when you have enough computational budget and a moderate number of features (up to a few hundred).</p>
+<h3 id="embedded-methods">Embedded Methods</h3>
+<p>Embedded methods perform feature selection as part of the model training process. The selection and the learning happen simultaneously.</p>
+<p><strong>L1 regularization (Lasso)</strong> adds a penalty proportional to the sum of the absolute values of the coefficients to the training objective:</p>
+<p>$$\mathcal{L}_{\text{Lasso}} = \text{Loss}(\mathbf{w}) + \lambda \sum_j |w_j|$$</p>
+<p>The L1 penalty has a geometric property that L2 does not: it produces sparse solutions. Many coefficients are driven to exactly zero. A feature with a zero coefficient contributes nothing to the model&rsquo;s predictions and is effectively deselected. By tuning $\lambda$, you control how many features are selected. High $\lambda$ means few features; low $\lambda$ means many.</p>
+<p>Why does L1 produce zeros while L2 does not? The L1 ball (in 2D, a diamond) has corners at the axes. When the loss function&rsquo;s level curves touch the L1 ball, they typically touch at a corner, which sits on an axis where one coordinate is zero. The L2 ball (a circle) has no corners, so the contact point is typically not on an axis, and both coordinates are nonzero.</p>
+<p><strong>Tree-based feature importance</strong>: a decision tree computes feature importance by summing the total impurity reduction attributable to each feature across all splits in the tree. Features that never appear in any split have zero importance. Random forests average this across many trees, giving a more stable estimate. You can train a random forest, extract feature importances, and remove features below some threshold - this is fast, captures nonlinear interactions, and handles mixed feature types naturally.</p>
+<h3 id="the-practical-workflow">The Practical Workflow</h3>
+<p>Start with all features. Train a random forest or gradient boosting model and compute feature importances. Look at the distribution: often a small number of features contribute the vast majority of the importance, and the tail is nearly flat. Remove features with near-zero importance and check whether validation performance changes. If it does not change or improves, keep the reduced feature set. Repeat with progressively stronger pruning until validation performance starts to degrade. The sweet spot is typically far fewer features than you started with.</p>
+<hr>
+<h2 id="feature-engineering-creating-features-from-features">Feature Engineering: Creating Features From Features</h2>
+<p>Feature selection removes unhelpful features. Feature engineering creates new, more informative features from the ones you have. It is the most creative and domain-specific part of the preprocessing pipeline.</p>
+<p>The key insight: a model can only learn what is in the features. If the relationship between the raw features and the target is complex, the model needs to be complex to capture it. But if you engineer features that directly represent the underlying relationships - compressing domain knowledge into the feature representation - a simpler model can achieve better performance.</p>
+<h3 id="log-transforms">Log Transforms</h3>
+<p>Many real-world quantities are log-normally distributed: house prices, income, population, city sizes, website traffic. A log-normal distribution has a long right tail - most values are in a narrow range but a few are very large. The mean income in a dataset might be $60,000, but a handful of billionaires push the mean up while most people cluster much lower.</p>
+<p>Linear models assume that the relationship between the feature and the target is linear. A linear relationship between raw income and house purchase probability is unlikely - the difference between $30,000 and $60,000 annual income matters a lot, but the difference between $1,000,000 and $1,030,000 matters very little. But a linear relationship between log income and purchase probability is often a good approximation. The log transform compresses the long tail, making the distribution more symmetric and making linear models appropriate.</p>
+<p>For a feature $x &gt; 0$, compute $x' = \log(x)$. For a feature that might be zero, compute $x' = \log(1 + x)$.</p>
+<p>The log transform also helps with outliers. A house price of $10,000,000 is 100 times larger than $100,000 in raw units but only $\log(10000000) / \log(100000) = 7/5 = 1.4$ times larger in log units. Outliers become less extreme after log transformation.</p>
+<h3 id="interaction-features">Interaction Features</h3>
+<p>Some features are only meaningful in combination. Consider a dataset of retail stores with features for <code>store_size</code> and <code>location_score</code> (a composite measure of how desirable the location is). A small store in a great location might perform similarly to a large store in a mediocre location. The individual features do not capture this trade-off, but their product <code>store_size × location_score</code> might.</p>
+<p>An <strong>interaction feature</strong> is the product (or ratio, or some function) of two or more existing features. Including $x_1 \cdot x_2$ as a feature lets a linear model learn a coefficient for the joint effect that neither $w_1 x_1$ nor $w_2 x_2$ can capture alone.</p>
+<p>This is especially important for linear models, which cannot learn interactions by default. A model with features ${x_1, x_2}$ and coefficients ${w_1, w_2}$ models the relationship as $w_1 x_1 + w_2 x_2$. Adding the interaction $x_1 x_2$ as a feature lets it model $w_1 x_1 + w_2 x_2 + w_3 x_1 x_2$, which can represent a much richer family of relationships.</p>
+<p>Tree-based and neural network models can learn interactions automatically, so manual interaction features are less critical for those. For linear models and feature-limited settings, interaction features can dramatically increase expressiveness.</p>
+<h3 id="date-and-time-decomposition">Date and Time Decomposition</h3>
+<p>A raw timestamp like <code>2024-07-14 15:30:00</code> is useless to a model as a single number. Converting it to the number of seconds since some epoch produces a number that grows monotonically - the model can detect trends over time, but it cannot learn that Saturdays are different from Mondays, or that July is different from January.</p>
+<p>The standard practice is to <strong>decompose</strong> a timestamp into its constituent parts:</p>
+<ul>
+<li>Year (captures long-term trends)</li>
+<li>Month or quarter (captures seasonality)</li>
+<li>Day of week (0-6, captures weekly patterns)</li>
+<li>Hour (captures intraday patterns)</li>
+<li><code>is_weekend</code> (binary: whether the date is Saturday or Sunday)</li>
+<li>Days since some meaningful reference event (campaign launch, policy change, product release)</li>
+</ul>
+<p>Each of these decomposed features is an independent numeric (or binary) feature that the model can learn from separately. A retail model might discover that Saturday has higher sales by learning a positive coefficient on <code>is_weekend</code>, and simultaneously that July has higher sales by learning a positive coefficient on <code>month == 7</code> (via one-hot encoding of month). It could not discover either of these from a single timestamp value.</p>
+<h3 id="binning-and-bucketing">Binning and Bucketing</h3>
+<p>Sometimes the relationship between a continuous feature and the target is not monotonic. Age and insurance risk is a classic example: very young drivers (under 25) are high risk, risk decreases through middle age, then increases again in old age. The relationship is U-shaped. A linear model cannot represent a U-shaped relationship with a single coefficient.</p>
+<p><strong>Binning</strong> converts a continuous feature into a discrete one by grouping values into ranges:</p>
+<ul>
+<li>0-25: young</li>
+<li>25-65: middle-aged</li>
+<li>65+: senior</li>
+</ul>
+<p>After binning, you one-hot encode the bins. The model can now learn separate effects for each age group without assuming monotonicity.</p>
+<p>Binning also handles the situation where the bins map to meaningful categories that the model should treat as categorically distinct. Age 17 and age 24 might have very different legal and behavioral contexts (underage vs. adult) even though they are numerically close. A split at 18 in a bin boundary makes the model see them as categorically different.</p>
+<p>The cost of binning is information loss. All values within a bin are treated as identical. A continuous linear relationship (if it exists) is approximated as a piecewise constant. Choose bins carefully - use domain knowledge about meaningful thresholds, or use quantile-based binning to ensure roughly equal numbers in each bin.</p>
+<hr>
+<h2 id="putting-it-together-the-preprocessing-pipeline">Putting It Together: The Preprocessing Pipeline</h2>
+<p>The preprocessing steps described in this post must be applied consistently and without leakage. The correct order is:</p>
+<ol>
+<li>Split data into train, validation, and test sets first, before any preprocessing.</li>
+<li>Fit all preprocessing objects (the mean and standard deviation for standardization, the category mapping for one-hot encoding, the imputation statistics, the feature selection threshold) on the training set only.</li>
+<li>Apply those fitted transformers to the validation and test sets using the training-set statistics.</li>
+</ol>
+<p>Step 1 is critical. If you standardize first and split second, the test set&rsquo;s statistics have influenced the standardization parameters - the model has, in a subtle way, seen the test set. The same applies to imputation, encoding, and feature selection.</p>
+<p>In scikit-learn, the <code>Pipeline</code> object enforces this correctly. You define a sequence of transformers (imputer, scaler, encoder) and a final estimator, and <code>Pipeline.fit</code> on the training set only computes all the transformer statistics. <code>Pipeline.transform</code> on the test set applies the stored training-set statistics.</p>
+<p>The preprocessing pipeline is not separate from the model. It is part of the model. Hyperparameter tuning should include the preprocessing choices: which scaling method, whether to use log transforms, how many features to select. Cross-validation should wrap the entire pipeline including preprocessing, not just the estimator. The train-val-test split discipline applies to the full pipeline, not just the final estimator.</p>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/decision-trees/" target="_blank" rel="noopener noreferrer">Decision Trees - Splitting the Data Until the Answer Emerges</a>
+</li>
+<li><a href="/posts/classical-ml-k-nn-svms/" target="_blank" rel="noopener noreferrer">k-NN &amp; SVMs - Two Classifiers, Two Geometries</a>
+</li>
+<li><a href="/posts/bias-variance-overfitting/" target="_blank" rel="noopener noreferrer">Bias, Variance &amp; Overfitting - The Three-Way Tradeoff You Can&rsquo;t Escape</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

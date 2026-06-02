@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Model Evaluation Metrics - Measuring What Actually Matters // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Model Evaluation Metrics - Measuring What Actually Matters"/>
+<meta name="twitter:description" content="Helpful context:
+ Train, Val &amp; Test Splits - The Discipline of Not Peeking  Imbalanced Classification - When 99% Accuracy Means the Model Is Useless  Decision Trees - Splitting the Data Until the Answer Emerges    You have trained a model. Now you need to know whether it is good. This sounds simple - count the predictions it gets right, divide by the total number of predictions, and you have accuracy."/>
+
+    <meta property="og:title" content="Model Evaluation Metrics - Measuring What Actually Matters" />
+<meta property="og:description" content="Helpful context:
+ Train, Val &amp; Test Splits - The Discipline of Not Peeking  Imbalanced Classification - When 99% Accuracy Means the Model Is Useless  Decision Trees - Splitting the Data Until the Answer Emerges    You have trained a model. Now you need to know whether it is good. This sounds simple - count the predictions it gets right, divide by the total number of predictions, and you have accuracy." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/model-evaluation-metrics/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-10-12T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-10-12T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Model Evaluation Metrics - Measuring What Actually Matters</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Oct 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          19 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/train-val-test-splits/" target="_blank" rel="noopener noreferrer">Train, Val &amp; Test Splits - The Discipline of Not Peeking</a>
+</li>
+<li><a href="/posts/imbalanced-classification/" target="_blank" rel="noopener noreferrer">Imbalanced Classification - When 99% Accuracy Means the Model Is Useless</a>
+</li>
+<li><a href="/posts/decision-trees/" target="_blank" rel="noopener noreferrer">Decision Trees - Splitting the Data Until the Answer Emerges</a>
+</li>
+</ul>
+<hr>
+<p>You have trained a model. Now you need to know whether it is good. This sounds simple - count the predictions it gets right, divide by the total number of predictions, and you have accuracy. But this number, which seems so natural, can be deeply misleading in ways that matter enormously in practice. Before doing anything else, let us look at a scenario that breaks accuracy completely.</p>
+<p>Suppose you build a cancer screening model. Cancer affects 1% of the population you are screening. You train your model, evaluate it on a held-out test set, and find that it achieves 99% accuracy. Should you celebrate? No. Consider what happens if your model simply predicts &ldquo;no cancer&rdquo; for every single person, without ever looking at any features. On a test set of 10,000 people, 9,900 are healthy and 100 have cancer. The &ldquo;always predict healthy&rdquo; strategy gets all 9,900 healthy cases right and all 100 cancer cases wrong. That is 9,900 / 10,000 = 99% accuracy. Your model could be exactly this strategy - and you would have no idea from the accuracy number alone.</p>
+<p>This model would be catastrophic. It identifies zero cancer cases. It is actively dangerous, because it gives patients and doctors false reassurance. And yet accuracy, the most natural-seeming evaluation metric, gives it a perfect-looking score.</p>
+<p>This is the core problem that motivates everything in this post. A metric is only useful if it measures what you actually care about. When the cost of different kinds of errors is different, and when classes appear at different frequencies, accuracy tells you almost nothing. We need better tools.</p>
+<hr>
+<h2 id="the-confusion-matrix">The Confusion Matrix</h2>
+<p>The first step toward better metrics is to stop summarizing predictions with a single number and instead ask: what kinds of errors is the model making, and at what rate?</p>
+<p>For a binary classification problem - where each example is either &ldquo;positive&rdquo; (the class we care about, like cancer) or &ldquo;negative&rdquo; (the other class, like healthy) - there are four possible outcomes for any prediction:</p>
+<ul>
+<li><strong>True Positive (TP):</strong> the example is actually positive, and the model predicted positive. A correct detection.</li>
+<li><strong>True Negative (TN):</strong> the example is actually negative, and the model predicted negative. A correct rejection.</li>
+<li><strong>False Positive (FP):</strong> the example is actually negative, but the model predicted positive. An incorrect alarm.</li>
+<li><strong>False Negative (FN):</strong> the example is actually positive, but the model predicted negative. A missed detection.</li>
+</ul>
+<p>These four quantities are arranged in a 2x2 table called the <strong>confusion matrix</strong>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Predicted Positive</th>
+<th>Predicted Negative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Actually Positive</strong></td>
+<td>TP</td>
+<td>FN</td>
+</tr>
+<tr>
+<td><strong>Actually Negative</strong></td>
+<td>FP</td>
+<td>TN</td>
+</tr>
+</tbody>
+</table>
+<p>The name &ldquo;confusion matrix&rdquo; reflects the fact that it shows exactly where and how the model is confused.</p>
+<p><strong>In the cancer example, each cell has a different real-world cost.</strong> A True Positive means the model correctly flagged someone who has cancer; they proceed to diagnosis and treatment. A True Negative means the model correctly cleared a healthy person; they are told they are fine and they are. A False Positive means a healthy person was told they might have cancer; they undergo a biopsy, which is invasive, stressful, and expensive. A False Negative means someone with cancer was told they are healthy; they go untreated. Their cancer progresses.</p>
+<p>These costs are wildly different. A False Negative might be fatal. A False Positive causes harm too - unnecessary medical procedures and anxiety - but it is recoverable. Any useful evaluation must distinguish between these two types of error rather than lumping them together into a single number.</p>
+<p><strong>For the &ldquo;always predict negative&rdquo; model</strong>, the confusion matrix on our 10,000-person test set would be:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Predicted Positive</th>
+<th>Predicted Negative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Actually Positive (cancer)</strong></td>
+<td>0</td>
+<td>100</td>
+</tr>
+<tr>
+<td><strong>Actually Negative (healthy)</strong></td>
+<td>0</td>
+<td>9900</td>
+</tr>
+</tbody>
+</table>
+<p>TP = 0, TN = 9900, FP = 0, FN = 100. Accuracy = (TP + TN) / total = 9900 / 10000 = 99%. But this model finds zero cancers. The confusion matrix reveals the problem immediately; accuracy obscures it completely.</p>
+<hr>
+<h2 id="precision-and-recall">Precision and Recall</h2>
+<p>From the four cells of the confusion matrix, we can derive two metrics that capture the two most important aspects of classification performance.</p>
+<p><strong>Precision</strong> answers the question: of all the examples I predicted to be positive, what fraction actually were positive?</p>
+<p>$$\text{Precision} = \frac{TP}{TP + FP}$$</p>
+<p>When you predict positive, how often are you right? Precision measures the quality of positive predictions. A model with high precision rarely cries wolf.</p>
+<p><strong>Recall</strong> answers a different question: of all the examples that were actually positive, what fraction did I correctly identify?</p>
+<p>$$\text{Recall} = \frac{TP}{TP + FN}$$</p>
+<p>Of all the real positives in the world, how many did I catch? Recall measures coverage. A model with high recall misses few real positives.</p>
+<p>Both metrics range from 0 to 1, with 1 being perfect. Note that the &ldquo;always predict negative&rdquo; model has recall of 0 / (0 + 100) = 0. It catches nothing. Precision is technically 0/0 for this model (it never predicts positive), which is undefined - another signal that the model is degenerate.</p>
+<h3 id="when-precision-matters-more-the-spam-filter">When precision matters more: the spam filter</h3>
+<p>Suppose you are building a spam filter. The positive class is spam. The filter marks an email as spam and moves it out of your inbox. A False Positive means a legitimate email was moved to the spam folder. You might miss an important message from your boss or a flight confirmation. That is costly. A False Negative means a spam email made it into your inbox. You manually delete it. Annoying, but survivable.</p>
+<p>In this setting, you want high precision. Every time the filter fires, it should be right. You are willing to let some spam through (lower recall) in exchange for not burying real emails.</p>
+<h3 id="when-recall-matters-more-cancer-screening">When recall matters more: cancer screening</h3>
+<p>In cancer screening, the positive class is cancer. A False Negative means a cancer case was cleared as healthy. The patient goes untreated. That is potentially fatal. A False Positive means a healthy person is flagged for further testing. They undergo a biopsy. That is stressful and costly, but the mistake is recoverable.</p>
+<p>In this setting, you want high recall. You want to catch every cancer case. You are willing to over-flag and send more healthy people to biopsy (lower precision) in exchange for not missing any real cases.</p>
+<h3 id="a-worked-numerical-example">A worked numerical example</h3>
+<p>Suppose your cancer screening model is run on 10,000 people, 100 of whom actually have cancer. The model produces the following confusion matrix:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Predicted Positive</th>
+<th>Predicted Negative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Actually Positive</strong></td>
+<td>85</td>
+<td>15</td>
+</tr>
+<tr>
+<td><strong>Actually Negative</strong></td>
+<td>200</td>
+<td>9700</td>
+</tr>
+</tbody>
+</table>
+<p>TP = 85, FP = 200, FN = 15, TN = 9700.</p>
+<p>$$\text{Precision} = \frac{85}{85 + 200} = \frac{85}{285} \approx 0.298$$</p>
+<p>$$\text{Recall} = \frac{85}{85 + 15} = \frac{85}{100} = 0.850$$</p>
+<p>$$\text{Accuracy} = \frac{85 + 9700}{10000} = \frac{9785}{10000} = 97.85%$$</p>
+<p>Accuracy looks good. Precision looks poor - only 30% of positive predictions are correct. Recall looks good - 85% of actual cancer cases were caught. Whether this model is acceptable depends entirely on what you care about. In a screening context, 85% recall means 15 out of 100 cancer patients are sent home undetected, which may or may not be acceptable depending on how the test fits into a broader diagnostic pipeline.</p>
+<hr>
+<h2 id="the-precision-recall-tradeoff">The Precision-Recall Tradeoff</h2>
+<p>Most classifiers do not output a hard positive/negative decision directly. They output a <strong>score</strong> - a probability, a confidence, or some real-valued number - and a decision is made by comparing that score to a threshold. If the score is above the threshold, predict positive; otherwise, predict negative.</p>
+<p>The choice of threshold directly controls the tradeoff between precision and recall.</p>
+<p><strong>Raising the threshold</strong> means the model only predicts positive when it is very confident. Fewer things get flagged as positive. Among those that do get flagged, the proportion that are truly positive goes up (precision increases). But the model also fails to flag some true positives that it was only moderately confident about (recall decreases).</p>
+<p><strong>Lowering the threshold</strong> means the model flags something as positive at even low confidence. Almost everything gets flagged. The number of true positives found increases (recall increases). But so does the number of false positives, since the model is now flagging things it was barely confident about (precision decreases).</p>
+<p>The two extremes illustrate this clearly. If the threshold is 0 (always predict positive), recall is 1.0 - you catch every true positive - but precision is just the fraction of positives in the dataset (in our cancer example, 1%). If the threshold is 1.0 (never predict positive), precision is undefined and recall is 0.</p>
+<p>Neither extreme is useful. The right operating point depends on the relative costs of FP and FN. For cancer screening, you want a low threshold, accepting lower precision to preserve recall. For spam filtering, you want a higher threshold, accepting lower recall to preserve precision.</p>
+<p>This tradeoff is not a flaw in the model; it is a fundamental constraint. You cannot have both perfect precision and perfect recall unless the model is itself perfect. Any finite, imperfect classifier will face this tradeoff, and the right point on the tradeoff curve is determined by the problem, not by the model.</p>
+<hr>
+<h2 id="the-f1-score">The F1 Score</h2>
+<p>Sometimes you need a single number summarizing classification performance when you cannot choose separate targets for precision and recall. The most common choice is the <strong>F1 score</strong>, defined as the harmonic mean of precision and recall:</p>
+<p>$$F_1 = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} = \frac{2 \cdot TP}{2 \cdot TP + FP + FN}$$</p>
+<h3 id="why-harmonic-mean-rather-than-arithmetic-mean">Why harmonic mean rather than arithmetic mean?</h3>
+<p>The arithmetic mean of precision and recall is $(\text{P} + \text{R}) / 2$. The harmonic mean is $2\text{PR}/(\text{P}+\text{R})$. Why prefer the harmonic mean?</p>
+<p>Because the harmonic mean is dominated by the smaller of the two values and correctly penalizes extreme imbalance. Consider a model with precision 1.0 and recall 0.0:</p>
+<ul>
+<li>Arithmetic mean: $(1.0 + 0.0) / 2 = 0.5$. This looks like a mediocre but passable model.</li>
+<li>Harmonic mean: $2 \cdot (1.0 \cdot 0.0) / (1.0 + 0.0) = 0$. This correctly identifies the model as completely useless.</li>
+</ul>
+<p>A model that never predicts positive has recall 0 regardless of what its precision might be in the limit. It catches nothing. An F1 of 0 correctly captures this. The arithmetic mean&rsquo;s 0.5 would be deeply misleading.</p>
+<p>The same logic applies in reverse: precision 0.0 and recall 1.0 also gives F1 = 0. A model that predicts positive for everything has recall 1.0 but precision equal to the base rate (which is low for imbalanced problems). F1 will be low; arithmetic mean would be inflated.</p>
+<p>For our cancer screening example:</p>
+<p>$$F_1 = 2 \cdot \frac{0.298 \cdot 0.850}{0.298 + 0.850} = 2 \cdot \frac{0.253}{1.148} \approx 0.441$$</p>
+<h3 id="f-beta-weighting-precision-and-recall-differently">F-beta: weighting precision and recall differently</h3>
+<p>F1 treats precision and recall as equally important. This is often not the right assumption. The <strong>F-beta score</strong> is a generalization:</p>
+<p>$$F_\beta = (1 + \beta^2) \cdot \frac{\text{Precision} \cdot \text{Recall}}{\beta^2 \cdot \text{Precision} + \text{Recall}}$$</p>
+<p>When $\beta = 1$, this reduces to F1. When $\beta &gt; 1$, recall is weighted more heavily - useful for cancer screening, where missing a positive is worse than a false alarm. When $\beta &lt; 1$, precision is weighted more heavily - useful for spam filtering, where a false positive (deleting a real email) is worse than a miss. The parameter $\beta$ can be thought of as: recall is considered $\beta$ times as important as precision.</p>
+<p>For a cancer screening application where catching positives matters more than avoiding false alarms, $\beta = 2$ is a common choice: recall counts twice as much as precision.</p>
+<hr>
+<h2 id="the-roc-curve">The ROC Curve</h2>
+<p>Precision and recall are metrics for a fixed decision threshold. But as we saw, the threshold is a free parameter, and the &ldquo;right&rdquo; threshold depends on the problem. The <strong>ROC curve</strong> (Receiver Operating Characteristic curve) is a way to visualize model performance across all possible thresholds simultaneously.</p>
+<p>Two quantities go on the axes. The y-axis is the <strong>True Positive Rate (TPR)</strong>, which is exactly the same as recall:</p>
+<p>$$\text{TPR} = \frac{TP}{TP + FN}$$</p>
+<p>The x-axis is the <strong>False Positive Rate (FPR)</strong>, which measures how often a negative example is incorrectly predicted as positive:</p>
+<p>$$\text{FPR} = \frac{FP}{FP + TN}$$</p>
+<p>Note the symmetry. TPR asks: of all actual positives, what fraction did I catch? FPR asks: of all actual negatives, what fraction did I incorrectly flag?</p>
+<p>To construct the ROC curve, sweep the decision threshold from 1 down to 0. At each threshold value, compute the (FPR, TPR) pair and plot it. As the threshold decreases, both FPR and TPR generally increase - you catch more true positives, but you also incorrectly flag more true negatives. The curve sweeps from the bottom-left to the top-right of a unit square.</p>
+<p><strong>Understanding the reference points.</strong> A threshold of 1 (predict nothing as positive): TPR = 0, FPR = 0. The curve starts at (0, 0). A threshold of 0 (predict everything as positive): TPR = 1, FPR = 1. The curve ends at (1, 1).</p>
+<p><strong>The random classifier baseline.</strong> A classifier that assigns random scores to every example, with no actual discriminative power, traces a straight diagonal line from (0,0) to (1,1). At any threshold, such a classifier has TPR = FPR - it catches positives at the same rate it incorrectly flags negatives. This diagonal is the baseline: any useful model should be above it.</p>
+<p><strong>A perfect classifier</strong> would achieve TPR = 1 with FPR = 0 at some threshold - it catches all positives before flagging any negatives. Its curve jumps immediately from (0,0) to (0,1) and then moves right along the top. The upper-left corner (0, 1) is the ideal operating point.</p>
+<p>The further a curve bows toward the upper-left corner, the better the model is. A curve that hugs the upper-left is a model that, even at low thresholds (high sensitivity), generates very few false positives.</p>
+<h3 id="auc-area-under-the-curve">AUC: Area Under the Curve</h3>
+<p>The <strong>AUC</strong> (Area Under the ROC Curve) summarizes the entire curve as a single number. It ranges from 0 to 1. A random classifier has AUC = 0.5 (the area under the diagonal). A perfect classifier has AUC = 1.0.</p>
+<p>AUC has a useful probabilistic interpretation: it equals the probability that, given one random positive example and one random negative example, the model assigns a higher score to the positive example. An AUC of 0.85 means the model ranks a random positive above a random negative 85% of the time.</p>
+<p>This makes AUC a <strong>threshold-free</strong> measure of discrimination quality. It does not ask whether the absolute scores are calibrated or what the right threshold is. It asks only whether the model can rank positives above negatives. This is useful when comparing models that may have been trained with different score scales.</p>
+<p>A model with AUC below 0.5 is actively anti-informative: it ranks negatives above positives more often than not. This usually indicates a label-flipping bug or a severe problem.</p>
+<h3 id="when-to-use-roc-vs-the-precision-recall-curve">When to use ROC vs the precision-recall curve</h3>
+<p>The ROC curve and the precision-recall (PR) curve both show model performance across thresholds, but they emphasize different things.</p>
+<p><strong>ROC can be misleading when the positive class is rare.</strong> Suppose you have 10,000 examples: 100 positive and 9,900 negative. Your model has FPR = 0.01, meaning it incorrectly flags 1% of negatives. That sounds small. But 1% of 9,900 is 99 false positives - nearly as many as there are true positives in total. On the ROC curve, FPR = 0.01 looks like excellent performance. On the PR curve, precision = TP / (TP + FP) = TP / (TP + 99) would expose the problem.</p>
+<p>The rule of thumb: use the ROC curve when the class balance is roughly equal, or when you care about performance across both classes. Use the PR curve when the positive class is rare and performance on it is what matters. In medical diagnosis, fraud detection, and anomaly detection - where positive examples are scarce and costly to miss - the PR curve gives a more honest picture.</p>
+<hr>
+<h2 id="regression-metrics">Regression Metrics</h2>
+<p>Everything above assumes a classification problem where the output is a class label (or a score thresholded into a label). Many problems instead require predicting a continuous value: a house price, a patient&rsquo;s blood glucose level, tomorrow&rsquo;s temperature. For these <strong>regression</strong> problems, different metrics apply.</p>
+<p>Let $y_1, \ldots, y_n$ be the true values and $\hat{y}_1, \ldots, \hat{y}_n$ be the model&rsquo;s predictions. The residual for example $i$ is $e_i = y_i - \hat{y}_i$.</p>
+<h3 id="mean-absolute-error-mae">Mean Absolute Error (MAE)</h3>
+<p>$$\text{MAE} = \frac{1}{n}\sum_{i=1}^{n} |e_i|$$</p>
+<p>MAE is the average magnitude of the errors. It is in the same units as the target variable, which makes it interpretable. A MAE of $15,000 on a house price prediction model means the model is off by $15,000 on average.</p>
+<p>MAE treats all errors equally regardless of their magnitude. An error of 10 contributes 10 times as much as an error of 1, but an error of 100 contributes only 10 times as much as an error of 10.</p>
+<h3 id="mean-squared-error-mse">Mean Squared Error (MSE)</h3>
+<p>$$\text{MSE} = \frac{1}{n}\sum_{i=1}^{n} e_i^2$$</p>
+<p>MSE squares each error before averaging. This has two effects. First, it makes MSE differentiable everywhere (useful for optimization, since $|e|$ has a kink at 0 while $e^2$ is smooth). Second, and more importantly, it penalizes large errors disproportionately. An error of 10 contributes 100, while an error of 1 contributes only 1 - that is, the larger error has 100 times the impact on MSE rather than just 10 times the impact on MAE.</p>
+<p>This makes MSE preferable when large errors are especially costly and you want to actively penalize them. If your model occasionally makes catastrophically large errors, MSE will catch and penalize this in a way that MAE might not.</p>
+<p>The downside: MSE is in squared units of the target, which is hard to interpret directly. A house price model with MSE = $2.25 \times 10^8$ is not easy to parse.</p>
+<h3 id="root-mean-squared-error-rmse">Root Mean Squared Error (RMSE)</h3>
+<p>$$\text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n} e_i^2}$$</p>
+<p>RMSE is simply the square root of MSE. It restores the units to match the target variable while preserving MSE&rsquo;s property of penalizing large errors heavily. It is the most commonly reported regression metric in practice.</p>
+<p>For the house price model: if MSE = $2.25 \times 10^8$, then RMSE = $15,000. Now the number is interpretable again. And unlike MAE, RMSE reflects the disproportionate contribution of large outlier errors.</p>
+<p>When to use which: if your residuals are roughly normally distributed and you care about large errors more than small ones, use RMSE. If your residuals include meaningful outliers that you do not want to over-weight (perhaps because they are measurement errors rather than real model failures), use MAE.</p>
+<h3 id="r-squared-r2">R-squared ($R^2$)</h3>
+<p>MAE and RMSE tell you the magnitude of errors in the units of the problem. But they do not tell you whether those errors are good or bad relative to a baseline. An RMSE of $15,000 for a house price model - is that good? It depends entirely on whether house prices vary by $10,000 or by $1,000,000.</p>
+<p>$R^2$, called the <strong>coefficient of determination</strong>, provides a baseline-relative measure. The baseline is the simplest possible model: always predict the mean of the training targets.</p>
+<p>$$R^2 = 1 - \frac{\sum_i (y_i - \hat{y}_i)^2}{\sum_i (y_i - \bar{y})^2}$$</p>
+<p>The numerator is the total squared error of your model. The denominator is the total squared error of the mean-prediction baseline. So $R^2$ measures: what fraction of the variance in $y$ does your model explain, relative to simply predicting the mean?</p>
+<ul>
+<li>$R^2 = 1$: your model predicts every example perfectly. All residuals are zero.</li>
+<li>$R^2 = 0$: your model performs exactly as well as just predicting $\bar{y}$ for everything. It has explained none of the variance.</li>
+<li>$R^2 &lt; 0$: your model is worse than predicting the mean. This can and does happen if you apply a model to a distribution it was not trained on, or if the model is severely misconfigured.</li>
+</ul>
+<p>$R^2$ is dimensionless and scale-free, which makes it useful for comparing across problems. But it should not be used in isolation. A high $R^2$ on training data might just reflect overfitting. And $R^2$ can be misleading when the target distribution is very skewed or when outliers dominate.</p>
+<hr>
+<h2 id="which-metric-to-use-when">Which Metric to Use When</h2>
+<p>The right metric is not a universal property of models; it is a property of the problem. Here is a practical guide.</p>
+<p><strong>Use accuracy</strong> when the classes are balanced and the costs of different error types are similar. On a balanced binary classification problem where FP and FN are equally undesirable, accuracy is a perfectly reasonable summary. On an imbalanced problem, it is nearly useless.</p>
+<p><strong>Use precision</strong> when false positives are costly. Spam filtering is the canonical example. Fraud detection systems that trigger immediate card blocks or legal investigations are another: a false accusation is more costly than a missed case. When you want to be sure that every positive prediction you make is actually positive, optimize for precision.</p>
+<p><strong>Use recall</strong> when false negatives are costly. Cancer screening. Disease surveillance. Safety-critical anomaly detection where a missed event could cause harm. When the cost of missing a real positive outweighs the cost of an unnecessary follow-up, optimize for recall.</p>
+<p><strong>Use F1</strong> when you need a single number that balances precision and recall and cannot choose a specific operating threshold. F1 is the default when neither FP nor FN dominates and you want a model comparison metric. Use F-beta if the costs are unequal but you still want a single number.</p>
+<p><strong>Use AUC-ROC</strong> when you want to compare models in a threshold-free way, particularly when classes are roughly balanced and you care about the model&rsquo;s overall ranking ability rather than its performance at any specific threshold. AUC is also useful when the downstream deployment threshold will be chosen later based on operational constraints.</p>
+<p><strong>Use AUC-PR</strong> when the positive class is rare. In fraud detection, medical diagnosis of rare conditions, and event detection in long time series, the ROC curve can make a mediocre model look excellent because the large number of true negatives inflates the denominator of FPR. The PR curve keeps the focus squarely on performance in the positive class.</p>
+<p><strong>For regression:</strong> use RMSE as the default, particularly when large errors are worse than small ones and you want the metric to reflect this. Use MAE when the problem has meaningful outliers in the target that you do not want to distort the metric. Use $R^2$ when you want to communicate the fraction of variance explained, especially when comparing models across different datasets or target scales.</p>
+<hr>
+<p>A final note: evaluation metrics are only as good as the data they are computed on. Even a perfect AUC on a test set tells you nothing useful if the test set does not reflect the distribution the model will encounter in deployment. Metrics measure what happened on a particular dataset. Whether that dataset is representative, whether the labels are accurate, and whether the class balance matches real-world conditions are all separate questions that no metric can answer for you. The metric is the last step in evaluation, not the first.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/bias-variance-overfitting/" target="_blank" rel="noopener noreferrer">Bias, Variance &amp; Overfitting - The Three-Way Tradeoff You Can&rsquo;t Escape</a>
+</li>
+<li><a href="/posts/cross-validation/" target="_blank" rel="noopener noreferrer">Cross-Validation - Testing Your Model on Data It Has Never Seen</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

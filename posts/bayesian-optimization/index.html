@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Bayesian Optimization - Searching for the Best Hyperparameters Without Burning the Budget // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Bayesian Optimization - Searching for the Best Hyperparameters Without Burning the Budget"/>
+<meta name="twitter:description" content="Helpful context:
+ Gaussian Processes  Cross-Validation - Estimating How Well Your Model Will Generalize    You have a neural network with five hyperparameters: learning rate, batch size, dropout probability, number of layers, and hidden size. Every combination requires training the full model and evaluating it on a validation set. One training run takes four hours. Grid search over 5 values per hyperparameter gives $5^5 = 3125$ configurations. That is over 12,000 hours of compute - roughly 500 days on a single machine."/>
+
+    <meta property="og:title" content="Bayesian Optimization - Searching for the Best Hyperparameters Without Burning the Budget" />
+<meta property="og:description" content="Helpful context:
+ Gaussian Processes  Cross-Validation - Estimating How Well Your Model Will Generalize    You have a neural network with five hyperparameters: learning rate, batch size, dropout probability, number of layers, and hidden size. Every combination requires training the full model and evaluating it on a validation set. One training run takes four hours. Grid search over 5 values per hyperparameter gives $5^5 = 3125$ configurations. That is over 12,000 hours of compute - roughly 500 days on a single machine." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/bayesian-optimization/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-10-25T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-10-25T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Bayesian Optimization - Searching for the Best Hyperparameters Without Burning the Budget</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Oct 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/gaussian-processes/" target="_blank" rel="noopener noreferrer">Gaussian Processes</a>
+</li>
+<li><a href="/posts/cross-validation/" target="_blank" rel="noopener noreferrer">Cross-Validation - Estimating How Well Your Model Will Generalize</a>
+</li>
+</ul>
+<hr>
+<p>You have a neural network with five hyperparameters: learning rate, batch size, dropout probability, number of layers, and hidden size. Every combination requires training the full model and evaluating it on a validation set. One training run takes four hours. Grid search over 5 values per hyperparameter gives $5^5 = 3125$ configurations. That is over 12,000 hours of compute - roughly 500 days on a single machine.</p>
+<p>There has to be a smarter way. Bayesian optimization is that smarter way.</p>
+<h2 id="the-objective-function">The Objective Function</h2>
+<p>Define $f(x)$ as the validation performance (say, validation accuracy) when you train with hyperparameter configuration $x$. We want to find $x^* = \arg\max_x f(x)$.</p>
+<p>Three properties make this hard:</p>
+<ol>
+<li><strong>Expensive to evaluate.</strong> Each call to $f$ requires a full training run. You can afford tens of evaluations, not thousands.</li>
+<li><strong>No gradients.</strong> The validation metric is not differentiable with respect to the hyperparameters in general. You cannot run gradient descent on $f$ directly. (This is a different optimization problem from training the model, where gradients of the training loss are available.)</li>
+<li><strong>Black box.</strong> You get a number out when you put a configuration in. You have no analytic expression for $f$, no formula to reason about. Only a sequence of evaluated points.</li>
+</ol>
+<p>This is called <strong>black-box optimization</strong>. The goal is to find the maximum of $f$ while calling $f$ as few times as possible.</p>
+<h2 id="why-grid-search-and-random-search-fall-short">Why Grid Search and Random Search Fall Short</h2>
+<p><strong>Grid search</strong> evaluates a fixed grid of hyperparameter combinations. It is exhaustive within the grid but wastes evaluations: if a region of the grid is bad, grid search still evaluates all grid points in that region. It also misses points between grid values - the true optimum may lie between the grid lines.</p>
+<p><strong>Random search</strong> (Bergstra and Bengio, 2012) is surprisingly better. The key insight: if only 2 of your 5 hyperparameters actually matter to performance, random search effectively searches those 2 important dimensions much more densely than grid search does. Grid search allocates equal evaluation budget to all dimensions including the irrelevant ones; random search does not.</p>
+<p>But both methods share a fatal flaw: they ignore what was already evaluated. If configuration $x = (0.001, 64, 0.3, 4, 256)$ gave 91% validation accuracy and configuration $x' = (0.001, 64, 0.3, 4, 512)$ is very similar, you have good reason to believe $x'$ will also perform well - or that slightly different values near $(0.001, 64, 0.3, 4, \cdot)$ might do even better. Grid search and random search throw away that information completely. Every evaluation is independent.</p>
+<h2 id="the-core-idea---use-what-you-already-know">The Core Idea - Use What You Already Know</h2>
+<p>Bayesian optimization builds a model of $f$ from the evaluations it has already made, then uses that model to decide intelligently where to evaluate next.</p>
+<p>After evaluating $f$ at points $x_1, \ldots, x_t$, you have a dataset of observations ${(x_i, f(x_i))}_{i=1}^t$. Fit a <strong>surrogate model</strong> - a probabilistic model that predicts $f(x)$ at every unobserved point $x$ and also quantifies its uncertainty about that prediction. Use the surrogate to compute an <strong>acquisition function</strong> that scores each candidate point $x$ by how useful it would be to evaluate next. Evaluate $f$ at the point that maximizes the acquisition function. Update the surrogate with the new observation. Repeat.</p>
+<p>This is <strong>sequential model-based optimization (SMBO)</strong>. Each evaluation informs the next. The surrogate gradually becomes more accurate as more observations accumulate, and the acquisition function focuses the remaining budget on the most promising regions.</p>
+<h2 id="gaussian-processes-as-the-surrogate">Gaussian Processes as the Surrogate</h2>
+<p>A <strong>Gaussian Process (GP)</strong> is the standard surrogate model for Bayesian optimization. A GP is a distribution over functions: it defines a probability distribution over all possible functions $f$, and conditioning on observations gives a posterior distribution over functions consistent with those observations.</p>
+<p>Formally, a GP is specified by a mean function $m(x)$ and a covariance kernel $k(x, x')$. The kernel captures how similar we expect $f$ to be at two nearby points. A common choice is the <strong>squared exponential kernel</strong>:</p>
+<p>$$k(x, x') = \sigma_f^2 \exp!\left(-\frac{|x - x'|^2}{2\ell^2}\right)$$</p>
+<p>Here $\sigma_f^2$ is the signal variance (overall scale of $f$&rsquo;s variation) and $\ell$ is the <strong>length scale</strong> (how quickly $f$ changes - small $\ell$ means $f$ can vary rapidly, large $\ell$ means $f$ is smooth). Both are hyperparameters of the GP itself, learned from the observations by maximizing marginal likelihood.</p>
+<p>Given $t$ observations, the GP posterior at any new point $x$ is a Gaussian:</p>
+<p>$$p(f(x) \mid \text{data}) = \mathcal{N}(\mu(x), \sigma^2(x))$$</p>
+<p>The posterior mean $\mu(x)$ is the GP&rsquo;s best guess for $f(x)$. The posterior variance $\sigma^2(x)$ quantifies uncertainty. Near observed points, the variance is small (we are confident). Far from any observation, the variance is large (we are uncertain).</p>
+<p>This is exactly what Bayesian optimization needs: a model that not only predicts, but also knows when it does not know.</p>
+<h2 id="the-acquisition-function">The Acquisition Function</h2>
+<p>The acquisition function $\alpha(x)$ takes the GP&rsquo;s posterior mean and variance at point $x$ and returns a score for how useful it would be to evaluate $f(x)$ next. Maximizing $\alpha$ gives the next point to evaluate.</p>
+<p>The central tension is <strong>exploration vs exploitation</strong>. Exploitation means evaluating near the current best known point - likely to give a good result but unlikely to discover something better. Exploration means evaluating in high-uncertainty regions - the GP does not know what is there, and there might be something excellent.</p>
+<p><strong>Expected Improvement (EI).</strong> Let $f^* = \max_{i \leq t} f(x_i)$ be the current best observed value. The expected improvement at $x$ is the expected amount by which $f(x)$ would exceed $f^*$:</p>
+<p>$$\text{EI}(x) = \mathbb{E}!\left[\max(0,\ f(x) - f^*)\right]$$</p>
+<p>Under the GP, $f(x) \sim \mathcal{N}(\mu(x), \sigma^2(x))$, and EI has a closed form:</p>
+<p>$$\text{EI}(x) = (\mu(x) - f^* - \xi) \cdot \Phi(Z) + \sigma(x) \cdot \phi(Z)$$</p>
+<p>where $Z = \frac{\mu(x) - f^* - \xi}{\sigma(x)}$, $\Phi$ is the standard normal CDF, $\phi$ is the standard normal PDF, and $\xi \geq 0$ is a small exploration parameter (typically 0.01).</p>
+<p>The formula rewards two things simultaneously: a high mean $\mu(x)$ (the GP predicts a good value there) and a high standard deviation $\sigma(x)$ (uncertainty - something good might be lurking). EI is zero where $\mu(x) &lt; f^*$ and $\sigma(x)$ is also small (we confidently predict this region is bad).</p>
+<p><strong>Upper Confidence Bound (UCB).</strong> A simpler approach:</p>
+<p>$$\text{UCB}(x) = \mu(x) + \kappa \cdot \sigma(x)$$</p>
+<p>The acquisition score is just the mean plus $\kappa$ times the standard deviation. The hyperparameter $\kappa$ directly controls the exploration-exploitation trade-off: large $\kappa$ favors exploration of uncertain regions, small $\kappa$ favors exploitation near the current best.</p>
+<p><strong>Worked example.</strong> After 3 evaluations at $x \in {0.001, 0.01, 0.1}$ (learning rates) with validation accuracies ${85%, 91%, 79%}$, the GP posterior has high mean near $x = 0.01$ (the current best) and also high uncertainty near $x = 0.003$ (never evaluated, but adjacent to a good region). EI will score $x = 0.003$ highly: maybe the true optimum is nearby and we have not looked there yet. EI will score $x = 0.2$ (far from all evaluated points) highly for exploration. The next evaluation goes wherever EI is highest.</p>
+<h2 id="the-full-loop">The Full Loop</h2>
+<ol>
+<li>Evaluate $f$ at a small number of random configurations to initialize (typically 5-10 points).</li>
+<li>Fit a GP to the observed ${(x_i, f(x_i))}$ pairs.</li>
+<li>Maximize the acquisition function $\alpha(x)$ over the hyperparameter space to find $x_{\text{next}}$. (This inner optimization is cheap because evaluating $\alpha$ is fast - it just queries the GP.)</li>
+<li>Evaluate $f(x_{\text{next}})$ - train the model with those hyperparameters and measure validation accuracy.</li>
+<li>Add $(x_{\text{next}}, f(x_{\text{next}}))$ to the observations.</li>
+<li>Go to step 2.</li>
+</ol>
+<p>After 20-50 total evaluations, Bayesian optimization typically finds a configuration that would require hundreds or thousands of random search evaluations to match.</p>
+<h2 id="why-bo-beats-random-search">Why BO Beats Random Search</h2>
+<p>Random search allocates evaluations uniformly over the hyperparameter space regardless of what was found. Bayesian optimization concentrates evaluations in the regions the surrogate identifies as promising, while still occasionally exploring uncertain regions. The more informative each evaluation, the faster convergence to the optimum.</p>
+<p>The gain is most dramatic when $f$ is smooth (nearby hyperparameters give similar performance) and when only a few hyperparameters matter most. The GP&rsquo;s length scale parameter adapts to this: if performance is insensitive to batch size, the GP learns a long length scale in that dimension and stops sending evaluations there.</p>
+<h2 id="when-bo-breaks-down">When BO Breaks Down</h2>
+<p><strong>Scalability of the GP.</strong> Fitting a GP requires inverting the $t \times t$ covariance matrix, which costs $O(t^3)$ time and $O(t^2)$ memory. After a few hundred observations, standard GP inference becomes slow. Sparse GP approximations exist but add complexity.</p>
+<p><strong>High dimensionality.</strong> GPs work well in low-dimensional hyperparameter spaces (under roughly 20 dimensions). In high dimensions, the surrogate needs many observations to model $f$ accurately because there are many directions to explore. For neural architecture search with hundreds of discrete choices, GP-based BO is impractical.</p>
+<p><strong>Discrete and conditional spaces.</strong> Hyperparameter spaces often have structure: the number of hidden units is discrete; the dropout probability only applies if dropout is enabled. Standard GP kernels assume continuous inputs. Extensions exist (random forest surrogates, TPE) but require departing from the clean GP framework.</p>
+<h2 id="tools-in-practice">Tools in Practice</h2>
+<p><strong>Optuna</strong> is the most widely used hyperparameter optimization framework in production ML today. It implements <strong>Tree-structured Parzen Estimator (TPE)</strong> - a BO variant that models $p(x \mid f(x) &gt; \tau)$ and $p(x \mid f(x) \leq \tau)$ separately using kernel density estimators, rather than fitting a GP over the full space. TPE scales much better than GP-based BO and handles discrete and conditional hyperparameter spaces naturally.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> optuna
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">objective</span>(trial):
+    lr <span style="color:#f92672">=</span> trial<span style="color:#f92672">.</span>suggest_float(<span style="color:#e6db74">&#34;lr&#34;</span>, <span style="color:#ae81ff">1e-5</span>, <span style="color:#ae81ff">1e-1</span>, log<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+    dropout <span style="color:#f92672">=</span> trial<span style="color:#f92672">.</span>suggest_float(<span style="color:#e6db74">&#34;dropout&#34;</span>, <span style="color:#ae81ff">0.0</span>, <span style="color:#ae81ff">0.5</span>)
+    n_layers <span style="color:#f92672">=</span> trial<span style="color:#f92672">.</span>suggest_int(<span style="color:#e6db74">&#34;n_layers&#34;</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">5</span>)
+    <span style="color:#75715e"># ... train model with these hyperparameters ...</span>
+    <span style="color:#66d9ef">return</span> validation_accuracy
+
+study <span style="color:#f92672">=</span> optuna<span style="color:#f92672">.</span>create_study(direction<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;maximize&#34;</span>)
+study<span style="color:#f92672">.</span>optimize(objective, n_trials<span style="color:#f92672">=</span><span style="color:#ae81ff">50</span>)
+
+print(study<span style="color:#f92672">.</span>best_params)
+</code></pre></div><p><strong>Hyperopt</strong> is older and also implements TPE. <strong>scikit-optimize</strong> (<code>skopt</code>) implements GP-based BO and is easy to use for small experiments. <strong>BoTorch</strong> is a PyTorch-based framework for scalable BO with GPU-accelerated GP inference and modern acquisition functions, used when the full GP framework is needed at scale.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Black-box optimization</td>
+<td>Maximize $f(x)$ when $f$ is expensive to evaluate, non-differentiable, and has no analytic form</td>
+</tr>
+<tr>
+<td>Random search vs grid search</td>
+<td>Random search better when few hyperparameters matter; both ignore previous evaluations</td>
+</tr>
+<tr>
+<td>Surrogate model</td>
+<td>A cheap probabilistic model of $f$; GP gives mean and uncertainty at every point</td>
+</tr>
+<tr>
+<td>GP posterior</td>
+<td>Mean = best guess; variance = uncertainty; low near observed points, high far away</td>
+</tr>
+<tr>
+<td>Acquisition function</td>
+<td>Scores candidate points by expected usefulness; balances exploration and exploitation</td>
+</tr>
+<tr>
+<td>Expected Improvement</td>
+<td>$\mathbb{E}[\max(0, f(x) - f^*)]$; rewards high mean and high uncertainty simultaneously</td>
+</tr>
+<tr>
+<td>UCB</td>
+<td>$\mu(x) + \kappa \sigma(x)$; $\kappa$ controls exploration-exploitation trade-off</td>
+</tr>
+<tr>
+<td>GP scaling</td>
+<td>$O(t^3)$ in the number of observations; impractical above a few hundred evaluations</td>
+</tr>
+<tr>
+<td>TPE</td>
+<td>BO variant used in Optuna; scales better than GP-based BO; handles discrete spaces</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/gaussian-processes/" target="_blank" rel="noopener noreferrer">Gaussian Processes - A Distribution Over Functions</a>
+</li>
+<li><a href="/posts/cross-validation/" target="_blank" rel="noopener noreferrer">Cross-Validation - Estimating How Well Your Model Will Generalize</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

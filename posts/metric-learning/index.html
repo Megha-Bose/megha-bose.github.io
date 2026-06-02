@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Metric Learning - Teaching the Model What &#39;Similar&#39; Means // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Metric Learning - Teaching the Model What &#39;Similar&#39; Means"/>
+<meta name="twitter:description" content="Helpful context:
+ Classical ML - k-NN, SVMs, and the Geometry of Classification  Neural Networks and Perceptrons    To find the $k$ nearest neighbors of a point, you need a distance function. By default, everyone uses Euclidean distance:
+$$d(x, y) = \sqrt{\sum_{i=1}^d (x_i - y_i)^2}$$
+This distance treats every dimension as equally important. If your features are pixel values in a 100x100 image, Euclidean distance sums up squared differences across all 10,000 pixels."/>
+
+    <meta property="og:title" content="Metric Learning - Teaching the Model What &#39;Similar&#39; Means" />
+<meta property="og:description" content="Helpful context:
+ Classical ML - k-NN, SVMs, and the Geometry of Classification  Neural Networks and Perceptrons    To find the $k$ nearest neighbors of a point, you need a distance function. By default, everyone uses Euclidean distance:
+$$d(x, y) = \sqrt{\sum_{i=1}^d (x_i - y_i)^2}$$
+This distance treats every dimension as equally important. If your features are pixel values in a 100x100 image, Euclidean distance sums up squared differences across all 10,000 pixels." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/metric-learning/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-10-22T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-10-22T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Metric Learning - Teaching the Model What &#39;Similar&#39; Means</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Oct 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/classical-ml-k-nn-svms/" target="_blank" rel="noopener noreferrer">Classical ML - k-NN, SVMs, and the Geometry of Classification</a>
+</li>
+<li><a href="/posts/neural-networks-perceptrons/" target="_blank" rel="noopener noreferrer">Neural Networks and Perceptrons</a>
+</li>
+</ul>
+<hr>
+<p>To find the $k$ nearest neighbors of a point, you need a distance function. By default, everyone uses Euclidean distance:</p>
+<p>$$d(x, y) = \sqrt{\sum_{i=1}^d (x_i - y_i)^2}$$</p>
+<p>This distance treats every dimension as equally important. If your features are pixel values in a 100x100 image, Euclidean distance sums up squared differences across all 10,000 pixels. The result is problematic in a precise way: Euclidean distance between two photos of the same face taken under different lighting conditions can be enormous (every pixel changed). Euclidean distance between two different people&rsquo;s faces photographed under similar conditions might be small (similar average pixel values, similar lighting). The distance function disagrees with the human notion of &ldquo;same person.&rdquo;</p>
+<p>The core question: instead of assuming a distance function, can we learn one from data?</p>
+<h2 id="what-makes-a-valid-distance-metric">What Makes a Valid Distance Metric</h2>
+<p>A valid distance metric is a function $d: \mathcal{X} \times \mathcal{X} \to \mathbb{R}$ satisfying three properties:</p>
+<ol>
+<li><strong>Non-negativity and identity</strong>: $d(x, y) \geq 0$, with $d(x, y) = 0$ if and only if $x = y$.</li>
+<li><strong>Symmetry</strong>: $d(x, y) = d(y, x)$.</li>
+<li><strong>Triangle inequality</strong>: $d(x, z) \leq d(x, y) + d(y, z)$.</li>
+</ol>
+<p>The triangle inequality is the most substantive: it says you cannot have a shorter path from $x$ to $z$ by going via $y$ than by going directly.</p>
+<p>The <strong>Mahalanobis distance</strong> is the most natural generalization of Euclidean distance that can be learned:</p>
+<p>$$d_M(x, y) = \sqrt{(x - y)^\top M (x - y)}$$</p>
+<p>Here $M$ is a $d \times d$ positive semi-definite matrix. When $M = I$ (the identity matrix), this reduces exactly to Euclidean distance. When $M$ is diagonal, it scales each dimension independently - a weighted Euclidean distance. When $M$ is a full positive semi-definite matrix, it can rotate and scale the feature space in any direction. Because $M$ is positive semi-definite, all three metric properties are satisfied automatically.</p>
+<p><strong>Intuition for what $M$ does.</strong> Any positive semi-definite matrix $M$ can be written as $M = L^\top L$ for some matrix $L$. Then $d_M(x, y) = |L(x-y)|_2$. So the Mahalanobis distance is just the Euclidean distance after applying the linear transformation $L$ to the data. Learning $M$ is equivalent to learning a linear transformation of the feature space where Euclidean distance is meaningful.</p>
+<p><strong>Learning the matrix $M$ is metric learning.</strong></p>
+<h2 id="linear-metric-learning---lmnn">Linear Metric Learning - LMNN</h2>
+<p><strong>Large Margin Nearest Neighbor (LMNN)</strong> learning is a classical metric learning algorithm. The idea is intuitive: for each training point $x_i$, define its $k$ same-class neighbors as its <strong>target neighbors</strong> - the points it should be close to. Then optimize $M$ to satisfy two constraints:</p>
+<ol>
+<li>Target neighbors should be pulled close to $x_i$ (small $d_M(x_i, x_j)$ for same-class $j$).</li>
+<li>Points of a different class should be pushed away from $x_i$ by at least a margin $\delta$ relative to its target neighbors (no impostor should be closer to $x_i$ than a target neighbor).</li>
+</ol>
+<p>Formally, the objective is a semidefinite program (SDP) - an optimization problem with a linear objective and a constraint that $M$ must be positive semi-definite. SDPs can be solved exactly but scale poorly. For a dataset of $n$ points in $d$ dimensions, LMNN&rsquo;s SDP becomes impractical for $n$ beyond a few tens of thousands.</p>
+<p>LMNN works well when the data is low-dimensional and the class structure is locally consistent. It is an important baseline and its formulation makes the intuition of metric learning concrete.</p>
+<h2 id="siamese-networks">Siamese Networks</h2>
+<p>The deep learning approach to metric learning replaces the linear transformation $L$ with a neural network $f_\theta$. Two copies of the same network - sharing all weights - process two inputs and produce embeddings. The distance between the embeddings determines whether the inputs are similar.</p>
+<p><strong>Architecture.</strong> A Siamese network takes two inputs $x_a$ and $x_b$, passes each through the same neural network $f_\theta$ (same weights, applied independently), and produces embeddings $z_a = f_\theta(x_a)$ and $z_b = f_\theta(x_b)$. The distance $d(z_a, z_b) = |z_a - z_b|_2$ is used as a similarity score.</p>
+<p>Weight sharing is critical: using the same weights for both inputs guarantees that the distance is symmetric. It also means the network generalizes - the same function is applied to every input, so a representation learned from one example transfers to all inputs.</p>
+<p><strong>Training with contrastive loss.</strong> Training pairs are labeled &ldquo;same class&rdquo; or &ldquo;different class.&rdquo; The <strong>contrastive loss</strong> is:</p>
+<p>$$\mathcal{L} = y \cdot d(z_a, z_b)^2 + (1 - y) \cdot \max(0, m - d(z_a, z_b))^2$$</p>
+<p>Here $y = 1$ if the pair is same-class and $y = 0$ if different-class, and $m$ is a margin. For same-class pairs ($y=1$), the loss pushes the embeddings together by minimizing distance. For different-class pairs ($y=0$), the loss pushes embeddings apart, but only up to margin $m$ - once the embeddings are farther than $m$, the loss is zero (no need to push them further apart).</p>
+<p>The network learns a feature representation where semantically similar inputs are nearby and dissimilar inputs are far away. The final layer of the network is the embedding, not a class label. This distinction matters: the output is a location in a learned metric space, not a softmax over fixed classes.</p>
+<h2 id="triplet-loss">Triplet Loss</h2>
+<p>Contrastive loss works but has a practical weakness: the quality of training depends heavily on which pairs you choose. Random pairs are often too easy (very different examples are already far apart) and contribute zero gradient.</p>
+<p><strong>Triplet loss</strong> addresses this by training on triplets instead of pairs. A triplet $(a, p, n)$ consists of:</p>
+<ul>
+<li>An <strong>anchor</strong> $a$ - the reference point.</li>
+<li>A <strong>positive</strong> $p$ - a different example from the same class as $a$.</li>
+<li>A <strong>negative</strong> $n$ - an example from a different class.</li>
+</ul>
+<p>The loss enforces that the anchor is closer to the positive than to the negative by at least a margin $\alpha$:</p>
+<p>$$\mathcal{L} = \max!\left(0,\ d(f(a), f(p))^2 - d(f(a), f(n))^2 + \alpha\right)$$</p>
+<p>If the anchor is already closer to the positive than the negative by more than $\alpha$, the loss is zero - this triplet is &ldquo;easy&rdquo; and contributes nothing. Gradient only flows for triplets where the constraint is violated or nearly so.</p>
+<p><strong>Hard negative mining.</strong> For a given anchor and positive, choose the negative that is closest to the anchor in the current embedding space - the &ldquo;hardest&rdquo; negative. This ensures that most triplets in a batch are &ldquo;hard&rdquo; and contribute meaningful gradient. Without hard negative mining, most triplets are easy and training stagnates. In practice, semi-hard negatives (negatives farther than the positive but within the margin) are often more stable than the absolute hardest negatives.</p>
+<p><strong>Worked example.</strong> Anchor $a$ is a photo of person A. Positive $p$ is a different photo of person A. Negative $n$ is a photo of person B. The triplet loss says: the embedding of $a$ must be closer to $p$ than to $n$ by at least $\alpha = 0.2$. If $d(f(a), f(p)) = 0.5$ and $d(f(a), f(n)) = 0.6$, the loss is $\max(0, 0.5 - 0.6 + 0.2) = \max(0, 0.1) = 0.1$. There is a constraint violation and the loss is positive. If instead $d(f(a), f(n)) = 0.8$, the loss is $\max(0, 0.5 - 0.8 + 0.2) = \max(0, -0.1) = 0$. The triplet is easy and contributes no gradient.</p>
+<h2 id="applications">Applications</h2>
+<p><strong>Face verification.</strong> Face verification asks: are these two photos the same person? Not &ldquo;who is this person?&rdquo; (face recognition) but &ldquo;are these the same?&rdquo; FaceNet (Schroff et al., Google, 2015) trains a deep CNN with triplet loss to produce 128-dimensional embeddings of face images. The training set contains millions of face images across hundreds of thousands of identities. At test time, two faces are embedded and their L2 distance is computed. If the distance is below a learned threshold, the system says &ldquo;same person.&rdquo; The system is not asked to recognize any specific identity - only to determine sameness. This allows it to verify identities it never saw during training.</p>
+<p><strong>Few-shot learning.</strong> Suppose you have 5 labeled examples of a new animal species and want to classify unseen images. A standard classifier cannot handle new classes without retraining. But in a good metric space, you can classify by nearest-neighbor: embed the 5 examples and the query image, and assign the query to the class whose examples are closest. <strong>Prototypical Networks</strong> extend this: compute the mean embedding (&ldquo;prototype&rdquo;) of each class&rsquo;s few examples, and classify by nearest prototype. This works because the metric space generalizes - the embedding function learned over many training classes produces an embedding where new classes also cluster.</p>
+<p><strong>Person re-identification.</strong> A surveillance system with cameras at different locations needs to track whether the same person appears in multiple cameras. Raw pixel distance fails completely (different lighting, angle, occlusion). A metric-learned embedding, trained on pairs of images from the same and different identities, produces representations that are robust to these variations. The same re-id model can be deployed to a new location without retraining.</p>
+<p><strong>Signature verification.</strong> Determine if two handwritten signatures were signed by the same person. The training set contains pairs of genuine-genuine and genuine-forgery pairs. A Siamese network learns an embedding where genuine signatures of the same person are close and forgeries are far from genuine signatures.</p>
+<h2 id="why-this-differs-from-training-a-classifier">Why This Differs From Training a Classifier</h2>
+<p>A softmax classifier learns a fixed set of $C$ output classes. The final layer maps the embedding to $C$ scores. Everything the classifier knows is about those $C$ classes. At test time, it can only assign inputs to one of those classes.</p>
+<p>A metric learner learns a similarity function. Its output is an embedding, not a class label. Because the network has learned what similarity means in general - not which specific classes to recognize - it generalizes to new classes at test time. Give it 5 examples of a class it never saw and it can tell you which new examples belong to that class by distance. This is the fundamental reason metric learning is useful for few-shot and open-set recognition problems: the learned distance function transfers; the class boundaries do not.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metric learning</td>
+<td>Learn a distance function from data rather than assuming Euclidean distance</td>
+</tr>
+<tr>
+<td>Mahalanobis distance</td>
+<td>$\sqrt{(x-y)^\top M (x-y)}$; valid metric for any positive semi-definite $M$</td>
+</tr>
+<tr>
+<td>LMNN</td>
+<td>Linear metric learning; pull target neighbors close, push impostors away by a margin</td>
+</tr>
+<tr>
+<td>Siamese network</td>
+<td>Two weight-shared copies; output is an embedding; distance determines similarity</td>
+</tr>
+<tr>
+<td>Contrastive loss</td>
+<td>Minimize distance for same-class pairs; maximize (up to margin) for different-class pairs</td>
+</tr>
+<tr>
+<td>Triplet loss</td>
+<td>Force anchor closer to positive than negative by margin $\alpha$; hard negative mining matters</td>
+</tr>
+<tr>
+<td>Few-shot learning</td>
+<td>Prototypical Networks classify by nearest prototype in learned metric space</td>
+</tr>
+<tr>
+<td>Generalization</td>
+<td>Metric learning transfers to unseen classes; classifiers do not</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/dimensionality-reduction/" target="_blank" rel="noopener noreferrer">Dimensionality Reduction - Seeing High-Dimensional Data in Two Dimensions</a>
+</li>
+<li><a href="/posts/building-llm-agents/" target="_blank" rel="noopener noreferrer">Building LLM Agents - few-shot concepts</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

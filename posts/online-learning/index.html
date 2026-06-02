@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Online Learning - Updating Models One Example at a Time // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Online Learning - Updating Models One Example at a Time"/>
+<meta name="twitter:description" content="Helpful context:
+ Machine Learning First Principles  Gradient Descent - The Engine Behind Every Learned Model    The standard assumption in machine learning is comfortable: you have all your data, you train once, and you deploy. The model is frozen. The world stands still.
+Now consider a fraud detection system that processes thousands of transactions per second. A news recommendation engine where yesterday&rsquo;s model knows nothing about today&rsquo;s breaking story."/>
+
+    <meta property="og:title" content="Online Learning - Updating Models One Example at a Time" />
+<meta property="og:description" content="Helpful context:
+ Machine Learning First Principles  Gradient Descent - The Engine Behind Every Learned Model    The standard assumption in machine learning is comfortable: you have all your data, you train once, and you deploy. The model is frozen. The world stands still.
+Now consider a fraud detection system that processes thousands of transactions per second. A news recommendation engine where yesterday&rsquo;s model knows nothing about today&rsquo;s breaking story." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/online-learning/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-10-18T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-10-18T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Online Learning - Updating Models One Example at a Time</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Oct 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/machine-learning-first-principles/" target="_blank" rel="noopener noreferrer">Machine Learning First Principles</a>
+</li>
+<li><a href="/posts/gradient-descent/" target="_blank" rel="noopener noreferrer">Gradient Descent - The Engine Behind Every Learned Model</a>
+</li>
+</ul>
+<hr>
+<p>The standard assumption in machine learning is comfortable: you have all your data, you train once, and you deploy. The model is frozen. The world stands still.</p>
+<p>Now consider a fraud detection system that processes thousands of transactions per second. A news recommendation engine where yesterday&rsquo;s model knows nothing about today&rsquo;s breaking story. A stock price predictor operating in a market that shifts every millisecond. You cannot retrain from scratch every few minutes. The world does not wait for you to finish your training loop.</p>
+<p>This is the setting that online learning is built for.</p>
+<h2 id="batch-vs-online-learning">Batch vs Online Learning</h2>
+<p><strong>Batch learning</strong> means training on the entire dataset at once, producing a fixed model, and deploying it. The model does not change after training ends. This is the default mode for almost every tutorial and course.</p>
+<p><strong>Online learning</strong> means updating the model parameters on each new example - or each small group of examples - as they arrive, without ever seeing the full dataset at once. The model is always changing. The model at time $t+1$ has seen one more example than the model at time $t$.</p>
+<p>The trade-off is real. Batch learning allows multiple passes over the data, more stable gradient estimates, and careful validation before deployment. Online learning allows continuous adaptation, handles unbounded data streams, and can track a changing world. The right choice depends on whether your data arrives all at once or continuously, and whether the underlying distribution is stationary or shifting.</p>
+<h2 id="the-perceptron---the-original-online-learner">The Perceptron - the Original Online Learner</h2>
+<p>The perceptron algorithm (Rosenblatt, 1957) is one of the earliest machine learning algorithms, and it is inherently online. It classifies inputs into two classes: $+1$ and $-1$.</p>
+<p>The setup: a weight vector $w \in \mathbb{R}^d$ and a bias $b$. Given an input $x$, the perceptron predicts $\hat{y} = \text{sign}(w \cdot x + b)$. That is the full model.</p>
+<p>The online update rule is:</p>
+<ul>
+<li>Receive example $(x_t, y_t)$ where $y_t \in {+1, -1}$.</li>
+<li>Predict $\hat{y}_t = \text{sign}(w_t \cdot x_t + b)$.</li>
+<li>If $\hat{y}_t = y_t$: do nothing. The model was right.</li>
+<li>If $\hat{y}<em>t \neq y_t$: update $w</em>{t+1} \leftarrow w_t + \eta \cdot y_t \cdot x_t$.</li>
+</ul>
+<p>Here $\eta &gt; 0$ is the <strong>learning rate</strong> - a scalar controlling how large each update is. If the model predicted $-1$ but the true label was $+1$, then $y_t \cdot x_t$ points in the direction of $x_t$, pushing the weight vector toward classifying $x_t$ as $+1$ next time. If the model was right, the weights do not change at all. The perceptron is lazy - it only updates when it makes a mistake.</p>
+<p><strong>Worked example.</strong> Suppose $w = [0, 0]$, $\eta = 1$. We receive the example $x = [1, 2]$, $y = +1$. The prediction is $\text{sign}(0 \cdot 1 + 0 \cdot 2) = \text{sign}(0) = -1$ (treating ties as $-1$). We were wrong. The update is $w \leftarrow [0,0] + 1 \cdot (+1) \cdot [1,2] = [1, 2]$. On the next example with similar $x$, the model now predicts $\text{sign}(1 \cdot 1 + 2 \cdot 2) = \text{sign}(5) = +1$. Correct.</p>
+<p>The <strong>perceptron convergence theorem</strong> says that if the training data is linearly separable, the perceptron is guaranteed to converge to a separating hyperplane in a finite number of updates. If the data is not linearly separable, it never converges and cycles forever.</p>
+<h2 id="sgd-as-online-learning">SGD as Online Learning</h2>
+<p>Stochastic gradient descent (SGD) with batch size 1 is online learning. For each incoming example $(x_t, y_t)$, compute the gradient of the loss with respect to the parameters using only that single example, and take a gradient step. The parameters are updated after every single data point.</p>
+<p>$$\theta_{t+1} \leftarrow \theta_t - \eta \cdot \nabla_\theta \mathcal{L}(\theta_t; x_t, y_t)$$</p>
+<p>Here $\theta_t$ are the model parameters at step $t$, $\mathcal{L}$ is the loss function, and $\eta$ is the learning rate.</p>
+<p>Mini-batch SGD (batch sizes of 32, 64, 256) is a middle ground - it averages the gradient over a small group of examples, reducing noise while still updating frequently. In an online setting, mini-batches correspond to processing a small buffer of recently arrived examples before updating.</p>
+<p>The important consequence: any algorithm that can be optimized with SGD can in principle be run online. Linear regression, logistic regression, and neural networks all fit this description.</p>
+<h2 id="which-algorithms-support-online-learning-natively">Which Algorithms Support Online Learning Natively</h2>
+<p>Not every algorithm can be updated incrementally. The key question is whether the algorithm can incorporate a new example without reprocessing all previous examples.</p>
+<p><strong>Online-compatible algorithms:</strong></p>
+<ul>
+<li>Perceptron - updates one example at a time by design.</li>
+<li>SGD-based models - linear regression, logistic regression, neural networks - any model with a gradient-computable loss.</li>
+<li>Naive Bayes - internally maintains counts of features per class. Adding a new example means incrementing counts. No retraining required.</li>
+<li>Passive-aggressive algorithms - an online learning framework that updates aggressively when a mistake is made and remains passive otherwise, with a configurable aggressiveness parameter.</li>
+</ul>
+<p><strong>Algorithms that require all data at once:</strong></p>
+<ul>
+<li>Decision trees - the splitting criterion requires computing statistics over the entire dataset. Incremental variants exist but are complex and less efficient.</li>
+<li>Standard SVMs - the quadratic programming formulation requires access to all support vectors simultaneously.</li>
+<li>k-NN - not a parametric model at all; it stores all training examples and uses them at inference time. Every new example is simply added to the store, but inference cost grows linearly with the number of stored examples.</li>
+</ul>
+<p>In scikit-learn, the online learning interface is <code>partial_fit</code>. Algorithms that support incremental learning implement <code>partial_fit(X_batch, y_batch)</code> in addition to the usual <code>fit</code>. Calling <code>partial_fit</code> updates the model on the provided batch without forgetting previous updates.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> sklearn.linear_model <span style="color:#f92672">import</span> SGDClassifier
+
+clf <span style="color:#f92672">=</span> SGDClassifier(loss<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;log_loss&#34;</span>, learning_rate<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;optimal&#34;</span>)
+
+<span style="color:#75715e"># Streaming loop - data arrives one batch at a time</span>
+<span style="color:#66d9ef">for</span> X_batch, y_batch <span style="color:#f92672">in</span> data_stream():
+    clf<span style="color:#f92672">.</span>partial_fit(X_batch, y_batch, classes<span style="color:#f92672">=</span>[<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>])
+
+<span style="color:#75715e"># At any point the model can predict</span>
+predictions <span style="color:#f92672">=</span> clf<span style="color:#f92672">.</span>predict(X_new)
+</code></pre></div><p>Algorithms in scikit-learn that support <code>partial_fit</code>: <code>SGDClassifier</code>, <code>SGDRegressor</code>, <code>Perceptron</code>, <code>MultinomialNB</code>, <code>BernoulliNB</code>, <code>PassiveAggressiveClassifier</code>, <code>PassiveAggressiveRegressor</code>, <code>MiniBatchKMeans</code>.</p>
+<h2 id="concept-drift---the-enemy-of-online-learning">Concept Drift - the Enemy of Online Learning</h2>
+<p>Online learning solves the problem of continuous data arrival. But it introduces a new problem: the world changes. The distribution of the data at time $t + 1000$ may be very different from the distribution at time $t$.</p>
+<p><strong>Concept drift</strong> is when the conditional distribution $p(y \mid x)$ changes over time. The same input $x$ now maps to a different output $y$ than it did before. A model trained on pre-pandemic shopping patterns fails in 2023 because consumer behavior shifted. A fraud detection model trained before a new attack vector is introduced will not catch the new fraud because the distribution of fraud has changed.</p>
+<p>Types of drift:</p>
+<ul>
+<li><strong>Sudden drift</strong>: the distribution changes abruptly. A new product launches and user preferences shift overnight.</li>
+<li><strong>Gradual drift</strong>: the distribution shifts slowly. Consumer tastes evolve over months.</li>
+<li><strong>Recurring drift</strong>: the distribution cycles. A seasonal pattern where shopping behavior in December differs from July, then returns.</li>
+</ul>
+<p><strong>Detecting drift.</strong> One approach is to monitor model performance on a rolling window of recent examples. If the validation accuracy on the last 1000 examples drops significantly relative to the previous window, drift has likely occurred. Two statistical tests designed specifically for streaming data:</p>
+<ul>
+<li><strong>Page-Hinkley test</strong>: tracks the cumulative sum of deviations of a monitored statistic from its running mean. A large deviation signals drift.</li>
+<li><strong>ADWIN (ADaptive WINdowing)</strong>: maintains a sliding window of recent data and automatically shrinks the window when the distribution of the old portion differs significantly from the recent portion. The window size adapts to the rate of drift.</li>
+</ul>
+<p><strong>Handling drift.</strong> Plain online learning adapts slowly because all past examples contribute equally to the current weights. Better strategies:</p>
+<ul>
+<li>Weight recent examples more heavily by using a decaying learning rate or explicit example weights.</li>
+<li>Use a sliding window and discard examples older than $W$ steps. The model only reflects the last $W$ examples.</li>
+<li>Ensemble approaches: maintain a pool of models trained on different time windows, blending them or selecting the best-performing one on recent data.</li>
+</ul>
+<h2 id="the-forgetting-problem">The Forgetting Problem</h2>
+<p>Naive online learning accumulates all updates forever. If the distribution shifts, the old examples continue pulling the weights in the wrong direction. This is a slow, persistent form of interference.</p>
+<p>In neural networks, this becomes <strong>catastrophic forgetting</strong>: when you fine-tune a network on new data, gradient descent moves the weights toward the new data&rsquo;s objective, which can erase the patterns learned from old data. A network fine-tuned to recognize a new class of images might lose accuracy on classes it learned earlier.</p>
+<p>One principled solution is <strong>elastic weight consolidation (EWC)</strong>. The idea: identify which weights are most important for previously learned tasks (using the Fisher information matrix as a proxy), and add a regularization term that penalizes large changes to those important weights. The model can still adapt to new data but is constrained from moving away from its previous knowledge on the dimensions that mattered most.</p>
+<p>A simpler practical approach: keep a small replay buffer of old examples and mix them into each training batch. This way, the model is never trained only on new data; it always sees a mix of old and new.</p>
+<h2 id="real-deployments">Real Deployments</h2>
+<p><strong>Ad click-through rate prediction</strong> at scale (Google, Meta) is one of the highest-stakes applications of online learning. Hundreds of thousands of model updates per minute. The model must capture the fact that a newly viral topic at 2pm today is irrelevant by 6pm, and a completely new topic will dominate tomorrow. Batch retraining would always be stale. The models used are typically large logistic regression models or gradient-boosted trees with online variants, updated on every click event in real time.</p>
+<p><strong>Recommendation systems</strong> use implicit feedback (did the user click? did they watch the video to completion?) to update their models continuously. A recommendation made at 9am reflects user behavior through 8:59am. By noon, the model has already absorbed three hours of new signal.</p>
+<p><strong>Autonomous vehicle perception</strong> improves as the fleet encounters edge cases. When a specific driving scenario causes prediction errors, the model is updated incrementally with that scenario. The fleet effectively learns from its own mistakes in deployment.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Batch learning</td>
+<td>Train once on all data; model is frozen after deployment</td>
+</tr>
+<tr>
+<td>Online learning</td>
+<td>Update on each new example or mini-batch; model evolves continuously</td>
+</tr>
+<tr>
+<td>Perceptron update</td>
+<td>$w \leftarrow w + \eta \cdot y \cdot x$ when wrong; no update when right</td>
+</tr>
+<tr>
+<td><code>partial_fit</code></td>
+<td>scikit-learn interface for online-compatible algorithms</td>
+</tr>
+<tr>
+<td>Concept drift</td>
+<td>$p(y \mid x)$ changes over time; the model becomes stale</td>
+</tr>
+<tr>
+<td>ADWIN</td>
+<td>Adaptive windowing for drift detection in streams</td>
+</tr>
+<tr>
+<td>Catastrophic forgetting</td>
+<td>Fine-tuning erases old knowledge; EWC and replay buffers help</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/ensembles-forests-boosting/" target="_blank" rel="noopener noreferrer">Ensembles - Weak Learners That Combine Into Something Stronger</a>
+</li>
+<li><a href="/posts/bias-variance-overfitting/" target="_blank" rel="noopener noreferrer">Bias-Variance Tradeoff - Why Perfect Training Accuracy Is a Warning Sign</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
