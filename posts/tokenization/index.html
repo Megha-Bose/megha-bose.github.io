@@ -1,67 +1,111 @@
-<!doctype html><html lang="en-us">
-<head>
-<title>Tokenization - Breaking Language Into Pieces a Model Can Learn From // Megha Bose</title>
-<link rel="shortcut icon" href="/favicon.ico">
-<meta charset="utf-8">
-<meta name="generator" content="Hugo 0.92.2">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="author" content="Megha Bose">
-<meta name="description" content>
-<link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Tokenization - Breaking Language Into Pieces a Model Can Learn From">
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Tokenization - Breaking Language Into Pieces a Model Can Learn From // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Tokenization - Breaking Language Into Pieces a Model Can Learn From"/>
 <meta name="twitter:description" content="Helpful context:
- Transformers From First Principles - Why Attention Changed Everything  Probability Distributions - The Shapes That Randomness Takes    Consider the expression &ldquo;1 + 1 = 2&rdquo;. How many tokens is that in GPT-4&rsquo;s tokenizer? Seven: &#34;1&#34;, &#34; +&#34;, &#34; 1&#34;, &#34; =&#34;, &#34; 2&#34;. The spaces are part of the tokens. Now try &#34;2024&#34; - that&rsquo;s one token. What about &#34;100,000&#34;? Three tokens: &#34;100&#34;, &#34;,&#34;, &#34;000&#34;.">
-<meta property="og:title" content="Tokenization - Breaking Language Into Pieces a Model Can Learn From">
+ Transformers From First Principles - Why Attention Changed Everything  Probability Distributions - The Shapes That Randomness Takes    Consider the expression &ldquo;1 &#43; 1 = 2&rdquo;. How many tokens is that in GPT-4&rsquo;s tokenizer? Seven: &quot;1&quot;, &quot; &#43;&quot;, &quot; 1&quot;, &quot; =&quot;, &quot; 2&quot;. The spaces are part of the tokens. Now try &quot;2024&quot; - that&rsquo;s one token. What about &quot;100,000&quot;? Three tokens: &quot;100&quot;, &quot;,&quot;, &quot;000&quot;."/>
+
+    <meta property="og:title" content="Tokenization - Breaking Language Into Pieces a Model Can Learn From" />
 <meta property="og:description" content="Helpful context:
- Transformers From First Principles - Why Attention Changed Everything  Probability Distributions - The Shapes That Randomness Takes    Consider the expression &ldquo;1 + 1 = 2&rdquo;. How many tokens is that in GPT-4&rsquo;s tokenizer? Seven: &#34;1&#34;, &#34; +&#34;, &#34; 1&#34;, &#34; =&#34;, &#34; 2&#34;. The spaces are part of the tokens. Now try &#34;2024&#34; - that&rsquo;s one token. What about &#34;100,000&#34;? Three tokens: &#34;100&#34;, &#34;,&#34;, &#34;000&#34;.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://megha-bose.github.io/posts/tokenization/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2022-03-06T00:00:00+00:00">
-<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00">
-<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
-</head>
-<body>
-<header class="app-header">
-<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
-<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-<nav class="app-header-menu">
-<a class="app-header-menu-item" href="/about/">About Me</a>
-<br>
-<a class="app-header-menu-item" href="/resume/"> Resume</a>
-<br>
-<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-</nav>
-<div class="app-header-social">
-<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
-</a>
-<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</a>
-<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-</a>
-<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-</a>
-</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-<span class="theme-toggle-icon"></span>
-</button>
-</header>
-<main class="app-container">
-<article class="post">
-<header class="post-header">
-<h1 class="post-title">Tokenization - Breaking Language Into Pieces a Model Can Learn From</h1>
-<div class="post-meta">
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-Mar 2022
-</div>
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-10 min read
-</div>
-</div>
-</header>
-<div class="post-content">
-<p><strong>Helpful context:</strong></p>
+ Transformers From First Principles - Why Attention Changed Everything  Probability Distributions - The Shapes That Randomness Takes    Consider the expression &ldquo;1 &#43; 1 = 2&rdquo;. How many tokens is that in GPT-4&rsquo;s tokenizer? Seven: &quot;1&quot;, &quot; &#43;&quot;, &quot; 1&quot;, &quot; =&quot;, &quot; 2&quot;. The spaces are part of the tokens. Now try &quot;2024&quot; - that&rsquo;s one token. What about &quot;100,000&quot;? Three tokens: &quot;100&quot;, &quot;,&quot;, &quot;000&quot;." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/tokenization/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Tokenization - Breaking Language Into Pieces a Model Can Learn From</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Mar 2022
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          10 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
 <ul>
 <li><a href="/posts/transformers-from-first-principles/" target="_blank" rel="noopener noreferrer">Transformers From First Principles - Why Attention Changed Everything</a>
 </li>
@@ -69,7 +113,7 @@ Mar 2022
 </li>
 </ul>
 <hr>
-<p>Consider the expression &ldquo;1 + 1 = 2&rdquo;. How many tokens is that in GPT-4&rsquo;s tokenizer? Seven: <code>"1"</code>, <code>" +"</code>, <code>" 1"</code>, <code>" ="</code>, <code>" 2"</code>. The spaces are part of the tokens. Now try <code>"2024"</code> - that&rsquo;s one token. What about <code>"100,000"</code>? Three tokens: <code>"100"</code>, <code>","</code>, <code>"000"</code>. None of this is arbitrary. These choices cascade into whether your language model can do arithmetic, how many words of context it can actually hold, and why the same model might be twice as capable in English as in Swahili.</p>
+<p>Consider the expression &ldquo;1 + 1 = 2&rdquo;. How many tokens is that in GPT-4&rsquo;s tokenizer? Seven: <code>&quot;1&quot;</code>, <code>&quot; +&quot;</code>, <code>&quot; 1&quot;</code>, <code>&quot; =&quot;</code>, <code>&quot; 2&quot;</code>. The spaces are part of the tokens. Now try <code>&quot;2024&quot;</code> - that&rsquo;s one token. What about <code>&quot;100,000&quot;</code>? Three tokens: <code>&quot;100&quot;</code>, <code>&quot;,&quot;</code>, <code>&quot;000&quot;</code>. None of this is arbitrary. These choices cascade into whether your language model can do arithmetic, how many words of context it can actually hold, and why the same model might be twice as capable in English as in Swahili.</p>
 <p>Tokenization is the step that converts a raw string into the integer IDs that a language model actually sees. It happens before any neural network computation, and it shapes almost everything downstream.</p>
 <hr>
 <h2 id="why-not-just-use-characters">Why Not Just Use Characters?</h2>
@@ -80,16 +124,16 @@ Mar 2022
 <h2 id="why-not-just-use-words">Why Not Just Use Words?</h2>
 <p>At the other extreme: one token per word. English has roughly 170,000 words. All languages combined, millions. And this immediately creates two problems.</p>
 <p>The first is the vocabulary size. A model&rsquo;s embedding table has one vector per token. At a million words, that&rsquo;s a massive matrix, and most entries will be seen only a handful of times during training. Rare words get poor representations because the model has almost no data to learn from.</p>
-<p>The second problem is out-of-vocabulary words. Any word you didn&rsquo;t see during training is unknown. <code>"unhappily"</code> and <code>"happiness"</code> are completely different tokens, despite sharing <code>"happy"</code>. A new proper noun - a person&rsquo;s name, a city, a product - is unhandled. You need a special <code>[UNK]</code> token, and at inference time the model has no information about what that token represents.</p>
+<p>The second problem is out-of-vocabulary words. Any word you didn&rsquo;t see during training is unknown. <code>&quot;unhappily&quot;</code> and <code>&quot;happiness&quot;</code> are completely different tokens, despite sharing <code>&quot;happy&quot;</code>. A new proper noun - a person&rsquo;s name, a city, a product - is unhandled. You need a special <code>[UNK]</code> token, and at inference time the model has no information about what that token represents.</p>
 <p>Word-level tokenization also fails immediately on code, mathematics, URLs, and any non-whitespace-delimited language like Chinese or Japanese.</p>
 <hr>
 <h2 id="the-sweet-spot-subword-tokenization">The Sweet Spot: Subword Tokenization</h2>
 <p>The solution that has dominated for the last decade is subword tokenization. The key insight: common words should be one token; rare words should be split into meaningful pieces; nothing should be truly unhandled.</p>
 <p>In practice this looks like:</p>
 <ul>
-<li><code>"running"</code> → <code>["running"]</code> (common word, one token)</li>
-<li><code>"unhappily"</code> → <code>["un", "happily"]</code> or <code>["unhappy", "ily"]</code> (less common, split at morpheme)</li>
-<li><code>"supercalifragilistic"</code> → <code>["super", "cal", "ifrag", "ilis", "tic"]</code> (rare word, split into plausible chunks)</li>
+<li><code>&quot;running&quot;</code> → <code>[&quot;running&quot;]</code> (common word, one token)</li>
+<li><code>&quot;unhappily&quot;</code> → <code>[&quot;un&quot;, &quot;happily&quot;]</code> or <code>[&quot;unhappy&quot;, &quot;ily&quot;]</code> (less common, split at morpheme)</li>
+<li><code>&quot;supercalifragilistic&quot;</code> → <code>[&quot;super&quot;, &quot;cal&quot;, &quot;ifrag&quot;, &quot;ilis&quot;, &quot;tic&quot;]</code> (rare word, split into plausible chunks)</li>
 </ul>
 <p>The model sees coherent subword units that carry meaning, sequences are shorter than character-level, and nothing is truly unknown.</p>
 <p>Three algorithms dominate this space. They share the same goal but differ in how they decide what to merge.</p>
@@ -109,25 +153,25 @@ Mar 2022
 </li>
 <li><strong>Stop</strong> when the vocabulary reaches the target size (e.g., 50,000 tokens).</li>
 </ol>
-<p>The result: the most common sequences in your training corpus become single tokens. <code>"the"</code> gets merged early. <code>"ing"</code>, <code>"tion"</code>, <code>"pre"</code> get merged. Rare words end up as sequences of shorter pieces. And critically, every input can always be represented - even if a word is completely novel, it can be split down to individual characters.</p>
+<p>The result: the most common sequences in your training corpus become single tokens. <code>&quot;the&quot;</code> gets merged early. <code>&quot;ing&quot;</code>, <code>&quot;tion&quot;</code>, <code>&quot;pre&quot;</code> get merged. Rare words end up as sequences of shorter pieces. And critically, every input can always be represented - even if a word is completely novel, it can be split down to individual characters.</p>
 <p>Let&rsquo;s trace a tiny example. Suppose your corpus contains only these words:</p>
 <pre tabindex="0"><code>low, lower, lowest, new, newer
 </code></pre><p>Start with individual characters. The most frequent pair might be <code>e, r</code> (appearing in lower, newer). Merge to <code>er</code>. Then <code>l, o</code> merges to <code>lo</code>. Then <code>lo, w</code> merges to <code>low</code>. Eventually <code>low</code> itself becomes a token. This mirrors the actual frequency structure of the corpus.</p>
 <p>BPE is deterministic given the training corpus. Given the same data, you always get the same tokenizer.</p>
 <hr>
 <h2 id="wordpiece-and-sentencepiece">WordPiece and SentencePiece</h2>
-<p><strong>WordPiece</strong> (Schuster & Nakamura 2012, used in BERT) uses the same iterative merging idea as BPE, but the criterion for which pair to merge is different. Instead of raw frequency, WordPiece picks the pair whose merge maximizes the likelihood of the training corpus under a language model. This produces slightly different splits - you&rsquo;ll see tokens like <code>"##ing"</code> in BERT, where <code>"##"</code> signals a word-internal continuation.</p>
+<p><strong>WordPiece</strong> (Schuster &amp; Nakamura 2012, used in BERT) uses the same iterative merging idea as BPE, but the criterion for which pair to merge is different. Instead of raw frequency, WordPiece picks the pair whose merge maximizes the likelihood of the training corpus under a language model. This produces slightly different splits - you&rsquo;ll see tokens like <code>&quot;##ing&quot;</code> in BERT, where <code>&quot;##&quot;</code> signals a word-internal continuation.</p>
 <p>The difference matters in practice: WordPiece tends to create tokens that work well for the specific pre-training objective (masked language modeling), while BPE is more purely frequency-driven.</p>
-<p><strong>SentencePiece</strong> (Kudo & Richardson 2018, used in LLaMA, T5) takes a different approach to the input. Rather than assuming the text has already been split into words (by whitespace), SentencePiece treats the raw text stream - including spaces - as a sequence of Unicode characters. It then applies either BPE or a unigram language model on this stream.</p>
-<p>Why does this matter? Because whitespace-based pre-tokenization is English-centric. Chinese and Japanese don&rsquo;t separate words with spaces. Arabic morphology doesn&rsquo;t align neatly with whitespace. SentencePiece handles all of these uniformly, encoding the space character as a special symbol <code>"▁"</code> (so <code>"▁hello"</code> means &ldquo;hello with a preceding space&rdquo;). LLaMA&rsquo;s tokenizer uses this approach, which is part of why it handles multilingual input more gracefully than GPT-2-style tokenizers.</p>
+<p><strong>SentencePiece</strong> (Kudo &amp; Richardson 2018, used in LLaMA, T5) takes a different approach to the input. Rather than assuming the text has already been split into words (by whitespace), SentencePiece treats the raw text stream - including spaces - as a sequence of Unicode characters. It then applies either BPE or a unigram language model on this stream.</p>
+<p>Why does this matter? Because whitespace-based pre-tokenization is English-centric. Chinese and Japanese don&rsquo;t separate words with spaces. Arabic morphology doesn&rsquo;t align neatly with whitespace. SentencePiece handles all of these uniformly, encoding the space character as a special symbol <code>&quot;▁&quot;</code> (so <code>&quot;▁hello&quot;</code> means &ldquo;hello with a preceding space&rdquo;). LLaMA&rsquo;s tokenizer uses this approach, which is part of why it handles multilingual input more gracefully than GPT-2-style tokenizers.</p>
 <hr>
 <h2 id="byte-level-bpe-the-gpt-4-approach">Byte-Level BPE: The GPT-4 Approach</h2>
 <p>GPT-4 uses tiktoken, which implements byte-level BPE. The idea: before doing anything with characters or words, convert all input to UTF-8 bytes. This gives a base vocabulary of exactly 256 symbols (one per byte value, 0 - 255).</p>
 <p>BPE then merges these bytes into larger units, exactly as before. The result: any Unicode character can always be represented - at worst, as a sequence of its raw bytes. No unknown tokens. Ever.</p>
 <p>This elegantly handles:</p>
 <ul>
-<li>Emoji: <code>"😀"</code> is 4 UTF-8 bytes, and will often be merged into a single token after BPE.</li>
-<li>Rare scripts: <code>"日本語"</code> encodes into bytes first, then BPE may or may not find merged tokens.</li>
+<li>Emoji: <code>&quot;😀&quot;</code> is 4 UTF-8 bytes, and will often be merged into a single token after BPE.</li>
+<li>Rare scripts: <code>&quot;日本語&quot;</code> encodes into bytes first, then BPE may or may not find merged tokens.</li>
 <li>Typos and novel words: always representable, always encodeable.</li>
 </ul>
 <p>Tiktoken also includes a pre-tokenization step that splits on whitespace and punctuation using a regex, which prevents the BPE from merging across word boundaries in most cases.</p>
@@ -156,7 +200,7 @@ Mar 2022
 <hr>
 <h2 id="tokenization-pathologies">Tokenization Pathologies</h2>
 <p>The choices made during tokenization have surprising consequences for what models can and cannot do well.</p>
-<p><strong>Numbers and arithmetic.</strong> The number <code>1,000,000</code> might tokenize as <code>["1", ",", "000", ",", "000"]</code> - five tokens with no structure that reflects place value. The model has to learn that <code>"000"</code> followed by a comma followed by <code>"000"</code> is a million, purely from examples. This is one of the core reasons that LLMs struggle with exact arithmetic. The numeric structure is destroyed before the model ever sees the input. Models that perform better on arithmetic (like those trained with special number tokenizers or tool use) often bypass this by calling a calculator.</p>
+<p><strong>Numbers and arithmetic.</strong> The number <code>1,000,000</code> might tokenize as <code>[&quot;1&quot;, &quot;,&quot;, &quot;000&quot;, &quot;,&quot;, &quot;000&quot;]</code> - five tokens with no structure that reflects place value. The model has to learn that <code>&quot;000&quot;</code> followed by a comma followed by <code>&quot;000&quot;</code> is a million, purely from examples. This is one of the core reasons that LLMs struggle with exact arithmetic. The numeric structure is destroyed before the model ever sees the input. Models that perform better on arithmetic (like those trained with special number tokenizers or tool use) often bypass this by calling a calculator.</p>
 <p><strong>Rare languages.</strong> A concept that takes one token in English might take 6 - 10 tokens in Swahili, Tamil, or Yoruba, because those languages have fewer merges in the tokenizer&rsquo;s training data (which was English-heavy). This has two concrete effects: the effective context window is shorter for those languages, and inference is more expensive. An English sentence of 100 tokens might require 300 tokens to say the same thing in a lower-resource language. Research on tokenizer fairness across languages has quantified this disparity extensively.</p>
 <p><strong>Code.</strong> Code tokenization is sensitive to indentation (Python), bracket matching (Lisp, JSON), and operator sequences. Good code tokenizers handle leading spaces carefully - in Python, the indentation level carries syntactic meaning, and if spaces get merged unpredictably, the model sees garbled syntax. This is why GitHub Copilot and Code Llama use modified tokenizers.</p>
 <p><strong>The &ldquo;SolidGoldMagikarp&rdquo; problem.</strong> Some tokens exist in the vocabulary because they appeared in BPE training data, but appear almost never in language model training data. The embeddings for these tokens are nearly random (never updated). When you prompt a model with these tokens, behavior is unpredictable - the model has no learned behavior for them. This was discovered by probing for unusual tokens in GPT models and finding that certain very long strings of repeated characters produce bizarre outputs.</p>
@@ -250,13 +294,44 @@ Mar 2022
 <li><a href="/posts/scaling-laws/" target="_blank" rel="noopener noreferrer">Scaling Laws - More Compute, More Data, More Predictably Better</a>
 </li>
 </ul>
-</div>
-<div class="post-footer">
-</div>
-</article>
-</main>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
-<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
-</body>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>

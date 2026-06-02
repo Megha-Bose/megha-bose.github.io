@@ -1,69 +1,113 @@
-<!doctype html><html lang="en-us">
-<head>
-<title>Expectation-Maximization - Alternating Between Guessing and Fitting // Megha Bose</title>
-<link rel="shortcut icon" href="/favicon.ico">
-<meta charset="utf-8">
-<meta name="generator" content="Hugo 0.92.2">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="author" content="Megha Bose">
-<meta name="description" content>
-<link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Expectation-Maximization - Alternating Between Guessing and Fitting">
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Expectation-Maximization - Alternating Between Guessing and Fitting // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Expectation-Maximization - Alternating Between Guessing and Fitting"/>
 <meta name="twitter:description" content="Helpful context:
  Probability Distributions - The Shapes That Randomness Takes  Maximum Likelihood - The Parameters That Make Your Data Most Probable    Imagine you have height measurements of 1000 people, but you don&rsquo;t know their genders. You suspect the data comes from two Gaussians - one for each gender. How do you fit both Gaussians when you don&rsquo;t know which person belongs to which?
-You can&rsquo;t - unless you guess.">
-<meta property="og:title" content="Expectation-Maximization - Alternating Between Guessing and Fitting">
+You can&rsquo;t - unless you guess."/>
+
+    <meta property="og:title" content="Expectation-Maximization - Alternating Between Guessing and Fitting" />
 <meta property="og:description" content="Helpful context:
  Probability Distributions - The Shapes That Randomness Takes  Maximum Likelihood - The Parameters That Make Your Data Most Probable    Imagine you have height measurements of 1000 people, but you don&rsquo;t know their genders. You suspect the data comes from two Gaussians - one for each gender. How do you fit both Gaussians when you don&rsquo;t know which person belongs to which?
-You can&rsquo;t - unless you guess.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://megha-bose.github.io/posts/expectation-maximization/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2021-08-03T00:00:00+00:00">
-<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00">
-<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
-</head>
-<body>
-<header class="app-header">
-<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
-<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-<nav class="app-header-menu">
-<a class="app-header-menu-item" href="/about/">About Me</a>
-<br>
-<a class="app-header-menu-item" href="/resume/"> Resume</a>
-<br>
-<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-</nav>
-<div class="app-header-social">
-<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
-</a>
-<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</a>
-<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-</a>
-<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-</a>
-</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-<span class="theme-toggle-icon"></span>
-</button>
-</header>
-<main class="app-container">
-<article class="post">
-<header class="post-header">
-<h1 class="post-title">Expectation-Maximization - Alternating Between Guessing and Fitting</h1>
-<div class="post-meta">
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-Aug 2021
-</div>
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-5 min read
-</div>
-</div>
-</header>
-<div class="post-content">
-<p><strong>Helpful context:</strong></p>
+You can&rsquo;t - unless you guess." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/expectation-maximization/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Expectation-Maximization - Alternating Between Guessing and Fitting</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Aug 2021
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          5 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
 <ul>
 <li><a href="/posts/probability-distributions/" target="_blank" rel="noopener noreferrer">Probability Distributions - The Shapes That Randomness Takes</a>
 </li>
@@ -88,19 +132,19 @@ Aug 2021
 <p>$$Q(\theta, \theta^\text{old}) = \mathbb{E}_{p(Z \mid X, \theta^\text{old})}[\log p(X, Z \mid \theta)]$$</p>
 <p>This is the &ldquo;soft assignment&rdquo; step. Instead of hard labels (point $x_n$ definitely belongs to cluster $k$), you compute soft responsibilities: the probability that each point came from each component, given where the components currently are.</p>
 <p><strong>M-step (Maximization).</strong> Maximize $Q$ over $\theta$:</p>
-<p>$$\theta^\text{new} = \arg\max_\theta Q(\theta, \theta^\text{old})$$</p>
+<p>$$\theta^\text{new} = \arg\max_\theta  Q(\theta, \theta^\text{old})$$</p>
 <p>This is the &ldquo;update parameters&rdquo; step. With soft assignments in hand, you re-fit the model parameters as weighted averages - each point contributes to each component proportionally to its responsibility.</p>
 <p>Repeat until the log-likelihood converges.</p>
 <hr>
 <h2 id="gaussian-mixture-models-the-full-example">Gaussian Mixture Models: The Full Example</h2>
 <p>A GMM with $K$ components models data as:</p>
-<p>$$p(x) = \sum_{k=1}^{K} \pi_k \mathcal{N}(x \mid \mu_k, \Sigma_k)$$</p>
+<p>$$p(x) = \sum_{k=1}^{K} \pi_k  \mathcal{N}(x \mid \mu_k, \Sigma_k)$$</p>
 <p>where $\pi_k$ are mixing weights summing to 1. The hidden variable $z_n \in \{1, \ldots, K\}$ says which component generated $x_n$.</p>
 <p><strong>E-step: compute responsibilities.</strong></p>
-<p>$$r_{nk} = \frac{\pi_k \mathcal{N}(x_n \mid \mu_k, \Sigma_k)}{\sum_{j=1}^{K} \pi_j \mathcal{N}(x_n \mid \mu_j, \Sigma_j)}$$</p>
+<p>$$r_{nk} = \frac{\pi_k  \mathcal{N}(x_n \mid \mu_k, \Sigma_k)}{\sum_{j=1}^{K} \pi_j  \mathcal{N}(x_n \mid \mu_j, \Sigma_j)}$$</p>
 <p>$r_{nk}$ is the posterior probability that component $k$ generated $x_n$. This is just Bayes' theorem: prior is $\pi_k$, likelihood is the Gaussian, normalize.</p>
 <p><strong>M-step: update parameters.</strong> Let $N_k = \sum_{n=1}^N r_{nk}$ (the effective number of points assigned to component $k$):</p>
-<p>$$\mu_k^\text{new} = \frac{1}{N_k} \sum_{n=1}^{N} r_{nk} x_n$$</p>
+<p>$$\mu_k^\text{new} = \frac{1}{N_k} \sum_{n=1}^{N} r_{nk}  x_n$$</p>
 <p>$$\Sigma_k^\text{new} = \frac{1}{N_k} \sum_{n=1}^{N} r_{nk} (x_n - \mu_k^\text{new})(x_n - \mu_k^\text{new})^\top$$</p>
 <p>$$\pi_k^\text{new} = \frac{N_k}{N}$$</p>
 <p>These are weighted versions of the usual MLE formulas, with responsibility weights $r_{nk}$ standing in for the unknown hard labels.</p>
@@ -179,13 +223,44 @@ Aug 2021
 <li><a href="/posts/kalman-filtering/" target="_blank" rel="noopener noreferrer">Kalman Filtering - Optimal Estimation When Sensors Lie</a>
 </li>
 </ul>
-</div>
-<div class="post-footer">
-</div>
-</article>
-</main>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
-<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
-</body>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>

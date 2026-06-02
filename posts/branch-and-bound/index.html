@@ -1,69 +1,113 @@
-<!doctype html><html lang="en-us">
-<head>
-<title>Branch and Bound - Exhaustive Search, Intelligently Pruned // Megha Bose</title>
-<link rel="shortcut icon" href="/favicon.ico">
-<meta charset="utf-8">
-<meta name="generator" content="Hugo 0.92.2">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="author" content="Megha Bose">
-<meta name="description" content>
-<link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Branch and Bound - Exhaustive Search, Intelligently Pruned">
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Branch and Bound - Exhaustive Search, Intelligently Pruned // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Branch and Bound - Exhaustive Search, Intelligently Pruned"/>
 <meta name="twitter:description" content="Helpful context:
  Dynamic Programming - Never Solve the Same Problem Twice  Constraint Satisfaction - Searching Smart, Not Exhaustively    An airline has 200 planes and 5,000 possible routes. Each plane-route assignment has a fuel cost. Which assignment minimizes total fuel cost?
-This is an integer programming problem - you can&rsquo;t assign 0.7 of a plane to a route. Brute force is impossible: $5000^{200}$ possibilities. Continuous relaxation (pretend fractions are allowed) gives you a fast answer, but the answer might require half a plane on one route and 1.">
-<meta property="og:title" content="Branch and Bound - Exhaustive Search, Intelligently Pruned">
+This is an integer programming problem - you can&rsquo;t assign 0.7 of a plane to a route. Brute force is impossible: $5000^{200}$ possibilities. Continuous relaxation (pretend fractions are allowed) gives you a fast answer, but the answer might require half a plane on one route and 1."/>
+
+    <meta property="og:title" content="Branch and Bound - Exhaustive Search, Intelligently Pruned" />
 <meta property="og:description" content="Helpful context:
  Dynamic Programming - Never Solve the Same Problem Twice  Constraint Satisfaction - Searching Smart, Not Exhaustively    An airline has 200 planes and 5,000 possible routes. Each plane-route assignment has a fuel cost. Which assignment minimizes total fuel cost?
-This is an integer programming problem - you can&rsquo;t assign 0.7 of a plane to a route. Brute force is impossible: $5000^{200}$ possibilities. Continuous relaxation (pretend fractions are allowed) gives you a fast answer, but the answer might require half a plane on one route and 1.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://megha-bose.github.io/posts/branch-and-bound/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2021-08-03T00:00:00+00:00">
-<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00">
-<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
-</head>
-<body>
-<header class="app-header">
-<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
-<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-<nav class="app-header-menu">
-<a class="app-header-menu-item" href="/about/">About Me</a>
-<br>
-<a class="app-header-menu-item" href="/resume/"> Resume</a>
-<br>
-<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-</nav>
-<div class="app-header-social">
-<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
-</a>
-<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</a>
-<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-</a>
-<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-</a>
-</div>
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-<span class="theme-toggle-icon"></span>
-</button>
-</header>
-<main class="app-container">
-<article class="post">
-<header class="post-header">
-<h1 class="post-title">Branch and Bound - Exhaustive Search, Intelligently Pruned</h1>
-<div class="post-meta">
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-Aug 2021
-</div>
-<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-7 min read
-</div>
-</div>
-</header>
-<div class="post-content">
-<p><strong>Helpful context:</strong></p>
+This is an integer programming problem - you can&rsquo;t assign 0.7 of a plane to a route. Brute force is impossible: $5000^{200}$ possibilities. Continuous relaxation (pretend fractions are allowed) gives you a fast answer, but the answer might require half a plane on one route and 1." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/branch-and-bound/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Branch and Bound - Exhaustive Search, Intelligently Pruned</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Aug 2021
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          7 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
 <ul>
 <li><a href="/posts/dynamic-programming/" target="_blank" rel="noopener noreferrer">Dynamic Programming - Never Solve the Same Problem Twice</a>
 </li>
@@ -84,7 +128,7 @@ Aug 2021
 <p>The result: you systematically explore the solution space, but you never enter subtrees that can&rsquo;t contain the optimal answer.</p>
 <hr>
 <h2 id="the-search-tree">The Search Tree</h2>
-<p>A node in the B&B tree represents a partial solution: some variables fixed, others free. The root has no variables fixed. Leaves are complete assignments.</p>
+<p>A node in the B&amp;B tree represents a partial solution: some variables fixed, others free. The root has no variables fixed. Leaves are complete assignments.</p>
 <p><strong>Best-first search:</strong> Use a priority queue ordered by bound. Always explore the node with the most promising bound first. This finds good solutions early and tightens the incumbent quickly, enabling more pruning. Requires $O(\text{tree size})$ memory.</p>
 <p><strong>Depth-first search with pruning:</strong> Dive deep to find a complete solution quickly, then backtrack and prune. Uses only $O(d)$ space where $d$ is the tree depth. Often faster in practice when good heuristics exist for finding the initial incumbent.</p>
 <p>Here&rsquo;s the basic algorithm for minimization:</p>
@@ -104,7 +148,7 @@ Aug 2021
     return incumbent
 </code></pre><hr>
 <h2 id="bounding-the-art-of-tight-estimates">Bounding: The Art of Tight Estimates</h2>
-<p>The power of B&B is entirely in the quality of the bound. A good bound must be:</p>
+<p>The power of B&amp;B is entirely in the quality of the bound. A good bound must be:</p>
 <ul>
 <li><strong>Valid:</strong> A lower bound must genuinely be $\leq$ the true optimum of the subproblem. If you use an invalid bound, you might prune the optimal solution and return a wrong answer.</li>
 <li><strong>Tight:</strong> Close to the true optimum. A lower bound of 0 is always valid for non-negative costs, but it never prunes anything.</li>
@@ -117,7 +161,7 @@ Aug 2021
 <hr>
 <h2 id="traveling-salesman-problem">Traveling Salesman Problem</h2>
 <p>Given a complete weighted graph, find the shortest Hamiltonian cycle (visit every city exactly once and return to the start).</p>
-<p>TSP is NP-complete. But B&B finds exact optimal solutions to instances with hundreds of cities in practice.</p>
+<p>TSP is NP-complete. But B&amp;B finds exact optimal solutions to instances with hundreds of cities in practice.</p>
 <p><strong>Branching strategy:</strong> At each node, pick an edge $e = (u, v)$ and branch on &ldquo;include $e$ in the tour&rdquo; vs &ldquo;exclude $e$ from the tour.&rdquo;</p>
 <p><strong>Lower bound via minimum spanning tree:</strong> A Hamiltonian cycle must visit every vertex, so it uses at least $n$ edges. A minimum spanning tree on the graph uses $n - 1$ edges and costs at most as much as the optimal tour (since removing one edge from the tour gives a spanning tree). So: MST cost is a valid lower bound on tour cost.</p>
 <p>More precisely: for the subproblem where some edges are fixed, compute the MST of the remaining unconstrained graph and add it to the cost of the fixed edges. For a 10-city instance, this bound is typically within 5-15% of the optimal, which prunes the vast majority of branches.</p>
@@ -134,10 +178,10 @@ Aug 2021
 <p>Left child LP: items 1 included (weight 2, value 10), take item 2 (weight 3, value 12), then $\frac{2}{2}$ of item 3 (weight 2, value 6). Total 28.0.</p>
 <p>Eventually the algorithm finds the true optimum: items 1, 2, 3 with value 28, weight 7 - exactly matching the LP bound, so that branch is confirmed optimal.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> Branch and bound still has exponential worst case - is it actually better than backtracking? Yes, because the bounds can prune exponentially many branches at once. Backtracking prunes only when a constraint is literally violated; B&B prunes when a bound shows the subtree can&rsquo;t improve the incumbent, even if every individual constraint is satisfied. For problems with tight LP relaxations (like knapsack, where the LP optimum is often close to the integer optimum), B&B prunes almost everything. For loose relaxations, it prunes less. The art is finding tight bounds. Industrial solvers combine B&B with <strong>cutting planes</strong> - additional constraints that tighten the LP relaxation without cutting off any integer-feasible solution - and this combination (branch-and-cut) is why Gurobi can solve MILPs with millions of variables.</p>
+<p><strong>Discomfort check.</strong> Branch and bound still has exponential worst case - is it actually better than backtracking? Yes, because the bounds can prune exponentially many branches at once. Backtracking prunes only when a constraint is literally violated; B&amp;B prunes when a bound shows the subtree can&rsquo;t improve the incumbent, even if every individual constraint is satisfied. For problems with tight LP relaxations (like knapsack, where the LP optimum is often close to the integer optimum), B&amp;B prunes almost everything. For loose relaxations, it prunes less. The art is finding tight bounds. Industrial solvers combine B&amp;B with <strong>cutting planes</strong> - additional constraints that tighten the LP relaxation without cutting off any integer-feasible solution - and this combination (branch-and-cut) is why Gurobi can solve MILPs with millions of variables.</p>
 </blockquote>
 <hr>
-<h2 id="bb-vs-other-approaches">B&B vs. Other Approaches</h2>
+<h2 id="bb-vs-other-approaches">B&amp;B vs. Other Approaches</h2>
 <table>
 <thead>
 <tr>
@@ -180,7 +224,7 @@ Aug 2021
 </tr>
 </tbody>
 </table>
-<p>DP and B&B both solve optimization problems exactly, but they&rsquo;re suited to different problem structures. DP requires optimal substructure and works when the subproblem space is polynomial. B&B works for any discrete optimization problem, but its efficiency depends entirely on bound quality.</p>
+<p>DP and B&amp;B both solve optimization problems exactly, but they&rsquo;re suited to different problem structures. DP requires optimal substructure and works when the subproblem space is polynomial. B&amp;B works for any discrete optimization problem, but its efficiency depends entirely on bound quality.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -219,20 +263,51 @@ Aug 2021
 </tr>
 </tbody>
 </table>
-<p>Branch and bound is the standard approach for exact optimization when DP doesn&rsquo;t apply. It&rsquo;s provably optimal - it always finds the global optimum - and in practice it exploits problem structure through tight bounds to navigate enormous search spaces efficiently. The worst case is still exponential, but real scheduling, routing, and resource allocation problems are solved to optimality every day by B&B solvers.</p>
+<p>Branch and bound is the standard approach for exact optimization when DP doesn&rsquo;t apply. It&rsquo;s provably optimal - it always finds the global optimum - and in practice it exploits problem structure through tight bounds to navigate enormous search spaces efficiently. The worst case is still exponential, but real scheduling, routing, and resource allocation problems are solved to optimality every day by B&amp;B solvers.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href="/posts/graph-algorithms-traversal/" target="_blank" rel="noopener noreferrer">Graph Algorithms & Traversal - Maps, Networks, and Hidden Order</a>
+<li><a href="/posts/graph-algorithms-traversal/" target="_blank" rel="noopener noreferrer">Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order</a>
 </li>
 </ul>
-</div>
-<div class="post-footer">
-</div>
-</article>
-</main>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
-<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
-</body>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>
