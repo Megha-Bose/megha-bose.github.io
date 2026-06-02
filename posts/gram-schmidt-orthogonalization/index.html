@@ -120,48 +120,45 @@ Theorem. Every finite-dimensional inner product space (over $\mathbb{R}$ or $\ma
 <p>Every finite-dimensional inner product space has an orthonormal basis - but given an arbitrary basis, how do we construct one? The <strong>Gram-Schmidt process</strong> is the answer: a constructive algorithm that takes any linearly independent list and produces an orthonormal list spanning the same space.</p>
 <p><strong>Theorem.</strong> Every finite-dimensional inner product space (over $\mathbb{R}$ or $\mathbb{C}$) has an orthonormal basis.</p>
 <p><em>Proof.</em> Take any basis. Apply Gram-Schmidt. $\square$ (The content is in the algorithm.)</p>
+<hr>
 <h2 id="the-gram-schmidt-algorithm">The Gram-Schmidt Algorithm</h2>
 <p><strong>Input:</strong> Linearly independent vectors $v_1, v_2, \ldots, v_n \in V$.</p>
 <p><strong>Output:</strong> Orthonormal vectors $e_1, e_2, \ldots, e_n$ with $\text{span}(e_1, \ldots, e_k) = \text{span}(v_1, \ldots, v_k)$ for each $k$.</p>
-<p><strong>Step 1.</strong> Set $e_1 = v_1 / |v_1|$.</p>
-<p><strong>Step $k$ (for $k = 2, \ldots, n$).</strong> Subtract from $v_k$ its projections onto all previously found orthonormal vectors, then normalise:
-$$\tilde{e}<em>k = v_k - \sum</em>{j=1}^{k-1} \langle v_k, e_j \rangle e_j, \qquad e_k = \frac{\tilde{e}_k}{|\tilde{e}_k|}$$</p>
-<p>The vector $\tilde{e}<em>k$ is the component of $v_k$ orthogonal to $\text{span}(e_1, \ldots, e</em>{k-1})$. Linear independence of the $v_i$ guarantees $\tilde{e}<em>k \neq 0$ (otherwise $v_k \in \text{span}(v_1, \ldots, v</em>{k-1})$, contradicting independence).</p>
-<h3 id="why-it-works-induction">Why It Works: Induction</h3>
-<p><strong>Claim:</strong> After step $k$, the set $\{e_1, \ldots, e_k\}$ is orthonormal and spans the same space as $\{v_1, \ldots, v_k\}$.</p>
-<p><em>Base case:</em> $k=1$. $e_1 = v_1/|v_1|$ is a unit vector spanning $\text{span}(v_1)$. ✓</p>
-<p><em>Inductive step:</em> Assume the claim holds for $k-1$. Then $\tilde{e}<em>k = v_k - P</em>{\text{span}(e_1,\ldots,e_{k-1})} v_k$ is the orthogonal complement of $v_k$ with respect to $\text{span}(e_1, \ldots, e_{k-1})$. By construction, $\langle \tilde{e}_k, e_j \rangle = 0$ for all $j &lt; k$ (the projection subtraction removes all components in those directions). Normalising gives $e_k$ with $|e_k|=1$. The span condition holds because $v_k = \tilde{e}<em>k + \sum</em>{j&lt;k} \langle v_k, e_j \rangle e_j$ is a linear combination of $\tilde{e}<em>k$ (proportional to $e_k$) and $e_1, \ldots, e</em>{k-1}$. $\square$</p>
-<h3 id="ascii-example-in-mathbbr3">ASCII Example in $\mathbb{R}^3$</h3>
-<pre tabindex="0"><code>Given: v1 = (1,1,0), v2 = (1,0,1), v3 = (0,1,1)
-
-Step 1:
-  ||v1|| = sqrt(2)
-  e1 = (1/sqrt(2), 1/sqrt(2), 0)
-
-Step 2:
-  &lt;v2, e1&gt; = 1/sqrt(2)
-  proj = (1/2, 1/2, 0)
-  tilde_e2 = v2 - proj = (1/2, -1/2, 1)
-  ||tilde_e2|| = sqrt(1/4 + 1/4 + 1) = sqrt(3/2)
-  e2 = (1/sqrt(6), -1/sqrt(6), 2/sqrt(6))
-
-Step 3:
-  &lt;v3, e1&gt; = 1/sqrt(2),  &lt;v3, e2&gt; = -1/sqrt(6) + 2/sqrt(6) = 1/sqrt(6)
-  proj = (1/2, 1/2, 0) + (1/6)*(1,-1,2) = (2/3, 1/3, 1/3)
-  tilde_e3 = (0,1,1) - (2/3, 1/3, 1/3) = (-2/3, 2/3, 2/3)
-  ||tilde_e3|| = (2/3)*sqrt(3)
-  e3 = (-1/sqrt(3), 1/sqrt(3), 1/sqrt(3))
-
-Check: &lt;e1,e2&gt; = 0, &lt;e1,e3&gt; = 0, &lt;e2,e3&gt; = 0  ✓
-</code></pre><h2 id="modified-gram-schmidt">Modified Gram-Schmidt</h2>
-<p>Classical Gram-Schmidt as stated above is mathematically correct but <strong>numerically unstable</strong>. In finite-precision arithmetic, rounding errors accumulate: after many steps, the computed $e_k$ may not be exactly orthogonal to the earlier $e_j$, and the error grows.</p>
-<p><strong>Modified Gram-Schmidt (MGS)</strong> reorders the operations to reduce error propagation. Instead of computing all projections of $v_k$ onto the previous $e_j$ simultaneously, we update the residual sequentially:</p>
-<pre tabindex="0"><code>for k = 1 to n:
-    e_k = v_k / ||v_k||
-    for j = k+1 to n:
-        v_j = v_j - &lt;v_j, e_k&gt; * e_k   # remove component along e_k immediately
-</code></pre><p>Mathematically, classical and modified GS are identical. Numerically, MGS projects the <em>already-partially-orthogonalised</em> $v_j$ against $e_k$, so errors from earlier steps don&rsquo;t compound the way they do in the classical formulation. The loss of orthogonality in classical GS is $O(\epsilon_{\text{mach}} \cdot \kappa(A)^2)$; in modified GS it is $O(\epsilon_{\text{mach}} \cdot \kappa(A))$, where $\kappa(A)$ is the condition number.</p>
-<p>For highly ill-conditioned problems, even MGS is insufficient. The remedy is <strong>reorthogonalisation</strong>: after computing $e_k$, immediately subtract its projections from $e_k$ again (one pass of classical GS applied to the output of classical GS).</p>
+<p><strong>Step 1.</strong> Normalise $v_1$:</p>
+<p>$$e_1 = \frac{v_1}{|v_1|}$$</p>
+<p><strong>Step $k$ (for $k = 2, \ldots, n$).</strong> Subtract from $v_k$ its projections onto all previously found orthonormal vectors, then normalise:</p>
+<p>$$\tilde{e}<em>k = v_k - \sum</em>{j=1}^{k-1} \langle v_k, e_j \rangle , e_j$$</p>
+<p>$$e_k = \frac{\tilde{e}_k}{|\tilde{e}_k|}$$</p>
+<p>The vector $\tilde{e}<em>k$ is the component of $v_k$ orthogonal to $\text{span}(e_1, \ldots, e</em>{k-1})$. Linear independence of the $v_i$ guarantees $\tilde{e}<em>k \neq 0$ - otherwise $v_k$ would lie in $\text{span}(v_1, \ldots, v</em>{k-1})$, contradicting independence.</p>
+<hr>
+<h2 id="why-it-works">Why It Works</h2>
+<p><strong>Claim:</strong> After step $k$, the set ${e_1, \ldots, e_k}$ is orthonormal and spans the same space as ${v_1, \ldots, v_k}$.</p>
+<p><em>Base case:</em> $k = 1$. $e_1 = v_1 / |v_1|$ is a unit vector spanning $\text{span}(v_1)$. ✓</p>
+<p><em>Inductive step:</em> Assume the claim holds for $k-1$. Then $\tilde{e}<em>k = v_k - P</em>{\text{span}(e_1,\ldots,e_{k-1})} v_k$ is the component of $v_k$ orthogonal to $\text{span}(e_1, \ldots, e_{k-1})$. By construction, $\langle \tilde{e}_k, e_j \rangle = 0$ for all $j &lt; k$, since the projection subtraction removes all components in those directions. Normalising gives $e_k$ with $|e_k| = 1$. The span condition holds because</p>
+<p>$$v_k = \tilde{e}<em>k + \sum</em>{j &lt; k} \langle v_k, e_j \rangle , e_j$$</p>
+<p>is a linear combination of $\tilde{e}<em>k$ (proportional to $e_k$) and $e_1, \ldots, e</em>{k-1}$. $\square$</p>
+<hr>
+<h2 id="worked-example-in-mathbbr3">Worked Example in $\mathbb{R}^3$</h2>
+<p>Take $v_1 = (1, 1, 0)$, $v_2 = (1, 0, 1)$, $v_3 = (0, 1, 1)$.</p>
+<p><strong>Step 1.</strong> Normalise $v_1$:</p>
+<p>$$|v_1| = \sqrt{2}, \qquad e_1 = \frac{1}{\sqrt{2}}(1,, 1,, 0)$$</p>
+<p><strong>Step 2.</strong> Project $v_2$ onto $e_1$ and subtract:</p>
+<p>$$\langle v_2, e_1 \rangle = \frac{1}{\sqrt{2}}$$</p>
+<p>$$\tilde{e}_2 = (1,0,1) - \frac{1}{\sqrt{2}} \cdot \frac{1}{\sqrt{2}}(1,1,0) = (1,0,1) - \frac{1}{2}(1,1,0) = \left(\frac{1}{2},, -\frac{1}{2},, 1\right)$$</p>
+<p>$$|\tilde{e}_2| = \sqrt{\frac{1}{4} + \frac{1}{4} + 1} = \sqrt{\frac{3}{2}}, \qquad e_2 = \frac{1}{\sqrt{6}}(1,, -1,, 2)$$</p>
+<p><strong>Step 3.</strong> Project $v_3$ onto $e_1$ and $e_2$ and subtract both:</p>
+<p>$$\langle v_3, e_1 \rangle = \frac{1}{\sqrt{2}}, \qquad \langle v_3, e_2 \rangle = \frac{0 - 1 + 2}{\sqrt{6}} = \frac{1}{\sqrt{6}}$$</p>
+<p>$$\tilde{e}_3 = (0,1,1) - \frac{1}{\sqrt{2}} \cdot \frac{1}{\sqrt{2}}(1,1,0) - \frac{1}{\sqrt{6}} \cdot \frac{1}{\sqrt{6}}(1,-1,2)$$</p>
+<p>$$= (0,1,1) - \frac{1}{2}(1,1,0) - \frac{1}{6}(1,-1,2) = \left(-\frac{2}{3},, \frac{2}{3},, \frac{2}{3}\right)$$</p>
+<p>$$|\tilde{e}_3| = \frac{2}{\sqrt{3}}, \qquad e_3 = \frac{1}{\sqrt{3}}(-1,, 1,, 1)$$</p>
+<p><strong>Verification:</strong> $\langle e_1, e_2 \rangle = 0$, $\langle e_1, e_3 \rangle = 0$, $\langle e_2, e_3 \rangle = 0$. Each vector has unit norm. ✓</p>
+<hr>
+<h2 id="modified-gram-schmidt">Modified Gram-Schmidt</h2>
+<p>Classical Gram-Schmidt as stated above is mathematically correct but <strong>numerically unstable</strong>. In finite-precision arithmetic, rounding errors accumulate: after many steps, the computed $e_k$ may not be exactly orthogonal to the earlier $e_j$.</p>
+<p><strong>Modified Gram-Schmidt (MGS)</strong> reorders the operations to reduce error propagation. Instead of computing all projections of $v_k$ onto the previous $e_j$ simultaneously, we update the remaining vectors sequentially: after finding $e_k$, immediately remove the $e_k$ component from every subsequent $v_j$ before moving on.</p>
+<p>Mathematically, classical and modified GS produce the same result. Numerically, MGS projects the already-partially-orthogonalised $v_j$ against $e_k$, so errors from earlier steps do not compound the way they do in the classical formulation. The loss of orthogonality in classical GS grows with the square of the condition number of the input matrix; in modified GS it grows only linearly with the condition number.</p>
+<p>For highly ill-conditioned problems, even MGS is insufficient. The remedy is <strong>reorthogonalisation</strong>: after computing $e_k$, apply one additional round of projection removal to clean up residual errors.</p>
+<hr>
 <h2 id="qr-decomposition">QR Decomposition</h2>
 <p>The Gram-Schmidt process directly produces a <strong>QR decomposition</strong> of any matrix $A$ with linearly independent columns.</p>
 <p><strong>Theorem (QR Decomposition).</strong> Let $A \in \mathbb{R}^{m \times n}$ have linearly independent columns ($m \geq n$). Then $A = QR$ where:</p>
@@ -169,24 +166,23 @@ Check: &lt;e1,e2&gt; = 0, &lt;e1,e3&gt; = 0, &lt;e2,e3&gt; = 0  ✓
 <li>$Q \in \mathbb{R}^{m \times n}$ has orthonormal columns ($Q^T Q = I_n$)</li>
 <li>$R \in \mathbb{R}^{n \times n}$ is upper triangular with positive diagonal entries</li>
 </ul>
-<p><strong>Construction.</strong> Running Gram-Schmidt on the columns $a_1, \ldots, a_n$ of $A$ gives orthonormal columns $e_1, \ldots, e_n$ of $Q$. The matrix $R$ captures the change of basis:
-$$a_k = \sum_{j=1}^k r_{jk} e_j, \qquad \text{where } r_{jk} = \langle a_k, e_j \rangle \text{ for } j &lt; k, \quad r_{kk} = |\tilde{e}_k| &gt; 0$$</p>
-<p>$R$ is upper triangular because $a_k$ only involves $e_1, \ldots, e_k$ (the span preservation property of GS), and the diagonal entries are positive because we normalise with $|\tilde{e}_k|$.</p>
+<p><strong>Construction.</strong> Running Gram-Schmidt on the columns $a_1, \ldots, a_n$ of $A$ gives orthonormal columns $e_1, \ldots, e_n$ of $Q$. The matrix $R$ captures the change of basis. For each column $a_k$:</p>
+<p>$$a_k = \sum_{j=1}^{k} r_{jk} , e_j, \qquad r_{jk} = \langle a_k, e_j \rangle \text{ for } j &lt; k, \quad r_{kk} = |\tilde{e}_k| &gt; 0$$</p>
+<p>$R$ is upper triangular because $a_k$ only involves $e_1, \ldots, e_k$ (the span-preservation property of GS). The diagonal entries are positive because we normalise with $|\tilde{e}_k|$.</p>
 <h3 id="uniqueness-of-qr">Uniqueness of QR</h3>
 <p><strong>Theorem.</strong> If $A$ has full column rank, the QR decomposition with positive diagonal of $R$ is unique.</p>
-<p><em>Proof sketch.</em> Suppose $A = Q_1 R_1 = Q_2 R_2$ with both having positive diagonals. Then $Q_2^T Q_1 = R_2 R_1^{-1}$. The left side has orthonormal columns (so it&rsquo;s orthogonal); the right side is upper triangular (product of upper triangular matrices). An orthogonal upper triangular matrix must be diagonal, and its diagonal entries satisfy $d_i^2 = 1$, so $d_i = \pm 1$. Positivity of the diagonals of both $R_1$ and $R_2$ forces $d_i = 1$, giving $Q_1 = Q_2$ and $R_1 = R_2$. $\square$</p>
+<p><em>Proof sketch.</em> Suppose $A = Q_1 R_1 = Q_2 R_2$ with both having positive diagonals. Then $Q_2^T Q_1 = R_2 R_1^{-1}$. The left side is orthogonal; the right side is upper triangular. An orthogonal upper triangular matrix must be diagonal with diagonal entries satisfying $d_i^2 = 1$, so $d_i = \pm 1$. Positivity of the diagonals of both $R_1$ and $R_2$ forces $d_i = 1$, giving $Q_1 = Q_2$ and $R_1 = R_2$. $\square$</p>
+<hr>
 <h2 id="solving-least-squares-via-qr">Solving Least Squares via QR</h2>
-<p>The QR decomposition provides the numerically preferred method for least squares. Given $Ax \approx b$ with $A = QR$:
-$$|Ax - b|^2 = |QRx - b|^2 = |Rx - Q^T b|^2 + |b - QQ^T b|^2$$</p>
-<p>(using the fact that $Q$ preserves norms and splitting $b = QQ^T b + (I - QQ^T)b$). The first term depends on $x$; minimising it requires solving the triangular system $Rx = Q^T b$, which is done by back-substitution in $O(n^2)$ operations. No matrix-matrix product $A^T A$ is formed, so the condition number is not squared.</p>
-<p><strong>Algorithm for least squares via QR:</strong></p>
-<pre tabindex="0"><code>1. Compute A = QR  (via modified Gram-Schmidt or Householder)
-2. Compute c = Q^T b
-3. Solve Rx = c by back-substitution
-</code></pre><p>Householder reflections (not Gram-Schmidt) are typically preferred in production codes for QR because they are numerically superior for very ill-conditioned problems, but the result is the same decomposition.</p>
-<h2 id="examples">Examples</h2>
-<p><strong>The QR algorithm for eigenvalues.</strong> The iteration $A_0 = A$, then $A_{k+1} = R_k Q_k$ (swap the order after factoring $A_k = Q_k R_k$) converges to a triangular (or quasi-triangular) matrix whose diagonal entries are the eigenvalues. This is not the same as applying QR decomposition once - it is a sequence of similarity transformations $A_{k+1} = Q_k^T A_k Q_k$, each of which preserves eigenvalues. With shifts and deflation, the QR algorithm runs in $O(n^3)$ per eigenvalue and is the standard method for dense eigenvalue problems.</p>
-<p><strong>Krylov subspace methods.</strong> Iterative solvers for large sparse systems (GMRES, Arnoldi, Lanczos) work in the <strong>Krylov subspace</strong> $\mathcal{K}_k(A, b) = \text{span}(b, Ab, A^2 b, \ldots, A^{k-1} b)$. Building an orthonormal basis for $\mathcal{K}_k$ as $k$ grows is precisely the <strong>Arnoldi iteration</strong> - Gram-Schmidt applied to successive Krylov vectors. The Lanczos iteration is the symmetric specialisation where the orthonormal basis and the projection of $A$ onto it can both be maintained with only 3-term recurrences, giving $O(kn)$ cost instead of $O(k^2 n)$. These methods underlie MATLAB&rsquo;s <code>eigs</code> and Python&rsquo;s <code>scipy.sparse.linalg.eigsh</code>.</p>
+<p>The QR decomposition provides the numerically preferred method for least squares. Given $Ax \approx b$ with $A = QR$, since $Q$ preserves norms we have:</p>
+<p>$$|Ax - b|^2 = |QRx - b|^2 = |Rx - Q^T b|^2 + |b - QQ^T b|^2$$</p>
+<p>The second term does not depend on $x$. Minimising the first term requires solving the triangular system:</p>
+<p>$$Rx = Q^T b$$</p>
+<p>This is done by back-substitution in $O(n^2)$ operations. No matrix-matrix product $A^T A$ is ever formed, so the condition number is not squared - this is the key numerical advantage over the normal equations.</p>
+<hr>
+<h2 id="further-applications">Further Applications</h2>
+<p><strong>The QR algorithm for eigenvalues.</strong> The iteration $A_0 = A$, then $A_{k+1} = R_k Q_k$ (swap the order after factoring $A_k = Q_k R_k$) converges to a triangular matrix whose diagonal entries are the eigenvalues. Each step is a similarity transformation $A_{k+1} = Q_k^T A_k Q_k$, which preserves eigenvalues. With shifts and deflation, the QR algorithm runs in $O(n^3)$ and is the standard method for dense eigenvalue problems.</p>
+<p><strong>Krylov subspace methods.</strong> Iterative solvers for large sparse systems (GMRES, Arnoldi, Lanczos) work in the Krylov subspace $\mathcal{K}_k(A, b) = \text{span}(b, Ab, A^2 b, \ldots, A^{k-1} b)$. Building an orthonormal basis for $\mathcal{K}_k$ as $k$ grows is precisely the <strong>Arnoldi iteration</strong> - Gram-Schmidt applied to successive Krylov vectors. The Lanczos iteration is the symmetric specialisation where the orthonormal basis can be maintained with only a 3-term recurrence, giving $O(kn)$ cost instead of $O(k^2 n)$. These methods underlie MATLAB&rsquo;s <code>eigs</code> and SciPy&rsquo;s <code>eigsh</code>.</p>
 <hr>
 <p><strong>Read Next:</strong></p>
 <ul>
