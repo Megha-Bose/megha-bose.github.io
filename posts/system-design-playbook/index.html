@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>System Design From First Principles - The Complete Playbook // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.8d2f4f9277811cccc3c651c082edc661e3e9eb76553d3d76d2d1f4e626cbc32a.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="System Design From First Principles - The Complete Playbook"/>
+<meta name="twitter:description" content="Helpful context:
+ The Vocabulary of Systems - Demystifying the Buzzwords That Fill Engineering Meetings  System Design - Building Things That Don&rsquo;t Fall Over    Most people approach system design by memorizing architectures. They study how Uber designed their location service, how Netflix handles streaming, how WhatsApp scaled to a billion users. Then they walk into a whiteboard session and freeze, because the problem in front of them is not Uber or Netflix - it is some variant they have never seen before, and their library of memorized diagrams does not pattern-match."/>
+
+    <meta property="og:title" content="System Design From First Principles - The Complete Playbook" />
+<meta property="og:description" content="Helpful context:
+ The Vocabulary of Systems - Demystifying the Buzzwords That Fill Engineering Meetings  System Design - Building Things That Don&rsquo;t Fall Over    Most people approach system design by memorizing architectures. They study how Uber designed their location service, how Netflix handles streaming, how WhatsApp scaled to a billion users. Then they walk into a whiteboard session and freeze, because the problem in front of them is not Uber or Netflix - it is some variant they have never seen before, and their library of memorized diagrams does not pattern-match." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/system-design-playbook/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/categories/">Topics</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">System Design From First Principles - The Complete Playbook</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 15, 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          24 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/engineering-vocabulary/" target="_blank" rel="noopener noreferrer">The Vocabulary of Systems - Demystifying the Buzzwords That Fill Engineering Meetings</a>
+</li>
+<li><a href="/posts/system-design-fundamentals/" target="_blank" rel="noopener noreferrer">System Design - Building Things That Don&rsquo;t Fall Over</a>
+</li>
+</ul>
+<hr>
+<p>Most people approach system design by memorizing architectures. They study how Uber designed their location service, how Netflix handles streaming, how WhatsApp scaled to a billion users. Then they walk into a whiteboard session and freeze, because the problem in front of them is not Uber or Netflix - it is some variant they have never seen before, and their library of memorized diagrams does not pattern-match.</p>
+<p>The engineers who do not freeze are not the ones who memorized more architectures. They are the ones who internalized a reasoning process. They know how to derive an architecture from requirements, how to justify technology choices from first principles, and how to name their tradeoffs explicitly. They do not recall the answer. They construct it.</p>
+<p>This post is that reasoning process, written out in full.</p>
+<hr>
+<h2 id="phase-1---understand-the-problem-before-touching-architecture">Phase 1 - Understand the Problem Before Touching Architecture</h2>
+<p>The most expensive mistake in system design is building a solution to the wrong problem. Requirements look simple on the surface and hide enormous complexity underneath. Spend the first 10-15 minutes here. Do not draw a single box until this phase is complete.</p>
+<h3 id="functional-requirements-what-must-the-system-do">Functional Requirements: What Must the System Do?</h3>
+<p>Write down exactly what operations the system supports. Be specific about the verbs.</p>
+<p>For a social media feed:</p>
+<ul>
+<li>Users can post content (text, images, video)</li>
+<li>Users can follow other users</li>
+<li>Users see a feed of content from people they follow, in reverse-chronological order (or ranked?)</li>
+<li>Users can like and comment on posts</li>
+</ul>
+<p>Each of these is a feature. Each feature is a read path or a write path or both, and each has different scale characteristics. &ldquo;Ranked feed&rdquo; instead of &ldquo;reverse-chronological&rdquo; changes the entire compute story - one is a database read, the other is a machine learning inference job.</p>
+<p>Questions to always ask:</p>
+<ul>
+<li>Does the system need to support all users globally or a specific region?</li>
+<li>Are there features that seem natural but are not explicitly required? (Analytics, search, notifications - these often get bolted on later and should be clarified upfront)</li>
+<li>What is the read/write ratio? A read-heavy system and a write-heavy system of equal scale require fundamentally different architectures.</li>
+</ul>
+<h3 id="non-functional-requirements-how-well-must-it-do-it">Non-Functional Requirements: How Well Must It Do It?</h3>
+<p>These are the constraints that eliminate whole categories of architectural choices.</p>
+<p><strong>Scale</strong>: How many users, active simultaneously? How many requests per second? How much data per day, per year? What is the growth rate? A system at 10,000 users and one at 10 million users are not the same design problem.</p>
+<p><strong>Latency</strong>: What is acceptable end-to-end latency for each operation? p50? p99? A &ldquo;fast&rdquo; feed load might mean under 300ms at p50. A real-time bidding system might require under 10ms at p99. These have entirely different implications for caching strategy and data model.</p>
+<p><strong>Availability</strong>: What is the acceptable downtime? 99.9% is 8.7 hours/year. 99.99% is 52 minutes/year. 99.999% is 5 minutes/year. Each additional nine requires significantly more investment. Most consumer products are fine at 99.9%. Financial transaction systems often require 99.99%+.</p>
+<p><strong>Consistency</strong>: If a user posts something, when must it be visible to their followers? Immediately? Within a second? Within a minute? The answer constrains whether you can use eventual consistency (simpler, faster, cheaper) or need strong consistency (harder, slower, expensive).</p>
+<p><strong>Durability</strong>: What is the cost of losing data? Losing a log message is acceptable. Losing a financial transaction is catastrophic. Durability requirements drive storage choices.</p>
+<p><strong>Throughput</strong>: Distinct from latency. A system can have low latency per request but need to sustain high throughput (many requests simultaneously). Or it can batch-process with high throughput but high latency per item (data pipelines).</p>
+<p>Write down all of these explicitly. The answers become constraints that eliminate options in every subsequent phase. &ldquo;We need 99.99% availability&rdquo; closes the door on any design with a single point of failure. &ldquo;We need strong consistency for financial data&rdquo; closes the door on eventually-consistent datastores for that data.</p>
+<hr>
+<h2 id="phase-2---estimate-scale-the-numbers-that-determine-your-architecture">Phase 2 - Estimate Scale: The Numbers That Determine Your Architecture</h2>
+<p>The right architecture at 1,000 RPS is wrong at 1,000,000 RPS. Back-of-envelope estimation identifies what will be stressed before you commit to a design that cannot handle it.</p>
+<h3 id="the-numbers-you-must-internalize">The Numbers You Must Internalize</h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Latency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L1 cache hit</td>
+<td>~0.5 ns</td>
+</tr>
+<tr>
+<td>L2 cache hit</td>
+<td>~7 ns</td>
+</tr>
+<tr>
+<td>RAM read</td>
+<td>~100 ns</td>
+</tr>
+<tr>
+<td>SSD random read</td>
+<td>~100 µs</td>
+</tr>
+<tr>
+<td>Network round-trip (same datacenter)</td>
+<td>~500 µs</td>
+</tr>
+<tr>
+<td>HDD disk seek</td>
+<td>~10 ms</td>
+</tr>
+<tr>
+<td>Network round-trip (cross-region)</td>
+<td>~100-150 ms</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Typical capacity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single CPU core</td>
+<td>~100M simple operations/sec</td>
+</tr>
+<tr>
+<td>Single SSD</td>
+<td>~100K IOPS random read, ~500 MB/s sequential</td>
+</tr>
+<tr>
+<td>Single network interface</td>
+<td>~10 Gbps = ~1.25 GB/s</td>
+</tr>
+<tr>
+<td>Single Postgres primary (well-tuned)</td>
+<td>~5,000-10,000 writes/sec, ~50,000 reads/sec</td>
+</tr>
+<tr>
+<td>Single Redis instance</td>
+<td>~100,000-1,000,000 ops/sec</td>
+</tr>
+<tr>
+<td>Single Nginx instance</td>
+<td>~50,000+ RPS for static, ~10,000 RPS for proxied</td>
+</tr>
+<tr>
+<td>Single Kafka broker</td>
+<td>millions of messages/sec, hundreds MB/s</td>
+</tr>
+</tbody>
+</table>
+<p>These numbers are orders of magnitude, not precise specs. Their value is in quickly identifying when a naive design is impossible. &ldquo;Each of our 10M daily active users fetches their feed 5 times a day, and we want to pre-compute feeds&rdquo; - that is 50M write operations per day just for feed maintenance, before actual user posts. Is that acceptable? Can the write path handle it?</p>
+<h3 id="worked-estimation-url-shortener">Worked Estimation: URL Shortener</h3>
+<p>Requirements: 100M URLs shortened per day. 10:1 read/write ratio. URLs kept for 5 years.</p>
+<p><strong>Writes</strong>: 100M / 86,400 seconds ≈ 1,200 writes/second (call it 2,000 with variance)</p>
+<p><strong>Reads</strong>: 10:1 ratio → 12,000 reads/second peak (call it 20,000)</p>
+<p><strong>Storage</strong>: Average URL = 200 bytes. 100M URLs/day × 365 × 5 years = 182 billion URLs. At 200 bytes each = 36 TB of raw URL data. With indexes and overhead, call it 100 TB.</p>
+<p><strong>Bandwidth</strong>: 20,000 reads/second, each read returning ~200 bytes → 4 MB/s outbound. Trivial.</p>
+<p>Conclusions from these numbers: writes are not the bottleneck (2,000/sec is fine for a single Postgres primary). Reads are significant but manageable (20,000/sec is addressable with caching). Storage is the real constraint - 100TB cannot fit on one machine and grows continuously.</p>
+<p>This tells you: the design needs a distributed or tiered storage strategy. It does not need a complex write path. It needs aggressive caching on reads (a cache hit rate of 99% reduces database reads to 200/sec). Before touching architecture, you know where the pressure is.</p>
+<hr>
+<h2 id="phase-3---design-the-data-model-start-with-access-patterns">Phase 3 - Design the Data Model: Start With Access Patterns</h2>
+<p>The data model is the most important design decision and the hardest to change later. Get it wrong here and every other decision is fighting the data layer. The correct way to design a data model is to start with access patterns, not with entities.</p>
+<h3 id="the-core-question-how-is-the-data-accessed">The Core Question: How Is the Data Accessed?</h3>
+<p>List every operation from Phase 1. For each operation, ask:</p>
+<ul>
+<li>What data does it need?</li>
+<li>How is it looked up? (By user ID? By time range? By full-text search?)</li>
+<li>How often is it read vs written?</li>
+<li>How many records are typically involved? (One record, or millions aggregated?)</li>
+</ul>
+<p>A &ldquo;get user by ID&rdquo; access pattern maps naturally to a key-value or relational lookup. A &ldquo;get all posts by users I follow, sorted by time&rdquo; access pattern is a join across multiple tables or a pre-computed feed. A &ldquo;search for posts containing a keyword&rdquo; access pattern requires a text index (Elasticsearch, not a relational database). The access pattern determines the data structure.</p>
+<h3 id="choosing-storage-the-decision-framework">Choosing Storage: The Decision Framework</h3>
+<p><strong>Use a relational database (PostgreSQL, MySQL) when:</strong></p>
+<ul>
+<li>Data has clear relationships between entities</li>
+<li>You need ACID transactions (money, inventory, anything where partial writes are catastrophic)</li>
+<li>The access patterns are known and query-able with indexes</li>
+<li>You need joins, aggregations, or complex queries</li>
+<li>Strong consistency is required</li>
+</ul>
+<p><strong>Use a document store (MongoDB, DynamoDB document mode) when:</strong></p>
+<ul>
+<li>Data is hierarchical and accessed as a unit (user profiles, product catalogs)</li>
+<li>Schema evolves frequently</li>
+<li>You want to avoid joins by denormalizing into a single document</li>
+<li>The primary access pattern is &ldquo;get this whole thing by ID&rdquo;</li>
+</ul>
+<p><strong>Use a key-value store (Redis, DynamoDB, Memcached) when:</strong></p>
+<ul>
+<li>Access pattern is always &ldquo;get by key&rdquo; or &ldquo;set by key&rdquo;</li>
+<li>Extremely high throughput required (Redis handles 1M+ ops/sec)</li>
+<li>Data fits in memory (Redis) or is small per-item (DynamoDB)</li>
+<li>Often used as a cache layer on top of another database</li>
+</ul>
+<p><strong>Use a wide-column store (Cassandra, HBase) when:</strong></p>
+<ul>
+<li>Write-heavy workload at massive scale</li>
+<li>Data is time-series or naturally partitioned (events by user ID + timestamp)</li>
+<li>Linear horizontal scale is more important than consistency</li>
+<li>Queries are always by partition key (never ad-hoc)</li>
+</ul>
+<p><strong>Use a search engine (Elasticsearch, Solr) when:</strong></p>
+<ul>
+<li>The primary access pattern is text search or fuzzy matching</li>
+<li>You need faceted filtering (filter by price range AND category AND brand)</li>
+<li>Full-text indexing is required</li>
+<li>Never as primary storage - Elasticsearch is not durable in the relational sense</li>
+</ul>
+<p><strong>Use a graph database (Neo4j, Neptune) when:</strong></p>
+<ul>
+<li>The primary queries involve traversing relationships (friends of friends, shortest path)</li>
+<li>The data is genuinely a graph and relationship traversal is the bottleneck</li>
+<li>Social networks' recommendation queries, fraud detection link analysis</li>
+</ul>
+<p>The anti-pattern: choosing a database because it&rsquo;s fashionable (&ldquo;we&rsquo;ll use Cassandra for scale&rdquo;) without mapping it to access patterns. Cassandra is extraordinarily good at write-heavy time-series data accessed by partition key. It is painful for anything else. The right database is the one whose strengths match your access patterns, not the one on the trending list.</p>
+<h3 id="normalize-vs-denormalize">Normalize vs Denormalize</h3>
+<p>Normalization eliminates data duplication. Denormalization deliberately introduces duplication to eliminate joins.</p>
+<p>A normalized relational model for a social feed: users table, posts table, follows table. Getting a user&rsquo;s feed requires joining all three. At 100M users, this join becomes expensive.</p>
+<p>A denormalized model: each user has a pre-computed feed stored as a list of post IDs. Reads are instant - no join. Writes are expensive - every post must be pushed to all followers' feed lists. This is fan-out on write.</p>
+<p>Neither is universally right. The choice depends on read/write ratio and whether the fan-out is manageable. At 10:1 read-heavy, denormalization is usually worth it. For a user with 10M followers, fan-out on write is catastrophically expensive - you need a hybrid.</p>
+<hr>
+<h2 id="phase-4---design-the-api-define-the-contract-first">Phase 4 - Design the API: Define the Contract First</h2>
+<p>Before drawing internal components, define what clients will call. This forces clarity: if you cannot articulate the API, you have not understood the system.</p>
+<h3 id="api-design-principles">API Design Principles</h3>
+<p><strong>Name operations by intent, not implementation.</strong> <code>POST /shorten</code> is better than <code>POST /create-record-and-store-in-database</code>. The API should be decoupled from internals.</p>
+<p><strong>Choose the right protocol.</strong> REST for public APIs accessed by browsers or external clients. gRPC for high-performance internal service-to-service communication. WebSockets or Server-Sent Events for real-time push (notifications, live feeds). GraphQL when clients need flexible querying of nested data and you want to avoid under/over-fetching.</p>
+<p><strong>Design for idempotency.</strong> Any write operation that might be retried should be idempotent: calling it multiple times produces the same result as calling it once. Stripe does this with idempotency keys on payment requests. URL shorteners often hash the long URL so the same URL always produces the same short code.</p>
+<p><strong>Version from the start.</strong> <code>/v1/shorten</code> instead of <code>/shorten</code>. When the API changes, you can introduce <code>/v2/</code> without breaking existing clients.</p>
+<h3 id="worked-example-url-shortener-api">Worked Example: URL Shortener API</h3>
+<pre tabindex="0"><code>POST /v1/urls
+Body: { &quot;long_url&quot;: &quot;https://...&quot;, &quot;alias&quot;: &quot;optional-custom&quot;, &quot;expires_at&quot;: &quot;optional&quot; }
+Response: { &quot;short_url&quot;: &quot;https://short.ly/abc123&quot;, &quot;expires_at&quot;: &quot;...&quot; }
+
+GET /{short_code}
+Response: 301 Redirect to long_url (or 302 for tracking clicks)
+
+GET /v1/urls/{short_code}/stats
+Response: { &quot;clicks&quot;: 1234, &quot;created_at&quot;: &quot;...&quot;, &quot;last_accessed&quot;: &quot;...&quot; }
+
+DELETE /v1/urls/{short_code}
+Response: 204 No Content
+</code></pre><p>Note the choice of 301 vs 302 redirect: 301 is permanent and browsers cache it, meaning after the first visit, no subsequent request hits your servers - good for throughput, bad for analytics (you lose click tracking). 302 is temporary and browsers re-request every time - good for analytics, costs one server round-trip per click. This is a tradeoff that should be made explicit in the API design, not discovered later.</p>
+<hr>
+<h2 id="phase-5---design-the-architecture-component-by-component">Phase 5 - Design the Architecture: Component by Component</h2>
+<p>Now draw the boxes. Work top-down from the client to the data. For every component you add, be able to answer: why does this exist, what problem does it solve, and what would break if I removed it?</p>
+<h3 id="the-standard-layers-and-when-to-skip-them">The Standard Layers (and When to Skip Them)</h3>
+<p><strong>DNS and CDN</strong>: DNS routes the domain to your infrastructure. A CDN sits in front of everything and serves static assets (images, CSS, JS) from edge nodes close to users. Every web system needs DNS. CDN is justified when serving significant static content or when geographic latency matters. For a purely API-driven service with no assets, CDN is less critical initially.</p>
+<p><strong>Load Balancer</strong>: Required as soon as you have more than one application server. At Layer 7 (HTTP-aware), it can route based on path, headers, or host. At Layer 4 (TCP), it is faster but cannot inspect content. Most web systems use L7 (AWS ALB, GCP HTTP Load Balancer, Nginx, HAProxy). Add an L4 load balancer in front for very high-throughput non-HTTP protocols.</p>
+<p><strong>Application Servers</strong>: The stateless business logic layer. Stateless is non-negotiable: any per-request state lives in an external store. Design application servers to be horizontally scalable from day one - this single decision enables every future scaling maneuver.</p>
+<p><strong>Cache</strong>: Sits between application servers and the database. Reduces database read load and latency. Add a cache when: read traffic is high, data is frequently re-read (high temporal locality), and data changes slowly relative to its read rate. If every read is for unique data that is never re-requested, a cache adds overhead without benefit.</p>
+<p><strong>Message Queue</strong>: Sits between components that need to communicate asynchronously. Add a queue when: you want to decouple producer throughput from consumer processing speed; you want multiple consumers for the same event; you want to buffer spikes; you need retries on failure. Do not add a queue where synchronous response is required (the user is waiting for the result).</p>
+<p><strong>Database</strong>: The system of record. Multiple databases for different access patterns is normal and often necessary. A relational database for transactional data, a search engine for full-text search, a time-series database for metrics. Each component should use the storage primitive best suited to its access pattern.</p>
+<h3 id="drawing-the-write-path-and-read-path-separately">Drawing the Write Path and Read Path Separately</h3>
+<p>The most clarifying exercise in system design is separating the write path from the read path and drawing each independently.</p>
+<p><strong>Write path for URL shortener:</strong>
+Client → Load Balancer → Application Server → Generate short code → Write to database → (async) update analytics</p>
+<p><strong>Read path for URL shortener:</strong>
+Client → Load Balancer → Application Server → Check cache for short code → Cache hit: return redirect / Cache miss: query database → populate cache → return redirect</p>
+<p>Drawing these separately makes it obvious where the bottlenecks are and which components serve which purpose. The write path needs the database to be durable. The read path needs the cache to be fast. These are different requirements and their solutions are independent.</p>
+<hr>
+<h2 id="phase-6---technology-selection-how-to-choose-and-justify">Phase 6 - Technology Selection: How to Choose and Justify</h2>
+<p>This is where system design becomes differentiated. Anyone can name technologies. Being able to justify a choice from first principles - and explain what you give up by making it - is the skill.</p>
+<h3 id="the-justification-framework">The Justification Framework</h3>
+<p>For every technology choice, articulate four things:</p>
+<ol>
+<li><strong>What problem does this solve?</strong> State the specific requirement it addresses.</li>
+<li><strong>Why this over the alternatives?</strong> Name the alternatives and explain why each is a worse fit.</li>
+<li><strong>What are the tradeoffs?</strong> Every technology has downsides. Name them explicitly.</li>
+<li><strong>What would trigger a different choice?</strong> Under what conditions would you switch?</li>
+</ol>
+<h3 id="database-worked-justification">Database: Worked Justification</h3>
+<p>&ldquo;For the primary URL storage, I&rsquo;d use PostgreSQL.</p>
+<p>The access patterns are: write a URL record (once per shortened URL), read a URL record by short code (on every redirect), and read analytics by URL. These are straightforward key-value lookups and simple aggregations - relational database strengths.</p>
+<p>We need ACID guarantees on writes: if a short code is generated but the URL record fails to persist, we have a dangling pointer. A relational database gives us transactional safety here.</p>
+<p>Why not Cassandra? Cassandra is exceptional for write-heavy time-series data at massive scale, but it requires careful schema design around partition keys and does not support transactions across partition keys. For our read-heavy, relational-ish workload, Postgres is simpler and better-suited. Why not DynamoDB? DynamoDB would work for key-value access, but it adds operational complexity and cost without giving us anything Postgres cannot. At our scale estimate, a well-tuned Postgres primary handles our write rate comfortably.</p>
+<p>The tradeoffs: Postgres is a single-primary system. When we outgrow vertical scaling on writes, we will need to shard. For reads, we can add read replicas. At 10x current scale, this would be the revisit point.</p>
+<p>What would change this choice: if our write rate exceeded ~10,000/second sustained, or if we needed built-in multi-region active-active writes, I&rsquo;d look at CockroachDB (distributed SQL with automatic sharding and multi-region support) or Cassandra with careful schema design.&rdquo;</p>
+<p>This is the pattern. Every technology choice should follow this structure.</p>
+<h3 id="the-technology-decision-map">The Technology Decision Map</h3>
+<p><strong>Relational DB (Postgres, MySQL)</strong>: Strong consistency, ACID, complex queries, foreign key integrity, schema enforcement. Use for: financial records, user data with relationships, any data requiring transactions.</p>
+<p><strong>Document DB (MongoDB, DynamoDB)</strong>: Flexible schema, hierarchical data, high throughput on simple key lookups. Use for: product catalogs, user profiles, content management, anything accessed whole-document.</p>
+<p><strong>Key-Value Store (Redis, Memcached)</strong>: Extreme throughput, in-memory, simple access. Use for: caching, session storage, rate limiting counters, leaderboards, pub/sub. Redis specifically: sessions, distributed locks, sorted sets for rankings, geospatial queries.</p>
+<p><strong>Wide-Column (Cassandra, HBase)</strong>: Linear write scale, partition-key access, time-series. Use for: event streams, IoT data, write-heavy analytics, time-series metrics.</p>
+<p><strong>Search (Elasticsearch)</strong>: Full-text search, faceted filtering, relevance ranking. Use for: product search, log analytics, anything requiring text matching. Not for primary storage.</p>
+<p><strong>Message Queue (Kafka, SQS, RabbitMQ)</strong>: Kafka for high-throughput durable event streaming with replay. SQS for simple task queues in AWS ecosystems. RabbitMQ for complex routing logic between producers and consumers.</p>
+<p><strong>Cache (Redis, Memcached)</strong>: Redis for richness (sorted sets, persistence, pub/sub). Memcached for pure key-value caching with simpler operability. The default choice in new systems is Redis.</p>
+<p><strong>Object Storage (S3, GCS)</strong>: Unlimited scale, cheap, durable. Latency of ~100-200ms per get. Use for: large files, images, videos, backups, data lakes. Not for low-latency access.</p>
+<hr>
+<h2 id="phase-7---identify-and-address-bottlenecks">Phase 7 - Identify and Address Bottlenecks</h2>
+<p>Every architecture has a bottleneck. The goal is not to eliminate bottlenecks - it is to choose which bottleneck you can live with and ensure the actual bottleneck matches your weakest constraint, not your strongest one.</p>
+<h3 id="the-bottleneck-analysis-method">The Bottleneck Analysis Method</h3>
+<p>For each component in your architecture, estimate its capacity against the scale numbers from Phase 2. Find where the headroom runs out first.</p>
+<p><strong>&ldquo;Can the database handle the write rate?&quot;</strong> Take your estimated writes per second. Compare to database capacity. If writes are 2,000/sec and Postgres handles 10,000/sec, there is headroom. If writes are 15,000/sec, this is your bottleneck and the design needs to address it.</p>
+<p><strong>&ldquo;What is the cache hit rate and what happens on a miss?&quot;</strong> If your cache hit rate is 99% and you have 20,000 reads/sec, only 200 reads/sec reach the database. If the cache goes down or hit rate drops to 80%, 4,000 reads/sec hit the database. Does the database survive?</p>
+<p><strong>&ldquo;What happens when a downstream service is slow?&quot;</strong> If your application server calls three downstream services synchronously, the p99 latency of your service is roughly the sum of the p99 latencies of all three. A slow payment service makes your checkout slow even if everything else is fast.</p>
+<h3 id="addressing-common-bottlenecks">Addressing Common Bottlenecks</h3>
+<p><strong>Database read bottleneck</strong>: Add read replicas. Add a cache in front of the database. Ensure the hottest queries are indexed. Denormalize to avoid expensive joins.</p>
+<p><strong>Database write bottleneck</strong>: Optimize writes (batch inserts, write-behind caching). Vertical scale the primary (faster CPU, more memory, NVMe SSDs). Shard by a well-distributed key. Move non-critical writes to a queue for async processing.</p>
+<p><strong>Application server bottleneck</strong>: Application servers are stateless, so this is the easiest bottleneck to address: add more servers and let the load balancer distribute. Ensure the bottleneck is not downstream (if the database is saturated, adding application servers makes it worse).</p>
+<p><strong>Cache bottleneck</strong>: Redis is so fast that the cache itself is rarely the bottleneck. If it is, scale Redis with clustering (Redis Cluster) or add more cache instances behind a consistent hash.</p>
+<p><strong>Network bottleneck</strong>: Move computation and data closer together (same availability zone, same datacenter). Use a CDN for static content. Compress payloads. Reduce the number of network calls by batching or by restructuring data access.</p>
+<hr>
+<h2 id="phase-8---design-for-failure-reliability-from-first-principles">Phase 8 - Design for Failure: Reliability From First Principles</h2>
+<p>Reliable systems are not built by hoping components do not fail. They are built by assuming every component will fail and designing accordingly.</p>
+<h3 id="classify-every-component-by-failure-mode">Classify Every Component by Failure Mode</h3>
+<p>For each component, ask: what happens when this fails? There are three classes of failure:</p>
+<p><strong>Hard dependency</strong>: The component fails and the request cannot complete. The database for a URL shortener is a hard dependency for writes - if the database is down, no new URLs can be shortened.</p>
+<p><strong>Soft dependency</strong>: The component fails and the system degrades gracefully. The analytics service is a soft dependency for redirects - if it is down, the redirect still works, we just lose click tracking for that period.</p>
+<p><strong>Transparent failure</strong>: The component fails and a fallback handles it transparently. The cache is a transparent failure for reads - if Redis is down, reads fall through to the database. Slower, but correct.</p>
+<p>Categorize every component. Ensure hard dependencies have redundancy (replication, failover). Design soft dependencies to degrade gracefully. Ensure transparent failures do not cascade (a Redis outage should not cause 100x more database load than the database can handle).</p>
+<h3 id="replication-and-failover">Replication and Failover</h3>
+<p>Every stateful component needs replication. The purpose of replication:</p>
+<ul>
+<li><strong>Availability</strong>: if the primary fails, a replica takes over</li>
+<li><strong>Read scale</strong>: reads can be distributed across replicas (with eventual consistency implications)</li>
+<li><strong>Geographic redundancy</strong>: replicas in different zones or regions survive zone/region failures</li>
+</ul>
+<p>For databases: use synchronous replication within an availability zone (zero data loss on failover), asynchronous replication across regions (low latency writes, possible data loss on region failure).</p>
+<p>Automatic failover is essential. Manual failover during an incident adds minutes to the recovery time. Every stateful component should have automated health checking and automatic promotion of a replica when the primary is unhealthy.</p>
+<h3 id="circuit-breakers-and-timeouts">Circuit Breakers and Timeouts</h3>
+<p>Without circuit breakers, a slow dependency cascades into a full outage. The pattern:</p>
+<p>A circuit breaker wraps each external call. When the error rate for a dependency exceeds a threshold, the circuit breaker &ldquo;trips&rdquo; - subsequent calls immediately return an error (or cached fallback) without contacting the dependency. After a cooldown period, the circuit breaker allows a test request. If it succeeds, the circuit closes and normal traffic resumes.</p>
+<p>Without this, your application server&rsquo;s thread pool fills up waiting for a slow dependency, and your service becomes unavailable - even though your service&rsquo;s own code is fine. A tripped circuit breaker fails fast, freeing threads, and allows your service to continue operating in a degraded state while the dependency recovers.</p>
+<p>Every external call must also have an explicit timeout. &ldquo;Wait forever&rdquo; is not a strategy.</p>
+<h3 id="idempotency-and-retries">Idempotency and Retries</h3>
+<p>At scale, failures happen. Network packets are dropped. Database connections time out. Requests fail mid-flight. The correct response is to retry. But retries are only safe if the operation is idempotent - calling it multiple times produces the same result.</p>
+<p>Design write operations to be idempotent:</p>
+<ul>
+<li>Use a client-generated request ID. On retry, the server detects the duplicate ID and returns the previous result without re-executing.</li>
+<li>Use conditional writes (&ldquo;write only if this value is X&rdquo;). Prevents double-writes.</li>
+<li>Generate deterministic IDs from content (hash the input). The same input always produces the same ID, so a duplicate write has the same effect as the original.</li>
+</ul>
+<p>Combine retries with exponential backoff and jitter. Immediate retries after failures create thundering herds. Exponential backoff reduces the retry rate over time. Jitter (random delay) desynchronizes retries from multiple clients hitting the same failed service simultaneously.</p>
+<hr>
+<h2 id="phase-9---a-complete-worked-example-designing-a-pastebin">Phase 9 - A Complete Worked Example: Designing a Pastebin</h2>
+<p>Rather than design Twitter (overused), here is a less-discussed system that exercises all the concepts above.</p>
+<p><strong>Requirements:</strong> Users can paste text. Each paste gets a unique URL. Pastes can be public or private (with a secret URL). Pastes expire after 30 days by default, or a custom duration. Read rate is 10x write rate. Analytics: view count per paste.</p>
+<h3 id="estimation">Estimation</h3>
+<p>Writes: 10M pastes/day → ~120/sec average, ~500/sec peak.
+Reads: 10x → 1,200/sec average, ~5,000/sec peak.
+Storage: average paste = 10KB. 10M/day × 30 days at any given time = 300M active pastes × 10KB = 3TB. Manageable on object storage.
+Data persisted for 30 days then deleted. Cleanup is a significant write workload.</p>
+<h3 id="data-model">Data Model</h3>
+<p>Three access patterns drive the model:</p>
+<ol>
+<li>Create paste → generate unique ID, store content</li>
+<li>Read paste by ID → return content if not expired</li>
+<li>Get view count for paste</li>
+</ol>
+<p>Paste record: <code>paste_id</code> (8-char random string), <code>content</code> stored in object storage (S3/GCS), <code>metadata</code> in relational database (created_at, expires_at, view_count, is_public, secret_key if private, owner_id if authenticated).</p>
+<p>Why split content from metadata? Content is large (up to several MB for code), accessed as a blob, and cheap to store in S3. Metadata is small, queried by ID, and needs fast point lookups. Mixing them in one database means paying database I/O for large blob reads on every access.</p>
+<p>Private pastes: generate a second longer random key that becomes part of the URL. The &ldquo;secret URL&rdquo; approach - knowing the URL is proof of authorization. No access control table needed, which simplifies the read path significantly.</p>
+<h3 id="api">API</h3>
+<pre tabindex="0"><code>POST /pastes
+Body: { &quot;content&quot;: &quot;...&quot;, &quot;expires_in&quot;: 86400, &quot;is_public&quot;: false }
+Response: { &quot;paste_id&quot;: &quot;abc12345&quot;, &quot;url&quot;: &quot;https://paste.io/abc12345&quot;, &quot;expires_at&quot;: &quot;...&quot; }
+
+GET /pastes/{paste_id}
+Response: Paste content (with view_count increment happening asynchronously)
+
+GET /pastes/{paste_id}/stats
+Response: { &quot;view_count&quot;: 1234, &quot;created_at&quot;: &quot;...&quot;, &quot;expires_at&quot;: &quot;...&quot; }
+</code></pre><p>View count increment is async intentionally: if the counter increment is on the read path, every view hits the database for a write. Instead, publish a &ldquo;paste-viewed&rdquo; event to a queue; a consumer updates the counter in batches.</p>
+<h3 id="architecture">Architecture</h3>
+<p>Write path: Client → Load Balancer → App Server → Generate paste ID → Write content to S3 → Write metadata to Postgres → Return paste URL.</p>
+<p>Read path: Client → Load Balancer → App Server → Cache lookup by paste_id → Hit: return content URL from cache → Miss: query Postgres for metadata → Check expiry → Return S3 signed URL → Client fetches content from S3 (CDN-accelerated).</p>
+<p>Why a signed S3 URL instead of proxying? Proxying the content through the app server means every large paste read saturates app server network bandwidth. A signed URL redirects the client to fetch directly from S3/CDN, removing the app server from the data path entirely.</p>
+<p>Expiry cleanup: a daily batch job queries Postgres for expired pastes and deletes them from both S3 and Postgres. This is a background operation with no latency requirement.</p>
+<p>Analytics: &ldquo;paste-viewed&rdquo; events are published to a Kafka topic. A consumer reads the topic and increments a Redis counter for each paste. The <code>/stats</code> endpoint reads from Redis. Eventual consistency is acceptable here - being 1 second behind on view counts is not a correctness problem.</p>
+<p><strong>Technology choices justified:</strong></p>
+<ul>
+<li>Postgres: metadata has a clear schema, transactions needed for atomic paste creation, relational database strengths match access patterns</li>
+<li>S3: content is large blobs, cheapest per-GB storage, durable, CDN-integrable</li>
+<li>Redis: view count is a counter, Redis INCR is atomic and extremely fast, no need for durable storage here</li>
+<li>Kafka: decouples read path from analytics write, survives consumer downtime (events are replayed), enables multiple future analytics consumers without changing the read path</li>
+</ul>
+<h3 id="failure-analysis">Failure Analysis</h3>
+<ul>
+<li>Postgres down → write path fails (hard dependency). Read path falls back to cache but new data unavailable. Mitigation: Postgres primary + synchronous replica with automatic failover (RDS Multi-AZ).</li>
+<li>S3 unavailable → content unreachable. S3 offers 99.99% availability. Cross-region replication as additional insurance.</li>
+<li>Redis down → view counts stop incrementing (acceptable degradation). Cache misses fall to Postgres (watch database load spike). Kafka events queue up until Redis recovers; counts are eventually consistent when consumer catches up.</li>
+<li>App server down → load balancer health check detects and stops routing. Replaced by auto-scaling group. Stateless - no impact.</li>
+</ul>
+<hr>
+<h2 id="the-trade-off-reference">The Trade-Off Reference</h2>
+<p>Every design decision involves trading one property for another. The fluency to name these explicitly, and explain why you made the choice you did, is the difference between a junior and senior design.</p>
+<table>
+<thead>
+<tr>
+<th>You want</th>
+<th>You sacrifice</th>
+<th>The mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Higher availability</td>
+<td>Consistency</td>
+<td>Eventual consistency, replica reads</td>
+</tr>
+<tr>
+<td>Lower latency</td>
+<td>Freshness</td>
+<td>Caching, read replicas with replication lag</td>
+</tr>
+<tr>
+<td>Higher write throughput</td>
+<td>Durability</td>
+<td>Write-behind caching, async durability</td>
+</tr>
+<tr>
+<td>Stronger consistency</td>
+<td>Availability</td>
+<td>Synchronous replication, quorum writes (no writes during partition)</td>
+</tr>
+<tr>
+<td>Simpler operations</td>
+<td>Optimal performance</td>
+<td>Managed services over self-hosted</td>
+</tr>
+<tr>
+<td>Lower cost</td>
+<td>Performance ceiling</td>
+<td>Smaller instances, fewer replicas, object storage over block storage</td>
+</tr>
+<tr>
+<td>Faster reads</td>
+<td>Slower writes</td>
+<td>Denormalization, pre-computation, fan-out on write</td>
+</tr>
+<tr>
+<td>Faster writes</td>
+<td>Slower reads</td>
+<td>Normalization, fan-out on read</td>
+</tr>
+<tr>
+<td>Resilience to dependency failure</td>
+<td>Complexity</td>
+<td>Circuit breakers, caches, graceful degradation code</td>
+</tr>
+<tr>
+<td>Horizontal write scale</td>
+<td>Query flexibility</td>
+<td>Sharding (restricts which queries are efficient)</td>
+</tr>
+<tr>
+<td>Schema flexibility</td>
+<td>Data integrity</td>
+<td>NoSQL (no foreign keys, no transactions across documents)</td>
+</tr>
+<tr>
+<td>Exactly-once processing</td>
+<td>Throughput</td>
+<td>Distributed transactions (slower, more coordination)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="what-the-best-system-designs-have-in-common">What the Best System Designs Have in Common</h2>
+<p>The best designs share properties that have nothing to do with choosing the right technologies:</p>
+<p><strong>They start simple and scale deliberately.</strong> A monolith with one database is often the right starting point. It is easier to split a well-factored monolith into services when scale demands it than to build a distributed system before you understand the load patterns.</p>
+<p><strong>Every component can be explained.</strong> &ldquo;We added this because&hellip;&rdquo; followed by a specific requirement. If a component cannot be explained by a requirement, it should not be in the design.</p>
+<p><strong>Failure modes are named.</strong> Every dependency has an explicit answer to &ldquo;what happens when this fails?&rdquo;</p>
+<p><strong>The data model matches the access patterns.</strong> Storage is chosen to serve the reads and writes that actually happen, not the reads and writes that seem natural.</p>
+<p><strong>Tradeoffs are explicit and justified.</strong> Choosing eventual consistency is fine. Choosing it without acknowledging that users may see stale data is not.</p>
+<p>The goal is not a beautiful architecture diagram. The goal is a system that does what it is supposed to do, at the scale required, with the failure characteristics acceptable to the business - and a team that understands why every piece is there.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/kafka-internals/" target="_blank" rel="noopener noreferrer">Kafka Internals - The Distributed Log That Became an Ecosystem</a>
+</li>
+<li><a href="/posts/raft-consensus/" target="_blank" rel="noopener noreferrer">Raft - How Distributed Systems Agree on Anything</a>
+</li>
+<li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
