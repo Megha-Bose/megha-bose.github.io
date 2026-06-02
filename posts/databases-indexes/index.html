@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          21 min read
+          25 min read
         </div>
       </div>
     </header>
@@ -124,6 +124,58 @@
 <p>A database index is this exact structure, applied to rows. It is a separate, sorted data structure that the database maintains alongside the main table. It maps column values to row locations. When you query <code>WHERE user_id = 42</code>, the database consults the index - &ldquo;where are all the rows with user_id = 42?&rdquo; - and jumps directly to those rows without reading anything else.</p>
 <p>The main table itself has no guaranteed ordering. Rows are stored in whatever order they were inserted - which is usually close to insertion order, and not sorted by any column your queries care about. The index provides the sorted structure the table lacks.</p>
 <p>The cost: every index must be updated whenever the underlying data changes. Adding a row to a table with three indexes means writing to four places on disk: the main table and each index. This is the fundamental tradeoff that runs through all of index design - faster reads, slower writes.</p>
+<hr>
+<h2 id="what-it-actually-looks-like">What It Actually Looks Like</h2>
+<p>Take a small orders table. The main table - called the heap - stores rows in insertion order, completely unsorted:</p>
+<pre tabindex="0"><code>Heap (insertion order)
+row | id | user_id | status    | created_at              | total_cents
+1   |  1 |    9823 | delivered | 2024-03-15 10:22:00 UTC |        4999
+2   |  2 |      42 | pending   | 2024-03-15 10:23:00 UTC |        1200
+3   |  3 |    7701 | shipped   | 2024-03-15 10:24:00 UTC |        8750
+4   |  4 |      42 | delivered | 2024-03-14 09:15:00 UTC |        3300
+5   |  5 |    1054 | pending   | 2024-03-15 10:25:00 UTC |         500
+6   |  6 |      42 | shipped   | 2024-03-13 14:30:00 UTC |        7200
+</code></pre><p>To find all rows where <code>user_id = 42</code>, the database reads all six rows and checks each one. With six rows this is instant. With 50 million rows this is catastrophic.</p>
+<p>Now you run <code>CREATE INDEX idx_orders_user ON orders(user_id)</code>. The database builds a separate sorted structure. Its leaf level - the bottom of the B-tree where the actual entries live - looks like this:</p>
+<pre tabindex="0"><code>Index on (user_id) - leaf level, sorted
+user_id | pointer to heap row
+     42 | → row 2
+     42 | → row 4
+     42 | → row 6
+   1054 | → row 5
+   7701 | → row 3
+   9823 | → row 1
+</code></pre><p>The entries are sorted by user_id. To find all rows where <code>user_id = 42</code>, the database traverses the B-tree from the root to the leaf position where 42 lives, then scans forward until user_id is no longer 42. It finds three entries, follows each pointer to fetch the actual row from the heap. Six rows read from the index, three heap fetches. With 50 million rows, the ratio is the same: O(log n) to reach the first match, then exactly as many heap fetches as there are matching rows.</p>
+<p>Above the leaf level, the B-tree&rsquo;s internal nodes act as a directory: each internal node stores a range of key values and a pointer to the child node covering that range. The root might say &ldquo;everything below 5000 is left, everything from 5000 to 8000 is middle, everything above 8000 is right.&rdquo; You follow one branch at each level until you arrive at the leaf. With branching factor 200, 50 million rows fit in a tree just four levels deep - four disk reads to locate any value.</p>
+<p><strong>What a composite index looks like</strong></p>
+<p><code>CREATE INDEX idx_orders_user_created ON orders(user_id, created_at DESC)</code> produces a leaf level sorted first by user_id, then by created_at newest-first within each user:</p>
+<pre tabindex="0"><code>Index on (user_id, created_at DESC) - leaf level
+user_id | created_at              | pointer
+     42 | 2024-03-15 10:23:00 UTC | → row 2
+     42 | 2024-03-14 09:15:00 UTC | → row 4
+     42 | 2024-03-13 14:30:00 UTC | → row 6
+   1054 | 2024-03-15 10:25:00 UTC | → row 5
+   7701 | 2024-03-15 10:24:00 UTC | → row 3
+   9823 | 2024-03-15 10:22:00 UTC | → row 1
+</code></pre><p>A query <code>WHERE user_id = 42 ORDER BY created_at DESC LIMIT 20</code> navigates to user_id = 42, then reads the next 20 entries in leaf order - they are already in the right order, so no sort step is needed at all. That is the point of ordering columns in an index: the sort the query needs is already the order the index stores things in.</p>
+<p>Notice that the <code>(user_id, created_at DESC)</code> index also helps a plain <code>WHERE user_id = 42</code> query - the leftmost column alone is a valid entry point into the tree. A query <code>WHERE created_at &gt; X</code> with no user_id filter cannot use this index at all: you cannot skip the first column.</p>
+<p><strong>What a partial index looks like</strong></p>
+<p><code>CREATE INDEX idx_orders_pending ON orders(id) WHERE status = 'pending'</code> contains only the rows matching the predicate:</p>
+<pre tabindex="0"><code>Partial index on (id) WHERE status = 'pending'
+id | pointer
+ 2 | → row 2
+ 5 | → row 5
+</code></pre><p>Two entries instead of six. At 50 million rows where 2% are pending, this index has 1 million entries instead of 50 million - fifty times smaller. Fifty times less storage, fifty times less memory used when this index is cached, fifty times less write overhead when non-pending rows are inserted or updated.</p>
+<p><strong>What a covering index looks like</strong></p>
+<p>Say the query is <code>SELECT status, created_at FROM orders WHERE user_id = 42</code>. With the basic index on <code>(user_id)</code>, the database finds the matching leaf entries and then follows a pointer to the heap for each one to read the <code>status</code> and <code>created_at</code> columns - an extra disk read per result row.</p>
+<p>With an index on <code>(user_id, status, created_at)</code>, the leaf entries already contain all three values:</p>
+<pre tabindex="0"><code>Index on (user_id, status, created_at) - leaf level
+user_id | status    | created_at              | pointer
+     42 | delivered | 2024-03-14 09:15:00 UTC | → row 4
+     42 | pending   | 2024-03-15 10:23:00 UTC | → row 2
+     42 | shipped   | 2024-03-13 14:30:00 UTC | → row 6
+   ...
+</code></pre><p>The query needs <code>status</code> and <code>created_at</code> - both are right there in the index. The database never follows the pointer to the heap. This is called an index-only scan, and <code>EXPLAIN ANALYZE</code> will tell you when the planner is using one.</p>
 <hr>
 <h2 id="why-indexes-exist-the-disk-problem">Why Indexes Exist: The Disk Problem</h2>
 <p>A table without an index is a heap - an unordered pile of rows. Finding orders for user 42 means reading every single row and checking whether <code>user_id = 42</code>. This is a full table scan. At 50 million rows, reading every row from disk takes seconds even with fast SSDs.</p>
