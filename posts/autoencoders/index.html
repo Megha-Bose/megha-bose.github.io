@@ -1,113 +1,69 @@
-<!doctype html>
-<html lang="en-us">
-  <head>
-    <title>Autoencoders - Compress It Down, Build It Back // Megha Bose</title>
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <meta charset="utf-8" />
-    <meta name="generator" content="Hugo 0.92.2" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="author" content="Megha Bose" />
-    <meta name="description" content="" />
-    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-
-    
-    <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Autoencoders - Compress It Down, Build It Back"/>
+<!doctype html><html lang="en-us">
+<head>
+<title>Autoencoders - Compress It Down, Build It Back // Megha Bose</title>
+<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.92.2">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Megha Bose">
+<meta name="description" content>
+<link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Autoencoders - Compress It Down, Build It Back">
 <meta name="twitter:description" content="Helpful context:
- Neural Networks &amp; Perceptrons - Function Approximation, Layer by Layer    Every high-dimensional dataset lives, in practice, on something much smaller. A collection of face images - each one $256 \times 256$ pixels, so a point in $\mathbb{R}^{65536}$ - does not actually fill that space uniformly. The images cluster on a low-dimensional surface: the manifold of human faces. It is parameterized by things like the angle of the jaw, the distance between the eyes, the direction of gaze."/>
-
-    <meta property="og:title" content="Autoencoders - Compress It Down, Build It Back" />
+ Neural Networks & Perceptrons - Function Approximation, Layer by Layer    Every high-dimensional dataset lives, in practice, on something much smaller. A collection of face images - each one $256 \times 256$ pixels, so a point in $\mathbb{R}^{65536}$ - does not actually fill that space uniformly. The images cluster on a low-dimensional surface: the manifold of human faces. It is parameterized by things like the angle of the jaw, the distance between the eyes, the direction of gaze.">
+<meta property="og:title" content="Autoencoders - Compress It Down, Build It Back">
 <meta property="og:description" content="Helpful context:
- Neural Networks &amp; Perceptrons - Function Approximation, Layer by Layer    Every high-dimensional dataset lives, in practice, on something much smaller. A collection of face images - each one $256 \times 256$ pixels, so a point in $\mathbb{R}^{65536}$ - does not actually fill that space uniformly. The images cluster on a low-dimensional surface: the manifold of human faces. It is parameterized by things like the angle of the jaw, the distance between the eyes, the direction of gaze." />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="http://megha-bose.github.io/posts/autoencoders/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2024-07-05T00:00:00+00:00" />
-<meta property="article:modified_time" content="2024-07-05T00:00:00+00:00" />
-
-
-
-    <script>
-      (function() {
-        var saved = localStorage.getItem('theme');
-        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
-      })();
-    </script>
-  </head>
-  <body>
-    <header class="app-header">
-      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
-      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
-      <nav class="app-header-menu">
-          <a class="app-header-menu-item" href="/about/">About Me</a>
-             <br> 
-          
-          <a class="app-header-menu-item" href="/resume/"> Resume</a>
-             <br> 
-          
-          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
-      </nav>
-      <div class="app-header-social">
-        
-          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
-  <title>Github</title>
-  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-</svg>
-          </a>
-        
-          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
-  <title>Linkedin</title>
-  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
-</svg>
-          </a>
-        
-          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
-  <title>X</title>
-  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
-</svg>
-          </a>
-        
-          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
-  <title>Instagram</title>
-  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-</svg>
-          </a>
-        
-      </div>
-      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
-        <span class="theme-toggle-icon"></span>
-      </button>
-    </header>
-    <main class="app-container">
-      
-  <article class="post">
-    <header class="post-header">
-      <h1 class ="post-title">Autoencoders - Compress It Down, Build It Back</h1>
-      <div class="post-meta">
-        <div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
-  <title>calendar</title>
-  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
-</svg>
-          Jul 2024
-        </div>
-        <div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
-  <title>clock</title>
-  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
-</svg>
-          18 min read
-        </div>
-      </div>
-    </header>
-    <div class="post-content">
-      <p><strong>Helpful context:</strong></p>
+ Neural Networks & Perceptrons - Function Approximation, Layer by Layer    Every high-dimensional dataset lives, in practice, on something much smaller. A collection of face images - each one $256 \times 256$ pixels, so a point in $\mathbb{R}^{65536}$ - does not actually fill that space uniformly. The images cluster on a low-dimensional surface: the manifold of human faces. It is parameterized by things like the angle of the jaw, the distance between the eyes, the direction of gaze.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://megha-bose.github.io/posts/autoencoders/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2024-07-05T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-07-05T00:00:00+00:00">
+<script>(function(){var a=localStorage.getItem('theme');a==='light'&&document.documentElement.setAttribute('data-theme','light')})()</script>
+</head>
+<body>
+<header class="app-header">
+<a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose"></a>
+<span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+<nav class="app-header-menu">
+<a class="app-header-menu-item" href="/about/">About Me</a>
+<br>
+<a class="app-header-menu-item" href="/resume/"> Resume</a>
+<br>
+<a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+</nav>
+<div class="app-header-social">
+<a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+<a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>Linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+</a>
+<a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="currentcolor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg"><title>X</title><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+</a>
+<a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me"><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram"><title>Instagram</title><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+</a>
+</div>
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+<span class="theme-toggle-icon"></span>
+</button>
+</header>
+<main class="app-container">
+<article class="post">
+<header class="post-header">
+<h1 class="post-title">Autoencoders - Compress It Down, Build It Back</h1>
+<div class="post-meta">
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Jul 2024
+</div>
+<div><svg viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+18 min read
+</div>
+</div>
+</header>
+<div class="post-content">
+<p><strong>Helpful context:</strong></p>
 <ul>
-<li><a href="/posts/neural-networks-perceptrons/" target="_blank" rel="noopener noreferrer">Neural Networks &amp; Perceptrons - Function Approximation, Layer by Layer</a>
+<li><a href="/posts/neural-networks-perceptrons/" target="_blank" rel="noopener noreferrer">Neural Networks & Perceptrons - Function Approximation, Layer by Layer</a>
 </li>
 </ul>
 <hr>
@@ -127,7 +83,7 @@
 <p>$$\mathcal{L} = \frac{1}{n} \sum_{i=1}^n | x^{(i)} - VWx^{(i)} |^2 = | X - XW^\top V^\top |_F^2$$</p>
 <p>where $X \in \mathbb{R}^{n \times D}$ is the data matrix (rows are examples, assumed mean-centered).</p>
 <p>The claim is that the optimal linear autoencoder performs <strong>exactly PCA</strong>. More precisely, the composition $VW$ at the minimum of $\mathcal{L}$ is the orthogonal projection onto the subspace spanned by the top $d$ eigenvectors of the sample covariance matrix $\Sigma = \frac{1}{n} X^\top X$.</p>
-<p><strong>Proof via SVD.</strong> Let $X = U S V^\top$ be the singular value decomposition, where $U \in \mathbb{R}^{n \times D}$ has orthonormal columns, $S = \mathrm{diag}(\sigma_1, \ldots, \sigma_r)$ with $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r &gt; 0$, and $V \in \mathbb{R}^{D \times D}$ is orthogonal. The columns of $V$ are the eigenvectors of $X^\top X$, and $\sigma_k^2 / n$ are the eigenvalues of the covariance matrix.</p>
+<p><strong>Proof via SVD.</strong> Let $X = U S V^\top$ be the singular value decomposition, where $U \in \mathbb{R}^{n \times D}$ has orthonormal columns, $S = \mathrm{diag}(\sigma_1, \ldots, \sigma_r)$ with $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r > 0$, and $V \in \mathbb{R}^{D \times D}$ is orthogonal. The columns of $V$ are the eigenvectors of $X^\top X$, and $\sigma_k^2 / n$ are the eigenvalues of the covariance matrix.</p>
 <p>The reconstruction error is $|X - XV^\top W^\top W V|_F^2$ after substituting $W = \tilde{W} V^\top$ for some $\tilde{W}$. Working in the eigenvector basis, we want to find the rank-$d$ matrix $P = V W^\top W V^\top$ that minimizes $|X - XP|_F^2$. By the Eckart-Young theorem, the best rank-$d$ approximation to $X$ in Frobenius norm is $X_d = U_d S_d V_d^\top$, where $U_d, S_d, V_d$ are the leading $d$ components of the SVD. The projection is:</p>
 <p>$$P^\star = V_d V_d^\top$$</p>
 <p>where $V_d \in \mathbb{R}^{D \times d}$ contains the top $d$ right singular vectors of $X$ (equivalently, top $d$ eigenvectors of the covariance matrix). The minimum reconstruction error is:</p>
@@ -148,7 +104,7 @@
 <p><strong>Gaussian noise:</strong> $\tilde{x} = x + \varepsilon$ where $\varepsilon \sim \mathcal{N}(0, \sigma^2 I)$.</p>
 <p><strong>Masking noise:</strong> each coordinate of $x$ is independently set to zero with probability $p$ (also called dropout noise).</p>
 <p>The loss is:</p>
-<p>$$\mathcal{L}<em>{\mathrm{DAE}} = \mathbb{E}</em>{x \sim p_{\mathrm{data}}}  \mathbb{E}_{\tilde{x} \sim q(\tilde{x}|x)} \left[ | x - g(f(\tilde{x})) |^2 \right]$$</p>
+<p>$$\mathcal{L}<em>{\mathrm{DAE}} = \mathbb{E}</em>{x \sim p_{\mathrm{data}}} \mathbb{E}_{\tilde{x} \sim q(\tilde{x}|x)} \left[ | x - g(f(\tilde{x})) |^2 \right]$$</p>
 <p>The network sees corrupted $\tilde{x}$ but must predict clean $x$. This forces it to learn which directions in input space are informative (and thus worth recovering) and which are noise. The identity map is no longer a valid solution - applying the identity to $\tilde{x}$ reproduces the noise, not the signal.</p>
 <p><strong>Why DAEs learn the manifold.</strong> The optimal reconstruction $g(f(\tilde{x}))$ under squared loss is the conditional mean $\mathbb{E}[x \mid \tilde{x}]$. For small Gaussian noise $\varepsilon$ with covariance $\sigma^2 I$, this conditional mean points from $\tilde{x}$ back toward the data manifold: roughly, $\mathbb{E}[x \mid \tilde{x}] \approx \tilde{x} + \sigma^2 \nabla_x \log p(\tilde{x})$. The reconstruction vector $g(f(\tilde{x})) - \tilde{x}$ therefore approximates the <strong>score function</strong> $\nabla_x \log p(x)$ of the data distribution.</p>
 <p>This connection - denoising is equivalent to score matching - is the foundation of modern diffusion models. A DAE trained at noise level $\sigma$ is learning to estimate the score of the data distribution convolved with Gaussian noise of that level. The data manifold is the zero-set of the score-based vector field: it is where all the denoising arrows point toward. By forcing the network to denoise, we force it to learn the geometry of the data distribution, not just a compact representation of the training set.</p>
@@ -158,8 +114,8 @@
 <p>The bottleneck in a standard autoencoder achieves compression through dimensionality: $d \ll D$. A <strong>sparse autoencoder (SAE)</strong> achieves a different kind of compression: the code $h = f(x) \in \mathbb{R}^d$ is forced to be sparse, meaning that most of its entries are zero for any given input, even if $d \geq D$.</p>
 <p>The training objective adds an $\ell_1$ penalty on the hidden activations:</p>
 <p>$$\mathcal{L}_{\mathrm{SAE}} = | x - g(f(x)) |^2 + \lambda | h |_1$$</p>
-<p>where $h = f(x)$ and $\lambda &gt; 0$ controls the sparsity-reconstruction tradeoff. The $\ell_1$ norm $|h|_1 = \sum_k |h_k|$ is chosen over $\ell_2$ because it induces true zeros in the solution (by the subdifferential analysis of the $\ell_1$ penalty, a coordinate $h_k$ is set to exactly zero whenever the reconstruction gradient at that coordinate is small relative to $\lambda$).</p>
-<p><strong>Overcomplete dictionaries.</strong> The striking regime is $d &gt; D$: the code dimension exceeds the input dimension. A standard autoencoder with $d &gt; D$ has no compression pressure at all and trivially learns the identity. An SAE with $d &gt; D$ is different: the code is high-dimensional but must be sparse - only $k \ll d$ entries active per input. This forces the model to learn an overcomplete dictionary of $d$ features such that any input can be reconstructed from a small subset of them. The analogy is to sparse coding: just as $k$-sparse signals can be recovered from few measurements via compressed sensing when the dictionary is incoherent, an SAE learns a dictionary in which each training example activates a small, distinct subset of features.</p>
+<p>where $h = f(x)$ and $\lambda > 0$ controls the sparsity-reconstruction tradeoff. The $\ell_1$ norm $|h|_1 = \sum_k |h_k|$ is chosen over $\ell_2$ because it induces true zeros in the solution (by the subdifferential analysis of the $\ell_1$ penalty, a coordinate $h_k$ is set to exactly zero whenever the reconstruction gradient at that coordinate is small relative to $\lambda$).</p>
+<p><strong>Overcomplete dictionaries.</strong> The striking regime is $d > D$: the code dimension exceeds the input dimension. A standard autoencoder with $d > D$ has no compression pressure at all and trivially learns the identity. An SAE with $d > D$ is different: the code is high-dimensional but must be sparse - only $k \ll d$ entries active per input. This forces the model to learn an overcomplete dictionary of $d$ features such that any input can be reconstructed from a small subset of them. The analogy is to sparse coding: just as $k$-sparse signals can be recovered from few measurements via compressed sensing when the dictionary is incoherent, an SAE learns a dictionary in which each training example activates a small, distinct subset of features.</p>
 <p><strong>Why sparsity helps interpretability.</strong> A dense code $h \in \mathbb{R}^d$ is hard to interpret: every coordinate mixes many underlying factors. A sparse code is far more interpretable: if $h_k$ is active only when a particular feature is present in $x$, then $h_k$ can be associated with that feature by inspection. This is the basis for the application of sparse autoencoders in <strong>mechanistic interpretability</strong> of large language models.</p>
 <p>The superposition hypothesis, developed in circuits-style research, posits that neural networks store more concepts than they have neurons by representing each concept as a sparse linear combination of neurons (the neurons &ldquo;superpose&rdquo; many features in their activations). SAEs trained on the residual stream or MLP activations of a transformer can decompose these superposed representations: each SAE feature corresponds to a specific, human-interpretable concept (a name, a syntactic role, a factual category). Because the dictionary is overcomplete and the codes are sparse, each concept activates on the appropriate inputs and is silent otherwise - recovering the individual &ldquo;virtual neurons&rdquo; that the transformer has mixed together.</p>
 <hr>
@@ -263,44 +219,13 @@
 <li><a href="/posts/generative-adversarial-networks/" target="_blank" rel="noopener noreferrer">GANs - Two Networks Playing a Game Neither Can Win Alone</a>
 </li>
 </ul>
-
-    </div>
-    <div class="post-footer">
-      
-    </div>
-  </article>
-
-    </main>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
-      onload="renderMathInElement(document.body, {
-        delimiters: [
-          {left: '$$', right: '$$', display: true},
-          {left: '$', right: '$', display: false}
-        ]
-      });"></script>
-    <script>
-      (function() {
-        var btn = document.getElementById('theme-toggle');
-        function applyTheme(theme, save) {
-          if (theme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-          } else {
-            document.documentElement.removeAttribute('data-theme');
-          }
-          if (save) localStorage.setItem('theme', theme);
-        }
-        btn.addEventListener('click', function() {
-          var current = document.documentElement.getAttribute('data-theme');
-          applyTheme(current === 'light' ? 'dark' : 'light', true);
-        });
-        
-        window.addEventListener('pageshow', function(e) {
-          if (e.persisted) {
-            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
-          }
-        });
-      })();
-    </script>
-  </body>
+</div>
+<div class="post-footer">
+</div>
+</article>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:!0},{left:'$',right:'$',display:!1}]})"></script>
+<script>(function(){var b=document.getElementById('theme-toggle');function a(a,b){a==='light'?document.documentElement.setAttribute('data-theme','light'):document.documentElement.removeAttribute('data-theme'),b&&localStorage.setItem('theme',a)}b.addEventListener('click',function(){var b=document.documentElement.getAttribute('data-theme');a(b==='light'?'dark':'light',!0)}),window.addEventListener('pageshow',function(b){b.persisted&&a(localStorage.getItem('theme')==='light'?'light':'dark',!1)})})()</script>
+</body>
 </html>
