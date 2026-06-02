@@ -111,7 +111,7 @@ Nov 2024
 <p>For bounded polyhedra (polytopes), the only LP optima are extreme points. But $P$ can be unbounded, in which case the objective may be $-\infty$, and this is detected through <em>extreme directions</em>.</p>
 <p><strong>Feasible direction.</strong> A vector $d \in \mathbb{R}^n$ is a feasible direction from $x \in P$ if $x + t d \in P$ for all $t \geq 0$. For $P = \{x \mid Ax = b, x \geq 0\}$, this requires $Ad = 0$ and $x_j + t d_j \geq 0$ for all $j \geq 0$ and all $t \geq 0$ - which means $d_j \geq 0$ for all $j$ with $x_j = 0$.</p>
 <p><strong>Extreme direction.</strong> A direction $d \geq 0$ with $Ad = 0$, $d \neq 0$, is an <em>extreme direction</em> if it cannot be written as a positive combination of two distinct feasible directions.</p>
-<p>Extreme directions arise naturally from the simplex algorithm. Given a BFS with basis $B$, consider increasing the $j$-th nonbasic variable. From $Bx_B + Nx_N = b$, increasing $x_j$ by $t$ forces $x_B$ to change by $-B^{-1}a_j \cdot t$. Define $\bar{a}_j = B^{-1}a_j$ (the $j$-th column of $B^{-1}N$). If $\bar{a}_j \leq 0$ componentwise (all entries nonpositive), then increasing $x_j$ never violates $x_B \geq 0$ - we can push $t \to \infty$. The direction $d$ with $d_j = 1$, $d_B = -\bar{a}<em>j$, $d</em>{k} = 0$ for other nonbasic $k$, satisfies $Ad = 0$, $d \geq 0$, and is an extreme direction. If $c^\top d &lt; 0$, moving along this ray drives the objective to $-\infty$ and the problem is <em>unbounded</em>.</p>
+<p>Extreme directions arise naturally from the simplex algorithm. Given a BFS with basis $B$, consider increasing the $j$-th nonbasic variable. From $Bx_B + Nx_N = b$, increasing $x_j$ by $t$ forces $x_B$ to change by $-B^{-1}a_j \cdot t$. Define $\bar{a}_{j} = B^{-1}a_j$ (the $j$-th column of $B^{-1}N$). If $\bar{a}_{j} \leq 0$ componentwise (all entries nonpositive), then increasing $x_j$ never violates $x_B \geq 0$ - we can push $t \to \infty$. The direction $d$ with $d_j = 1$, $d_B = -\bar{a}_{j}$, $d_{k} = 0$ for other nonbasic $k$, satisfies $Ad = 0$, $d \geq 0$, and is an extreme direction. If $c^\top d &lt; 0$, moving along this ray drives the objective to $-\infty$ and the problem is <em>unbounded</em>.</p>
 <hr>
 <h2 id="the-representation-theorem">The Representation Theorem</h2>
 <p>The extreme points and extreme directions together give a complete description of any nonempty polyhedron.</p>
@@ -141,7 +141,9 @@ Nov 2024
 <h2 id="the-simplex-algorithm">The Simplex Algorithm</h2>
 <p>The simplex algorithm is a pivot method: starting from a BFS, it moves to an adjacent BFS with a lower (or equal) objective, until no improving pivot exists.</p>
 <p><strong>Setup: the simplex tableau.</strong> Augment the system to track the objective. The tableau is:</p>
-<p>$$\begin{pmatrix} B^{-1}A & B^{-1}b \\ \bar{c}<em>N^\top - \bar{c}<em>B^\top B^{-1}A & -z_0 \end{pmatrix} \longrightarrow \begin{pmatrix} \bar{a}</em>{B_1,1} & \cdots & \bar{a}</em>{B_1,n} & \bar{b}<em>1 \\ \vdots & & \vdots & \vdots \\ \bar{a}</em>{B_m,1} & \cdots & \bar{a}_{B_m,n} & \bar{b}_m \\ \bar{c}_1 & \cdots & \bar{c}_n & -z_0 \end{pmatrix}$$</p>
+<div>
+$$\begin{pmatrix} B^{-1}A & B^{-1}b \\ \bar{c}_N^\top - \bar{c}_B^\top B^{-1}A & -z_0 \end{pmatrix} \longrightarrow \begin{pmatrix} \bar{a}_{B_1,1} & \cdots & \bar{a}_{B_1,n} & \bar{b}_1 \\ \vdots & & \vdots & \vdots \\ \bar{a}_{B_m,1} & \cdots & \bar{a}_{B_m,n} & \bar{b}_m \\ \bar{c}_1 & \cdots & \bar{c}_n & -z_0 \end{pmatrix}$$
+</div>
 <p>In the tableau, the $B$-columns form an identity (after basis row operations), the right-hand column gives $\bar{b} = B^{-1}b$, and the bottom row gives reduced costs (zero for basic variables, $\bar{c}_j$ for nonbasic). The current objective value is $z_0 = -(\text{bottom-right entry})$.</p>
 <p><strong>Algorithm:</strong></p>
 <p>While there exists a nonbasic $j$ with $\bar{c}_j &lt; 0$:</p>
@@ -153,13 +155,15 @@ Nov 2024
 <p><strong>Ratio test:</strong> If $\bar{a}_{ij} \leq 0$ for all $i$, the problem is <em>unbounded</em> - stop. Otherwise, compute:</p>
 </li>
 </ol>
-<p>$$\theta^* = \min\left\{\frac{\bar{b}<em>i}{\bar{a}</em>{ij}} : \bar{a}_{ij} > 0\right\}$$</p>
-<p>The leaving variable is the basic index $r$ achieving this minimum: $\theta^* = \bar{b}<em>r / \bar{a}</em>{rj}$.</p>
+<div>
+$$\theta^{\ast} = \min\left\{\frac{\bar{b}_i}{\bar{a}_{ij}} : \bar{a}_{ij} > 0\right\}$$
+</div>
+<p>The leaving variable is the basic index $r$ achieving this minimum: $\theta^{\ast} = \bar{b}_{r} / \bar{a}_{rj}$.</p>
 <ol start="3">
 <li><strong>Pivot:</strong> Remove $B_r$ from the basis, add $j$. Update the tableau by dividing row $r$ by $\bar{a}_{rj}$, then eliminating $x_j$ from all other rows (Gaussian elimination). The new basis matrix is $B' = B$ with column $B_r$ replaced by $a_j$.</li>
 </ol>
 <p>Repeat until all $\bar{c}_j \geq 0$.</p>
-<p><strong>Why the ratio test?</strong> Increasing $x_j$ by $\theta$ forces $x_{B_i} \to \bar{b}<em>i - \bar{a}</em>{ij}\theta$. To maintain $x_{B_i} \geq 0$ for each $i$ with $\bar{a}_{ij} > 0$, we need $\theta \leq \bar{b}<em>i / \bar{a}</em>{ij}$. The binding constraint (smallest ratio) determines how far we can move before a basic variable hits zero and must leave the basis.</p>
+<p><strong>Why the ratio test?</strong> Increasing $x_j$ by $\theta$ forces $x_{B_i} \to \bar{b}_{i} - \bar{a}_{ij}\theta$. To maintain $x_{B_i} \geq 0$ for each $i$ with $\bar{a}_{ij} > 0$, we need $\theta \leq \bar{b}_{i} / \bar{a}_{ij}$. The binding constraint (smallest ratio) determines how far we can move before a basic variable hits zero and must leave the basis.</p>
 <h3 id="worked-example">Worked Example</h3>
 <p>Consider the LP: minimize $-3x_1 - 5x_2$ subject to $x_1 \leq 4$, $x_2 \leq 6$, $3x_1 + 2x_2 \leq 18$, $x_1, x_2 \geq 0$.</p>
 <p>Add slacks $s_1, s_2, s_3 \geq 0$ to get standard form. Initial BFS: $x_1 = x_2 = 0$, $s_1 = 4$, $s_2 = 6$, $s_3 = 18$ (basis = $\{s_1, s_2, s_3\}$).</p>
@@ -211,18 +215,18 @@ Nov 2024
 <p><em>Proof.</em> $c^\top x \geq (A^\top y)^\top x = y^\top Ax = y^\top b$. The first inequality uses $c \geq A^\top y$ and $x \geq 0$; the last equality uses $Ax = b$. $\square$</p>
 <p>Weak duality immediately gives: if the primal objective equals any dual objective value, both are optimal. It also gives: if primal is unbounded below, dual is infeasible; if dual is unbounded above, primal is infeasible.</p>
 <p><strong>Strong Duality Theorem.</strong> If both primal and dual are feasible, then their optimal values are equal: there is no duality gap.</p>
-<p><em>Proof sketch.</em> At the optimal primal BFS with basis $B$, define $y^* = (B^{-1})^\top c_B = (B^\top)^{-1} c_B$. Then:</p>
+<p><em>Proof sketch.</em> At the optimal primal BFS with basis $B$, define $y^{\ast} = (B^{-1})^\top c_B = (B^\top)^{-1} c_B$. Then:</p>
 <ul>
-<li>Dual feasibility: $(A^\top y^<em>)_j = a_j^\top y^</em> = c_B^\top B^{-1} a_j$. For basic $j \in B$: $c_B^\top B^{-1}a_j = c_j$ (since $B^{-1}a_j = e_i$ for the corresponding basis column). For nonbasic $j \notin B$: $c_B^\top B^{-1}a_j = c_j - \bar{c}_j \leq c_j$ since $\bar{c}_j \geq 0$ by optimality of the primal BFS. So $A^\top y^* \leq c$, confirming $y^*$ is dual feasible.</li>
-<li>Equal objectives: $y^{<em>\top} b = c_B^\top B^{-1} b = c_B^\top \bar{b} = c^\top x^</em>$.</li>
+<li>Dual feasibility: $(A^\top y^{\ast})_{j} = a_{j}^\top y^{\ast} = c_B^\top B^{-1} a_{j}$. For basic $j \in B$: $c_B^\top B^{-1}a_j = c_j$ (since $B^{-1}a_j = e_i$ for the corresponding basis column). For nonbasic $j \notin B$: $c_B^\top B^{-1}a_j = c_j - \bar{c}_j \leq c_j$ since $\bar{c}_j \geq 0$ by optimality of the primal BFS. So $A^\top y^{\ast} \leq c$, confirming $y^{\ast}$ is dual feasible.</li>
+<li>Equal objectives: $(y^{\ast})^\top b = c_B^\top B^{-1} b = c_B^\top \bar{b} = c^\top x^{\ast}$.</li>
 </ul>
-<p>So the dual value $y^{<em>\top} b$ equals the primal value $c^\top x^</em>$. By weak duality, both are optimal. $\square$</p>
-<p>The dual variables $y^* = (B^\top)^{-1} c_B$ are called <em>shadow prices</em>: $y_i^*$ is the rate of change of the optimal objective with respect to $b_i$.</p>
-<p><strong>Complementary Slackness.</strong> Optimal primal $x^<em>$ and dual $y^</em>$ must satisfy:</p>
-<p>$$x_j^* (c_j - (A^\top y^*)_j) = 0 \quad \text{for all } j$$</p>
-<p>$$y_i^* (A_i x^* - b_i) = 0 \quad \text{for all } i$$</p>
-<p>In words: if $x_j^* > 0$ (a primal variable is positive), then the corresponding dual constraint must be tight ($c_j = (A^\top y^<em>)_j$). If a dual constraint is strict ($c_j > (A^\top y^</em>)_j$), then $x_j^* = 0$. For standard form LPs, $Ax^* = b$ always, so the second condition is automatic. The first condition says the reduced cost $\bar{c}_j = c_j - y^{*\top} a_j$ is zero for every basic variable - exactly the optimality condition for the primal simplex.</p>
-<p><em>Proof.</em> Strong duality gives $c^\top x^* = y^{<em>\top} b = y^{</em>\top} Ax^* = (A^\top y^<em>)^\top x^</em>$. So $(c - A^\top y^<em>)^\top x^</em> = 0$. Since $c - A^\top y^* \geq 0$ (dual feasibility) and $x^* \geq 0$, each term in the sum must be zero: $x_j^<em>(c_j - (A^\top y^</em>)_j) = 0$ for all $j$. $\square$</p>
+<p>So the dual value $(y^{\ast})^\top b$ equals the primal value $c^\top x^{\ast}$. By weak duality, both are optimal. $\square$</p>
+<p>The dual variables $y^{\ast} = (B^\top)^{-1} c_B$ are called <em>shadow prices</em>: $y_{i}^{\ast}$ is the rate of change of the optimal objective with respect to $b_i$.</p>
+<p><strong>Complementary Slackness.</strong> Optimal primal $x^{\ast}$ and dual $y^{\ast}$ must satisfy:</p>
+<p>$$x_{j}^{\ast} (c_{j} - (A^\top y^{\ast})_{j}) = 0 \quad \text{for all } j$$</p>
+<p>$$y_{i}^{\ast} (A_{i} x^{\ast} - b_{i}) = 0 \quad \text{for all } i$$</p>
+<p>In words: if $x_j^{\ast} > 0$ (a primal variable is positive), then the corresponding dual constraint must be tight ($c_j = (A^\top y^{\ast})_{j}$). If a dual constraint is strict ($c_j > (A^\top y^{\ast})_{j}$), then $x_j^{\ast} = 0$. For standard form LPs, $Ax^{\ast} = b$ always, so the second condition is automatic. The first condition says the reduced cost $\bar{c}_j = c_j - (y^{\ast})^\top a_j$ is zero for every basic variable - exactly the optimality condition for the primal simplex.</p>
+<p><em>Proof.</em> Strong duality gives $c^\top x^{\ast} = (y^{\ast})^\top b = (y^{\ast})^\top Ax^{\ast} = (A^\top y^{\ast})^\top x^{\ast}$. So $(c - A^\top y^{\ast})^\top x^{\ast} = 0$. Since $c - A^\top y^{\ast} \geq 0$ (dual feasibility) and $x^{\ast} \geq 0$, each term in the sum must be zero: $x_{j}^{\ast}(c_{j} - (A^\top y^{\ast})_{j}) = 0$ for all $j$. $\square$</p>
 <p>Complementary slackness is practically useful: given a candidate primal solution, use complementarity to read off the required dual solution and check feasibility directly - a faster route to optimality verification than re-running the simplex.</p>
 <hr>
 <h2 id="summary">Summary</h2>
@@ -280,7 +284,7 @@ Nov 2024
 </tr>
 <tr>
 <td>Complementary slackness</td>
-<td>$x_j^<em>(c_j - A_j^\top y^</em>) = 0$ for all $j$ at optimality</td>
+<td>$x_{j}^{\ast}(c_{j} - A_{j}^\top y^{\ast}) = 0$ for all $j$ at optimality</td>
 </tr>
 </tbody>
 </table>
