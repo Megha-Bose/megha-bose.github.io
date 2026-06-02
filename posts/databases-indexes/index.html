@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          15 min read
+          21 min read
         </div>
       </div>
     </header>
@@ -118,14 +118,22 @@
 <hr>
 <p>A startup runs a query: &ldquo;get all orders for this user.&rdquo; The table has fifty thousand rows. The query returns in 3ms. A year later, the table has fifty million rows. The same query takes 30 seconds. The CTO declares a database crisis. The engineer who wrote the query adds one line - <code>CREATE INDEX idx_orders_user_id ON orders(user_id)</code> - and the query returns in 2ms. Fifty million rows. Two milliseconds.</p>
 <p>What just happened? The answer involves B-trees, disk physics, and a counterintuitive truth: the data structure holding your index is more important than the data structure holding your data.</p>
+<hr>
+<h2 id="what-an-index-actually-is">What an Index Actually Is</h2>
+<p>The concept is older than computers. At the back of most textbooks there is an index: an alphabetically sorted list of terms, each followed by the page numbers where that term appears. When you need to find everything the author says about &ldquo;Byzantine fault tolerance,&rdquo; you do not read the book from page one. You flip to the index, find &ldquo;Byzantine fault tolerance&rdquo; in alphabetical order, read &ldquo;pages 247, 312, 418,&rdquo; and go directly to those pages.</p>
+<p>A database index is this exact structure, applied to rows. It is a separate, sorted data structure that the database maintains alongside the main table. It maps column values to row locations. When you query <code>WHERE user_id = 42</code>, the database consults the index - &ldquo;where are all the rows with user_id = 42?&rdquo; - and jumps directly to those rows without reading anything else.</p>
+<p>The main table itself has no guaranteed ordering. Rows are stored in whatever order they were inserted - which is usually close to insertion order, and not sorted by any column your queries care about. The index provides the sorted structure the table lacks.</p>
+<p>The cost: every index must be updated whenever the underlying data changes. Adding a row to a table with three indexes means writing to four places on disk: the main table and each index. This is the fundamental tradeoff that runs through all of index design - faster reads, slower writes.</p>
+<hr>
 <h2 id="why-indexes-exist-the-disk-problem">Why Indexes Exist: The Disk Problem</h2>
 <p>A table without an index is a heap - an unordered pile of rows. Finding orders for user 42 means reading every single row and checking whether <code>user_id = 42</code>. This is a full table scan. At 50 million rows, reading every row from disk takes seconds even with fast SSDs.</p>
-<p>The deeper issue is not just volume - it&rsquo;s random I/O. SSDs are fast for sequential reads but significantly slower for random access. A full table scan is sequential: read blocks from beginning to end. That&rsquo;s fast. An inefficient query that jumps around the disk following pointer chains is slow. The entire art of index design is about enabling sequential or highly localized reads for common query patterns.</p>
-<p>Without an index, the cost of <code>WHERE user_id = 42</code> is O(n) - linear in the number of rows. With a B-tree index, it&rsquo;s O(log n) - logarithmic. At 50 million rows, log₂(50,000,000) is roughly 25. Twenty-five comparisons instead of fifty million reads. That&rsquo;s the 30-second-to-2ms gap.</p>
+<p>The deeper issue is not just volume - it is random I/O. SSDs are fast for sequential reads but significantly slower for random access. A full table scan is sequential: read blocks from beginning to end. That is fast. An inefficient query that jumps around the disk following pointer chains is slow. The entire art of index design is about enabling sequential or highly localized reads for common query patterns.</p>
+<p>Without an index, the cost of <code>WHERE user_id = 42</code> is O(n) - linear in the number of rows. With a B-tree index, it is O(log n) - logarithmic. At 50 million rows, log₂(50,000,000) is roughly 25. Twenty-five comparisons instead of fifty million reads. That is the 30-second-to-2ms gap.</p>
+<hr>
 <h2 id="b-trees-why-not-a-binary-search-tree">B-Trees: Why Not a Binary Search Tree?</h2>
 <p>The obvious data structure for a sorted index is a binary search tree. O(log n) lookup, easy to understand. Why doesn&rsquo;t every database use a BST?</p>
-<p>Disk physics. A BST node holds one key and two children. Traversing a BST requires following pointers - each pointer is a disk read. For a table with 50 million rows, a BST has depth ~26. That&rsquo;s 26 random disk reads per lookup. At 0.1ms per random disk read (a fast SSD), 26 reads is 2.6ms of pure seek time before you&rsquo;ve even found your row.</p>
-<p>A B-tree node can hold hundreds of keys. The exact number is tuned to fill one disk page (typically 4KB or 8KB). PostgreSQL&rsquo;s default page size is 8KB; a B-tree node at this size holds roughly 100 - 200 keys plus pointers. A tree over 50 million rows with branching factor 200 has depth ~4. That&rsquo;s 4 disk reads instead of 26 - a 6x improvement just from the data structure choice.</p>
+<p>Disk physics. A BST node holds one key and two children. Traversing a BST requires following pointers - each pointer is a disk read. For a table with 50 million rows, a BST has depth ~26. That is 26 random disk reads per lookup. At 0.1ms per random disk read (a fast SSD), 26 reads is 2.6ms of pure seek time before you have even found your row.</p>
+<p>A B-tree node can hold hundreds of keys. The exact number is tuned to fill one disk page (typically 4KB or 8KB). PostgreSQL&rsquo;s default page size is 8KB; a B-tree node at this size holds roughly 100 - 200 keys plus pointers. A tree over 50 million rows with branching factor 200 has depth ~4. That is 4 disk reads instead of 26 - a 6x improvement just from the data structure choice.</p>
 <p>The B+ tree variant (used by PostgreSQL and MySQL InnoDB) goes further: all actual data resides in leaf nodes, and leaf nodes are linked in a doubly-linked list. This makes range scans - <code>WHERE user_id BETWEEN 1000 AND 2000</code> - extremely efficient: find the first matching leaf node, then follow the linked list forward until the range is exhausted. No backtracking through internal nodes.</p>
 <p>B-trees support:</p>
 <ul>
@@ -134,16 +142,18 @@
 <li><strong>Prefix matching</strong>: <code>WHERE username LIKE 'meg%'</code> - find the &lsquo;meg&rsquo; prefix, scan forward</li>
 <li><strong>ORDER BY / MIN / MAX</strong> - the tree is already sorted; no extra sort step</li>
 </ul>
+<hr>
 <h2 id="hash-indexes-the-deceptively-simple-alternative">Hash Indexes: The Deceptively Simple Alternative</h2>
 <p>Hash indexes store a hash of the indexed value mapped to the row location. Lookup is O(1) for equality queries - faster in theory than the O(log n) B-tree lookup.</p>
-<p>But hashing destroys ordering. A hash index cannot serve range queries, prefix matches, or ORDER BY. It&rsquo;s exclusively for <code>WHERE column = exact_value</code>. For high-cardinality columns where you only ever query for exact values - UUIDs, session tokens, email addresses - hash indexes seem ideal.</p>
-<p>In practice, most engineers default to B-tree even for equality-only workloads. The reasons: PostgreSQL&rsquo;s hash indexes were historically not crash-safe (not WAL-logged until version 10, meaning they could be corrupted by a server crash). More fundamentally, a B-tree equality lookup is log₂(n) - at 50 million rows that&rsquo;s 26 comparisons, which takes microseconds. The theoretical advantage of hash lookup over B-tree lookup is barely measurable in practice. The inflexibility of hash indexes (can&rsquo;t serve any range query you add later) often isn&rsquo;t worth the marginal gain.</p>
-<p>MySQL uses hash indexes for in-memory tables and for an adaptive hash index (automatically built in memory on top of B-tree pages that are accessed frequently). PostgreSQL&rsquo;s hash indexes exist but are rarely recommended.</p>
+<p>But hashing destroys ordering. A hash index cannot serve range queries, prefix matches, or ORDER BY. It is exclusively for <code>WHERE column = exact_value</code>. For high-cardinality columns where you only ever query for exact values - UUIDs, session tokens, email addresses - hash indexes seem ideal.</p>
+<p>In practice, most engineers default to B-tree even for equality-only workloads. The reasons: PostgreSQL&rsquo;s hash indexes were historically not crash-safe (not WAL-logged until version 10 - the WAL, or Write-Ahead Log, is the journal the database writes changes to before applying them, ensuring they survive crashes; anything not WAL-logged can be lost or corrupted on an unexpected shutdown). More fundamentally, a B-tree equality lookup is log₂(n) - at 50 million rows that is 26 comparisons, which takes microseconds. The theoretical advantage of hash lookup over B-tree lookup is barely measurable in practice. The inflexibility of hash indexes often is not worth the marginal gain.</p>
+<hr>
 <h2 id="discomfort-check-more-indexes-does-not-mean-faster">Discomfort Check: More Indexes Does Not Mean Faster</h2>
-<p>This is the most common index misconception. Indexes have a write cost. Every INSERT, UPDATE, or DELETE must update every index on that table. A table with eight indexes takes roughly eight times as many disk writes as an unindexed table - for every write operation.</p>
+<p>This is the most common index misconception. Indexes have a write cost. Every INSERT, UPDATE, or DELETE must update every index on that table. A table with eight indexes takes roughly eight times as many disk writes as an unindexed table for every write operation.</p>
 <p>For read-heavy tables (a product catalog, a user profile store), this is usually acceptable. For write-heavy tables - a time-series events table ingesting thousands of rows per second, an order processing table under peak load - excessive indexing directly degrades write throughput.</p>
-<p>Concrete example: a logging table that receives 10,000 inserts per second. Adding six indexes to support various analytics queries may reduce the sustainable insert rate to 3,000 per second. You&rsquo;ve improved read performance at the cost of crippling write performance.</p>
-<p>The index maintenance overhead appears in <code>EXPLAIN ANALYZE</code> when you see write operations showing up in the plan. <code>pg_stat_user_indexes</code> shows how often each index is actually used. Indexes with zero or near-zero usage should be candidates for removal. <code>pg_stat_user_tables</code> shows the ratio of sequential scans to index scans - if a table has high sequential scan count despite having indexes, either the indexes aren&rsquo;t matching queries or the planner correctly deems them unhelpful.</p>
+<p>Concrete example: a logging table that receives 10,000 inserts per second. Adding six indexes to support various analytics queries may reduce the sustainable insert rate to 3,000 per second. You have improved read performance at the cost of crippling write performance.</p>
+<p><code>pg_stat_user_indexes</code> shows how often each index is actually used. Indexes with zero or near-zero usage should be candidates for removal. <code>pg_stat_user_tables</code> shows the ratio of sequential scans to index scans - if a table has high sequential scan count despite having indexes, either the indexes are not matching queries or the planner correctly deems them unhelpful.</p>
+<hr>
 <h2 id="composite-indexes-and-the-leftmost-prefix-rule">Composite Indexes and the Leftmost Prefix Rule</h2>
 <p>A composite index covers multiple columns: <code>CREATE INDEX idx_orders_user_status ON orders(user_id, status)</code>.</p>
 <p>The order of columns is not arbitrary. This index helps:</p>
@@ -157,6 +167,7 @@
 </ul>
 <p>Think of a physical phone book sorted by (last name, first name). You can find everyone named &ldquo;Smith&rdquo; (leading column). You can find &ldquo;Smith, Megha&rdquo; (both columns). But finding everyone named &ldquo;Megha&rdquo; without knowing their last name requires reading the entire book - the second column is only useful after the first has constrained the search space.</p>
 <p>For query optimization: put equality conditions first, range conditions last. A query <code>WHERE user_id = 42 AND created_at &gt; '2024-01-01'</code> is best served by <code>(user_id, created_at)</code>. User ID equality narrows to one user&rsquo;s rows, then the B-tree&rsquo;s ordered structure scans the <code>created_at</code> range efficiently within that subset.</p>
+<hr>
 <h2 id="covering-indexes-and-index-only-scans">Covering Indexes and Index-Only Scans</h2>
 <p>After a B-tree lookup finds the matching key, the database normally does a second lookup - a &ldquo;heap fetch&rdquo; - to retrieve the actual row from the main table. This is a second random disk read per result row.</p>
 <p>A covering index includes all columns a query needs in the index itself, eliminating the heap fetch entirely:</p>
@@ -164,19 +175,105 @@
 </span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> status, created_at <span style="color:#66d9ef">FROM</span> orders <span style="color:#66d9ef">WHERE</span> user_id <span style="color:#f92672">=</span> <span style="color:#ae81ff">42</span>;
 <span style="color:#75715e">-- PostgreSQL EXPLAIN shows: &#34;Index Only Scan&#34; - no heap access
 </span></code></pre></div><p>The tradeoff: wider indexes consume more storage and have higher write overhead, since more columns must be updated in the index when the row changes. Measure before adding extra columns to indexes purely for coverage.</p>
+<hr>
 <h2 id="partial-indexes-indexing-a-subset">Partial Indexes: Indexing a Subset</h2>
 <p>A partial index covers only rows matching a predicate:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">INDEX</span> idx_orders_pending <span style="color:#66d9ef">ON</span> orders(created_at)
 <span style="color:#66d9ef">WHERE</span> status <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;pending&#39;</span>;
 </code></pre></div><p>If your application frequently queries <code>WHERE status = 'pending' AND created_at &gt; X</code>, this index is far smaller than a full index on <code>created_at</code> - it only contains pending orders, not the vastly larger set of completed and cancelled orders. Smaller index means faster scans, less write overhead, and less memory pressure on the buffer cache.</p>
 <p>Partial indexes are underused. Common patterns that benefit: <code>WHERE is_deleted = false</code> (active records only), <code>WHERE status IN ('processing', 'pending')</code> (open transactions), <code>WHERE account_tier = 'premium'</code> (premium features for a small percentage of users).</p>
+<hr>
 <h2 id="cardinality-when-indexes-make-things-worse">Cardinality: When Indexes Make Things Worse</h2>
 <p>An index on a boolean column has cardinality 2. Suppose <code>is_active</code> is true for 60% of rows. An index scan on <code>WHERE is_active = true</code> must follow index pointers to 60% of the rows scattered across the heap. Accessing 60% of a heap scattered randomly is slower than a single sequential scan.</p>
-<p>The query planner knows this. It estimates the selectivity of the predicate and chooses the plan with the lowest expected cost. When you run <code>EXPLAIN</code> and find the planner chose a sequential scan despite an existing index, it&rsquo;s usually correct - don&rsquo;t force it.</p>
+<p>The query planner knows this. It estimates the selectivity of the predicate and chooses the plan with the lowest expected cost. When you run <code>EXPLAIN</code> and find the planner chose a sequential scan despite an existing index, it is usually correct - do not force it.</p>
 <p>The threshold is roughly: if a predicate matches more than 5 - 10% of rows, a sequential scan is often faster than an index scan (the exact threshold depends on table size, page cache warmth, and hardware).</p>
 <p>This is why composite indexes with a high-cardinality leading column (user_id, UUID, email) are effective: they narrow the result set dramatically before the scan begins.</p>
+<hr>
+<h2 id="worked-example-identifying-indexes-for-a-real-table">Worked Example: Identifying Indexes for a Real Table</h2>
+<p>This is the skill that actually matters. Given a schema and a set of queries, how do you decide what to index and in what order?</p>
+<p><strong>The schema:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> orders (
+    id          BIGSERIAL <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span>,
+    user_id     BIGINT <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,
+    status      VARCHAR(<span style="color:#ae81ff">20</span>) <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,   <span style="color:#75715e">-- &#39;pending&#39;, &#39;processing&#39;, &#39;shipped&#39;, &#39;delivered&#39;, &#39;cancelled&#39;
+</span><span style="color:#75715e"></span>    created_at  TIMESTAMPTZ <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> NOW(),
+    total_cents INT <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>
+);
+</code></pre></div><p>Assume 50 million rows. 10 million distinct users (average 5 orders per user). Status distribution: &lsquo;pending&rsquo; 2%, &lsquo;processing&rsquo; 3%, &lsquo;shipped&rsquo; 15%, &lsquo;delivered&rsquo; 75%, &lsquo;cancelled&rsquo; 5%.</p>
+<p><strong>The queries the application actually runs:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Q1: Load a user&#39;s order history (every page load for the orders page)
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> id, status, created_at, total_cents
+<span style="color:#66d9ef">FROM</span> orders
+<span style="color:#66d9ef">WHERE</span> user_id <span style="color:#f92672">=</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>
+<span style="color:#66d9ef">ORDER</span> <span style="color:#66d9ef">BY</span> created_at <span style="color:#66d9ef">DESC</span>
+<span style="color:#66d9ef">LIMIT</span> <span style="color:#ae81ff">20</span>;
+
+<span style="color:#75715e">-- Q2: Check a specific order belongs to a user (security check before showing it)
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> id <span style="color:#66d9ef">FROM</span> orders <span style="color:#66d9ef">WHERE</span> id <span style="color:#f92672">=</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span> <span style="color:#66d9ef">AND</span> user_id <span style="color:#f92672">=</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">2</span>;
+
+<span style="color:#75715e">-- Q3: Background worker - pick up pending orders to process
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> id, user_id <span style="color:#66d9ef">FROM</span> orders <span style="color:#66d9ef">WHERE</span> status <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;pending&#39;</span>;
+
+<span style="color:#75715e">-- Q4: Admin dashboard - revenue in the last hour
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">COUNT</span>(<span style="color:#f92672">*</span>), <span style="color:#66d9ef">SUM</span>(total_cents) <span style="color:#66d9ef">FROM</span> orders
+<span style="color:#66d9ef">WHERE</span> created_at <span style="color:#f92672">&gt;</span> NOW() <span style="color:#f92672">-</span> INTERVAL <span style="color:#e6db74">&#39;1 hour&#39;</span>;
+
+<span style="color:#75715e">-- Q5: User&#39;s orders filtered by status (less frequent than Q1)
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> id, created_at, total_cents
+<span style="color:#66d9ef">FROM</span> orders
+<span style="color:#66d9ef">WHERE</span> user_id <span style="color:#f92672">=</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span> <span style="color:#66d9ef">AND</span> status <span style="color:#f92672">=</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">2</span>
+<span style="color:#66d9ef">ORDER</span> <span style="color:#66d9ef">BY</span> created_at <span style="color:#66d9ef">DESC</span>;
+</code></pre></div><p><strong>Analyzing each query:</strong></p>
+<p><strong>Q1</strong> - <code>WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20</code></p>
+<p>user_id has high cardinality: 10 million distinct values across 50 million rows. A user has on average 5 orders. The index needs to locate those 5 rows out of 50 million. This is the most frequent query in the application.</p>
+<p>The ORDER BY tells you something important: if your index is <code>(user_id, created_at DESC)</code>, the database can use the index to both filter by user_id and return rows in the right order without a separate sort step. Compare: with only an index on <code>user_id</code>, the database finds the user&rsquo;s rows and then sorts them. With <code>(user_id, created_at DESC)</code>, the rows come back sorted from the index directly.</p>
+<p>Candidate: <code>CREATE INDEX idx_orders_user_created ON orders(user_id, created_at DESC);</code></p>
+<p><strong>Q2</strong> - <code>WHERE id = $1 AND user_id = $2</code></p>
+<p><code>id</code> is the primary key - PostgreSQL creates a B-tree index on it automatically. The database finds the row by its primary key in one index lookup, then verifies <code>user_id</code> matches. One index lookup, one comparison. No additional index needed.</p>
+<p><strong>Q3</strong> - <code>WHERE status = 'pending'</code></p>
+<p>Status has cardinality 5. Only 2% of rows are &lsquo;pending&rsquo; - roughly 1 million rows out of 50 million. Two percent is selective enough that an index helps (below the 5-10% threshold).</p>
+<p>But do not create a plain index on <code>status</code>. A full index on <code>status</code> contains all 50 million rows. When the planner uses it to find &lsquo;pending&rsquo; rows, it follows 1 million pointers scattered across the heap. Every other status value in the index is dead weight you are paying write overhead to maintain.</p>
+<p>Better: a partial index that only indexes rows where <code>status = 'pending'</code>. This index contains only those 1 million rows - it is 50 times smaller, faster to scan, and has lower write overhead (only inserts and updates involving &lsquo;pending&rsquo; rows touch it).</p>
+<p>Candidate: <code>CREATE INDEX idx_orders_pending ON orders(id) WHERE status = 'pending';</code></p>
+<p>When you update a row from &lsquo;pending&rsquo; to &lsquo;processing&rsquo;, PostgreSQL removes it from this index automatically.</p>
+<p><strong>Q4</strong> - <code>WHERE created_at &gt; NOW() - INTERVAL '1 hour'</code></p>
+<p>A range query on <code>created_at</code> run by admins. At 50 million rows inserted over, say, 3 years, one hour&rsquo;s worth is roughly 0.001% of the table - around 500 rows. Very selective. An index on <code>created_at</code> lets the B-tree find the right starting point and scan forward the short distance to now.</p>
+<p>This query is run infrequently (admin dashboard). You might choose to add the index anyway because admin dashboards tend to be slow and complained about. Or you might skip it if the table is very write-heavy and the write overhead matters.</p>
+<p>Candidate (if deemed worth it): <code>CREATE INDEX idx_orders_created ON orders(created_at);</code></p>
+<p><strong>Q5</strong> - <code>WHERE user_id = $1 AND status = $2 ORDER BY created_at DESC</code></p>
+<p>Two equality conditions plus a sort. The <code>(user_id, created_at DESC)</code> index from Q1 already handles this partially: it uses user_id equality, then scans <code>created_at</code> in order, filtering <code>status</code> as it goes. For most users this is fine because a user has few enough orders that the status filter is cheap even if it is not using an index.</p>
+<p>If Q5 is measured as slow in production (a specific user with tens of thousands of orders, or status filtering that discards 90% of results), you could add <code>(user_id, status, created_at DESC)</code>. But start with the Q1 index and see if it is needed.</p>
+<p><strong>Final index decisions:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Serves Q1 (order history page), Q5 (filtered by status)
+</span><span style="color:#75715e">-- Leftmost prefix user_id also serves any future WHERE user_id = $1 queries
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">INDEX</span> idx_orders_user_created <span style="color:#66d9ef">ON</span> orders(user_id, created_at <span style="color:#66d9ef">DESC</span>);
+
+<span style="color:#75715e">-- Serves Q3 (pending order worker) - partial, 50x smaller than a full status index
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">INDEX</span> idx_orders_pending <span style="color:#66d9ef">ON</span> orders(id) <span style="color:#66d9ef">WHERE</span> status <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;pending&#39;</span>;
+
+<span style="color:#75715e">-- Serves Q4 (admin dashboard) - add only if admin queries are a pain point
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">INDEX</span> idx_orders_created <span style="color:#66d9ef">ON</span> orders(created_at);
+</code></pre></div><p><strong>What you deliberately did not index:</strong></p>
+<ul>
+<li><code>total_cents</code> - it appears only in SELECT, never in WHERE. Indexing it helps nothing.</li>
+<li>A full index on <code>status</code> - the partial index is strictly better for this workload.</li>
+<li><code>(user_id, status)</code> without <code>created_at</code> - Q5 still needs a sort step; the three-column composite is only worth it if measured as a bottleneck.</li>
+</ul>
+<p><strong>The three questions to ask for any table:</strong></p>
+<ol>
+<li>
+<p><strong>What WHERE clauses hit this table, and how often?</strong> Pull from query logs or application code. Frequency matters - a slow query run once a day may be acceptable; the same query run 10,000 times per minute is a crisis.</p>
+</li>
+<li>
+<p><strong>What is the cardinality and selectivity of each predicate?</strong> Run <code>SELECT COUNT(DISTINCT column) FROM table</code> to see cardinality. A predicate that returns 0.01% of rows is highly selective and benefits from an index. A predicate that returns 60% of rows does not.</p>
+</li>
+<li>
+<p><strong>What is the read/write ratio of this table?</strong> A product catalog with 100:1 read/write can tolerate many indexes. An events table with 1:100 read/write should have as few indexes as possible.</p>
+</li>
+</ol>
+<hr>
 <h2 id="full-text-search-gin-indexes">Full-Text Search: GIN Indexes</h2>
-<p>GIN (Generalized Inverted Index) handles composite values: arrays, JSONB, and full-text. For full-text search, a GIN index builds an inverted index - a mapping from each lexeme (stemmed word) to the rows containing it.</p>
+<p>GIN (Generalized Inverted Index) handles composite values: arrays, JSONB, and full-text. For full-text search, a GIN index builds an inverted index - a mapping from each lexeme (a stemmed, normalized word form - &ldquo;running,&rdquo; &ldquo;ran,&rdquo; and &ldquo;runs&rdquo; all reduce to the lexeme &ldquo;run&rdquo;) to the rows containing it.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Create a GIN index for full-text search
 </span><span style="color:#75715e"></span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">INDEX</span> idx_articles_fts <span style="color:#66d9ef">ON</span> articles
 <span style="color:#66d9ef">USING</span> GIN(to_tsvector(<span style="color:#e6db74">&#39;english&#39;</span>, title <span style="color:#f92672">||</span> <span style="color:#e6db74">&#39; &#39;</span> <span style="color:#f92672">||</span> body));
@@ -187,6 +284,7 @@
     <span style="color:#f92672">@@</span> to_tsquery(<span style="color:#e6db74">&#39;english&#39;</span>, <span style="color:#e6db74">&#39;database &amp; performance &amp; index&#39;</span>);
 </code></pre></div><p>GIN indexes update more slowly than B-trees - they batch internal writes. The <code>FASTUPDATE</code> option buffers pending insertions in a separate list and flushes them periodically, improving write performance at the cost of slightly higher worst-case query time during a flush. For high-ingestion workloads, tune <code>FASTUPDATE</code> and vacuum settings carefully.</p>
 <p>For search requirements beyond PostgreSQL&rsquo;s built-in full-text - fuzzy matching, multilingual analysis, relevance ranking at scale - Elasticsearch and OpenSearch provide dedicated inverted index engines with richer query capabilities.</p>
+<hr>
 <h2 id="reading-explain-analyze">Reading EXPLAIN ANALYZE</h2>
 <p><code>EXPLAIN ANALYZE</code> is the most important diagnostic tool for query performance. It shows the actual execution plan and real timing:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">EXPLAIN</span> <span style="color:#66d9ef">ANALYZE</span>
@@ -205,18 +303,21 @@ Execution Time: 0.3 ms
 </code></pre><p>Key things to read:</p>
 <ul>
 <li><strong>cost=startup..total</strong>: planner&rsquo;s estimate in abstract units. High startup cost = first rows are delayed.</li>
-<li><strong>actual time=X..Y</strong>: real milliseconds. startup..total. If these diverge wildly from cost estimates, run <code>ANALYZE table_name</code> to refresh statistics.</li>
+<li><strong>actual time=X..Y</strong>: real milliseconds. If these diverge wildly from cost estimates, run <code>ANALYZE table_name</code> to refresh statistics.</li>
 <li><strong>rows estimate vs actual</strong>: if the planner estimated 28 rows but found 2.8 million, it made a catastrophically wrong plan decision. Stale statistics cause this.</li>
 <li><strong>Seq Scan on a large table</strong>: almost always indicates a missing index or a predicate too broad for the index to help.</li>
 <li><strong>Nested Loop with many loops</strong>: in a join, a nested loop that loops 50,000 times over an inner scan is usually the sign of a missing index on the join column.</li>
 </ul>
+<hr>
 <h2 id="cloud-connections-postgresql-vs-mysql-vs-aurora">Cloud Connections: PostgreSQL vs MySQL vs Aurora</h2>
-<p>PostgreSQL and MySQL both default to B-tree indexes for everything that isn&rsquo;t explicitly specified otherwise. The difference is in the storage engine.</p>
+<p>PostgreSQL and MySQL both default to B-tree indexes for everything that is not explicitly specified otherwise. The difference is in the storage engine.</p>
 <p>MySQL InnoDB stores table rows in a clustered index - the primary key <em>is</em> the physical storage order of the table. Queries on the primary key are always index-only scans. Secondary indexes store the primary key value as the row pointer, meaning a secondary index lookup involves two B-tree traversals: one to find the primary key, one to fetch the row. This is generally fine, but it means you want to be deliberate about primary key choice - a UUID primary key on a large table causes random write ordering that hurts insert performance.</p>
-<p>PostgreSQL&rsquo;s heap-based storage separates the index from the row data. Clustered indexes are possible (<code>CLUSTER table_name USING index_name</code>) but are a one-time operation, not maintained on subsequent writes. PostgreSQL&rsquo;s MVCC implementation stores multiple versions of rows for concurrent transactions, meaning the heap can accumulate dead tuples - <code>VACUUM</code> reclaims them. Understanding vacuum tuning is essential for high-write PostgreSQL deployments.</p>
+<p>PostgreSQL&rsquo;s heap-based storage separates the index from the row data. Clustered indexes are possible (<code>CLUSTER table_name USING index_name</code>) but are a one-time operation, not maintained on subsequent writes. PostgreSQL uses MVCC (Multi-Version Concurrency Control) to handle concurrent reads and writes without blocking - rather than locking a row when it is being updated, the database keeps multiple versions of that row simultaneously so readers can still see the old version while a write is in progress. The side effect: the heap accumulates dead row versions (old versions no longer visible to any transaction). <code>VACUUM</code> is the background process that reclaims this space. Understanding vacuum tuning is essential for high-write PostgreSQL deployments.</p>
 <p><strong>AWS RDS</strong> runs PostgreSQL and MySQL as managed services, handling backups, failover, and replication. One important RDS behavior: read replicas have a small replication lag. Queries routed to read replicas may see stale data. For reads that must be current (read-your-own-write scenarios), route to the primary.</p>
-<p><strong>Amazon Aurora</strong> reimplements MySQL&rsquo;s and PostgreSQL&rsquo;s storage engine. Writes go to a distributed storage layer that replicates across 6 copies in 3 AZs - the primary doesn&rsquo;t wait for replication to replicas to acknowledge writes. Aurora replicas read from the same storage as the primary, meaning replication lag is typically under 10ms (versus seconds for RDS read replicas). For OLTP workloads with strict consistency requirements on reads, Aurora&rsquo;s replica architecture is a significant advantage.</p>
+<p><strong>Amazon Aurora</strong> reimplements the storage engine. Writes go to a distributed storage layer that replicates across 6 copies in 3 availability zones. Aurora replicas read from the same storage as the primary, meaning replication lag is typically under 10ms (versus seconds for RDS read replicas). For OLTP workloads with strict consistency requirements on reads, Aurora&rsquo;s replica architecture is a significant advantage.</p>
+<hr>
 <h2 id="the-critique-orms-and-the-n1-problem">The Critique: ORMs and the N+1 Problem</h2>
+<p>An ORM (Object-Relational Mapper) is a library that lets you write database queries as method calls on objects rather than raw SQL - <code>user.orders</code> instead of <code>SELECT * FROM orders WHERE user_id = $1</code>. Most web frameworks include one: Django&rsquo;s ORM, SQLAlchemy, ActiveRecord, Hibernate. They are convenient but they hide what SQL is actually being generated, which is where the trouble starts.</p>
 <p>ORM-generated queries are the primary source of index-related performance problems in application code. The N+1 problem is endemic:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e"># Fetches 100 users - 1 query</span>
 users <span style="color:#f92672">=</span> session<span style="color:#f92672">.</span>query(User)<span style="color:#f92672">.</span>limit(<span style="color:#ae81ff">100</span>)<span style="color:#f92672">.</span>all()
@@ -226,29 +327,25 @@ users <span style="color:#f92672">=</span> session<span style="color:#f92672">.<
     print(user<span style="color:#f92672">.</span>name, len(user<span style="color:#f92672">.</span>orders))  <span style="color:#75715e"># lazy loading triggers a query per user</span>
 
 <span style="color:#75715e"># Total: 101 queries. Should be 1 or 2.</span>
-</code></pre></div><p>The fix is explicit eager loading - tell the ORM to join or subquery-fetch related data upfront. But this requires awareness of the problem. Many engineers don&rsquo;t realize lazy-loaded ORM relationships generate per-row queries until they profile production traffic and discover hundreds of queries per page load.</p>
-<p>ORMs also generate suboptimal SQL in less obvious ways: unnecessary <code>SELECT *</code> when only two columns are needed, missing <code>LIMIT</code> clauses on unfiltered queries, unnecessary <code>ORDER BY</code> on result sets that don&rsquo;t need ordering (which forces a sort operation). The discipline of reviewing ORM-generated SQL in development - logging queries, using tools like Django Debug Toolbar or SQLAlchemy&rsquo;s <code>echo=True</code> - catches these problems before production.</p>
-<h2 id="count-vs-countcolumn-a-deceptively-simple-distinction">COUNT(*) vs COUNT(column): A Deceptively Simple Distinction</h2>
-<p>One of the most commonly asked SQL interview questions has a surprisingly instructive answer.</p>
+</code></pre></div><p>The fix is explicit eager loading - tell the ORM to join or subquery-fetch related data upfront. But this requires awareness of the problem. Many engineers do not realize lazy-loaded ORM relationships generate per-row queries until they profile production traffic and discover hundreds of queries per page load.</p>
+<p>ORMs also generate suboptimal SQL in less obvious ways: unnecessary <code>SELECT *</code> when only two columns are needed, missing <code>LIMIT</code> clauses on unfiltered queries, unnecessary <code>ORDER BY</code> on result sets that do not need ordering (which forces a sort operation). The discipline of reviewing ORM-generated SQL in development - logging queries, using tools like Django Debug Toolbar or SQLAlchemy&rsquo;s <code>echo=True</code> - catches these problems before production.</p>
+<hr>
+<h2 id="count-vs-countcolumn">COUNT(*) vs COUNT(column)</h2>
 <p><code>COUNT(*)</code> counts rows. <code>COUNT(column_name)</code> counts non-NULL values in that column. This is not just a semantic distinction - it has real performance implications.</p>
-<p>When you write <code>COUNT(*)</code>, the database does not need to read the value of any column. It only needs to verify that a row exists. InnoDB (MySQL&rsquo;s storage engine) can satisfy <code>COUNT(*)</code> by scanning the smallest available secondary index rather than the full table - secondary indexes have fewer columns and fit in fewer disk pages than the full table data. This is not just faster in theory: for a table with many wide columns and a narrow secondary index, the difference can be an order of magnitude.</p>
-<p>When you write <code>COUNT(email)</code>, the database must read the <code>email</code> column for every row and check whether it is NULL. It cannot use an index-only shortcut unless the index covers that column. If <code>email</code> has NULL values, the count will differ from <code>COUNT(*)</code>.</p>
+<p>When you write <code>COUNT(*)</code>, the database does not need to read the value of any column. It only needs to verify that a row exists. InnoDB can satisfy <code>COUNT(*)</code> by scanning the smallest available secondary index rather than the full table. When you write <code>COUNT(email)</code>, the database must read the <code>email</code> column for every row and check whether it is NULL.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- COUNT(*): counts all rows, no column reads needed
 </span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">COUNT</span>(<span style="color:#f92672">*</span>) <span style="color:#66d9ef">FROM</span> users;
 
 <span style="color:#75715e">-- COUNT(email): counts rows where email IS NOT NULL
-</span><span style="color:#75715e">-- If email can be null, this may return a smaller number
+</span><span style="color:#75715e">-- may return a smaller number if email can be null
 </span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">COUNT</span>(email) <span style="color:#66d9ef">FROM</span> users;
-
-<span style="color:#75715e">-- Both produce identical results ONLY when email has a NOT NULL constraint
-</span><span style="color:#75715e">-- In that case, prefer COUNT(*) for clarity and potential speed
-</span></code></pre></div><p>The practical rule: use <code>COUNT(*)</code> unless you specifically need to exclude NULL values from the count. Using <code>COUNT(column)</code> when you mean <code>COUNT(*)</code> is both semantically imprecise and potentially slower.</p>
-<p>There is a related myth worth dispelling: <code>COUNT(1)</code> is not faster than <code>COUNT(*)</code>. This was true decades ago in some databases. In every modern database - PostgreSQL, MySQL InnoDB, SQLite - the optimizer treats them identically. <code>COUNT(*)</code> is the clearest way to express &ldquo;count all rows.&rdquo;</p>
+</code></pre></div><p>Use <code>COUNT(*)</code> unless you specifically need to exclude NULL values. <code>COUNT(1)</code> is not faster than <code>COUNT(*)</code> - every modern database treats them identically.</p>
 <hr>
 <h2 id="future-outlook">Future Outlook</h2>
-<p><strong>Learned indexes</strong> replace B-tree structures with machine learning models trained on the data distribution. A simple linear model can map a sorted column&rsquo;s range to disk positions more compactly than a B-tree if the data is uniform. The theoretical speedup is real but the implementation is complex - what happens when you insert new data that shifts the distribution? Research continues (Google&rsquo;s &ldquo;The Case for Learned Index Structures,&rdquo; 2018), and learned indexes are entering production in specialized read-heavy systems.</p>
-<p><strong>Columnar storage</strong> inverts the fundamental layout assumption. A row-oriented database (PostgreSQL, MySQL) stores all columns for a row together. A columnar store (DuckDB, Apache Parquet, BigQuery, Redshift) stores each column contiguously. For analytics queries that read one or two columns from millions of rows (<code>SELECT AVG(revenue) FROM orders WHERE year = 2024</code>), columnar storage is dramatically faster - it reads only the relevant columns, skips everything else, and compresses columns of the same type far more efficiently than mixed-type rows.</p>
-<p>DuckDB has emerged as the embedded columnar store: it runs in-process (no server), reads Parquet files directly, and handles multi-gigabyte analytical queries efficiently on a laptop. For workloads that mix OLTP and OLAP, the architecture is increasingly to write to PostgreSQL for transactional workloads and export to Parquet/DuckDB for analytical queries - rather than trying to serve both from one database.</p>
+<p><strong>Learned indexes</strong> replace B-tree structures with machine learning models trained on the data distribution. A simple linear model can map a sorted column&rsquo;s range to disk positions more compactly than a B-tree if the data is uniform. Research continues (Google&rsquo;s &ldquo;The Case for Learned Index Structures,&rdquo; 2018), and learned indexes are entering production in specialized read-heavy systems.</p>
+<p><strong>Columnar storage</strong> inverts the fundamental layout assumption. A row-oriented database (PostgreSQL, MySQL) stores all columns for a row together. A columnar store (DuckDB, Apache Parquet, BigQuery, Redshift) stores each column contiguously. For analytics queries that read one or two columns from millions of rows (<code>SELECT AVG(revenue) FROM orders WHERE year = 2024</code>), columnar storage is dramatically faster - it reads only the relevant columns and compresses columns of the same type far more efficiently than mixed-type rows.</p>
+<p>Two terms worth knowing here: OLTP (Online Transaction Processing) describes the kind of workload a user-facing application generates - many small, fast reads and writes, one user&rsquo;s data at a time. OLAP (Online Analytical Processing) describes analytics workloads - a few very expensive queries that scan large portions of the table to produce aggregates and reports. Row-oriented databases are optimized for OLTP; columnar stores are optimized for OLAP.</p>
+<p>For workloads that mix both, the architecture is increasingly to write to PostgreSQL for transactional workloads and export to Parquet/DuckDB for analytical queries - rather than trying to serve both from one database.</p>
 <hr>
 <table>
 <thead>
@@ -284,7 +381,7 @@ users <span style="color:#f92672">=</span> session<span style="color:#f92672">.<
 </tr>
 <tr>
 <td>Composite index</td>
-<td>Column order matters; leftmost prefix rule</td>
+<td>Column order matters; equality columns first, range columns last; leftmost prefix rule</td>
 </tr>
 <tr>
 <td>Covering index</td>
@@ -307,6 +404,10 @@ users <span style="color:#f92672">=</span> session<span style="color:#f92672">.<
 <td>Shows actual plan and timing; stale statistics cause bad plan estimates</td>
 </tr>
 <tr>
+<td>When to index</td>
+<td>High-cardinality WHERE columns, frequent queries, selectivity under ~10%</td>
+</tr>
+<tr>
 <td>ORM N+1</td>
 <td>Lazy-loaded relationships generate per-row queries; use eager loading</td>
 </tr>
@@ -320,7 +421,7 @@ users <span style="color:#f92672">=</span> session<span style="color:#f92672">.<
 </tr>
 <tr>
 <td>COUNT(*) vs COUNT(col)</td>
-<td>COUNT(*) skips reading column values and can use smallest index; COUNT(col) must check for NULLs</td>
+<td>COUNT(*) skips reading column values; COUNT(col) must check for NULLs</td>
 </tr>
 </tbody>
 </table>
