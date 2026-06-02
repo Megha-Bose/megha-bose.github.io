@@ -155,7 +155,7 @@ But think about what $2^{-100}$ actually means. A 100-bit number requires a spec
 <p>A &ldquo;no&rdquo; is certain: if any bit $B[h_i(x)]$ is 0, then $x$ was never inserted. A &ldquo;yes&rdquo; could be a false positive - all $k$ bits happen to be 1 from other insertions.</p>
 <p>The false positive probability after inserting $n$ elements into $m$ bits with $k$ hash functions:</p>
 <p>$$p_{\text{FP}} \approx \left(1 - e^{-kn/m}\right)^k$$</p>
-<p>The optimal number of hash functions is $k^* = (m/n) \ln 2$, giving $p_{\text{FP}} \approx (0.618)^{m/n}$. With 10 bits per element and 7 hash functions, the false positive rate is about 0.8%.</p>
+<p>The optimal number of hash functions is $k^{\ast} = (m/n) \ln 2$, giving $p_{\text{FP}} \approx (0.618)^{m/n}$. With 10 bits per element and 7 hash functions, the false positive rate is about 0.8%.</p>
 <p>Bloom filters are everywhere: web browsers use them to check URLs against lists of malicious sites, databases use them to avoid unnecessary disk lookups, distributed systems use them to summarize large datasets.</p>
 <hr>
 <h2 id="reservoir-sampling">Reservoir Sampling</h2>
@@ -228,15 +228,15 @@ repeat n^2 times:
     pick any unsatisfied clause
     flip one of its two literals uniformly at random
 output &quot;unsatisfiable&quot;
-</code></pre><p><strong>Analysis as a random walk.</strong> Fix any satisfying assignment $s^<em>$. Define $X_t$ = the Hamming distance from the current assignment to $s^</em>$ at step $t$, i.e., the number of variables where they differ.</p>
-<p>When we pick an unsatisfied clause, $s^<em>$ must satisfy it (since $s^</em>$ satisfies all clauses). So at least one of the clause&rsquo;s two literals agrees with $s^*$. When we flip a uniformly random literal from the clause:</p>
+</code></pre><p><strong>Analysis as a random walk.</strong> Fix any satisfying assignment $s^{\ast}$. Define $X_t$ = the Hamming distance from the current assignment to $s^{\ast}$ at step $t$, i.e., the number of variables where they differ.</p>
+<p>When we pick an unsatisfied clause, $s^{\ast}$ must satisfy it (since $s^{\ast}$ satisfies all clauses). So at least one of the clause&rsquo;s two literals agrees with $s^{\ast}$. When we flip a uniformly random literal from the clause:</p>
 <ul>
-<li>If we flip the literal that agrees with $s^<em>$: $X_{t+1} = X_t + 1$ (we move away from $s^</em>$).</li>
-<li>If we flip the literal that disagrees with $s^<em>$: $X_{t+1} = X_t - 1$ (we move toward $s^</em>$).</li>
+<li>If we flip the literal that agrees with $s^{\ast}$: $X_{t+1} = X_t + 1$ (we move away from $s^{\ast}$).</li>
+<li>If we flip the literal that disagrees with $s^{\ast}$: $X_{t+1} = X_t - 1$ (we move toward $s^{\ast}$).</li>
 </ul>
-<p>Since at least one of the two literals agrees with $s^*$, $\Pr[X_{t+1} = X_t - 1] \geq 1/2$. This is a random walk on $\{0, 1, \ldots, n\}$ with a bias of at least $1/2$ toward 0 and a reflecting barrier at 0.</p>
+<p>Since at least one of the two literals agrees with $s^{\ast}$, $\Pr[X_{t+1} = X_t - 1] \geq 1/2$. This is a random walk on $\{0, 1, \ldots, n\}$ with a bias of at least $1/2$ toward 0 and a reflecting barrier at 0.</p>
 <p>The expected number of steps to reach 0 from position $i$ in such a walk is $O(n^2)$. Starting from any assignment (which has $X_0 \leq n$), we reach a satisfying assignment in expected $O(n^2)$ steps. Running for $n^2$ steps gives success with constant probability. Repeating $O(\log(1/\delta))$ times drives failure probability below $\delta$.</p>
-<p><strong>Schoning&rsquo;s algorithm for 3-SAT.</strong> For 3-SAT, each unsatisfied clause has 3 literals, and $s^<em>$ satisfies at least one. Flipping a random literal gives $\Pr[X \text{ decreases}] \geq 1/3$ and $\Pr[X \text{ increases}] \leq 2/3$. Now the walk drifts away from $s^</em>$. The drift ratio is 2-to-1 against us, and a careful gambler&rsquo;s ruin calculation shows the expected hitting time from position $i$ grows as $\Theta((4/3)^n)$.</p>
+<p><strong>Schoning&rsquo;s algorithm for 3-SAT.</strong> For 3-SAT, each unsatisfied clause has 3 literals, and $s^{\ast}$ satisfies at least one. Flipping a random literal gives $\Pr[X \text{ decreases}] \geq 1/3$ and $\Pr[X \text{ increases}] \leq 2/3$. Now the walk drifts away from $s^{\ast}$. The drift ratio is 2-to-1 against us, and a careful gambler&rsquo;s ruin calculation shows the expected hitting time from position $i$ grows as $\Theta((4/3)^n)$.</p>
 <p>Running the walk for $O((4/3)^n)$ steps and repeating gives a 3-SAT algorithm with runtime $O((4/3)^n \cdot \text{poly}(n))$. This is better than brute force ($O(2^n)$) by a constant factor in the exponent, and it is one of the best-known algorithms for 3-SAT in terms of the base of the exponential for random instances.</p>
 <hr>
 <h2 id="derandomization-via-method-of-conditional-expectations">Derandomization via Method of Conditional Expectations</h2>
