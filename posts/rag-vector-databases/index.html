@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>RAG and Vector Databases - Teaching Models to Remember What They Were Never Trained On // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.6230f69a8ac8b240d5cc40186ed5db548eaca216d140a41e6e8ff250146aacfc.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="RAG and Vector Databases - Teaching Models to Remember What They Were Never Trained On"/>
+<meta name="twitter:description" content="Helpful context:
+ Word Embeddings - Meaning as Position in Space  Transformers From First Principles - Why Attention Changed Everything  Sequence Modeling &amp; Language Models - Predicting One Token at a Time    A language model knows everything it was trained on and nothing else. If you trained it until January 2024 and you ask it about something that happened in February 2024, it will either confess ignorance or, more dangerously, hallucinate a plausible-sounding answer."/>
+
+    <meta property="og:title" content="RAG and Vector Databases - Teaching Models to Remember What They Were Never Trained On" />
+<meta property="og:description" content="Helpful context:
+ Word Embeddings - Meaning as Position in Space  Transformers From First Principles - Why Attention Changed Everything  Sequence Modeling &amp; Language Models - Predicting One Token at a Time    A language model knows everything it was trained on and nothing else. If you trained it until January 2024 and you ask it about something that happened in February 2024, it will either confess ignorance or, more dangerously, hallucinate a plausible-sounding answer." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/rag-vector-databases/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-06-02T00:00:00+00:00" />
+<meta property="article:modified_time" content="2025-06-02T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">RAG and Vector Databases - Teaching Models to Remember What They Were Never Trained On</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Jun 2025
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          17 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/word-embeddings/" target="_blank" rel="noopener noreferrer">Word Embeddings - Meaning as Position in Space</a>
+</li>
+<li><a href="/posts/transformers-from-first-principles/" target="_blank" rel="noopener noreferrer">Transformers From First Principles - Why Attention Changed Everything</a>
+</li>
+<li><a href="/posts/sequence-modeling-and-language-models/" target="_blank" rel="noopener noreferrer">Sequence Modeling &amp; Language Models - Predicting One Token at a Time</a>
+</li>
+</ul>
+<hr>
+<p>A language model knows everything it was trained on and nothing else. If you trained it until January 2024 and you ask it about something that happened in February 2024, it will either confess ignorance or, more dangerously, hallucinate a plausible-sounding answer. The same problem applies to private knowledge - a company&rsquo;s internal documentation, a user&rsquo;s personal files, a specialized corpus that never made it into the training data.</p>
+<p>The naive solution is: retrain the model, or fine-tune it on the new information. Both are expensive, slow, and have their own failure modes. A fine-tuned model tends to forget what it knew before (catastrophic forgetting), and retraining for every knowledge update is impractical.</p>
+<p>The better solution is to not bake the knowledge into the model&rsquo;s weights at all. Instead, at inference time, retrieve the relevant pieces of knowledge from an external store and hand them to the model as context. The model&rsquo;s job then becomes: reason over this retrieved information to produce an answer. This is Retrieval-Augmented Generation, or RAG.</p>
+<hr>
+<h2 id="the-retrieval-problem">The Retrieval Problem</h2>
+<p>Given a query, find the most relevant documents from a large corpus. This sounds like search, and it is, but the way &ldquo;relevant&rdquo; is defined is what changes everything.</p>
+<p>Traditional search is lexical - it matches keywords. A query for &ldquo;cardiovascular exercise benefits&rdquo; would return documents that contain those exact words or close morphological variants. This works well when the user knows the right vocabulary and when documents use it. It fails when a user asks &ldquo;how does running help your heart&rdquo; and the relevant document talks about &ldquo;aerobic activity and cardiovascular health&rdquo; - same concept, different words.</p>
+<p>The fix is to search over meaning, not tokens. And the way you represent meaning computationally is with embeddings: dense vectors in a high-dimensional space where semantically similar things are geometrically nearby.</p>
+<p>An embedding model (a neural network, usually a transformer) takes a piece of text and produces a vector - say, 768 or 1536 numbers. The model is trained such that &ldquo;I enjoy running&rdquo; and &ldquo;I like jogging&rdquo; produce vectors that are close together, while &ldquo;I enjoy running&rdquo; and &ldquo;the French Revolution began in 1789&rdquo; produce vectors that are far apart. The embedding is a learned compression of semantic content.</p>
+<p>Now retrieval becomes a geometric problem: given a query vector, find the document vectors that are most similar to it. Similarity is typically measured by cosine similarity (the angle between vectors) or dot product.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">cosine_similarity</span>(a, b):
+    <span style="color:#66d9ef">return</span> np<span style="color:#f92672">.</span>dot(a, b) <span style="color:#f92672">/</span> (np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>norm(a) <span style="color:#f92672">*</span> np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>norm(b))
+
+<span style="color:#75715e"># Embed the query and all documents</span>
+query_vec <span style="color:#f92672">=</span> embedding_model<span style="color:#f92672">.</span>encode(<span style="color:#e6db74">&#34;how does running help your heart&#34;</span>)
+doc_vecs  <span style="color:#f92672">=</span> embedding_model<span style="color:#f92672">.</span>encode([<span style="color:#e6db74">&#34;cardiovascular exercise benefits&#34;</span>,
+                                     <span style="color:#e6db74">&#34;French Revolution 1789&#34;</span>,
+                                     <span style="color:#e6db74">&#34;aerobic activity and cardiovascular health&#34;</span>])
+
+similarities <span style="color:#f92672">=</span> [cosine_similarity(query_vec, d) <span style="color:#66d9ef">for</span> d <span style="color:#f92672">in</span> doc_vecs]
+<span style="color:#75715e"># [0.91, 0.12, 0.89] -- retrieves docs 0 and 2 as most relevant</span>
+</code></pre></div><p>This is semantic search: retrieval based on meaning rather than lexical overlap.</p>
+<hr>
+<h2 id="the-scale-problem-why-exact-search-fails">The Scale Problem: Why Exact Search Fails</h2>
+<p>Searching over thousands of documents with exact cosine similarity is fine. Over millions or billions, it is not. Computing the cosine similarity between a query vector and every document vector in a corpus of 100 million items, where each vector has 768 dimensions, requires around 150 billion floating-point operations per query. Even on fast hardware, this takes seconds. At high query volumes, this is untenable.</p>
+<p>This is the approximate nearest neighbor (ANN) problem: find the vectors most similar to a query, not exactly, but fast enough to be practical. The approximation is a deliberate tradeoff - you will occasionally miss the single most similar vector, but you will get very good results in milliseconds rather than exact results in seconds.</p>
+<p>The most successful algorithm for this problem in practice is HNSW.</p>
+<hr>
+<h2 id="hnsw-hierarchical-navigable-small-world">HNSW: Hierarchical Navigable Small World</h2>
+<p>HNSW (Malkov &amp; Yashunin, 2018) is a graph-based index that enables sub-linear search over very large collections of vectors. Understanding it requires two ideas: small world graphs, and hierarchy.</p>
+<h3 id="small-world-graphs">Small World Graphs</h3>
+<p>A small world graph is one with two seemingly contradictory properties simultaneously: high local clustering (your neighbors are neighbors of each other) and short paths between any two nodes (the famous &ldquo;six degrees of separation&rdquo; result). In such a graph, navigating from any arbitrary node to any other takes very few hops, even if the graph has millions of nodes.</p>
+<p>HNSW constructs a proximity graph where each node is a vector, and nodes are connected to their nearest neighbors. Navigating this graph from an entry point to the query is a greedy local search: at each step, move to whichever neighbor is closest to the query. This finds very good approximate nearest neighbors very fast.</p>
+<h3 id="hierarchy">Hierarchy</h3>
+<p>The problem with a flat proximity graph is that greedy local search can get stuck in local optima - regions where every neighbor is farther from the query than the current node, but you are not actually near the global nearest neighbor. This is the coarse navigation problem: you need long-range connections to quickly cross large distances in the space before using short-range connections for fine-grained search.</p>
+<p>HNSW solves this by building a hierarchy of graphs. At the top layer, every node has long-range connections spanning the whole dataset - you can cross large distances quickly. At the bottom layer, every node has short-range connections to its closest neighbors for fine-grained precision. Intermediate layers have intermediate connection ranges.</p>
+<pre tabindex="0"><code>Layer 2 (sparse, long-range): A ──────────────── E
+                                                   |
+Layer 1 (medium):             A ──── C ──── D ── E
+                              |             |
+Layer 0 (dense, short-range): A─B─C─C'─D─D'─E─E'
+</code></pre><p>Search starts at the top layer, greedily navigates to the node closest to the query, then drops to the next layer and repeats. Each layer refines the result. The final search in layer 0 gives the approximate nearest neighbors.</p>
+<p>Construction: nodes are inserted one at a time. Each new node is assigned to a random maximum layer (exponential distribution, so most nodes appear only in layer 0). It is connected to its closest neighbors in every layer up to its maximum.</p>
+<h3 id="the-tradeoffs">The Tradeoffs</h3>
+<p>HNSW has several key parameters:</p>
+<ul>
+<li><strong>M</strong>: the number of bidirectional connections per node at construction time. Higher M gives better recall (you find the true nearest neighbors more often) at the cost of more memory and slower construction.</li>
+<li><strong>ef_construction</strong>: the size of the dynamic candidate list during construction. Higher values give better index quality at the cost of construction time.</li>
+<li><strong>ef_search</strong> (or <code>ef</code>): the size of the candidate list during search. This is the main recall-vs-latency knob at query time. Higher ef finds better nearest neighbors but takes longer.</li>
+</ul>
+<p>The key insight is that ef_search can be tuned independently of how the index was built. You build once, then adjust ef at query time based on your latency budget.</p>
+<p><strong>HNSW characteristics:</strong></p>
+<ul>
+<li>Memory: $O(nM)$ where $n$ is the number of vectors. With M=16 and 768-dimensional float32 vectors, storing 1 million vectors takes about 3 GB for the vectors plus ~100 MB for the graph structure.</li>
+<li>Search time: $O(\log n)$ in practice.</li>
+<li>Recall at ef=100: typically 95-99% for well-tuned parameters.</li>
+<li>Does not support deletion well (marks nodes as deleted but does not reclaim graph space).</li>
+</ul>
+<p>Other ANN algorithms exist - IVF (inverted file index) partitions the space into Voronoi cells, SCANN (Google) uses learned quantization, Annoy (Spotify) uses random projection trees - but HNSW dominates modern vector database implementations because of its strong recall-latency tradeoff and the fact that it works well across different data distributions without requiring a separate quantization step.</p>
+<hr>
+<h2 id="vector-databases">Vector Databases</h2>
+<p>A vector database is a storage and retrieval system built around dense vector search. It handles the infrastructure problems you would otherwise have to solve yourself: indexing, persistence, updates, scaling, filtering, and the operationalization of ANN search at production load.</p>
+<p>The three most commonly encountered options are Qdrant, Pinecone, and pgvector. They represent three distinct design philosophies.</p>
+<h3 id="qdrant">Qdrant</h3>
+<p>Qdrant is an open-source vector database written in Rust, designed to be self-hosted or deployed on Qdrant Cloud. It stores vectors alongside a payload (arbitrary JSON metadata), and its killer feature is <strong>filtered search</strong>: you can query for nearest neighbors subject to a filter on the payload, and the filter is applied efficiently without a post-filtering step.</p>
+<p>The naive approach to filtered search is: find the top-K nearest neighbors, then apply the filter and hope that enough of the top-K pass. This fails when the filter is selective - if only 1% of your corpus matches the filter, you need to retrieve the top-10000 to get 100 results that pass. Qdrant handles this with its own indexing over payload fields that integrates with the vector index, keeping latency sensible even for selective filters.</p>
+<p>Qdrant uses HNSW internally and supports scalar quantization (int8) and product quantization to compress vectors, trading some recall for 4-8x memory reduction.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> qdrant_client <span style="color:#f92672">import</span> QdrantClient
+<span style="color:#f92672">from</span> qdrant_client.models <span style="color:#f92672">import</span> VectorParams, Distance, Filter, FieldCondition, MatchValue
+
+client <span style="color:#f92672">=</span> QdrantClient(<span style="color:#e6db74">&#34;localhost&#34;</span>, port<span style="color:#f92672">=</span><span style="color:#ae81ff">6333</span>)
+
+<span style="color:#75715e"># Create a collection</span>
+client<span style="color:#f92672">.</span>create_collection(
+    collection_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;docs&#34;</span>,
+    vectors_config<span style="color:#f92672">=</span>VectorParams(size<span style="color:#f92672">=</span><span style="color:#ae81ff">768</span>, distance<span style="color:#f92672">=</span>Distance<span style="color:#f92672">.</span>COSINE)
+)
+
+<span style="color:#75715e"># Insert vectors with metadata payloads</span>
+client<span style="color:#f92672">.</span>upsert(
+    collection_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;docs&#34;</span>,
+    points<span style="color:#f92672">=</span>[
+        {<span style="color:#e6db74">&#34;id&#34;</span>: <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#34;vector&#34;</span>: embed(<span style="color:#e6db74">&#34;Climate change effects&#34;</span>), <span style="color:#e6db74">&#34;payload&#34;</span>: {<span style="color:#e6db74">&#34;source&#34;</span>: <span style="color:#e6db74">&#34;ipcc&#34;</span>, <span style="color:#e6db74">&#34;year&#34;</span>: <span style="color:#ae81ff">2023</span>}},
+        {<span style="color:#e6db74">&#34;id&#34;</span>: <span style="color:#ae81ff">2</span>, <span style="color:#e6db74">&#34;vector&#34;</span>: embed(<span style="color:#e6db74">&#34;Quantum computing basics&#34;</span>), <span style="color:#e6db74">&#34;payload&#34;</span>: {<span style="color:#e6db74">&#34;source&#34;</span>: <span style="color:#e6db74">&#34;arxiv&#34;</span>, <span style="color:#e6db74">&#34;year&#34;</span>: <span style="color:#ae81ff">2022</span>}},
+    ]
+)
+
+<span style="color:#75715e"># Semantic search with a filter</span>
+results <span style="color:#f92672">=</span> client<span style="color:#f92672">.</span>search(
+    collection_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;docs&#34;</span>,
+    query_vector<span style="color:#f92672">=</span>embed(<span style="color:#e6db74">&#34;global warming impacts&#34;</span>),
+    query_filter<span style="color:#f92672">=</span>Filter(
+        must<span style="color:#f92672">=</span>[FieldCondition(key<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;year&#34;</span>, match<span style="color:#f92672">=</span>MatchValue(value<span style="color:#f92672">=</span><span style="color:#ae81ff">2023</span>))]
+    ),
+    limit<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>
+)
+</code></pre></div><p>Qdrant is a strong choice when: you need full control over your infrastructure, you have selective filtering requirements, or you want to run everything on your own hardware.</p>
+<h3 id="pinecone">Pinecone</h3>
+<p>Pinecone is a fully managed, proprietary vector database offered as a cloud service. You never operate it - there is no server to configure, no index to tune. You get a namespace, a client library, and an API.</p>
+<p>Its design is oriented around operational simplicity: you send vectors in, query vectors out. The tradeoffs are the natural cloud tradeoffs - you give up control (no tuning of HNSW parameters, no access to internals) in exchange for not having to manage the infrastructure. It scales automatically, handles updates gracefully, and has a generous free tier for prototyping.</p>
+<p>Pinecone introduced <strong>namespaces</strong> for multi-tenancy (different users or datasets can share an index without seeing each other&rsquo;s data) and <strong>sparse-dense hybrid search</strong> (combining BM25 keyword scores with vector similarity in a single query). Hybrid search is important in practice because pure semantic search can miss exact matches - if a user asks for &ldquo;GPT-4&rdquo;, you want to find documents that mention &ldquo;GPT-4&rdquo; even if the semantic vector for &ldquo;GPT-4&rdquo; is not particularly close to documents about language models in general.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> pinecone
+
+pc <span style="color:#f92672">=</span> pinecone<span style="color:#f92672">.</span>Pinecone(api_key<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-api-key&#34;</span>)
+index <span style="color:#f92672">=</span> pc<span style="color:#f92672">.</span>Index(<span style="color:#e6db74">&#34;my-index&#34;</span>)
+
+<span style="color:#75715e"># Upsert</span>
+index<span style="color:#f92672">.</span>upsert(vectors<span style="color:#f92672">=</span>[
+    (<span style="color:#e6db74">&#34;id1&#34;</span>, embed(<span style="color:#e6db74">&#34;Climate change effects&#34;</span>), {<span style="color:#e6db74">&#34;source&#34;</span>: <span style="color:#e6db74">&#34;ipcc&#34;</span>}),
+    (<span style="color:#e6db74">&#34;id2&#34;</span>, embed(<span style="color:#e6db74">&#34;Quantum computing basics&#34;</span>), {<span style="color:#e6db74">&#34;source&#34;</span>: <span style="color:#e6db74">&#34;arxiv&#34;</span>}),
+])
+
+<span style="color:#75715e"># Query</span>
+results <span style="color:#f92672">=</span> index<span style="color:#f92672">.</span>query(
+    vector<span style="color:#f92672">=</span>embed(<span style="color:#e6db74">&#34;global warming impacts&#34;</span>),
+    top_k<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>,
+    filter<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;source&#34;</span>: {<span style="color:#e6db74">&#34;$eq&#34;</span>: <span style="color:#e6db74">&#34;ipcc&#34;</span>}},
+    include_metadata<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>
+)
+</code></pre></div><p>Pinecone is the path of least resistance for teams that want to prototype and ship quickly without deep infrastructure investment.</p>
+<h3 id="pgvector">pgvector</h3>
+<p>pgvector is a PostgreSQL extension that adds a <code>vector</code> data type and approximate nearest neighbor search operators. It is not a standalone vector database - it is vector search living inside your relational database.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">CREATE</span> EXTENSION <span style="color:#66d9ef">IF</span> <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">EXISTS</span> vector;
+
+<span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> documents (
+    id        SERIAL <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span>,
+    content   TEXT,
+    embedding VECTOR(<span style="color:#ae81ff">768</span>),
+    <span style="color:#66d9ef">source</span>    TEXT,
+    <span style="color:#66d9ef">year</span>      INT
+);
+
+<span style="color:#75715e">-- Create HNSW index
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">INDEX</span> <span style="color:#66d9ef">ON</span> documents <span style="color:#66d9ef">USING</span> hnsw (embedding vector_cosine_ops)
+    <span style="color:#66d9ef">WITH</span> (m <span style="color:#f92672">=</span> <span style="color:#ae81ff">16</span>, ef_construction <span style="color:#f92672">=</span> <span style="color:#ae81ff">64</span>);
+
+<span style="color:#75715e">-- Semantic search with relational filters
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> content, <span style="color:#66d9ef">source</span>, <span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> (embedding <span style="color:#f92672">&lt;=&gt;</span> <span style="color:#e6db74">&#39;[0.1, 0.2, ...]&#39;</span>) <span style="color:#66d9ef">AS</span> similarity
+<span style="color:#66d9ef">FROM</span> documents
+<span style="color:#66d9ef">WHERE</span> <span style="color:#66d9ef">year</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">2023</span>
+<span style="color:#66d9ef">ORDER</span> <span style="color:#66d9ef">BY</span> embedding <span style="color:#f92672">&lt;=&gt;</span> <span style="color:#e6db74">&#39;[0.1, 0.2, ...]&#39;</span>
+<span style="color:#66d9ef">LIMIT</span> <span style="color:#ae81ff">5</span>;
+</code></pre></div><p>The appeal is enormous: <strong>if you already run Postgres, you do not need to learn, operate, or pay for a new system</strong>. Your vectors live alongside your relational data. You can join vector search results with your existing tables in a single query. Transactions, backups, permissions - all handled by the infrastructure you already have.</p>
+<p>The tradeoff is performance at scale. pgvector&rsquo;s HNSW index is solid but optimized for the constraints of a general-purpose database engine, not for vector search alone. For collections beyond a few million vectors with high query throughput, dedicated vector databases are measurably faster. For most applications - especially internal tools, small-to-medium datasets, or anything where &ldquo;fast enough&rdquo; is fast enough - pgvector is the right answer.</p>
+<p><strong>A rough guide:</strong></p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Best For</th>
+<th>Not Ideal For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qdrant</td>
+<td>Self-hosted, selective filters, control</td>
+<td>Teams that want zero-ops</td>
+</tr>
+<tr>
+<td>Pinecone</td>
+<td>Fastest to production, managed, hybrid search</td>
+<td>Cost-sensitive, large datasets, control needed</td>
+</tr>
+<tr>
+<td>pgvector</td>
+<td>Existing Postgres users, joins, simplicity</td>
+<td>Very high throughput, billions of vectors</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="rag-retrieval-augmented-generation">RAG: Retrieval-Augmented Generation</h2>
+<p>With semantic search in place, RAG is the architecture that connects retrieval to generation.</p>
+<p>The core pipeline:</p>
+<ol>
+<li><strong>Offline (index time)</strong>: take your corpus, split it into chunks, embed each chunk, store the embeddings and the original text in a vector database.</li>
+<li><strong>Online (query time)</strong>: embed the user&rsquo;s query, retrieve the top-K most similar chunks, construct a prompt that includes those chunks as context, pass the prompt to the language model, return the model&rsquo;s response.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">rag_query</span>(user_question, retriever, llm, top_k<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>):
+    <span style="color:#75715e"># Step 1: embed and retrieve</span>
+    query_vec <span style="color:#f92672">=</span> embedding_model<span style="color:#f92672">.</span>encode(user_question)
+    chunks <span style="color:#f92672">=</span> retriever<span style="color:#f92672">.</span>search(query_vec, top_k<span style="color:#f92672">=</span>top_k)
+
+    <span style="color:#75715e"># Step 2: construct context</span>
+    context <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n\n</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>join([c<span style="color:#f92672">.</span>text <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> chunks])
+
+    <span style="color:#75715e"># Step 3: generate</span>
+    prompt <span style="color:#f92672">=</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;&#34;&#34;Answer the question using the provided context.
+</span><span style="color:#e6db74">Context:
+</span><span style="color:#e6db74"></span><span style="color:#e6db74">{</span>context<span style="color:#e6db74">}</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">Question: </span><span style="color:#e6db74">{</span>user_question<span style="color:#e6db74">}</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">Answer:&#34;&#34;&#34;</span>
+
+    <span style="color:#66d9ef">return</span> llm<span style="color:#f92672">.</span>complete(prompt)
+</code></pre></div><p>The model is not asked to recall from training. It is asked to read and reason. This dramatically reduces hallucination for knowledge-grounded questions: the model produces a bad answer when there is nothing useful in the retrieved context, not when its weights happen to contain stale or incorrect information.</p>
+<h3 id="chunking">Chunking</h3>
+<p>How you split documents into chunks has significant impact on retrieval quality. A chunk needs to be small enough that a single chunk is about one coherent thing (large chunks introduce irrelevant content alongside relevant content), but large enough to contain enough context to be useful (a chunk that is a single sentence may not have enough information to answer anything on its own).</p>
+<p>Common strategies:</p>
+<ul>
+<li><strong>Fixed-size chunks</strong> with overlap: split every 512 tokens, overlap by 64. Simple and surprisingly robust. The overlap prevents a relevant sentence from being split across chunk boundaries.</li>
+<li><strong>Semantic chunking</strong>: split at sentence or paragraph boundaries, then merge adjacent chunks as long as they stay semantically similar. Produces more coherent units but is more expensive.</li>
+<li><strong>Document-level hierarchy</strong>: embed individual sentences or paragraphs for retrieval, but retrieve the surrounding paragraph or section as context. Small-to-big retrieval: the retrieval granularity is fine, but the context window you hand to the model is coarser.</li>
+</ul>
+<p>A common failure mode: chunks are too large, so each chunk contains many topics, and the retrieval score is diluted across all of them. The chunk that is 80% relevant on one topic and 20% about something else will score lower than a chunk that is 100% relevant on its own.</p>
+<h3 id="reranking">Reranking</h3>
+<p>The embedding model used for retrieval is optimized for speed across a large corpus - it needs to embed millions of documents efficiently. It is not optimized for precision in ranking a small set of retrieved candidates.</p>
+<p>Reranking is a two-stage approach: retrieve a larger set of candidates with the fast embedding model (top-50), then use a slower but more accurate cross-encoder to score each candidate against the query and re-rank them.</p>
+<p>A cross-encoder takes (query, document) as a joint input and produces a single relevance score. Because it sees both together, it can model interactions between them that a bi-encoder (which embeds each independently) cannot. The tradeoff is that it is $O(n)$ in the number of candidates - you cannot use it to search over millions of documents, but you can use it to precisely rank the top 50 that the embedding model retrieved.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> sentence_transformers <span style="color:#f92672">import</span> CrossEncoder
+
+reranker <span style="color:#f92672">=</span> CrossEncoder(<span style="color:#e6db74">&#34;cross-encoder/ms-marco-MiniLM-L-6-v2&#34;</span>)
+
+<span style="color:#75715e"># candidates: list of (text, initial_score) tuples from vector search</span>
+query <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;effects of climate change on agriculture&#34;</span>
+candidate_texts <span style="color:#f92672">=</span> [c<span style="color:#f92672">.</span>text <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> candidates]
+scores <span style="color:#f92672">=</span> reranker<span style="color:#f92672">.</span>predict([[query, text] <span style="color:#66d9ef">for</span> text <span style="color:#f92672">in</span> candidate_texts])
+
+<span style="color:#75715e"># Re-sort by cross-encoder scores</span>
+reranked <span style="color:#f92672">=</span> sorted(zip(candidate_texts, scores), key<span style="color:#f92672">=</span><span style="color:#66d9ef">lambda</span> x: x[<span style="color:#ae81ff">1</span>], reverse<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+top_5 <span style="color:#f92672">=</span> reranked[:<span style="color:#ae81ff">5</span>]
+</code></pre></div><p>Reranking consistently improves answer quality in RAG systems and is worth doing whenever you have latency budget for the extra model call.</p>
+<h3 id="hybrid-search">Hybrid Search</h3>
+<p>Pure semantic search misses exact matches. If a user asks about &ldquo;RFC 7231&rdquo; and your documents contain that exact string, the semantic embedding of &ldquo;RFC 7231&rdquo; may not be particularly close to any document&rsquo;s embedding in the vector space. Keyword search would find it trivially.</p>
+<p>Hybrid search combines sparse retrieval (BM25 or TF-IDF, operating on token overlap) with dense retrieval (embedding similarity), then merges the scores. Reciprocal rank fusion is a simple and effective merging strategy: for each document, compute $1 / (k + \text{rank})$ from each retriever and sum them.</p>
+<p>Most production RAG systems use hybrid search because the domains where exact string matching helps (proper nouns, technical identifiers, version numbers) are exactly the domains where semantic search struggles most.</p>
+<hr>
+<h2 id="embeddings-which-model">Embeddings: Which Model?</h2>
+<p>The embedding model is the bottleneck for retrieval quality. Common options:</p>
+<ul>
+<li><strong>OpenAI text-embedding-3-small / text-embedding-3-large</strong>: very strong, cheap per call, but adds an external API dependency and latency.</li>
+<li><strong>Cohere Embed v3</strong>: competitive with OpenAI, also managed API.</li>
+<li><strong>BGE (BAAI General Embedding)</strong>: open-source, strong on the MTEB benchmark, can be self-hosted. BGE-M3 supports sparse and dense retrieval in a single model.</li>
+<li><strong>E5</strong> (Microsoft): another strong open-source family, good for long documents.</li>
+<li><strong>Nomic Embed</strong>: open-source, optimized for long contexts.</li>
+</ul>
+<p>The MTEB (Massive Text Embedding Benchmark) leaderboard is the practical reference for comparing embedding models across tasks. Different models perform differently on different retrieval tasks - domain-specific data (legal, medical, code) often benefits from fine-tuning a smaller model on in-domain data rather than using a large general-purpose model.</p>
+<p>Embedding dimensionality is also a choice. Higher dimension means more expressive but more storage and slower similarity computation. Many models allow <strong>Matryoshka representation learning</strong> (MRL): truncating the embedding to a smaller dimension with graceful degradation, giving you a knob to trade quality for cost.</p>
+<hr>
+<h2 id="failure-modes">Failure Modes</h2>
+<p>RAG is not magic. Understanding when it fails is essential.</p>
+<p><strong>Retrieval failure</strong>: the relevant information exists in the corpus but does not get retrieved. Causes: bad chunking, wrong embedding model for the domain, query too vague, corpus too large for the index quality.</p>
+<p><strong>Context window overflow</strong>: the retrieved chunks together exceed the model&rsquo;s context limit. Fix: retrieve fewer or shorter chunks, or use a model with a larger context window.</p>
+<p><strong>Context dilution</strong>: too many retrieved chunks, most of which are marginally relevant. The model attends to the irrelevant content and produces a muddled answer. Fix: use a reranker, reduce top-K.</p>
+<p><strong>Position bias</strong>: language models tend to pay less attention to information in the middle of long contexts (the &ldquo;lost in the middle&rdquo; problem). Fix: put the most relevant chunk first or last, not buried in the middle.</p>
+<p><strong>Hallucination despite retrieval</strong>: the model ignores the context and generates from its weights. This happens when the prompt does not clearly instruct the model to restrict itself to the provided context, or when the model is poorly calibrated for grounded generation. Fix: explicit system instructions to only use the provided context, and to say &ldquo;I don&rsquo;t know&rdquo; when the context does not contain the answer.</p>
+<p><strong>Stale index</strong>: documents were updated but the vectors were not re-indexed. Fix: incremental indexing triggered by document updates.</p>
+<hr>
+<h2 id="when-not-to-use-rag">When Not to Use RAG</h2>
+<p>RAG adds latency (retrieval + model call), operational complexity (maintaining the index), and a new failure mode (retrieval failure). It is not always the right answer.</p>
+<p>Fine-tuning is better when: the knowledge is stable and unlikely to change, you need the model to internalize patterns of reasoning (not just facts), the corpus is small enough to fit in training, or you need near-zero latency on the retrieval step.</p>
+<p>Long-context models (1M token context window) can sometimes replace RAG when the entire relevant corpus fits in context - just stuff it all in. This works for small codebases, individual documents, or narrow domains.</p>
+<p>RAG shines when: the knowledge changes frequently (news, financial data, company documentation), the corpus is too large to fit in a context window or as training data, you need citations or source attribution, or you need to combine knowledge from multiple domains that would conflict if all fine-tuned into one model.</p>
+<p>Most serious production systems that need knowledge-grounded generation use some combination of all three: a base model fine-tuned on the domain, RAG for current information, and occasionally full context stuffing for small high-precision tasks. The right answer is always situational.</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
