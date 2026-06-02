@@ -15,11 +15,11 @@
     <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="The Hot Partition Problem - When Everyone Writes to the Same Key"/>
 <meta name="twitter:description" content="Helpful context:
- Databases &amp; Indexes - The Structures That Make Queries Fast    It&rsquo;s Black Friday. The time is 8:59 AM Eastern. A product page for a $79 gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%."/>
+ Databases &amp; Indexes - The Structures That Make Queries Fast    It is Black Friday. The time is 8:59 AM Eastern. A product page for a 79-dollar gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%."/>
 
     <meta property="og:title" content="The Hot Partition Problem - When Everyone Writes to the Same Key" />
 <meta property="og:description" content="Helpful context:
- Databases &amp; Indexes - The Structures That Make Queries Fast    It&rsquo;s Black Friday. The time is 8:59 AM Eastern. A product page for a $79 gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%." />
+ Databases &amp; Indexes - The Structures That Make Queries Fast    It is Black Friday. The time is 8:59 AM Eastern. A product page for a 79-dollar gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://megha-bose.github.io/posts/the-hot-partition-problem/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
@@ -103,7 +103,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          13 min read
         </div>
       </div>
     </header>
@@ -114,18 +114,24 @@
 </li>
 </ul>
 <hr>
-<p>It&rsquo;s Black Friday. The time is 8:59 AM Eastern. A product page for a $79 gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%. Disk IOPS saturate. Response latencies climb from 2 milliseconds to 30 seconds. The load balancer starts timing out requests. The product page goes blank. The entire e-commerce platform shows errors, not because the system ran out of capacity overall, but because one partition is on fire while twenty others are sitting mostly idle.</p>
-<p>This is the hot partition problem. More capacity doesn&rsquo;t fix it. Adding shards distributes the new capacity evenly, but the traffic is not even - it&rsquo;s concentrated. The hot shard&rsquo;s share of traffic doesn&rsquo;t decrease when you add more shards.</p>
+<p>It is Black Friday. The time is 8:59 AM Eastern. A product page for a 79-dollar gaming headset is loaded 100,000 times in the next sixty seconds because a popular influencer mentioned it in a tweet. The database partition holding that product record receives traffic it has never seen in its operating lifetime. The node&rsquo;s CPU hits 100%. Disk IOPS - Input/Output Operations Per Second, the number of read and write requests a storage device can physically handle in one second - saturate at their hardware ceiling. Response latencies climb from 2 milliseconds to 30 seconds. The load balancer starts timing out requests. The product page goes blank.</p>
+<p>The entire e-commerce platform is showing errors. Not because the system ran out of capacity overall - twenty other partitions are sitting idle. One partition is on fire.</p>
+<p>This is the hot partition problem. More capacity does not fix it. Adding shards distributes the new capacity evenly, but the traffic is not even - it is concentrated. The hot shard&rsquo;s share of traffic does not decrease when you add more shards.</p>
+<hr>
 <h2 id="what-creates-hot-partitions">What Creates Hot Partitions</h2>
-<p><strong>Power-law distributions in access patterns</strong> are the fundamental cause. Hash-based sharding distributes keys evenly across the keyspace - but only if traffic is distributed evenly across keys. In almost every real system it isn&rsquo;t. User-generated content follows a power law: a tiny fraction of content accounts for the vast majority of reads. A single tweet from Beyoncé gets hundreds of millions of impressions; the average tweet gets three. The shard holding Beyoncé&rsquo;s data absorbs traffic proportional to her popularity, not to the total number of users.</p>
-<p><strong>Celebrity and viral content</strong> is the acute version. An account with 50 million followers posts something. That post&rsquo;s shard absorbs a spike orders of magnitude larger than any typical post. The shard has no way to adapt - it&rsquo;s a fixed slice of the keyspace, and all requests for that content must go through it.</p>
+<p><strong>Power-law distributions in access patterns</strong> are the fundamental cause. Hash-based sharding distributes keys evenly across the keyspace - but only if traffic is distributed evenly across keys. In almost every real system it is not. User-generated content follows a power law: a tiny fraction of content accounts for the vast majority of reads. A single tweet from Beyoncé gets hundreds of millions of impressions; the average tweet gets three. The shard holding Beyoncé&rsquo;s data absorbs traffic proportional to her popularity, not to the total number of users.</p>
+<p><strong>Celebrity and viral content</strong> is the acute version. An account with 50 million followers posts something. That post&rsquo;s shard absorbs a spike orders of magnitude larger than any typical post. The shard has no way to adapt - it is a fixed slice of the keyspace, and all requests for that content must go through it.</p>
 <p><strong>Sequential and time-based partition keys</strong> create a different failure mode: monotonic hot partitions. If your shard key is a timestamp or auto-incrementing integer, all new writes go to the &ldquo;latest&rdquo; partition - always the same one. This is one of the most common operational mistakes in systems using Bigtable, HBase, or DynamoDB with a poorly chosen key. The last partition is always hot; all prior partitions are cold and idle. You get the worst of both worlds: wasted capacity and a saturated write path.</p>
-<p><strong>Thundering herd at cache miss:</strong> when a cached item expires and thousands of concurrent requests all simultaneously miss the cache and pound the underlying partition, the spike is brief but can be catastrophic. This is structurally the same problem - concentrated traffic on one destination - triggered by a timer rather than popularity.</p>
+<p><strong>Thundering herd at cache miss:</strong> a thundering herd is what happens when many processes or requests are all waiting for the same event and then all wake up simultaneously when it occurs. The classic example: a cached item expires. Thousands of concurrent requests all simultaneously see an empty cache and all rush to fetch the data from the underlying database at the same time. The spike is brief but can be catastrophic. This is structurally the same problem as viral content - concentrated traffic on one destination - triggered by a timer rather than popularity.</p>
+<hr>
 <h2 id="the-real-story-beyoncé-and-twitters-architecture">The Real Story: Beyoncé and Twitter&rsquo;s Architecture</h2>
-<p>In February 2013, Beyoncé announced her pregnancy at the Grammy Awards. Twitter&rsquo;s architecture at the time used a push-based fan-out model: when a user posts, the tweet is written into every follower&rsquo;s precomputed timeline feed. For most users this works fine.</p>
-<p>For Beyoncé, who had tens of millions of followers, a single tweet triggered tens of millions of write operations - all of them hitting the fan-out workers simultaneously, all of them trying to write to different users' timeline caches. The fan-out workers fell behind. The queue grew. Timelines stopped updating. The system that was designed to handle scale was overwhelmed by a single event.</p>
-<p>This is not purely a hot partition problem (the writes themselves were distributed across many users' partitions), but it illustrates the same root cause: access patterns that are radically non-uniform collide with infrastructure designed for uniform distribution.</p>
-<p>Twitter, Reddit during major news events, and Steam during major game launches (2021&rsquo;s Cyberpunk launch caused Steam to show errors for hours) have all hit variations of this problem. The pattern is always: one item, one event, one moment in time - concentrated load that infrastructure assumed would be spread.</p>
+<p>To understand the Beyoncé problem, you first need to understand how Twitter&rsquo;s timeline system worked.</p>
+<p>When you open Twitter, you see a feed of tweets from people you follow. The naïve way to build this is to query all the tweets from all accounts you follow and sort them by time - but this is slow, especially for users who follow thousands of accounts. Twitter&rsquo;s solution was to precompute each user&rsquo;s timeline feed. When someone you follow posts a tweet, Twitter immediately writes a copy of that tweet ID into your precomputed feed.</p>
+<p>This approach is called <strong>fan-out</strong> - the idea is that one write event &ldquo;fans out&rdquo; into many downstream writes, like a single signal branching into multiple outputs. For most accounts, if you have 500 followers, posting a tweet triggers 500 background writes. Manageable.</p>
+<p>For Beyoncé, who had tens of millions of followers, a single tweet triggered tens of millions of write operations - all of them hitting the fan-out workers simultaneously. <strong>Write amplification</strong> is the term for this phenomenon: one logical write (Beyoncé posts a tweet) causes many more physical writes (tens of millions of copies written into follower timelines). The amplification factor here was roughly equal to the follower count.</p>
+<p>The fan-out workers fell behind. The queue grew. Timelines stopped updating. The system designed for scale was overwhelmed by a single event.</p>
+<p>Twitter, Reddit during major news events, and Steam during major game launches (2021&rsquo;s Cyberpunk launch caused Steam to show errors for hours) have all hit variations of this problem. The pattern is always the same: one item, one event, one moment - concentrated load that infrastructure assumed would be spread.</p>
+<hr>
 <h2 id="detecting-hot-partitions">Detecting Hot Partitions</h2>
 <p>You cannot fix what you cannot see. The mistake is monitoring only aggregate cluster metrics. A healthy cluster-level average hides a saturated individual partition.</p>
 <p>Per-partition metrics are required: request rate, CPU utilization, read/write throughput, and latency - all broken down by partition or shard. The diagnostic signatures:</p>
@@ -134,7 +140,8 @@
 <li>P99 latency for requests to one shard is 500ms while others are 5ms</li>
 <li>One Kafka partition&rsquo;s consumer lag grows continuously while neighboring partitions stay current</li>
 </ul>
-<p>Most managed services expose this natively. DynamoDB&rsquo;s CloudWatch metrics include <code>ConsumedReadCapacityUnits</code> and <code>ConsumedWriteCapacityUnits</code> per partition. Kafka exposes per-partition offset lag through JMX. Redis Cluster exposes per-slot statistics via <code>CLUSTER INFO</code>.</p>
+<p>Most managed services expose this natively. DynamoDB&rsquo;s CloudWatch metrics include <code>ConsumedReadCapacityUnits</code> and <code>ConsumedWriteCapacityUnits</code> per partition. Kafka exposes per-partition offset lag through JMX - Java Management Extensions, a standard interface for monitoring and managing Java applications. Redis Cluster exposes per-slot statistics via <code>CLUSTER INFO</code>.</p>
+<hr>
 <h2 id="solution-1-key-salting">Solution 1: Key Salting</h2>
 <p>The most direct fix for a hot key is to artificially spread it across multiple virtual shards by appending a random suffix.</p>
 <p>For a hot key like <code>product:viral-item</code>, instead of routing all reads and writes to one location, distribute across N:</p>
@@ -142,43 +149,50 @@
 product:viral-item:1
 ...
 product:viral-item:N-1
-</code></pre><p>Pick the shard suffix randomly on write. On read, scatter across all N shards and merge the results. The hot key&rsquo;s traffic is now distributed N-ways.</p>
-<p>The cost on reads is scatter-gather: N parallel requests instead of one. For write-heavy hot keys, this is a good trade. For read-heavy keys with high N, the overhead of merging becomes significant. N is tunable - size it to the actual hotness factor, not a fixed number.</p>
-<h2 id="solution-2-dynamodb-adaptive-capacity---and-why-its-not-enough">Solution 2: DynamoDB Adaptive Capacity - and Why It&rsquo;s Not Enough</h2>
+</code></pre><p>Pick the shard suffix randomly on write. On read, you need to retrieve data from all N shards and combine the results - this is called <strong>scatter-gather</strong>: you scatter the query outward to multiple locations in parallel, then gather (merge) the responses back into a single answer. The hot key&rsquo;s traffic is now distributed N-ways.</p>
+<p>The cost of scatter-gather is that reads become N parallel requests instead of one, plus the work of merging. For write-heavy hot keys, this is a good trade. For read-heavy keys with high N, the overhead of merging becomes significant. N is tunable - size it to the actual hotness factor, not a fixed number.</p>
+<hr>
+<h2 id="solution-2-dynamodb-adaptive-capacity---and-why-it-is-not-enough">Solution 2: DynamoDB Adaptive Capacity - and Why It Is Not Enough</h2>
 <p>DynamoDB has a feature called adaptive capacity that automatically redistributes provisioned throughput from cold partitions to hot ones. It detects usage imbalance and shifts capacity in response. For moderate, sustained hot partitions - where one item legitimately needs more throughput than its partition was allocated - this buys significant relief without application changes.</p>
-<p>The limitation is fundamental physics. A DynamoDB partition has a hard ceiling on its throughput regardless of how much capacity you&rsquo;ve provisioned for the table overall. Adaptive capacity can reallocate capacity up to the partition&rsquo;s physical ceiling. If a viral event drives traffic a hundred times above that ceiling, adaptive capacity cannot help. The partition is saturated. You need application-level solutions.</p>
-<p>DynamoDB&rsquo;s recommendation for truly hot items is to add a random suffix to the partition key (key salting) and use DAX (DynamoDB Accelerator) - an in-memory caching layer purpose-built for DynamoDB. DAX sits in front of DynamoDB, absorbs read traffic for hot keys, and reduces the hit rate on DynamoDB itself dramatically.</p>
+<p>The limitation is fundamental physics. A DynamoDB partition has a hard ceiling on its throughput regardless of how much capacity you have provisioned for the table overall. Adaptive capacity can reallocate capacity up to the partition&rsquo;s physical ceiling. If a viral event drives traffic a hundred times above that ceiling, adaptive capacity cannot help. The partition is saturated. You need application-level solutions.</p>
+<p>DynamoDB&rsquo;s recommendation for truly hot items is to add a random suffix to the partition key (key salting) and use DAX - DynamoDB Accelerator, an in-memory caching layer purpose-built for DynamoDB. DAX sits in front of DynamoDB, absorbs read traffic for hot keys in memory, and dramatically reduces how often requests reach DynamoDB itself.</p>
+<hr>
 <h2 id="solution-3-caching-as-a-hot-partition-shield">Solution 3: Caching as a Hot Partition Shield</h2>
-<p>For read-heavy hot partitions, placing a caching layer in front eliminates most of the load. AWS ElastiCache (Redis) is the canonical choice for this: cache the hot item, serve reads from Redis, and let the underlying partition handle only cache misses and writes.</p>
-<p>Redis handles hundreds of thousands of reads per second on a single node. DynamoDB at default settings handles far fewer per partition. The cache acts as a multiplier: a cache hit rate of 99% means the partition sees 1% of the original read traffic.</p>
-<p>The complexity this introduces: cache invalidation. How does every application server know when the hot item&rsquo;s value changes? The options:</p>
+<p>For read-heavy hot partitions, placing a caching layer in front eliminates most of the load. The idea is simple: the first time a hot item is requested, fetch it from the database and store a copy in a fast in-memory cache. Every subsequent request gets the cached copy instead of hitting the database.</p>
+<p>AWS ElastiCache (backed by Redis) is the canonical choice for this. Redis handles hundreds of thousands of reads per second on a single node. DynamoDB at default settings handles far fewer per partition. A cache hit rate of 99% means the underlying partition sees only 1% of the original read traffic.</p>
+<p>The complexity this introduces is cache invalidation - keeping the cached copy synchronized with the source of truth when the underlying data changes. The options:</p>
 <ul>
-<li><strong>TTL-based expiry:</strong> accept that reads may be briefly stale. Fine for product views; problematic for inventory counts.</li>
-<li><strong>Write-through caching:</strong> update the cache whenever the backing store is updated. Keeps the cache current but adds write-path latency.</li>
-<li><strong>Pub/sub invalidation:</strong> publish an invalidation message when the item changes; all cache nodes evict and re-fetch. More complex but avoids staleness.</li>
+<li><strong>TTL-based expiry:</strong> TTL stands for Time To Live - a timer attached to a cache entry. When it expires, the next request fetches fresh data from the database. Simple to implement; accepts that reads may briefly return stale data. Fine for product view counts; problematic for inventory levels.</li>
+<li><strong>Write-through caching:</strong> update the cache at the same time as the underlying store, on every write. Keeps the cache current but adds latency to every write operation.</li>
+<li><strong>Pub/sub invalidation:</strong> pub/sub (publish/subscribe) is a messaging pattern where one component publishes a notification to a channel, and all subscribers to that channel receive it. When an item changes, publish an invalidation event; every cache node subscribed to that channel evicts its copy and re-fetches. More moving parts, but avoids staleness entirely.</li>
 </ul>
-<p>The &ldquo;first write&rdquo; cold start problem: when a new viral item appears, there is no cache entry. The first wave of requests all miss the cache simultaneously and hammer the partition. Request coalescing (discussed below) is the fix.</p>
+<p>The cold start problem: when a new viral item appears, there is no cache entry yet. The first wave of requests all miss the cache simultaneously and all hammer the underlying partition together. This is the thundering herd again. Request coalescing (next section) is the fix.</p>
+<hr>
 <h2 id="solution-4-request-coalescing">Solution 4: Request Coalescing</h2>
-<p>When many concurrent requests arrive for the same key within a short window, coalescing deduplicates them. The first request fetches from the underlying store; all subsequent requests for the same key during the same in-flight window wait for that first request&rsquo;s result and share it.</p>
-<p>This is also called request collapsing or thundering herd protection. Varnish implements it at the HTTP caching layer with its &ldquo;grace mode.&rdquo; Application-level implementations use a shared promise or future: the first goroutine (or thread) to see a cache miss &ldquo;owns&rdquo; the fetch; subsequent goroutines subscribe to the same future and receive the result when it completes.</p>
-<p>This converts N simultaneous partition reads into one, regardless of concurrency level. It&rsquo;s particularly effective for the cold-start problem on newly viral content.</p>
-<h2 id="solution-5-write-buffering-with-sqs">Solution 5: Write Buffering with SQS</h2>
-<p>For write-heavy hot partitions, buffering writes through a queue decouples the write rate from the application&rsquo;s request rate. Instead of every request writing directly to the hot partition, requests write to an SQS queue. A consumer drains the queue at a controlled rate and batch-writes to the database.</p>
-<p>This doesn&rsquo;t eliminate the writes, but it smooths the spike - converting bursty write traffic into a steady, controlled write rate. The cost is latency: the data isn&rsquo;t written immediately, so reads after a write may not reflect the latest state. Acceptable for view counts and follower counts; not acceptable for inventory levels where overselling is a real risk.</p>
+<p>When many concurrent requests arrive for the same key within a short window, coalescing deduplicates them. The first request fetches from the underlying store; all subsequent requests for the same key, arriving while the first fetch is still in flight, wait for that first request&rsquo;s result and share it.</p>
+<p>This is also called request collapsing or thundering herd protection. It converts N simultaneous partition reads into one, regardless of concurrency level. Varnish (a widely-used HTTP cache) implements this at the HTTP layer with its &ldquo;grace mode.&rdquo; Application-level implementations use a shared promise: the first goroutine (or thread) to see a cache miss &ldquo;owns&rdquo; the fetch and registers a future result; subsequent goroutines subscribe to the same future and receive the result when it arrives.</p>
+<p>This is particularly effective for the cold-start problem on newly viral content.</p>
+<hr>
+<h2 id="solution-5-write-buffering-with-a-queue">Solution 5: Write Buffering with a Queue</h2>
+<p>For write-heavy hot partitions, buffering writes through a message queue decouples the write rate from the application&rsquo;s request rate. Instead of every request writing directly to the hot partition, requests write to a queue. A consumer drains the queue at a controlled rate and batch-writes to the database.</p>
+<p>AWS SQS - Simple Queue Service, Amazon&rsquo;s managed message queue - is a common choice for this. The application drops writes into SQS, which holds them reliably until a consumer is ready to process them. The database sees a smooth, controlled write stream instead of a spike.</p>
+<p>This does not eliminate the writes, but it smooths the spike - converting bursty write traffic into a steady, controlled rate. The cost is latency: the data is not written immediately, so a read right after a write may return the old value. Acceptable for view counts and follower counts; not acceptable for inventory levels where selling more than you have in stock is a real business problem.</p>
+<hr>
 <h2 id="real-world-architectures">Real-World Architectures</h2>
-<p><strong>Twitter&rsquo;s hybrid fan-out:</strong> Twitter resolved the celebrity problem by defining a follower threshold (roughly 10,000 followers in early versions of the system). Accounts below the threshold use write-time fan-out: a post is pushed into each follower&rsquo;s precomputed timeline at post time. Accounts above the threshold are treated differently: their posts are pulled at read time and merged into each requesting user&rsquo;s precomputed feed. This bounds write amplification for celebrity accounts. The fan-out workers are no longer asked to write to 100 million timelines for a single post.</p>
-<p><strong>Redis Cluster and hot slots:</strong> Redis Cluster uses 16,384 hash slots. All keys that hash to the same slot live on the same node. If multiple high-traffic keys hash to the same slot, that slot&rsquo;s node is hot. Redis Cluster does not automatically rebalance within a slot - the application must use key salting (<code>{key}:suffix</code> syntax, which changes how the key is slotted) and perform scatter-gather at the application layer.</p>
-<p><strong>Consistent hashing and virtual nodes:</strong> Consistent hashing partially mitigates hot partitions by distributing keyspace more evenly and making it cheaper to add capacity. Virtual nodes (each physical node is responsible for multiple points on the hash ring) improve the distribution. But consistent hashing distributes keyspace uniformly - it does not distribute access patterns uniformly. A hot key on consistent hashing is still a hot key; you&rsquo;ve just made it cheaper to add more nodes around it.</p>
+<p><strong>Twitter&rsquo;s hybrid fan-out:</strong> Twitter resolved the celebrity problem by setting a follower threshold (roughly 10,000 followers in early versions of the system). Accounts below the threshold use write-time fan-out: a post is pushed into each follower&rsquo;s precomputed timeline at post time. Accounts above the threshold are handled differently - their posts are not fanned out on write. Instead, they are pulled and merged into each requesting user&rsquo;s feed at read time. This bounds write amplification for high-follower accounts. The fan-out workers are no longer asked to write to 100 million timelines for a single post.</p>
+<p><strong>Redis Cluster and hot slots:</strong> Redis Cluster divides its entire keyspace into 16,384 hash slots. Every key is mapped to one of these slots via a hash function, and each slot lives on exactly one node. If multiple high-traffic keys happen to map to the same slot, that node is hot. Redis Cluster does not automatically rebalance within a slot - the application must use key salting and perform scatter-gather at the application layer.</p>
+<p><strong>Consistent hashing and virtual nodes:</strong> Most distributed databases use a technique called consistent hashing to distribute keys across nodes. Imagine the keyspace arranged in a circle - a hash ring. Each node owns a segment of that ring, and a key is routed to the node whose segment starts closest to the key&rsquo;s position on the ring. The advantage over simple modular hashing is that when you add or remove a node, only the keys in the affected segment need to be moved - not all keys.</p>
+<p>Virtual nodes extend this: instead of each physical node owning one segment of the ring, each physical node is assigned multiple smaller segments scattered around the ring. This improves distribution, especially when nodes have different capacities. But consistent hashing and virtual nodes distribute keyspace uniformly - they do not distribute access patterns uniformly. A hot key on consistent hashing is still a hot key; you have just made it cheaper to add more nodes around it.</p>
+<hr>
 <h2 id="when-solutions-make-things-worse">When Solutions Make Things Worse</h2>
-<p>Caching hot data introduces cache invalidation complexity that can become its own source of bugs. A cache that&rsquo;s out of sync with the source of truth is worse than no cache at all in systems where correctness matters.</p>
+<p>Caching hot data introduces cache invalidation complexity that can become its own source of bugs. A cache that is out of sync with the source of truth is worse than no cache in systems where correctness matters - you end up with users seeing different versions of the same data depending on which cache node their request hit.</p>
 <p>Key salting adds application complexity: every write must choose a shard suffix, every read must scatter-gather across all suffixes. The number of suffixes becomes a configuration parameter you must tune per key type. Changing it after the fact requires a data migration.</p>
-<p>Write buffering via SQS means your system is no longer strongly consistent by default. A client that writes and then immediately reads may read stale data. This is acceptable in many contexts but must be a deliberate choice, not an accidental one.</p>
+<p>Write buffering via a queue means your system is no longer strongly consistent by default. A client that writes and then immediately reads may read stale data. This is acceptable in many contexts but must be a deliberate design choice, not an accidental one.</p>
+<hr>
 <h2 id="multi-region-complications">Multi-Region Complications</h2>
 <p>In a multi-region deployment, hot partitions are complicated by cross-region replication lag. If a viral item is written in US-EAST-1 and read in EU-WEST-1, the replication lag means EU-WEST-1 may serve stale data during peak traffic. The hot partition problem combines with the eventual consistency problem.</p>
-<p>Global tables in DynamoDB provide multi-active replication - reads and writes in any region, with last-writer-wins conflict resolution. This spreads read traffic globally and reduces per-region hot partition severity. But it doesn&rsquo;t eliminate the hot key problem - it just distributes it geographically.</p>
-<h2 id="future-outlook">Future Outlook</h2>
-<p>Serverless architectures are inherently more resistant to hot partition problems at the application layer. Lambda functions are stateless and run in parallel automatically - there&rsquo;s no concept of a partition that can be hot. The hot partition problem gets pushed down to the storage layer (still a DynamoDB partition, still an S3 prefix, still a relational database row). Stateless compute at infinite scale is not the same as infinitely scalable storage.</p>
-<p>The long-term solution is storage systems designed with hotness as a first-class concept - systems that automatically detect hot keys and transparently shard them at the storage layer without application changes. DynamoDB&rsquo;s adaptive capacity is an early version of this. Future systems will likely handle more of this transparently.</p>
+<p>Global tables in DynamoDB provide multi-active replication - reads and writes in any region, with last-writer-wins conflict resolution (when two regions write to the same key at the same time, the write with the later timestamp wins). This spreads read traffic globally and reduces per-region hot partition severity. But it does not eliminate the hot key problem - it distributes it geographically.</p>
+<hr>
 <h2 id="summary">Summary</h2>
 <table>
 <thead>
@@ -191,12 +205,12 @@ product:viral-item:N-1
 <tbody>
 <tr>
 <td>Viral/celebrity content reads</td>
-<td>Read-through cache (ElastiCache)</td>
+<td>Read-through cache (Redis/ElastiCache)</td>
 <td>Cache invalidation complexity</td>
 </tr>
 <tr>
 <td>Viral content write spikes</td>
-<td>Key salting (scatter-gather)</td>
+<td>Key salting + scatter-gather reads</td>
 <td>N reads per logical read</td>
 </tr>
 <tr>
@@ -211,7 +225,7 @@ product:viral-item:N-1
 </tr>
 <tr>
 <td>Write-heavy spikes</td>
-<td>SQS write buffering</td>
+<td>Queue-based write buffering (SQS)</td>
 <td>Eventual consistency</td>
 </tr>
 <tr>
