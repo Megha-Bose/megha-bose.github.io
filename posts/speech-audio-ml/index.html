@@ -106,7 +106,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -128,12 +128,25 @@
 <p>The <strong>Nyquist-Shannon theorem</strong> says you can perfectly reconstruct any signal with maximum frequency $f_{\max}$ from samples taken at $f_s &gt; 2f_{\max}$. Human speech contains energy up to about 8 kHz, so 16 kHz sampling is sufficient to capture all phonetically relevant information.</p>
 <p>Each sample is a real number representing amplitude. A one-second clip at 16 kHz is a vector in $\mathbb{R}^{16000}$. This raw representation is almost useless for learning: nearby samples are highly correlated, the interesting structure is in frequency patterns not amplitude values, and the representation is completely invariant to what actually matters - which frequencies are active when.</p>
 <hr>
-<h2 id="from-waveform-to-spectrogram">From Waveform to Spectrogram</h2>
-<p>The solution is to analyze the signal in the <strong>frequency domain over time</strong>. The <strong>Short-Time Fourier Transform (STFT)</strong> breaks the signal into overlapping frames, applies a Fourier transform to each frame, and stacks the results:</p>
-<p>$$X[k, t] = \sum_{n=0}^{N-1} x[n + t \cdot H] \cdot w[n] \cdot e^{-i2\pi kn/N}$$</p>
-<p>where $w[n]$ is a window function (Hann window is standard), $N$ is the frame length (typically 25ms, or 400 samples at 16 kHz), and $H$ is the hop length (typically 10ms, or 160 samples). The result is a 2D array: $|X[k,t]|^2$ is the <strong>spectrogram</strong>, showing how much energy each frequency $k$ has at each time frame $t$.</p>
+<h2 id="from-waveform-to-spectrogram-stft-derived">From Waveform to Spectrogram: STFT Derived</h2>
+<p>The DFT (see <a href="/posts/fourier-analysis/" target="_blank" rel="noopener noreferrer">Fourier Analysis</a>
+) assumes the signal is periodic and stationary over the entire window. Speech violates this completely: a phoneme lasts 50-100ms, and the frequency content changes dramatically from one phoneme to the next. Applying the DFT to an entire sentence gives you a blurred average of all the frequencies present at all times - useless for understanding what was said when.</p>
+<p>The fix is to make the DFT local in time. Slide a short window across the signal, apply the DFT inside each window, and stack the results. This is the <strong>Short-Time Fourier Transform (STFT)</strong>.</p>
+<p><strong>Step-by-step derivation.</strong> Start with the DFT of the full signal:
+$$X[k] = \sum_{n=0}^{N-1} x[n] \cdot e^{-i2\pi kn/N}$$</p>
+<p>To localize this to time $t$, multiply $x[n]$ by a window function $w[n - tH]$ centered at time step $t$ (where $H$ is the hop length in samples):
+$$X[k, t] = \sum_{n} x[n] \cdot w[n - tH] \cdot e^{-i2\pi kn/N}$$</p>
+<p>The window $w$ selects a short segment of the signal around position $tH$ and tapers it to zero at the edges. Substituting $m = n - tH$ to shift the index to the local frame:
+$$X[k, t] = \sum_{m=0}^{N-1} x[m + tH] \cdot w[m] \cdot e^{-i2\pi k(m + tH)/N}$$</p>
+<p>The term $e^{-i2\pi k \cdot tH/N}$ is a phase offset that depends on the absolute time $t$ but not on the local index $m$. For the spectrogram (which uses $|X[k,t]|^2$), this phase cancels out. So:
+$$|X[k, t]|^2 = \left|\sum_{m=0}^{N-1} x[m + tH] \cdot w[m] \cdot e^{-i2\pi km/N}\right|^2$$</p>
+<p>This is exactly a DFT of the windowed frame $x[m + tH] \cdot w[m]$. Practically: extract a frame of $N$ samples centered at position $tH$, multiply pointwise by the window, apply the DFT, take the magnitude squared. Repeat by advancing $t$ by one hop.</p>
+<p><strong>Parameter choices:</strong> $N = 400$ samples (25ms at 16 kHz) captures enough of a phoneme to be informative. $H = 160$ samples (10ms) gives 75% overlap between consecutive frames, which ensures smooth spectral evolution. The output shape is $(\lfloor N/2 \rfloor + 1) \times T$ where $T$ is the number of frames.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> Why does the window matter? The STFT assumes the signal is stationary within each frame - if you multiply by a rectangular window (just cut out the frame), the sharp edges introduce high-frequency artifacts in the spectrum (Gibbs phenomenon). A smooth window tapers to zero at the edges, reducing this spectral leakage. The Hann window $w[n] = \sin^2(\pi n / N)$ is the standard choice for speech.</p>
+<p><strong>Discomfort check.</strong> Why does the window matter? If you use a rectangular window - just cutting out the frame with sharp edges at both ends - the DFT sees a signal that abruptly jumps from nonzero to zero at the boundaries. This artificial discontinuity looks like high-frequency energy (Gibbs phenomenon) and leaks into neighboring frequency bins, masking the true spectrum. The <strong>Hann window</strong> $w[m] = \sin^2(\pi m / N)$ smoothly tapers to zero at both ends, eliminating the discontinuity and reducing leakage by over 30 dB compared to a rectangular window. The tradeoff is slightly reduced frequency resolution (the main lobe is wider), but in speech this is almost always worth it.</p>
+</blockquote>
+<blockquote>
+<p><strong>Discomfort check.</strong> What exactly is the STFT outputting - is it complex or real? The raw STFT $X[k,t]$ is complex: it has magnitude $|X[k,t]|$ and phase $\angle X[k,t]$. The magnitude tells you how much of frequency $k$ is present at time $t$; the phase tells you where in the cycle that frequency is. For speech recognition, only the magnitude matters - phase is speaker and microphone dependent and carries no phonetic information. The spectrogram discards phase by taking $|X[k,t]|^2$. For speech synthesis (going from spectrogram back to audio), you need the phase, which is why vocoders like Griffin-Lim or WaveGlow are used to reconstruct it.</p>
 </blockquote>
 <hr>
 <h2 id="the-mel-scale-and-mel-spectrograms">The Mel Scale and Mel Spectrograms</h2>
@@ -200,10 +213,35 @@
 </ul>
 <p>For streaming ASR, smaller Whisper variants (Whisper-tiny, Whisper-base) are often used with chunked audio, trading some accuracy for latency. Quantization (int8, fp16) and model distillation further reduce compute. CPU vs. GPU inference involves a different tradeoff: GPU has higher throughput, CPU has lower fixed cost for sparse traffic.</p>
 <hr>
-<h2 id="latent-space-decomposition-in-speech">Latent Space Decomposition in Speech</h2>
-<p>Modern speech synthesis and voice conversion models separate speech into disentangled representations. A <strong>speech signal contains at minimum</strong>: content (what is being said), speaker identity (whose voice), prosody (rhythm, stress, intonation), and acoustic environment (room reverb, microphone).</p>
-<p><strong>Latent space decomposition</strong> trains an encoder to separately represent these factors - separating speech content from speaker and style representations, enabling voice conversion (same content, different speaker) and style transfer (same content and speaker, different prosody). The technical challenge is that these factors are entangled in the raw signal - the same phoneme sounds different depending on the speaker and acoustic context.</p>
-<p>Vector quantization (as in VQ-VAE) is commonly used to enforce discrete, disentangled codes for different factors. The content encoder is trained to be speaker-independent (via adversarial training or feature normalization); the speaker encoder captures a fixed-length speaker embedding independent of content.</p>
+<h2 id="latent-space-and-latent-space-decomposition">Latent Space and Latent Space Decomposition</h2>
+<p><strong>What is the latent space?</strong></p>
+<p>When a neural network encodes an input $\mathbf{x} \in \mathbb{R}^d$ through layers into a representation $\mathbf{z} \in \mathbb{R}^k$ with $k \ll d$, $\mathbf{z}$ lives in the <strong>latent space</strong>. &ldquo;Latent&rdquo; means hidden - the representation is never directly observed, only inferred. The encoder $f: \mathbb{R}^d \to \mathbb{R}^k$ compresses the input; a decoder $g: \mathbb{R}^k \to \mathbb{R}^d$ reconstructs it. This is exactly an autoencoder.</p>
+<p>Why is the latent space useful? Because it is <em>structured</em>. A well-trained encoder maps semantically similar inputs to nearby points in latent space. An audio encoder trained on speech should map two utterances of the same word by different speakers to nearby $\mathbf{z}$ vectors - because the underlying content is the same, even though the raw waveforms are very different. The latent space is a coordinate system over the space of meanings, not the space of signals.</p>
+<p>You can explore this geometry: interpolating between two latent codes $\mathbf{z}_1$ and $\mathbf{z}_2$ along the line $\alpha \mathbf{z}_1 + (1-\alpha)\mathbf{z}_2$ and decoding each intermediate point should produce a smooth transition between the two corresponding utterances. This would be incoherent in the raw signal space - interpolating two waveforms just gives a blurry superposition.</p>
+<p><strong>The problem: entanglement.</strong></p>
+<p>A standard autoencoder learns a latent code that captures <em>everything</em> about the input in a single vector: content, speaker, prosody, noise, microphone characteristics, all compressed together. This is fine for reconstruction. It is useless if you want to separate these factors - you cannot change the speaker without changing everything else, because the latent code does not factor them out.</p>
+<p><strong>Latent space decomposition (LSD)</strong> is the approach of training the model to produce <em>multiple, independent</em> latent codes, each capturing a specific factor:</p>
+<p>$$\mathbf{z}_{\text{content}}, \mathbf{z}_{\text{speaker}}, \mathbf{z}_{\text{prosody}} = E_c(\mathbf{x}),; E_s(\mathbf{x}),; E_p(\mathbf{x})$$</p>
+<p>A decoder then reconstructs from the combination: $\hat{\mathbf{x}} = D(\mathbf{z}_{\text{content}}, \mathbf{z}_{\text{speaker}}, \mathbf{z}_{\text{prosody}})$. Voice conversion becomes: take $\mathbf{z}_{\text{content}}$ from utterance A and $\mathbf{z}_{\text{speaker}}$ from utterance B, feed both to $D$. The output speaks the content of A in the voice of B.</p>
+<p><strong>How disentanglement is enforced.</strong></p>
+<p>The model does not automatically learn to separate these factors - without explicit pressure, it will collapse everything into $\mathbf{z}_{\text{content}}$ and ignore the others. Three main approaches:</p>
+<ol>
+<li>
+<p><strong>Adversarial training</strong>: train a speaker classifier on $\mathbf{z}_{\text{content}}$ and penalize the content encoder for making speaker classification easy. The content encoder is forced to remove speaker information to fool the classifier. This is gradient reversal - the classifier gradient is negated before it reaches the encoder.</p>
+</li>
+<li>
+<p><strong>Information bottleneck</strong>: constrain the capacity of $\mathbf{z}_{\text{content}}$ to be small (few dimensions, quantized, or through a variational bottleneck). Content is high-frequency and varies frame by frame; speaker identity is low-frequency and consistent across an utterance. If the bottleneck is tight enough in the right way, only content passes through.</p>
+</li>
+<li>
+<p><strong>Vector quantization (VQ-VQ)</strong>: discretize $\mathbf{z}_{\text{content}}$ to a finite codebook. The model must express content as a sequence of discrete codes (analogous to phonemes). Speaker information cannot be expressed in a discrete phoneme-like code and is naturally excluded.</p>
+</li>
+</ol>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why is disentanglement so hard? Because the factors are genuinely entangled in the signal: the same phoneme /a/ sounds different when spoken by a child vs. an adult, in a whisper vs. a shout, in a quiet room vs. a car. The mapping from signal to factor is many-to-one and context-dependent. Any decomposition is an approximation - there is no clean boundary between &ldquo;content&rdquo; and &ldquo;speaker&rdquo; at the level of the waveform. The model must learn a useful approximation, not a perfect factorization.</p>
+</blockquote>
+<blockquote>
+<p><strong>Discomfort check.</strong> Is the latent space always continuous? No. VAEs learn a continuous latent space with a Gaussian prior, enabling smooth interpolation. VQ-VAEs quantize to a discrete codebook - interpolation between codes is not meaningful, but the discrete codes are often more interpretable and correspond more cleanly to linguistic units like phonemes. For speech content, discrete codes tend to work better; for speaker embeddings, continuous codes are standard.</p>
+</blockquote>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
