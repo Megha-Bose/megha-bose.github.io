@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Evaluating LLMs - Why Benchmarks Are Harder Than They Look // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.f23f63463731fbe831ce8a78e38493f44547929096c1767199625f9f442ed892.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Evaluating LLMs - Why Benchmarks Are Harder Than They Look"/>
+<meta name="twitter:description" content="Helpful context:
+ Sequence Modeling &amp; Language Models - Predicting One Token at a Time  Transformers From First Principles - Why Attention Changed Everything  Scaling Laws - How Model Performance Grows With Compute    How do you know if a language model is good? The question sounds simple. It is not. A language model is asked to do many things simultaneously - reason, recall facts, write code, follow instructions, refuse harmful requests, maintain coherence over long contexts - and no single number captures all of them."/>
+
+    <meta property="og:title" content="Evaluating LLMs - Why Benchmarks Are Harder Than They Look" />
+<meta property="og:description" content="Helpful context:
+ Sequence Modeling &amp; Language Models - Predicting One Token at a Time  Transformers From First Principles - Why Attention Changed Everything  Scaling Laws - How Model Performance Grows With Compute    How do you know if a language model is good? The question sounds simple. It is not. A language model is asked to do many things simultaneously - reason, recall facts, write code, follow instructions, refuse harmful requests, maintain coherence over long contexts - and no single number captures all of them." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/llm-evaluation-benchmarks/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="http://megha-bose.github.io/categories/ml/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">Evaluating LLMs - Why Benchmarks Are Harder Than They Look</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Mar 2022
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          9 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/sequence-modeling-and-language-models/" target="_blank" rel="noopener noreferrer">Sequence Modeling &amp; Language Models - Predicting One Token at a Time</a>
+</li>
+<li><a href="/posts/transformers-from-first-principles/" target="_blank" rel="noopener noreferrer">Transformers From First Principles - Why Attention Changed Everything</a>
+</li>
+<li><a href="/posts/scaling-laws/" target="_blank" rel="noopener noreferrer">Scaling Laws - How Model Performance Grows With Compute</a>
+</li>
+</ul>
+<hr>
+<p>How do you know if a language model is good? The question sounds simple. It is not. A language model is asked to do many things simultaneously - reason, recall facts, write code, follow instructions, refuse harmful requests, maintain coherence over long contexts - and no single number captures all of them. The history of LLM evaluation is largely a history of proxies that seemed reasonable, got saturated, and were quietly replaced.</p>
+<hr>
+<h2 id="perplexity-the-intrinsic-baseline">Perplexity: The Intrinsic Baseline</h2>
+<p><strong>Perplexity</strong> is the oldest and most principled LLM metric. Given a test corpus $W = w_1, w_2, \ldots, w_N$:</p>
+<p>$$\text{PP}(W) = \exp!\left(-\frac{1}{N} \sum_{t=1}^{N} \log P(w_t \mid w_1, \ldots, w_{t-1})\right)$$</p>
+<p>Perplexity is the exponential of the average negative log-likelihood per token - equivalently, the geometric mean of the inverse token probabilities. A perplexity of $k$ means the model is, on average, as uncertain as if it were choosing uniformly among $k$ options at each token. Lower is better.</p>
+<p>Perplexity has a clean information-theoretic interpretation: it is $2^{H}$ where $H$ is the cross-entropy of the model distribution against the true data distribution. Minimizing perplexity is exactly minimizing the cross-entropy loss used during training.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If perplexity is so principled, why don&rsquo;t we just use it? Three problems. First, perplexity is distribution-specific: perplexity on Wikipedia text and perplexity on code are not comparable, and a model optimized for one will have high perplexity on the other. Second, perplexity measures average token probability, not task capability. A model that assigns 99% probability to the right next token in fluent English prose might still fail to reason about basic arithmetic. Third, and most practically: you cannot compare perplexities across models with different tokenizers. GPT-4 and LLaMA tokenize the same text differently, producing different token counts and hence different perplexities even if the models are equivalent in capability.</p>
+</blockquote>
+<p>Perplexity is invaluable for tracking progress within a single model family (same tokenizer, same training distribution) and for debugging. It is not useful for comparing models across architectures.</p>
+<hr>
+<h2 id="multiple-choice-knowledge-benchmarks">Multiple-Choice Knowledge Benchmarks</h2>
+<p>The most widely reported benchmarks evaluate knowledge and reasoning via multiple-choice questions. The model is shown a question and $k$ answer choices; it selects the one it assigns highest probability to (or the one it generates).</p>
+<p><strong>MMLU (Massive Multitask Language Understanding)</strong> - 57 subjects spanning STEM, humanities, social sciences, and professional domains (law, medicine, accountancy). 15,908 questions at the level of US high school to professional exams. The original GPT-3 achieved ~43% (random is 25%); GPT-4 achieves ~86%. MMLU is now saturated at the high end - most frontier models score above 85%.</p>
+<p><strong>HellaSwag</strong> - tests commonsense reasoning about everyday situations. Given a scenario description, choose which of four continuations is most plausible. Designed to be easy for humans (95%+) but hard for early models. Now saturated: frontier models score 95%+.</p>
+<p><strong>ARC (AI2 Reasoning Challenge)</strong> - elementary and middle school science questions. Two sets: ARC-Easy and ARC-Challenge. ARC-Challenge is selected to require reasoning that retrieval alone cannot solve. Still has headroom but increasingly saturated.</p>
+<p><strong>WinoGrande</strong> - pronoun resolution requiring commonsense knowledge. &ldquo;The trophy doesn&rsquo;t fit in the suitcase because it&rsquo;s too big. What is too big?&rdquo; Requires understanding which noun the pronoun refers to based on world knowledge.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Multiple-choice seems like a clean evaluation format. What&rsquo;s the problem? Several. First, the format leaks signal: models can often identify the correct answer by its style (longer, more hedged, more professionally worded) without understanding the question. Second, these benchmarks are overwhelmingly in English - they measure English-language performance on English knowledge. Third, the questions are fixed and finite: once they appear in training data (data contamination), benchmark scores become inflated measures of memorization, not generalization. Fourth, multiple-choice tests a model&rsquo;s ability to rank answers, not generate them - a model can get 90% on MMLU while generating incoherent free-form responses.</p>
+</blockquote>
+<hr>
+<h2 id="code-generation-benchmarks">Code Generation Benchmarks</h2>
+<p><strong>HumanEval</strong> - 164 Python programming problems with unit tests. The model generates a function body given a docstring; the solution is executed against tests. The metric is <strong>pass@k</strong>: the probability that at least one of $k$ generated solutions passes all tests.</p>
+<p>$$\text{pass@}k = 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}}$$</p>
+<p>where $n$ is the number of samples generated and $c$ is the number that pass. pass@1 (single attempt) is the standard reported metric. GPT-4 achieves ~87% pass@1 on HumanEval; earlier GPT-3.5 achieved ~48%.</p>
+<p><strong>MBPP (Mostly Basic Python Programming)</strong> - 374 crowd-sourced Python problems, slightly harder distribution than HumanEval.</p>
+<p><strong>SWE-bench</strong> - a harder benchmark testing the ability to resolve real GitHub issues in large codebases. The model must read an issue description and generate a patch that passes the associated tests. Significantly harder than HumanEval: frontier models achieve 20-50% depending on scaffolding. More realistic measure of software engineering capability.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> HumanEval has only 164 problems. Isn&rsquo;t that too small for a reliable estimate? Yes, but the execution-based evaluation (unit tests) makes it much more reliable than human rating - you get a binary correct/incorrect signal with no ambiguity. The small size is a problem for sensitivity: the difference between 85% and 87% on 164 problems is 3 questions. This is why researchers report confidence intervals and use multiple seeds when generating samples.</p>
+</blockquote>
+<hr>
+<h2 id="mathematical-reasoning">Mathematical Reasoning</h2>
+<p><strong>GSM8K</strong> - 8,500 grade school math word problems requiring multi-step arithmetic reasoning. Solutions are typically 3-8 steps. GPT-4 achieves ~92%; GPT-3 achieved ~35%. Now saturated for frontier models.</p>
+<p><strong>MATH</strong> - 12,500 competition math problems across 5 difficulty levels, spanning algebra, geometry, number theory, and calculus. Significantly harder than GSM8K. Frontier models achieve 70-85%; earlier models achieved &lt;10%.</p>
+<p><strong>AIME/AMC</strong> - recent models are being evaluated on American Mathematics Competition problems, which require olympiad-level reasoning. These are not yet saturated and are increasingly used to differentiate frontier models.</p>
+<p>Mathematical benchmarks are important because they require <em>reasoning chains</em>, not just recall. A model that solves MATH problems is demonstrating something qualitatively different from a model that pattern-matches to memorized solutions.</p>
+<hr>
+<h2 id="instruction-following-and-conversational-quality">Instruction Following and Conversational Quality</h2>
+<p><strong>MT-Bench</strong> - 80 multi-turn questions across eight categories (writing, roleplay, reasoning, math, coding, STEM, humanities, extraction). A strong LLM (GPT-4) is used as a judge, rating responses on a 1-10 scale. MT-Bench measures conversational quality and instruction adherence rather than factual knowledge.</p>
+<p><strong>AlpacaEval</strong> - head-to-head comparison against a reference model (text-davinci-003 originally). A judge model rates which response is preferred. Results are reported as win rate against the reference.</p>
+<p><strong>Chatbot Arena</strong> - human raters compare responses from two anonymized models and vote for the better one. Elo ratings are computed from these pairwise comparisons. This is the most realistic measure of human preference: real users, real conversations, blind evaluation. The limitation is cost and speed - accumulating enough votes takes weeks.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Using a strong LLM as a judge seems circular - you&rsquo;re using GPT-4 to evaluate models, including GPT-4 itself. Doesn&rsquo;t GPT-4 have biases that favor its own output style? Yes, this is a real and documented problem called <strong>self-enhancement bias</strong>. GPT-4 tends to prefer responses written in its own style. Researchers address this by using multiple judges, comparing judge ratings against human ratings, and carefully designing prompts that ask for specific criteria rather than overall preference. Despite the limitation, LLM-as-judge is much faster and cheaper than human evaluation and correlates reasonably well with human preferences on most tasks.</p>
+</blockquote>
+<hr>
+<h2 id="safety-and-truthfulness">Safety and Truthfulness</h2>
+<p><strong>TruthfulQA</strong> - 817 questions designed to probe whether models give truthful answers to questions where humans commonly hold misconceptions. Example: &ldquo;What happens if you eat a fruit seed?&rdquo; A model trained to be confident and fluent will often generate plausible-sounding false claims. TruthfulQA specifically targets this failure mode.</p>
+<p><strong>BBQ (Bias Benchmark for QA)</strong> - tests for social biases by presenting ambiguous scenarios where the correct answer is &ldquo;unknown&rdquo; but biased models will guess based on group stereotypes.</p>
+<p><strong>WinoBias</strong> - pronoun resolution tasks that reveal gender biases in coreference resolution.</p>
+<hr>
+<h2 id="long-context-and-retrieval">Long Context and Retrieval</h2>
+<p><strong>RULER</strong> - tests long-context capabilities at context lengths up to 128k tokens. Includes needle-in-a-haystack retrieval, variable tracking, and aggregation tasks.</p>
+<p><strong>SCROLLS</strong> - summarization and question answering over long documents (books, legal contracts, scientific papers).</p>
+<p><strong>NIAH (Needle in a Haystack)</strong> - place a specific fact in a large context (often 100k+ tokens) at varying depths; ask the model to retrieve it. Tests whether models actually use their full context window or rely primarily on recent tokens.</p>
+<hr>
+<h2 id="contamination-the-silent-killer">Contamination: The Silent Killer</h2>
+<p>The most serious problem in LLM evaluation is <strong>data contamination</strong>: test data appearing in training data. Since frontier models are trained on web-scale datasets (hundreds of billions of tokens), the probability that any fixed benchmark appears somewhere in the training set is high. A model that has memorized the MMLU questions and answers achieves high scores through recall, not generalization.</p>
+<p>Detecting contamination is hard: training datasets are rarely fully disclosed. Indicators include: unusually high scores on older benchmarks, performance drops on held-out subsets, models generating benchmark questions unprompted.</p>
+<p>The response has been a continuous cycle: new benchmarks are created, models are trained on data that includes them, scores saturate, new benchmarks are needed. GSM8K took years to saturate; ARC-Challenge is nearly saturated now. The field has moved to dynamic benchmarks (where questions are generated fresh at evaluation time) and private test sets.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If contamination is so pervasive, can we trust any benchmark? For frontier models with undisclosed training data, trust is limited. The most trustworthy benchmarks are: (1) Chatbot Arena, which uses novel conversations from real users; (2) benchmarks released after the model&rsquo;s training cutoff; (3) execution-based benchmarks like HumanEval, where memorizing answers is harder than reasoning through them; (4) adversarial benchmarks designed to change frequently. Single benchmark scores from a single lab should be treated with skepticism. Cross-benchmark consistency and third-party evaluation are more reliable.</p>
+</blockquote>
+<hr>
+<h2 id="what-benchmarks-do-not-capture">What Benchmarks Do Not Capture</h2>
+<p>No current benchmark reliably measures:</p>
+<ul>
+<li><strong>Long-horizon planning and agency</strong>: can the model execute a multi-step task over hours with tool use?</li>
+<li><strong>Calibration</strong>: does the model know when it does not know something?</li>
+<li><strong>Genuine novel reasoning</strong>: distinguishing memorization from true out-of-distribution generalization</li>
+<li><strong>Multilingual fairness</strong>: most benchmarks are English-centric; performance on low-resource languages is systematically underreported</li>
+<li><strong>Real-world task performance</strong>: the correlation between benchmark scores and performance on actual user tasks is positive but noisy</li>
+</ul>
+<p>The field is increasingly aware that benchmark saturation and contamination mean that aggregate scores on established benchmarks have diminishing returns as a measure of genuine capability improvement.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>What it tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Perplexity</td>
+<td>Next-token prediction on held-out data</td>
+<td>Useful within a model family; not cross-model comparable</td>
+</tr>
+<tr>
+<td>MMLU</td>
+<td>Broad knowledge, 57 subjects</td>
+<td>Near-saturated for frontier models (85%+)</td>
+</tr>
+<tr>
+<td>HumanEval</td>
+<td>Python function generation (164 problems)</td>
+<td>Pass@1 ~87% for GPT-4</td>
+</tr>
+<tr>
+<td>GSM8K</td>
+<td>Grade school math reasoning</td>
+<td>Near-saturated (90%+)</td>
+</tr>
+<tr>
+<td>MATH</td>
+<td>Competition math</td>
+<td>Active headroom (70-85%)</td>
+</tr>
+<tr>
+<td>MT-Bench</td>
+<td>Instruction following, LLM-as-judge</td>
+<td>Widely used; self-enhancement bias risk</td>
+</tr>
+<tr>
+<td>Chatbot Arena</td>
+<td>Human preference, Elo ratings</td>
+<td>Most realistic; slow to accumulate</td>
+</tr>
+<tr>
+<td>TruthfulQA</td>
+<td>Factual truthfulness</td>
+<td>Important for safety evaluation</td>
+</tr>
+<tr>
+<td>SWE-bench</td>
+<td>Real GitHub issue resolution</td>
+<td>Hard; 20-50% for frontier models</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/scaling-laws/" target="_blank" rel="noopener noreferrer">Scaling Laws - How Model Performance Grows With Compute</a>
+</li>
+<li><a href="/posts/direct-preference-optimization/" target="_blank" rel="noopener noreferrer">Direct Preference Optimization - Alignment Without the RL</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

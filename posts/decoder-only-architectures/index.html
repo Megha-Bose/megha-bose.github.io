@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Encoder-Decoder vs Decoder-Only - Why Almost Every Modern LLM Dropped the Encoder // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.f23f63463731fbe831ce8a78e38493f44547929096c1767199625f9f442ed892.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Encoder-Decoder vs Decoder-Only - Why Almost Every Modern LLM Dropped the Encoder"/>
+<meta name="twitter:description" content="Helpful context:
+ Transformers From First Principles - Why Attention Changed Everything  Attention Mechanisms - Not All Tokens Are Created Equal  Positional Encodings - Teaching Attention Where Things Are in a Sequence    The original transformer had two halves: an encoder and a decoder. The encoder reads the input; the decoder generates the output. This made intuitive sense for translation - the encoder reads French, the decoder writes English."/>
+
+    <meta property="og:title" content="Encoder-Decoder vs Decoder-Only - Why Almost Every Modern LLM Dropped the Encoder" />
+<meta property="og:description" content="Helpful context:
+ Transformers From First Principles - Why Attention Changed Everything  Attention Mechanisms - Not All Tokens Are Created Equal  Positional Encodings - Teaching Attention Where Things Are in a Sequence    The original transformer had two halves: an encoder and a decoder. The encoder reads the input; the decoder generates the output. This made intuitive sense for translation - the encoder reads French, the decoder writes English." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://megha-bose.github.io/posts/decoder-only-architectures/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-03-06T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-03-06T00:00:00+00:00" />
+
+
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+        
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+        
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+        
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="http://megha-bose.github.io/categories/math/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">Encoder-Decoder vs Decoder-Only - Why Almost Every Modern LLM Dropped the Encoder</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Mar 2022
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          8 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/transformers-from-first-principles/" target="_blank" rel="noopener noreferrer">Transformers From First Principles - Why Attention Changed Everything</a>
+</li>
+<li><a href="/posts/attention-mechanisms/" target="_blank" rel="noopener noreferrer">Attention Mechanisms - Not All Tokens Are Created Equal</a>
+</li>
+<li><a href="/posts/positional-encodings/" target="_blank" rel="noopener noreferrer">Positional Encodings - Teaching Attention Where Things Are in a Sequence</a>
+</li>
+</ul>
+<hr>
+<p>The original transformer had two halves: an encoder and a decoder. The encoder reads the input; the decoder generates the output. This made intuitive sense for translation - the encoder reads French, the decoder writes English. For five years, variations on this design dominated NLP. Then, quietly, the encoder disappeared from most state-of-the-art language models. GPT-3, LLaMA, Gemma, Mistral, Falcon, Qwen - all decoder-only. The question worth understanding is why.</p>
+<hr>
+<h2 id="the-three-architectures">The Three Architectures</h2>
+<p>Modern transformer variants fall into three families, distinguished by how they use attention masking.</p>
+<p><strong>Encoder-only (BERT, RoBERTa, DeBERTa):</strong> Every token attends to every other token - bidirectional attention. The encoder reads the full input and produces contextual representations of each token. No token generation: these models output representations, not sequences. Suited for classification, named entity recognition, extractive question answering - tasks where you need rich understanding of a fixed input.</p>
+<p><strong>Encoder-decoder (T5, BART, original transformer):</strong> An encoder with bidirectional attention processes the input; a decoder with causal (left-to-right) attention generates the output, cross-attending to the encoder&rsquo;s representations at each layer. The encoder sees the full source; the decoder generates the target one token at a time. Suited for tasks with distinct input and output sequences: translation, summarization, document-to-answer.</p>
+<p><strong>Decoder-only (GPT, LLaMA, Gemma, Mistral):</strong> A single transformer stack where every token attends only to past tokens - a causal mask prevents attending to future positions. There is no encoder; input and output are in the same sequence. The model generates text by continuing whatever has been given to it. Suited for language modeling, instruction following, generation in general.</p>
+<hr>
+<h2 id="the-causal-mask">The Causal Mask</h2>
+<p>The mechanism that makes decoder-only work is the <strong>causal attention mask</strong>. In standard self-attention, the attention matrix $A \in \mathbb{R}^{n \times n}$ has $A_{ij}$ representing how much token $i$ attends to token $j$. In causal attention, positions where $j &gt; i$ are masked to $-\infty$ before the softmax, so $\text{softmax}(-\infty) = 0$:</p>
+<p>$$A_{ij} = \begin{cases} \frac{q_i \cdot k_j}{\sqrt{d_k}} &amp; j \leq i \ -\infty &amp; j &gt; i \end{cases}$$</p>
+<p>This lower-triangular mask enforces the property that each token&rsquo;s representation depends only on tokens to its left. This is what allows a decoder-only model to be trained efficiently: you feed in the full sequence and compute all positions in parallel during training, but each position only sees its causal context. The causal mask makes training equivalent to processing all prefixes simultaneously.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If the decoder can only look left, how does it understand the full context of a long prompt? It doesn&rsquo;t need to - by the time it is generating the first output token, all prompt tokens are in its causal context. The decoder sees the full prompt (leftward) when generating the first output token, then sees the full prompt plus generated token 1 when generating token 2, and so on. The constraint is one-directional: the model cannot &ldquo;look ahead&rdquo; to future output tokens, which is what we want for autoregressive generation.</p>
+</blockquote>
+<hr>
+<h2 id="cross-attention-what-the-encoder-adds">Cross-Attention: What the Encoder Adds</h2>
+<p>In an encoder-decoder model, the decoder has two types of attention at each layer:</p>
+<ol>
+<li><strong>Causal self-attention</strong> over previously generated tokens</li>
+<li><strong>Cross-attention</strong> to the encoder output:</li>
+</ol>
+<p>$$\text{CrossAttention}(Q, K_{enc}, V_{enc}) = \text{softmax}!\left(\frac{Q W_Q \cdot (K_{enc} W_K)^\top}{\sqrt{d_k}}\right) V_{enc} W_V$$</p>
+<p>The queries $Q$ come from the decoder&rsquo;s current hidden state; keys and values come from the encoder output. Every decoder layer can directly access any encoder position via cross-attention.</p>
+<p>This explicit separation of &ldquo;reading&rdquo; (encoder) and &ldquo;writing&rdquo; (decoder) is the core architectural distinction. The encoder builds rich bidirectional representations of the source; the decoder uses these via cross-attention while generating the target.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> If cross-attention lets the decoder attend to the encoder at every layer, doesn&rsquo;t that give the decoder-only model a structural disadvantage? Yes, in a strict sense. A decoder-only model must reconstruct the &ldquo;reading&rdquo; phase implicitly within its causal self-attention layers: the prompt tokens in the context serve as a de facto encoder, but they can only be attended to, not re-attended to with bidirectional context. For tasks where the input needs deep bidirectional analysis (morphologically complex languages, tasks requiring very long-range dependencies across the input), encoder-decoder has a theoretical advantage. In practice, scaling has largely erased this gap.</p>
+</blockquote>
+<hr>
+<h2 id="why-decoder-only-won">Why Decoder-Only Won</h2>
+<p>Several converging factors explain the dominance of decoder-only architectures.</p>
+<p><strong>Unified pretraining objective.</strong> Encoder-only models (BERT) are pretrained with masked language modeling (MLM): randomly mask 15% of tokens and predict them. This requires bidirectional attention but cannot be used for generation. Encoder-decoder models (T5) use a span corruption objective: mask contiguous spans and predict them with the decoder. Decoder-only models use next-token prediction on the entire sequence - the simplest possible pretraining objective, applicable to any text. The same objective that pretrains the model is identical to what is used at inference. No architectural mismatch.</p>
+<p><strong>Scaling efficiency.</strong> At scale, the encoder-decoder architecture doubles the parameter count for a given model depth: you have encoder parameters and decoder parameters. A decoder-only model with the same parameter budget puts all capacity into a single stack. Empirically, single-stack models at the same parameter count perform at least as well as encoder-decoder models on generation tasks.</p>
+<p><strong>KV cache.</strong> At inference, decoder-only models cache the key and value matrices from previous tokens (the <strong>KV cache</strong>), avoiding recomputation. Each new token requires only one forward pass through the network with the cached KV matrices - computation scales as $O(n \cdot d^2)$ per token rather than $O(n^2 \cdot d)$ per sequence. This is crucial for long-context inference. Encoder-decoder models must recompute cross-attention at every decoder step using the full encoder output, which is less cache-friendly.</p>
+<p><strong>In-context learning.</strong> Decoder-only models with next-token pretraining naturally develop in-context learning: the ability to learn from examples placed in the context window without parameter updates. This emergent capability - which appeared around 100B parameters in GPT-3 - made decoder-only models extraordinarily flexible. Any task can be framed as: &ldquo;Here are some examples. Continue this pattern.&rdquo; The unified sequence format makes this natural; encoder-decoder models require explicit input-output separation.</p>
+<p><strong>Instruction tuning generalizes better.</strong> Instruction-tuned decoder-only models (ChatGPT, LLaMA-chat, Gemma-IT) can handle diverse tasks within a single model via prompting. Encoder-decoder models typically need task-specific fine-tuning or at minimum careful prompt design that respects the encoder-decoder interface. The flexibility of the unified sequence format is a practical advantage.</p>
+<hr>
+<h2 id="when-encoder-decoder-still-makes-sense">When Encoder-Decoder Still Makes Sense</h2>
+<p>Decoder-only is not universally superior. Encoder-decoder models retain advantages in specific settings.</p>
+<p><strong>Fixed-length input, structured output.</strong> For translation, the source sentence is fixed and finite; you want to generate a complete, accurate translation. Bidirectional understanding of the source is valuable. T5 and mT5 remain competitive on translation benchmarks against larger decoder-only models.</p>
+<p><strong>Document understanding.</strong> When the task is to extract specific information from a long document (NER, relation extraction, document QA), bidirectional context over the document helps. Encoder-only models like DeBERTa still lead on many extractive benchmarks.</p>
+<p><strong>Constrained generation.</strong> Tasks with strict structural constraints on the output (SQL generation, structured data-to-text) benefit from the encoder&rsquo;s ability to build a rich understanding of constraints before generation begins.</p>
+<p><strong>Efficiency at small scale.</strong> For resource-constrained deployments where a small model must handle a narrow task, an encoder-decoder trained for that task (e.g., T5-small for summarization) can outperform a larger decoder-only model in both accuracy and compute.</p>
+<hr>
+<h2 id="modern-decoder-only-innovations">Modern Decoder-Only Innovations</h2>
+<p>The architectural evolution of decoder-only models has focused on attention efficiency and positional encoding.</p>
+<p><strong>Grouped Query Attention (GQA)</strong> (used in LLaMA 2/3, Gemma, Mistral): instead of one key-value head per query head, share key-value heads across groups of query heads. If there are $h$ query heads and $g$ KV head groups, the KV cache size is reduced by $h/g$. GQA interpolates between Multi-Head Attention ($g = h$) and Multi-Query Attention ($g = 1$), trading a small accuracy loss for substantial memory reduction.</p>
+<p><strong>Multi-head Latent Attention (MLA)</strong> (DeepSeek): compresses key-value matrices into a low-rank latent representation before projecting back to full KV. Reduces KV cache memory by a large factor while maintaining quality.</p>
+<p><strong>RoPE</strong> (Rotary Position Embedding): the dominant positional encoding for decoder-only models. Encodes position by rotating query and key vectors, making dot products depend on relative position. Extends gracefully to longer contexts than training length with interpolation. Used in LLaMA, Mistral, Falcon, Qwen, most modern decoder-only models.</p>
+<p><strong>SlidingWindow / Sparse Attention</strong> (Mistral): each token attends to a fixed window of recent tokens plus occasional global attention tokens, reducing attention complexity from $O(n^2)$ to $O(n \cdot w)$ where $w$ is the window size. Enables long contexts without quadratic memory growth.</p>
+<hr>
+<h2 id="the-convergence">The Convergence</h2>
+<p>The practical conclusion is clean: for language generation at scale, decoder-only is the right architecture. The unified pretraining objective, KV cache efficiency, in-context learning flexibility, and strong scaling properties make it the dominant design. Encoder-decoder remains relevant for narrow, high-accuracy generation tasks and for resource-constrained task-specific deployment. Encoder-only remains the best choice for classification and understanding tasks where generation is not required.</p>
+<p>The fact that nearly every frontier model (GPT-4, Claude, LLaMA, Gemma, Mistral, Qwen, Falcon) is decoder-only is not coincidence. It is the result of empirical evidence accumulating over years of scaling experiments.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Attention</th>
+<th>Pretraining</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Encoder-only (BERT)</td>
+<td>Bidirectional</td>
+<td>Masked LM</td>
+<td>Classification, NER, extractive QA</td>
+</tr>
+<tr>
+<td>Encoder-decoder (T5)</td>
+<td>Enc: bidirectional; Dec: causal + cross</td>
+<td>Span corruption</td>
+<td>Translation, structured generation</td>
+</tr>
+<tr>
+<td>Decoder-only (GPT, LLaMA)</td>
+<td>Causal</td>
+<td>Next-token prediction</td>
+<td>Language modeling, instruction following, generation</td>
+</tr>
+</tbody>
+</table>
+<p>Key reasons decoder-only dominates at scale: unified pretraining objective, KV cache efficiency, in-context learning emergence, parameter efficiency at large scale.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/kv-caching-llm-inference/" target="_blank" rel="noopener noreferrer">KV Caching &amp; LLM Inference - Making Autoregressive Generation Fast</a>
+</li>
+<li><a href="/posts/efficient-transformers/" target="_blank" rel="noopener noreferrer">Efficient Transformers - Beating the Quadratic Bottleneck</a>
+</li>
+<li><a href="/posts/lora-4-bit-quantization/" target="_blank" rel="noopener noreferrer">LoRA &amp; 4-bit Quantization - Fine-Tuning Without a Supercomputer</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
