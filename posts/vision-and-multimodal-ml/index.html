@@ -170,7 +170,7 @@
 <p><strong>CLIP (Contrastive Language-Image Pretraining)</strong> (Radford et al., 2021) learns aligned image and text representations by training on 400 million image-text pairs scraped from the web.</p>
 <p><strong>Architecture</strong>: a vision encoder (ViT or ResNet) maps images to embeddings; a text encoder (transformer) maps text to embeddings. Both encoders project to the same $d$-dimensional space.</p>
 <p><strong>Contrastive loss</strong>: given a batch of $N$ (image, text) pairs, the loss maximizes the similarity between matched pairs and minimizes similarity between unmatched pairs:</p>
-<p>$$\mathcal{L} = -\frac{1}{2N}\sum_{i=1}^{N}!\left[\log \frac{e^{s_{ii}/\tau}}{\sum_j e^{s_{ij}/\tau}} + \log \frac{e^{s_{ii}/\tau}}{\sum_j e^{s_{ji}/\tau}}\right]$$</p>
+<p>$$\mathcal{L} = -\frac{1}{2N}\sum_{i=1}^{N}\left[\log \frac{e^{s_{ii}/\tau}}{\sum_j e^{s_{ij}/\tau}} + \log \frac{e^{s_{ii}/\tau}}{\sum_j e^{s_{ji}/\tau}}\right]$$</p>
 <p>where $s_{ij} = \mathbf{v}_i^\top \mathbf{t}_j$ is the cosine similarity between image embedding $\mathbf{v}_i$ and text embedding $\mathbf{t}_j$, and $\tau$ is a learned temperature.</p>
 <p><strong>Why CLIP is powerful</strong>: by aligning image and text representations, CLIP enables <strong>zero-shot classification</strong>. To classify an image into $k$ categories, compute the similarity of the image embedding to each category&rsquo;s text embedding (&ldquo;a photo of a cat&rdquo;, &ldquo;a photo of a dog&rdquo;, &hellip;) and take the argmax. No task-specific fine-tuning required. CLIP achieves competitive ImageNet accuracy without seeing a single labeled ImageNet example during training.</p>
 <p>CLIP embeddings are used as image features in virtually every subsequent multimodal model. The text-image alignment makes them a universal connector between vision and language.</p>
@@ -184,7 +184,7 @@
 <p>$$q(\mathbf{x}_t | \mathbf{x}_{t-1}) = \mathcal{N}(\mathbf{x}_t; \sqrt{1 - \beta_t}, \mathbf{x}_{t-1},; \beta_t \mathbf{I})$$</p>
 <p><strong>Reverse process</strong>: a neural network (U-Net or DiT - Diffusion Transformer) learns to denoise: given noisy $\mathbf{x}_t$ and timestep $t$, predict the noise $\epsilon$ that was added:</p>
 <p>$$p_\theta(\mathbf{x}_{t-1} | \mathbf{x}_t) = \mathcal{N}(\mathbf{x}_{t-1};; \mu_\theta(\mathbf{x}_t, t),; \sigma_t^2 \mathbf{I})$$</p>
-<p>The training objective is simply $\mathbb{E}_{t, \mathbf{x}_0, \epsilon}!\left[|\epsilon - \epsilon_\theta(\mathbf{x}_t, t)|^2\right]$ - predict the added noise.</p>
+<p>The training objective is simply $\mathbb{E}_{t, \mathbf{x}_0, \epsilon}\left[|\epsilon - \epsilon_\theta(\mathbf{x}_t, t)|^2\right]$ - predict the added noise.</p>
 <p><strong>Text conditioning</strong> is injected via cross-attention. CLIP text embeddings condition every attention layer of the U-Net: the denoising network attends to the text representation while denoising, steering the generation toward the text description.</p>
 <p><strong>Latent diffusion</strong> (Stable Diffusion): instead of diffusing in pixel space (expensive at $512 \times 512 \times 3$), first encode images to a lower-dimensional latent space with a VAE, diffuse there, then decode. The latent space is $64 \times 64 \times 4$ - much cheaper.</p>
 <blockquote>
