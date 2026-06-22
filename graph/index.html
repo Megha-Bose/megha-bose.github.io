@@ -280,15 +280,6 @@
   };
 
    
-  const CLUSTER = {
-    'math':               { x: -0.28, y: -0.30 },
-    'ml':                 { x:  0.32, y: -0.28 },
-    'algorithms':         { x:  0.32, y:  0.30 },
-    'computer-systems':   { x: -0.08, y:  0.38 },
-    'programming':        { x:  0.06, y:  0.06 },
-  };
-
-   
   const ROOMS = {
     'math':               { name: 'The Mathematics Tower',   subtitle: 'Mathematics' },
     'ml':                 { name: 'The Machine Learning Workshop', subtitle: 'Machine Learning' },
@@ -448,13 +439,52 @@
 
   const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
 
-  /* ── room sizing & doorway targets, derived once from the data above ── */
+  /* ── room sizing, layout & doorway targets, derived once from the data above ── */
+  const CELL         = 34;  /* grid cell per envelope - generous spacing for easy clicking */
+  const ROOM_PADDING = 80;  /* clearance from the grid to the room wall (fits title/subtitle) */
+  const ROOM_GUTTER  = 70;  /* spacing between adjacent rooms so they never overlap */
+
   const roomCounts = Object.fromEntries(d3.rollup(nodes, v => v.length, d => d.category));
-  function roomHalfSize(cat) {
-    const n = roomCounts[cat] || 1;
-    return 95 + 17 * Math.sqrt(n);
+  function roomGridSide(cat) {
+    return Math.max(1, Math.ceil(Math.sqrt(roomCounts[cat] || 1)));
   }
-  /* per-room list of other-room categories a doorway should aim at */
+  function roomHalfSize(cat) {
+    return (roomGridSide(cat) * CELL) / 2 + ROOM_PADDING;
+  }
+
+  
+
+  function computeRoomOffsets() {
+    const rows = [
+      ['math', 'computer-systems'],
+      ['ml', 'algorithms', 'programming'],
+    ];
+    const offsets = {};
+    const rowHeights = rows.map(row => 2 * Math.max(...row.map(roomHalfSize)));
+    const totalHeight = rowHeights.reduce((a, b) => a + b, 0) + ROOM_GUTTER * (rows.length - 1);
+    let y = -totalHeight / 2;
+    rows.forEach((row, ri) => {
+      const rowHeight = rowHeights[ri];
+      const cy = y + rowHeight / 2;
+      const widths = row.map(cat => 2 * roomHalfSize(cat));
+      const totalWidth = widths.reduce((a, b) => a + b, 0) + ROOM_GUTTER * (row.length - 1);
+      let x = -totalWidth / 2;
+      row.forEach((cat, ci) => {
+        const w = widths[ci];
+        offsets[cat] = { ox: x + w / 2, oy: cy };
+        x += w + ROOM_GUTTER;
+      });
+      y += rowHeight + ROOM_GUTTER;
+    });
+    return offsets;
+  }
+  const ROOM_OFFSET = computeRoomOffsets();
+  function roomCenter(cat) {
+    const o = ROOM_OFFSET[cat] || { ox: 0, oy: 0 };
+    return { cx: W / 2 + o.ox, cy: H / 2 + o.oy };
+  }
+
+   
   const roomDoorTargets = {};
   Object.keys(ROOMS).forEach(cat => { roomDoorTargets[cat] = []; });
   DOORS.forEach(([a, b]) => {
@@ -462,7 +492,7 @@
     (roomDoorTargets[b] = roomDoorTargets[b] || []).push(a);
   });
 
-  /* adjacency */
+   
   const prereqsOf  = {};
   const unlocksFor = {};
   nodes.forEach(n => { prereqsOf[n.id] = new Set(); unlocksFor[n.id] = new Set(); });
@@ -473,25 +503,31 @@
     prereqsOf[e.target].add(e.source);
   });
 
-  /* initial positions: cluster-based + jitter */
-  nodes.forEach(n => {
-    const c = CLUSTER[n.category] || {x: 0, y: 0};
-    n.x = c.x * W + (Math.random() - .5) * 120;
-    n.y = c.y * H + (Math.random() - .5) * 120;
-  });
+   
+  edges.forEach(e => { e.source = nodeById[e.source]; e.target = nodeById[e.target]; });
 
-  /* ── force simulation ── */
-  const sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(edges)
-      .id(d => d.id)
-      .distance(120)
-      .strength(0.2))
-    .force('charge', d3.forceManyBody().strength(-250).distanceMax(300))
-    .force('collide', d3.forceCollide(30).strength(0.9))
-    .force('cx', d3.forceX(n => (CLUSTER[n.category]?.x || 0) * W + W/2).strength(0.2))
-    .force('cy', d3.forceY(n => (CLUSTER[n.category]?.y || 0) * H + H/2).strength(0.2))
-    .alphaDecay(0.02)
-    .velocityDecay(0.45);
+  
+
+  const nodesByCategory = d3.group(nodes, n => n.category);
+  function layoutNodes() {
+    nodesByCategory.forEach((list, cat) => {
+      const side = roomGridSide(cat);
+      const center = roomCenter(cat);
+      const rows = Math.ceil(list.length / side);
+      const gridHeight = rows * CELL;
+      list.forEach((n, i) => {
+        const row = Math.floor(i / side);
+        const itemsInRow = Math.min(side, list.length - row * side);
+        const col = i % side;
+        const rowWidth = itemsInRow * CELL;
+        const startX = center.cx - rowWidth / 2 + CELL / 2;
+        const startY = center.cy - gridHeight / 2 + CELL / 2;
+        n.x = startX + col * CELL;
+        n.y = startY + row * CELL;
+      });
+    });
+  }
+  layoutNodes();
 
    
   function bezierControlPoint(x1, y1, x2, y2) {
@@ -514,8 +550,7 @@
   const WALL_INSET = 4;    
 
   function roomRect(cat) {
-    const pos = CLUSTER[cat];
-    const cx = pos.x * W + W/2, cy = pos.y * H + H/2;
+    const { cx, cy } = roomCenter(cat);
     const half = roomHalfSize(cat);
     return { cx, cy, halfW: half, halfH: half };
   }
@@ -687,13 +722,14 @@
 
    
   const clusterLabelG = g.append('g').attr('class', 'cluster-labels').attr('pointer-events', 'none');
-  Object.entries(CLUSTER).forEach(([cat, pos]) => {
+  Object.keys(ROOMS).forEach(cat => {
     const info = CAT[cat];
     if (!info) return;
+    const pos = roomCenter(cat);
     clusterLabelG.append('text')
       .attr('data-cat', cat)
-      .attr('x', pos.x * W + W/2)
-      .attr('y', pos.y * H + H/2)
+      .attr('x', pos.cx)
+      .attr('y', pos.cy)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .attr('font-size', 54)
@@ -862,20 +898,19 @@
   }
 
    
-  sim.on('tick', () => {
-    nodes.forEach(clampNodeToRoom);
+  function renderPositions() {
     footstepMeta.forEach(updateFootsteps);
     nodeEls.attr('transform', d => `translate(${d.x},${d.y}) scale(${nodeScale(d)})`);
     labelEls.attr('x', d => d.x).attr('y', d => d.y);
-  });
+  }
 
    
   function updateClusterLabels() {
     clusterLabelG.selectAll('text').each(function() {
       const cat = d3.select(this).attr('data-cat');
-      if (!cat || !CLUSTER[cat]) return;
-      const pos = CLUSTER[cat];
-      d3.select(this).attr('x', pos.x * W + W/2).attr('y', pos.y * H + H/2);
+      if (!cat) return;
+      const pos = roomCenter(cat);
+      d3.select(this).attr('x', pos.cx).attr('y', pos.cy);
     });
   }
 
@@ -1022,16 +1057,21 @@
     infoPanel.style.display = 'none';
   }
 
-  /* ── drag ── */
+  /* ── drag: positions are static, so dragging just moves the one envelope
+     directly (clamped to its own room) and refreshes what touches it ── */
   function dragStart(event, d) {
-    if (!event.active) sim.alphaTarget(0.2).restart();
-    d.fx = d.x; d.fy = d.y;
+    d3.select(this).raise();
   }
-  function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
-  function dragEnd(event, d) {
-    if (!event.active) sim.alphaTarget(0);
-    d.fx = null; d.fy = null;
+  function dragged(event, d) {
+    d.x = event.x; d.y = event.y;
+    clampNodeToRoom(d);
+    d3.select(this).attr('transform', `translate(${d.x},${d.y}) scale(${nodeScale(d)})`);
+    labelEls.filter(n => n === d).attr('x', d.x).attr('y', d.y);
+    footstepMeta.forEach(meta => {
+      if (meta.edge.source === d || meta.edge.target === d) updateFootsteps(meta);
+    });
   }
+  function dragEnd(event, d) {}
 
   /* ── category filter ── */
   document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -1106,8 +1146,10 @@
    
   nodes.forEach(n => { n._visible = true; n._match = true; });
 
+  renderPositions();
+
    
-  sim.on('end', () => {
+  function zoomToFit(animate) {
     const pad = 60;
     const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
     const x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad;
@@ -1115,22 +1157,22 @@
     const scale = Math.min(W / (x1-x0), H / (y1-y0), 1);
     const tx = W/2 - scale*(x0+x1)/2;
     const ty = H/2 - scale*(y0+y1)/2;
-    svg.transition().duration(800)
-      .call(zoom.transform, d3.zoomIdentity.translate(tx,ty).scale(scale));
-  });
+    const sel = animate ? svg.transition().duration(800) : svg;
+    sel.call(zoom.transform, d3.zoomIdentity.translate(tx,ty).scale(scale));
+  }
+  zoomToFit(true);
 
    
   window.addEventListener('resize', () => {
     W = canvasEl.clientWidth;
     H = canvasEl.clientHeight;
     svg.attr('width', W).attr('height', H);
-    sim.force('cx', d3.forceX(n => (CLUSTER[n.category]?.x || 0)*W + W/2).strength(0.2));
-    sim.force('cy', d3.forceY(n => (CLUSTER[n.category]?.y || 0)*H + H/2).strength(0.2));
+    layoutNodes();
     updateClusterLabels();
     updateRooms();
     updateCompass();
     updateBorder();
-    sim.alpha(0.1).restart();
+    renderPositions();
   });
 
 })();
