@@ -423,11 +423,27 @@
   });
 
    
-  const FOOT_COUNT = 6;
    
-  const FOOT_T = [0.10, 0.20, 0.42, 0.52, 0.74, 0.84];
+  const FOOT_SPACING = 45;    
+  const FOOT_MIN_PAIRS = 1;
+  const FOOT_MAX_PAIRS = 6;
+  const FOOT_MAX_COUNT = FOOT_MAX_PAIRS * 2;
    
   const footG = g.append('g').attr('class', 'footsteps').attr('pointer-events', 'none');
+
+   
+  function footTsForPairs(n) {
+    const PAIR_GAP = 0.09;
+    if (n <= 1) return [0.5 - PAIR_GAP / 2, 0.5 + PAIR_GAP / 2];
+    const margin = 0.08;
+    const span = 1 - margin * 2;
+    const ts = [];
+    for (let i = 0; i < n; i++) {
+      const c = margin + span * (i / (n - 1));
+      ts.push(Math.max(0, c - PAIR_GAP / 2), Math.min(1, c + PAIR_GAP / 2));
+    }
+    return ts;
+  }
 
    
    
@@ -435,7 +451,7 @@
   const footstepMeta = edges.map(e => {
     const grp = footG.append('g');
     const els = [];
-    for (let s = 0; s < FOOT_COUNT; s++) {
+    for (let s = 0; s < FOOT_MAX_COUNT; s++) {
       const el = grp.append('image')
         .attr('href', s % 2 === 0 ? '/images/left.png' : '/images/right.png')
         .attr('width', FOOT_W)
@@ -447,7 +463,7 @@
         .node();
       els.push(el);
     }
-    return { edge: e, grp: grp.node(), els };
+    return { edge: e, grp: grp.node(), els, activeCount: FOOT_MAX_COUNT };
   });
 
    
@@ -467,8 +483,17 @@
      
     const px_off = -dy / dlen, py_off = dx / dlen;
 
+     
+    const pairs = Math.min(FOOT_MAX_PAIRS, Math.max(FOOT_MIN_PAIRS, Math.round(dlen / FOOT_SPACING)));
+    const ts = footTsForPairs(pairs);
+    meta.activeCount = ts.length;
+
     meta.els.forEach((el, s) => {
-      const t = FOOT_T[s];
+      if (s >= ts.length) {
+        el.style.opacity = '0';
+        return;
+      }
+      const t = ts[s];
       const p = bezierAt(x1, y1, mx, my, x2, y2, t);
 
        
@@ -642,7 +667,7 @@
     });
     footstepMeta.forEach(meta => {
       const op = footOpacityValue(meta);
-      meta.els.forEach(el => el.style.opacity = op);
+      meta.els.forEach((el, s) => el.style.opacity = s < meta.activeCount ? op : 0);
     });
   }
 
