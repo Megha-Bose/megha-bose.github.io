@@ -289,6 +289,26 @@
   };
 
    
+  const ROOMS = {
+    'math':               { name: 'Ravenclaw Tower',        subtitle: 'Mathematics' },
+    'ml':                 { name: 'The Slytherin Dungeons', subtitle: 'Machine Learning' },
+    'algorithms':         { name: 'Gryffindor Hall',        subtitle: 'Algorithms' },
+    'computer-systems':   { name: 'The Hufflepuff Cellars', subtitle: 'Systems' },
+    'programming':        { name: 'The Scriptorium',        subtitle: 'Programming' },
+  };
+
+  
+
+  const DOORS = [
+    ['math', 'ml'],
+    ['math', 'algorithms'],
+    ['math', 'computer-systems'],
+    ['algorithms', 'computer-systems'],
+    ['algorithms', 'programming'],
+    ['computer-systems', 'ml'],
+  ];
+
+   
   const canvasEl  = document.getElementById('graph-canvas');
   const tooltip   = document.getElementById('graph-tooltip');
   const infoPanel = document.getElementById('graph-info');
@@ -350,11 +370,97 @@
   svg.call(zoom);
   let currentZoom = 1;
 
+  /* ── compass rose & map border: fixed in screen space, outside the pan/zoom
+     group so they never move when the user pans or zooms the map ── */
+  const INK = '#5c3d11';
+  const compassG = svg.append('g').attr('class', 'compass-rose').attr('pointer-events', 'none');
+  const borderG  = svg.append('g').attr('class', 'map-border').attr('pointer-events', 'none');
+
+  function renderCompass() {
+    compassG.selectAll('*').remove();
+    const r = 30;
+    compassG.append('circle')
+      .attr('r', r).attr('fill', 'none').attr('stroke', INK).attr('stroke-width', 1.2).attr('stroke-opacity', 0.55);
+    compassG.append('circle')
+      .attr('r', r - 7).attr('fill', 'none').attr('stroke', INK).attr('stroke-width', 0.7).attr('stroke-opacity', 0.35);
+    /* center diamond */
+    compassG.append('path')
+      .attr('d', `M0,${-6} L6,0 L0,6 L-6,0 Z`)
+      .attr('fill', INK).attr('fill-opacity', 0.45);
+    /* N/E/S/W ticks + letters */
+    [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]].forEach(([letter, dx, dy]) => {
+      compassG.append('line')
+        .attr('x1', dx * (r - 7)).attr('y1', dy * (r - 7))
+        .attr('x2', dx * r).attr('y2', dy * r)
+        .attr('stroke', INK).attr('stroke-width', 1.2).attr('stroke-opacity', 0.55);
+      compassG.append('text')
+        .attr('x', dx * (r + 11)).attr('y', dy * (r + 11) + 3.5)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', letter === 'N' ? 12 : 10)
+        .attr('font-family', "'IM Fell English SC', Georgia, serif")
+        .attr('fill', INK).attr('fill-opacity', 0.6)
+        .text(letter);
+    });
+  }
+  function updateCompass() {
+    compassG.attr('transform', `translate(${W - 64},${H - 64}) rotate(6)`);
+  }
+
+  function renderBorder() {
+    borderG.selectAll('*').remove();
+    borderG.append('rect').attr('class', 'border-outer')
+      .attr('fill', 'none').attr('stroke', INK).attr('stroke-width', 1.4).attr('stroke-opacity', 0.3).attr('rx', 6);
+    borderG.append('rect').attr('class', 'border-inner')
+      .attr('fill', 'none').attr('stroke', INK).attr('stroke-width', 0.7).attr('stroke-opacity', 0.2).attr('rx', 4);
+    /* small corner flourishes: a short L-shaped double tick at each corner */
+    const flourish = 'M0,18 L0,4 Q0,0 4,0 L18,0';
+    [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx, sy]) => {
+      borderG.append('path')
+        .attr('class', 'border-flourish')
+        .attr('d', flourish)
+        .attr('fill', 'none').attr('stroke', INK).attr('stroke-width', 1).attr('stroke-opacity', 0.4)
+        .attr('data-sx', sx).attr('data-sy', sy);
+    });
+  }
+  function updateBorder() {
+    const inset = 10;
+    borderG.select('.border-outer')
+      .attr('x', inset).attr('y', inset).attr('width', W - inset*2).attr('height', H - inset*2);
+    borderG.select('.border-inner')
+      .attr('x', inset + 6).attr('y', inset + 6).attr('width', W - (inset+6)*2).attr('height', H - (inset+6)*2);
+    borderG.selectAll('.border-flourish').each(function() {
+      const el = d3.select(this);
+      const sx = +el.attr('data-sx'), sy = +el.attr('data-sy');
+      const x = sx > 0 ? inset : W - inset;
+      const y = sy > 0 ? inset : H - inset;
+      const scaleX = sx > 0 ? 1 : -1, scaleY = sy > 0 ? 1 : -1;
+      el.attr('transform', `translate(${x},${y}) scale(${scaleX},${scaleY})`);
+    });
+  }
+  renderCompass();
+  renderBorder();
+  updateCompass();
+  updateBorder();
+
   /* ── data ── */
   const nodes = GRAPH_DATA.nodes.map(d => ({ ...d }));
   const edges = GRAPH_DATA.edges.map(d => ({ ...d }));
 
   const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+
+  /* ── room sizing & doorway targets, derived once from the data above ── */
+  const roomCounts = Object.fromEntries(d3.rollup(nodes, v => v.length, d => d.category));
+  function roomHalfSize(cat) {
+    const n = roomCounts[cat] || 1;
+    return 70 + 13 * Math.sqrt(n);
+  }
+  /* per-room list of other-room categories a doorway should aim at */
+  const roomDoorTargets = {};
+  Object.keys(ROOMS).forEach(cat => { roomDoorTargets[cat] = []; });
+  DOORS.forEach(([a, b]) => {
+    (roomDoorTargets[a] = roomDoorTargets[a] || []).push(b);
+    (roomDoorTargets[b] = roomDoorTargets[b] || []).push(a);
+  });
 
   /* adjacency */
   const prereqsOf  = {};
@@ -402,6 +508,170 @@
       ty: 2*u*(my-y1) + 2*t*(y2-my),   
     };
   }
+
+   
+  const DOOR_HALF  = 18;   
+  const WALL_INSET = 4;    
+
+  function roomRect(cat) {
+    const pos = CLUSTER[cat];
+    const cx = pos.x * W + W/2, cy = pos.y * H + H/2;
+    const half = roomHalfSize(cat);
+    return { cx, cy, halfW: half, halfH: half };
+  }
+
+  
+
+  function doorExitPoint(rect, ox, oy) {
+    const dx = ox - rect.cx, dy = oy - rect.cy;
+    const tX = dx !== 0 ? rect.halfW / Math.abs(dx) : Infinity;
+    const tY = dy !== 0 ? rect.halfH / Math.abs(dy) : Infinity;
+    const t = Math.min(tX, tY);
+    const x = rect.cx + dx * t, y = rect.cy + dy * t;
+    const side = (t === tX) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'bottom' : 'top');
+    return { x, y, side };
+  }
+
+  
+
+  function wallSegments(rect, doorPoints) {
+    const { cx, cy, halfW, halfH } = rect;
+    const bySide = { top: [], bottom: [], left: [], right: [] };
+    doorPoints.forEach(d => bySide[d.side].push(d));
+    const segments = [];
+
+    function emit(side, start, end, toCoords) {
+      if (end - start <= 1) return;
+      segments.push({ side, ...toCoords(start, end) });
+    }
+
+    ['top', 'bottom'].forEach(side => {
+      const y = side === 'top' ? cy - halfH : cy + halfH;
+      const doors = bySide[side].slice().sort((a, b) => a.x - b.x);
+      let cursor = cx - halfW;
+      doors.forEach(d => {
+        emit(side, cursor, d.x - DOOR_HALF, (s, e) => ({ x1: s, y1: y, x2: e, y2: y }));
+        cursor = d.x + DOOR_HALF;
+      });
+      emit(side, cursor, cx + halfW, (s, e) => ({ x1: s, y1: y, x2: e, y2: y }));
+    });
+
+    ['left', 'right'].forEach(side => {
+      const x = side === 'left' ? cx - halfW : cx + halfW;
+      const doors = bySide[side].slice().sort((a, b) => a.y - b.y);
+      let cursor = cy - halfH;
+      doors.forEach(d => {
+        emit(side, cursor, d.y - DOOR_HALF, (s, e) => ({ x1: x, y1: s, x2: x, y2: e }));
+        cursor = d.y + DOOR_HALF;
+      });
+      emit(side, cursor, cy + halfH, (s, e) => ({ x1: x, y1: s, x2: x, y2: e }));
+    });
+
+    return segments;
+  }
+
+   
+  function buildRoomWalls(rect, doorPoints) {
+    const outer = wallSegments(rect, doorPoints);
+    const inner = wallSegments(
+      { cx: rect.cx, cy: rect.cy, halfW: rect.halfW - WALL_INSET, halfH: rect.halfH - WALL_INSET },
+      doorPoints
+    );
+    return outer.concat(inner);
+  }
+
+  function cornerTicks(rect) {
+    const { cx, cy, halfW, halfH } = rect;
+    return [
+      [cx - halfW, cy - halfH,  1,  1],
+      [cx + halfW, cy - halfH, -1,  1],
+      [cx - halfW, cy + halfH,  1, -1],
+      [cx + halfW, cy + halfH, -1, -1],
+    ].map(([x, y, sx, sy]) => ({ x1: x, y1: y, x2: x + sx * 9, y2: y + sy * 9 }));
+  }
+
+   
+  const roomG = g.append('g').attr('class', 'rooms').attr('pointer-events', 'none');
+  const roomSel = roomG.selectAll('g.room')
+    .data(Object.keys(ROOMS))
+    .enter().append('g')
+    .attr('class', 'room')
+    .attr('data-cat', d => d);
+
+  roomSel.append('g').attr('class', 'corner-ticks');
+  roomSel.append('g').attr('class', 'walls');
+  roomSel.append('g').attr('class', 'doors');
+  roomSel.append('text')
+    .attr('class', 'room-title')
+    .attr('text-anchor', 'middle')
+    .attr('font-size', 14)
+    .attr('font-family', "'IM Fell English SC', Georgia, serif")
+    .attr('font-variant', 'small-caps')
+    .attr('letter-spacing', '0.03em')
+    .attr('fill', d => CAT[d]?.color || '#5c3d11')
+    .attr('fill-opacity', 0.8)
+    .text(d => ROOMS[d].name);
+  roomSel.append('text')
+    .attr('class', 'room-subtitle')
+    .attr('text-anchor', 'middle')
+    .attr('font-size', 9)
+    .attr('font-style', 'italic')
+    .attr('font-family', "'IM Fell English', Georgia, serif")
+    .attr('fill', d => CAT[d]?.color || '#5c3d11')
+    .attr('fill-opacity', 0.55)
+    .text(d => ROOMS[d].subtitle);
+
+  function updateRooms() {
+    roomSel.each(function(cat) {
+      const rect = roomRect(cat);
+      const others = roomDoorTargets[cat] || [];
+      const doorPoints = others.map(o => doorExitPoint(rect, roomRect(o).cx, roomRect(o).cy));
+
+      const room = d3.select(this);
+
+      room.select('g.corner-ticks').selectAll('line')
+        .data(cornerTicks(rect))
+        .join('line')
+        .attr('x1', d => d.x1).attr('y1', d => d.y1)
+        .attr('x2', d => d.x2).attr('y2', d => d.y2)
+        .attr('stroke', CAT[cat]?.color || '#5c3d11')
+        .attr('stroke-width', 1.3)
+        .attr('stroke-opacity', 0.65);
+
+      room.select('g.walls').selectAll('line')
+        .data(buildRoomWalls(rect, doorPoints))
+        .join('line')
+        .attr('x1', d => d.x1).attr('y1', d => d.y1)
+        .attr('x2', d => d.x2).attr('y2', d => d.y2)
+        .attr('stroke', CAT[cat]?.color || '#5c3d11')
+        .attr('stroke-width', 1.1)
+        .attr('stroke-opacity', 0.55);
+
+      room.select('g.doors').selectAll('path')
+        .data(doorPoints)
+        .join('path')
+        .attr('d', d => {
+           
+          const nx = d.side === 'left' ? 1 : d.side === 'right' ? -1 : 0;
+          const ny = d.side === 'top' ? 1 : d.side === 'bottom' ? -1 : 0;
+          const r = DOOR_HALF;
+          if (nx !== 0) {
+            return `M${d.x},${d.y - r} A${r},${r} 0 0 ${nx > 0 ? 1 : 0} ${d.x},${d.y + r}`;
+          }
+          return `M${d.x - r},${d.y} A${r},${r} 0 0 ${ny > 0 ? 1 : 0} ${d.x + r},${d.y}`;
+        })
+        .attr('fill', 'none')
+        .attr('stroke', CAT[cat]?.color || '#5c3d11')
+        .attr('stroke-width', 1)
+        .attr('stroke-opacity', 0.4);
+
+      room.select('text.room-title')
+        .attr('x', rect.cx).attr('y', rect.cy - rect.halfH + 19);
+      room.select('text.room-subtitle')
+        .attr('x', rect.cx).attr('y', rect.cy - rect.halfH + 31);
+    });
+  }
+  updateRooms();
 
    
   const clusterLabelG = g.append('g').attr('class', 'cluster-labels').attr('pointer-events', 'none');
@@ -844,6 +1114,9 @@
     sim.force('cx', d3.forceX(n => (CLUSTER[n.category]?.x || 0)*W + W/2).strength(0.06));
     sim.force('cy', d3.forceY(n => (CLUSTER[n.category]?.y || 0)*H + H/2).strength(0.06));
     updateClusterLabels();
+    updateRooms();
+    updateCompass();
+    updateBorder();
     sim.alpha(0.1).restart();
   });
 
