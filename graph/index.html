@@ -290,11 +290,11 @@
 
    
   const ROOMS = {
-    'math':               { name: 'Ravenclaw Tower',        subtitle: 'Mathematics' },
-    'ml':                 { name: 'The Slytherin Dungeons', subtitle: 'Machine Learning' },
-    'algorithms':         { name: 'Gryffindor Hall',        subtitle: 'Algorithms' },
-    'computer-systems':   { name: 'The Hufflepuff Cellars', subtitle: 'Systems' },
-    'programming':        { name: 'The Scriptorium',        subtitle: 'Programming' },
+    'math':               { name: 'The Mathematics Tower',   subtitle: 'Mathematics' },
+    'ml':                 { name: 'The Machine Learning Workshop', subtitle: 'Machine Learning' },
+    'algorithms':         { name: 'The Algorithms Hall',     subtitle: 'Algorithms' },
+    'computer-systems':   { name: 'The Systems Cellar',      subtitle: 'Systems' },
+    'programming':        { name: 'The Scriptorium',         subtitle: 'Programming' },
   };
 
   
@@ -452,7 +452,7 @@
   const roomCounts = Object.fromEntries(d3.rollup(nodes, v => v.length, d => d.category));
   function roomHalfSize(cat) {
     const n = roomCounts[cat] || 1;
-    return 70 + 13 * Math.sqrt(n);
+    return 95 + 17 * Math.sqrt(n);
   }
   /* per-room list of other-room categories a doorway should aim at */
   const roomDoorTargets = {};
@@ -486,10 +486,10 @@
       .id(d => d.id)
       .distance(120)
       .strength(0.2))
-    .force('charge', d3.forceManyBody().strength(-600).distanceMax(700))
+    .force('charge', d3.forceManyBody().strength(-250).distanceMax(300))
     .force('collide', d3.forceCollide(30).strength(0.9))
-    .force('cx', d3.forceX(n => (CLUSTER[n.category]?.x || 0) * W + W/2).strength(0.05))
-    .force('cy', d3.forceY(n => (CLUSTER[n.category]?.y || 0) * H + H/2).strength(0.05))
+    .force('cx', d3.forceX(n => (CLUSTER[n.category]?.x || 0) * W + W/2).strength(0.2))
+    .force('cy', d3.forceY(n => (CLUSTER[n.category]?.y || 0) * H + H/2).strength(0.2))
     .alphaDecay(0.02)
     .velocityDecay(0.45);
 
@@ -518,6 +518,18 @@
     const cx = pos.x * W + W/2, cy = pos.y * H + H/2;
     const half = roomHalfSize(cat);
     return { cx, cy, halfW: half, halfH: half };
+  }
+
+  
+
+  const ROOM_MARGIN = 16;
+  function clampNodeToRoom(d) {
+    const rect = roomRect(d.category);
+    if (!rect) return;
+    const minX = rect.cx - rect.halfW + ROOM_MARGIN, maxX = rect.cx + rect.halfW - ROOM_MARGIN;
+    const minY = rect.cy - rect.halfH + ROOM_MARGIN, maxY = rect.cy + rect.halfH - ROOM_MARGIN;
+    if (d.x < minX) d.x = minX; else if (d.x > maxX) d.x = maxX;
+    if (d.y < minY) d.y = minY; else if (d.y > maxY) d.y = maxY;
   }
 
   
@@ -851,6 +863,7 @@
 
    
   sim.on('tick', () => {
+    nodes.forEach(clampNodeToRoom);
     footstepMeta.forEach(updateFootsteps);
     nodeEls.attr('transform', d => `translate(${d.x},${d.y}) scale(${nodeScale(d)})`);
     labelEls.attr('x', d => d.x).attr('y', d => d.y);
@@ -1111,8 +1124,8 @@
     W = canvasEl.clientWidth;
     H = canvasEl.clientHeight;
     svg.attr('width', W).attr('height', H);
-    sim.force('cx', d3.forceX(n => (CLUSTER[n.category]?.x || 0)*W + W/2).strength(0.06));
-    sim.force('cy', d3.forceY(n => (CLUSTER[n.category]?.y || 0)*H + H/2).strength(0.06));
+    sim.force('cx', d3.forceX(n => (CLUSTER[n.category]?.x || 0)*W + W/2).strength(0.2));
+    sim.force('cy', d3.forceY(n => (CLUSTER[n.category]?.y || 0)*H + H/2).strength(0.2));
     updateClusterLabels();
     updateRooms();
     updateCompass();
