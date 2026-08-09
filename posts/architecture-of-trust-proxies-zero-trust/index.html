@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>The Architecture of Trust - Proxies, Reverse Tunnels, and Zero-Trust Authorization at Scale // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.362b8abec019c2a91d93fe8bd44c9637e8f697453ea741e3aef001b3c79ca744.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://megha-bose.github.io/avatar.jpg"/>
+
+<meta name="twitter:title" content="The Architecture of Trust - Proxies, Reverse Tunnels, and Zero-Trust Authorization at Scale"/>
+<meta name="twitter:description" content="Helpful context:
+ Networking - How Packets Find Their Way Across the Internet  Load Balancing &amp; Proxies - Distributing Work So No Single Machine Drowns  Security Fundamentals - What Attackers Know That You Might Not  Identity &amp; OTP - Proving Who You Are Without Sharing a Password  Microservices - Small Services, Large Coordination Problems    If you ask ten engineers how a request travels from a browser to a private database, you get ten different, half-complete answers."/>
+
+    <meta property="og:title" content="The Architecture of Trust - Proxies, Reverse Tunnels, and Zero-Trust Authorization at Scale" />
+<meta property="og:description" content="Helpful context:
+ Networking - How Packets Find Their Way Across the Internet  Load Balancing &amp; Proxies - Distributing Work So No Single Machine Drowns  Security Fundamentals - What Attackers Know That You Might Not  Identity &amp; OTP - Proving Who You Are Without Sharing a Password  Microservices - Small Services, Large Coordination Problems    If you ask ten engineers how a request travels from a browser to a private database, you get ten different, half-complete answers." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://megha-bose.github.io/posts/architecture-of-trust-proxies-zero-trust/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-07-21T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-07-21T00:00:00+00:00" />
+
+
+    <meta property="fb:app_id" content="3721256308022480" />
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social app-header-social-primary">
+        
+          
+          <a href="mailto:megh.bose@gmail.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-mail">
+  <title>Email</title>
+  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+      <div class="app-header-social app-header-social-secondary">
+        
+          
+        
+          
+        
+          
+        
+          
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.reddit.com/user/Quirky_Concoction" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-reddit" xmlns="http://www.w3.org/2000/svg">
+  <title>Reddit</title>
+  <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.07 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.youtube.com/@Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-youtube">
+  <title>YouTube</title>
+  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://meghabose10.wordpress.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-globe">
+  <title>Old Website</title>
+  <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+          </a>
+          
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="https://megha-bose.github.io/categories/computer-systems/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">The Architecture of Trust - Proxies, Reverse Tunnels, and Zero-Trust Authorization at Scale</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Jul 2026
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          13 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/networking-ip-tcp-http/" target="_blank" rel="noopener noreferrer">Networking - How Packets Find Their Way Across the Internet</a>
+</li>
+<li><a href="/posts/load-balancing-proxies/" target="_blank" rel="noopener noreferrer">Load Balancing &amp; Proxies - Distributing Work So No Single Machine Drowns</a>
+</li>
+<li><a href="/posts/security-fundamentals/" target="_blank" rel="noopener noreferrer">Security Fundamentals - What Attackers Know That You Might Not</a>
+</li>
+<li><a href="/posts/identity-otp-services/" target="_blank" rel="noopener noreferrer">Identity &amp; OTP - Proving Who You Are Without Sharing a Password</a>
+</li>
+<li><a href="/posts/microservices-architecture/" target="_blank" rel="noopener noreferrer">Microservices - Small Services, Large Coordination Problems</a>
+</li>
+</ul>
+<hr>
+<p>If you ask ten engineers how a request travels from a browser to a private database, you get ten different, half-complete answers. Most people can explain either the network path or the identity path, rarely both, and the place where they actually intersect - the edge, where a proxy hands a request across a trust boundary - is where the real architecture decisions live.</p>
+<p>Networking (proxies and tunnels) builds the pathway data travels across network boundaries. Identity and authorization (workload certificates, short-lived tokens, permission graphs) decide who is allowed to use that pathway and for what. Treat them as separate concerns and you get systems that are either impossible to operate, because nothing can reach anything, or trivially compromised, because everything trusts everything once it&rsquo;s inside.</p>
+<p>This post works through both from first principles: how a stateful firewall actually decides which packets are allowed back in, why a service with zero open inbound ports can still serve public traffic, and what a mature zero-trust system does differently at the moment a request crosses from &ldquo;outside&rdquo; to &ldquo;inside.&rdquo; For the mechanics of authentication itself - passwords, OAuth, JWTs - see Security Fundamentals and Identity &amp; OTP linked above; this picks up from there and asks what happens once identity has been established and a request needs to travel.</p>
+<h2 id="the-physics-of-a-network-socket">The Physics of a Network Socket</h2>
+<p>Before any proxy or token enters the picture, a request is just packets between two OS-level sockets, and the ground truth here shapes everything built on top of it.</p>
+<p>An IP address identifies a host on the network - the equivalent of a street address. A port is a numbered channel (0 to 65535) that the OS kernel binds to a specific running process - the apartment number within that address. A single server at <code>198.51.100.1</code> might have a web server listening on port 443, an SSH daemon on port 22, and Postgres on port 5432, each an independent process with its own socket.</p>
+<p>An <strong>inbound connection</strong> is one where a remote client initiates the TCP handshake toward a port your machine is listening on. An <strong>outbound connection</strong> is one your process initiates toward someone else&rsquo;s listening port. This direction matters more than almost anything else in network security, because nearly every firewall in production enforces the same asymmetric rule: block unsolicited inbound connections, allow essentially all outbound ones.</p>
+<p>That raises an obvious question: if inbound is blocked, how does a reply ever get back to you?</p>
+<p>The answer is <strong>connection tracking (conntrack)</strong>. When your OS opens an outbound socket, the firewall records a 4-tuple - source IP, source port, destination IP, destination port - in a state table the moment the SYN packet leaves. When the remote server replies with a SYN-ACK, the firewall checks it against that table. If the reply&rsquo;s addresses and ports match an entry created by a connection <em>you</em> initiated, it&rsquo;s let through, even though it is, technically, an inbound packet. Nothing about the packet itself is special; it&rsquo;s permitted because the firewall remembers it asked for exactly this.</p>
+<h2 id="a-discomfort-check-a-private-server-doesnt-need-an-open-port-to-be-public">A Discomfort Check: A Private Server Doesn&rsquo;t Need an Open Port to Be Public</h2>
+<p>The instinctive assumption is that a server sitting in a private subnet can never serve public web traffic unless you open an inbound port, typically 443, in the firewall protecting it.</p>
+<p>That&rsquo;s false, and the reason is the same full-duplex property conntrack relies on. A TCP connection is bidirectional once established. If the private server is the one that dials <em>out</em> to a public edge proxy and keeps that connection open, the edge proxy can push HTTP requests down that existing stream indefinitely. The private server never opens a listening port to the internet; it just never hangs up the outbound connection it made. This is the entire trick behind reverse tunnels, and it&rsquo;s worth sitting with before the next section, because most engineers' mental model of &ldquo;private&rdquo; assumes a listening socket has to exist somewhere on the public side of the boundary. It doesn&rsquo;t.</p>
+<h2 id="the-taxonomy-of-proxies">The Taxonomy of Proxies</h2>
+<p>&ldquo;Proxy&rdquo; is used loosely enough in casual conversation that it&rsquo;s worth being precise. Four distinct architectures get called by the same name, and they protect different things and route traffic in different directions.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Protects</th>
+<th>TCP initiated by</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Forward proxy</td>
+<td>The client</td>
+<td>Client → proxy → internet</td>
+<td>Squid, Zscaler, Envoy (egress)</td>
+</tr>
+<tr>
+<td>Reverse proxy</td>
+<td>The backend</td>
+<td>Client → proxy → backend</td>
+<td>Nginx, Envoy, HAProxy, AWS ALB</td>
+</tr>
+<tr>
+<td>Inverting proxy / reverse tunnel</td>
+<td>An air-gapped private host</td>
+<td>Backend → proxy ← client</td>
+<td>Cloudflare Tunnel, ngrok</td>
+</tr>
+<tr>
+<td>Service mesh sidecar</td>
+<td>East-west microservice traffic</td>
+<td>Service → sidecar → sidecar → service</td>
+<td>Istio, Linkerd, Envoy mesh</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Forward proxies</strong> sit in front of clients. Corporate networks route employee traffic through one to enforce content filtering and data loss prevention, and to mask the client&rsquo;s real IP - the destination server only ever sees the proxy.</p>
+<p><strong>Reverse proxies</strong> sit in front of backends. When you hit <code>api.example.com</code>, you&rsquo;re talking to Nginx or Envoy, not the application server directly. It terminates TLS, load-balances across replicas, rate-limits, and hides the internal topology - the mechanics of exactly how are covered in Load Balancing &amp; Proxies, linked above.</p>
+<p><strong>Inverting proxies</strong>, also called reverse tunnels, solve a problem neither of the above can: a backend with no public IP and no open inbound ports at all, like an on-prem machine behind corporate NAT or a private VPC with no ingress rules. Instead of a proxy dialing <em>in</em>, a local agent on the private machine dials <em>out</em> to a public edge proxy and holds that connection open, authenticated via mTLS or a client secret. When a user hits the public domain, the edge proxy verifies them, then forwards the request down that already-open outbound pipe:</p>
+<div class="mermaid">
+sequenceDiagram
+    participant U as User Browser
+    participant E as Public Edge Proxy
+    participant P as Private Backend
+    P->>E: Long-lived outbound TLS tunnel (mTLS or client secret)
+    U->>E: HTTPS request
+    E->>E: Authenticate and authorize the request
+    E->>P: Forward down the already-open tunnel
+    P->>E: Response
+    E->>U: Response
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p><strong>Service mesh sidecars</strong> apply the reverse-proxy idea to east-west traffic between your own services rather than north-south traffic from the internet - every instance gets its own small Envoy process handling load balancing, retries, and mTLS for its outbound calls. Load Balancing &amp; Proxies covers how the sidecar model and its control plane actually work; here it matters mainly as the fourth entry in this taxonomy.</p>
+<h2 id="a-discomfort-check-a-reverse-tunnel-is-not-a-backdoor">A Discomfort Check: A Reverse Tunnel Is Not a Backdoor</h2>
+<p>If a private machine keeps a persistent outbound connection open to the public internet, doesn&rsquo;t that hand an attacker a permanent way in?</p>
+<p>No, and the reason is what flows through the tunnel, not the tunnel&rsquo;s existence. The private machine only ever acts as a TLS <em>client</em> connecting outward to a certificate it has verified; it never listens for inbound connections from arbitrary hosts. The edge proxy authenticates and authorizes every user request <em>before</em> anything is forwarded down the tunnel, and it signs the forwarded request with a private key that the private agent validates against a known public key before executing anything. The private machine&rsquo;s external attack surface, the set of things an internet scanner can even attempt to connect to, stays at zero open inbound ports throughout. The tunnel is a pipe the private side controls the far end of, not a hole in its perimeter.</p>
+<h2 id="zero-trust-the-edge-translation-pattern">Zero Trust: The Edge Translation Pattern</h2>
+<p>Getting a request across the network boundary is only half the problem. The more consequential failure mode in distributed systems is what happens <em>after</em> the request is inside.</p>
+<p>The common anti-pattern, sometimes called &ldquo;hard shell, soft center,&rdquo; authenticates the user once at the API gateway, strips the auth headers, and forwards plain, unauthenticated HTTP calls internally on the assumption that the internal network is inherently safe. It&rsquo;s a reasonable-sounding assumption until any single container in the call path is compromised: the moment that happens, the attacker has unauthenticated lateral access to every service downstream, because none of them ever checked anything.</p>
+<p>The fix used in mature systems is the <strong>edge translation pattern</strong>: external credentials, such as session cookies or third-party OAuth tokens from Okta or Azure AD, are validated once at the edge and never forwarded any further. The edge mints a new, short-lived internal token in their place, and every hop afterward re-verifies both the calling <em>workload&rsquo;s</em> identity, typically via mTLS backed by SPIFFE/SPIRE-issued certificates, and the internal token, independently.</p>
+<div class="mermaid">
+sequenceDiagram
+    participant U as User Browser
+    participant G as Edge API Gateway
+    participant A as Order Service
+    participant B as Payment Service
+    U->>G: HTTPS + external session / OAuth token
+    G->>G: Validate against IdP, strip external token, mint short-lived internal token
+    G->>A: gRPC + mTLS + internal token
+    A->>A: Verify caller workload (mTLS/SPIFFE) and internal token locally
+    A->>B: Forward internal token, gRPC + mTLS
+    B->>B: Re-verify workload identity and token before mutating state
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Nothing downstream of the gateway ever sees the user&rsquo;s original OAuth token or session cookie again.</p>
+<h2 id="a-discomfort-check-why-not-just-pass-the-user-id-downstream">A Discomfort Check: Why Not Just Pass the User ID Downstream?</h2>
+<p>If every service can locally verify a signed token in zero milliseconds, why go through the trouble of minting a <em>new</em> internal token instead of just letting every microservice parse the user&rsquo;s raw email or ID out of the original credential and write a simple equality check?</p>
+<p>Because hardcoding an identity schema across every microservice is a coupling problem disguised as a shortcut. If services parse a numeric user ID directly, you cannot add SAML or a second enterprise identity provider without touching every service that ever checked identity. If services log request headers for debugging, which they will, eventually, somewhere, forwarding the original OAuth token risks a long-lived, replayable user credential ending up in a log aggregator. An opaque internal principal, something like <code>principal://auth/workforce/okta/alice</code>, decouples &ldquo;who issued this identity&rdquo; from &ldquo;what does this service need to check,&rdquo; which is what lets you swap or federate identity providers later without a rewrite.</p>
+<h2 id="authorization-at-scale-from-acl-tables-to-relationship-graphs">Authorization at Scale: From ACL Tables to Relationship Graphs</h2>
+<p>Establishing <em>who</em> the caller is only answers half the question that matters before any mutation. The other half, <em>what</em> they&rsquo;re allowed to touch, is where naive designs collapse first at scale.</p>
+<p>The obvious starting point is a permissions table and a query:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- The anti-pattern: relational ACL query
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">SELECT</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">FROM</span> document_permissions
+<span style="color:#66d9ef">WHERE</span> document_id <span style="color:#f92672">=</span> <span style="color:#ae81ff">456</span> <span style="color:#66d9ef">AND</span> user_id <span style="color:#f92672">=</span> <span style="color:#ae81ff">123</span> <span style="color:#66d9ef">AND</span> permission <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;EDIT&#39;</span>;
+</code></pre></div><p>This works until permissions stop being flat. If Alice&rsquo;s access comes through being a member of the Eng team, which belongs to the Engineering org, which has access to a Projects folder, which contains the document, a single permission check now needs recursive joins across a hierarchy table. And a dashboard listing 100 files triggers 100 separate authorization queries against a primary transactional database, an N+1 problem that shows up in production exactly when you can least afford it, during a traffic spike.</p>
+<p>Modern authorization engines, such as OpenFGA, Ory Keto, and Permify, replace the table with a <strong>relationship graph</strong> instead:</p>
+<div class="mermaid">
+graph LR
+    Alice[User: Alice] -->|member| Admins[Group: Admins]
+    Admins -->|editor| Backups[Folder: Backups]
+    Backups -->|parent| Doc[Doc: RecoveryPlan]
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>A permission check becomes a graph-reachability question: can you get from Alice to RecoveryPlan by following edges that compose into &ldquo;editor&rdquo;? It&rsquo;s evaluated in memory with localized caching, typically in under 5 milliseconds regardless of how deep the hierarchy is. It&rsquo;s the same reason graph traversal beats repeated SQL joins for any deeply nested relationship: the structure is native to the query instead of being reconstructed from flat tables every time.</p>
+<h2 id="a-discomfort-check-fast-tokens-dont-mean-fast-revocation">A Discomfort Check: Fast Tokens Don&rsquo;t Mean Fast Revocation</h2>
+<p>Stateless signed tokens are attractive because services verify them in zero milliseconds without a database round-trip. But that raises an uncomfortable question: if someone is terminated right now, don&rsquo;t they still have working access until their token happens to expire?</p>
+<p>Yes, which is exactly why identity and authorization have to be decoupled deliberately rather than treated as one solved problem. Internal tokens are kept deliberately short-lived, two to five minutes is typical, which bounds the exposure window on its own. Authorization is checked separately and freshly on every state-changing call, against an engine like OpenFGA, which reflects a group membership revocation the instant it happens rather than whenever a cached token expires. For genuinely urgent lockouts, the identity provider increments a per-user <code>token_epoch</code>; the edge gateway rejects any refresh request for a stale epoch immediately, which caps the damage to whatever the current short-lived token can still do until it expires on its own. The token proves <em>who</em> someone is; it was never meant to prove they still <em>should</em> be able to do something.</p>
+<h2 id="the-anatomy-of-a-production-request">The Anatomy of a Production Request</h2>
+<p>Put every piece together and a single &ldquo;delete record&rdquo; click traces a path like this:</p>
+<div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant LB as L4 Load Balancer
+    participant RP as L7 Reverse Proxy
+    participant G as Edge API Gateway
+    participant A as Microservice A
+    participant AZ as Authorization Engine
+    participant B as Microservice B
+    C->>LB: HTTPS request
+    LB->>RP: Raw TCP, routed at wire speed
+    RP->>G: TLS terminated, HTTP/2 decoded, rate-limited
+    G->>G: Validate external OAuth session, strip it, mint short-lived internal token
+    G->>A: gRPC + mTLS + internal token (via reverse tunnel if backend is private)
+    A->>A: Verify token signature locally against cached JWKS
+    A->>AZ: Check permission for this principal and resource
+    AZ->>A: Allow
+    A->>B: Forward internal token, gRPC + mTLS
+    B->>B: Re-verify workload identity and token, then mutate state
+    B->>A: Success
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Every arrow in that diagram is a decision this post covered: which direction the TCP handshake goes, which kind of proxy is involved, whether a credential gets translated or forwarded as-is, and whether the callee re-checks authorization or just trusts the caller. Skipping any one of them is exactly how a system ends up hard-shelled and soft-centered without anyone deciding that on purpose.</p>
+<h2 id="future-outlook">Future Outlook</h2>
+<p>SPIFFE/SPIRE-issued workload identities are increasingly replacing static service credentials and shared secrets for service-to-service auth, the same way passkeys are replacing passwords for humans - both are converging on &ldquo;short-lived cryptographic proof tied to a specific, attestable identity&rdquo; as the default rather than the advanced option. On the authorization side, general-purpose policy engines like OPA and Cedar, and relationship-graph engines like OpenFGA and Ory Keto, are converging too: expect the line between &ldquo;policy-as-code&rdquo; and &ldquo;ReBAC&rdquo; to blur as both solve the same underlying need - fast, centrally-updated, real-time permission checks that don&rsquo;t require redeploying a service to change a rule.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key Insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stateful firewalls (conntrack)</td>
+<td>An outbound connection&rsquo;s 4-tuple opens the return path; no inbound port needs to be listening</td>
+</tr>
+<tr>
+<td>Forward vs reverse proxy</td>
+<td>Forward hides the client&rsquo;s identity from the destination; reverse hides the backend&rsquo;s topology from the client</td>
+</tr>
+<tr>
+<td>Inverting proxy / reverse tunnel</td>
+<td>The private backend dials out and holds the connection open; the edge proxy authenticates before forwarding down it</td>
+</tr>
+<tr>
+<td>Hard shell, soft center</td>
+<td>Authenticating only at the edge and trusting the internal network turns one compromised container into total lateral access</td>
+</tr>
+<tr>
+<td>Edge translation pattern</td>
+<td>Strip external tokens at the edge; mint short-lived internal tokens carrying opaque principal URIs</td>
+</tr>
+<tr>
+<td>mTLS / SPIFFE</td>
+<td>Verifies which workload is calling, independent of and in addition to which user the request is on behalf of</td>
+</tr>
+<tr>
+<td>ReBAC / OpenFGA</td>
+<td>Permissions as a relationship graph; a check becomes graph reachability instead of a recursive SQL join</td>
+</tr>
+<tr>
+<td>Token lifetime vs authorization</td>
+<td>Short expiry bounds exposure in time; a separate, real-time authorization check bounds it by permission</td>
+</tr>
+</tbody>
+</table>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

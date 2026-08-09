@@ -174,7 +174,7 @@ What happened in those three seconds is one of the more elegant pieces of protoc
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          14 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -215,6 +215,9 @@ What happened in those three seconds is one of the more elegant pieces of protoc
 <p>OpenID Connect (OIDC) adds an identity layer. OIDC extends the OAuth 2.0 flow with an additional token: the ID token. The ID token is a JWT containing claims about the user&rsquo;s identity: <code>sub</code> (subject - a stable, unique user identifier from the authorization server&rsquo;s perspective), <code>email</code>, <code>name</code>, <code>iss</code> (issuer), and <code>exp</code> (expiration).</p>
 <p>The client verifies the ID token&rsquo;s signature (using the authorization server&rsquo;s public key, typically fetched from a well-known JWKS endpoint), checks that <code>iss</code> matches the expected issuer and <code>aud</code> matches its own client ID, and can now trust the identity claims without any additional network call.</p>
 <p>&ldquo;Sign in with Google,&rdquo; &ldquo;Sign in with GitHub,&rdquo; and &ldquo;Sign in with Apple&rdquo; are all OIDC flows. The access token lets the app call APIs; the ID token tells the app who is logged in.</p>
+<h3 id="dont-send-the-id-token-to-your-api">Don&rsquo;t Send the ID Token to Your API</h3>
+<p>Once a frontend has both tokens, a mistake that looks obviously wrong the first time you say it out loud still sneaks into real codebases: passing the ID token as <code>Authorization: Bearer &lt;id_token&gt;</code> to a backend API, because it&rsquo;s the JWT that&rsquo;s sitting right there with the user&rsquo;s email in it.</p>
+<p>Two things break. First, the audience: an ID token is minted with <code>aud</code> set to your <em>frontend&rsquo;s</em> client ID, not your API. If your API accepts ID tokens, any other application the same user has logged into, one that also receives an ID token for that same user minted for a completely different client, can replay it against your API, because nothing about the token ties it to your specific service. Second, scope: an ID token asserts identity (&ldquo;this is Alice&rdquo;), not what Alice is allowed to do (&ldquo;Alice has read access to Billing&rdquo;). APIs need access tokens, which carry the OAuth scopes and audience they were actually issued to be checked against. Reach for the ID token to render a user&rsquo;s name and photo in the UI; reach for the access token, and only the access token, to call an API.</p>
 <h2 id="jwt-structure-and-the-stateless-tradeoff">JWT: Structure and the Stateless Tradeoff</h2>
 <p>A JWT (JSON Web Token) has three base64url-encoded sections separated by dots: <code>header.payload.signature</code>.</p>
 <p>The header specifies the signing algorithm (<code>RS256</code> - RSA with SHA-256, using the authorization server&rsquo;s private key - is common for public OIDC providers; <code>HS256</code> - HMAC-SHA256 with a shared secret - is common for internal systems). The payload contains claims. The signature signs header + payload, preventing tampering.</p>
