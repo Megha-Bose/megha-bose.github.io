@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="author" content="Megha Bose" />
     <meta name="description" content="" />
-    <link rel="stylesheet" href="/css/main.min.a1db1b8ce9a92b75e235fb3c5134d044a974213914e4d61a5f7bb0ba2bae36f6.css" />
+    <link rel="stylesheet" href="/css/main.min.4ff66bac5420a45426474b92071ab79f3919b3f4a8a257ad2a63aa809bf2b634.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 
     
@@ -200,14 +200,9 @@
 <p>An <strong>inbound connection</strong> is one where a remote client initiates the TCP handshake toward a port your machine is listening on. An <strong>outbound connection</strong> is one your process initiates toward someone else&rsquo;s listening port. This direction matters more than almost anything else in network security, because nearly every firewall in production enforces the same asymmetric rule: block unsolicited inbound connections, allow essentially all outbound ones.</p>
 <p>That raises an obvious question: if inbound is blocked, how does a reply ever get back to you?</p>
 <p>The answer is <strong>connection tracking (conntrack)</strong>. When your OS opens an outbound socket, the firewall records a 4-tuple - source IP, source port, destination IP, destination port - in a state table the moment the SYN packet leaves. When the remote server replies with a SYN-ACK, the firewall checks it against that table. If the reply&rsquo;s addresses and ports match an entry created by a connection <em>you</em> initiated, it&rsquo;s let through, even though it is, technically, an inbound packet. Nothing about the packet itself is special; it&rsquo;s permitted because the firewall remembers it asked for exactly this.</p>
-<div class="discomfort-check">
-  <p class="discomfort-check-label">Discomfort Check</p>
-  <p class="discomfort-check-title">A Private Server Doesn&#39;t Need an Open Port to Be Public</p>
-  <p>The instinctive assumption is that a server sitting in a private subnet can never serve public web traffic unless you open an inbound port, typically 443, in the firewall protecting it.</p>
-<p>That&rsquo;s false, and the reason is the same full-duplex property conntrack relies on. A TCP connection is bidirectional once established. If the private server is the one that dials <em>out</em> to a public edge proxy and keeps that connection open, the edge proxy can push HTTP requests down that existing stream indefinitely. The private server never opens a listening port to the internet; it just never hangs up the outbound connection it made. This is the entire trick behind reverse tunnels, and it&rsquo;s worth sitting with before the next section, because most engineers' mental model of &ldquo;private&rdquo; assumes a listening socket has to exist somewhere on the public side of the boundary. It doesn&rsquo;t.</p>
-
-</div>
-
+<blockquote>
+<p><strong>Discomfort check.</strong> The instinctive assumption is that a server sitting in a private subnet can never serve public web traffic unless you open an inbound port, typically 443, in the firewall protecting it. That&rsquo;s false, and the reason is the same full-duplex property conntrack relies on. A TCP connection is bidirectional once established. If the private server is the one that dials <em>out</em> to a public edge proxy and keeps that connection open, the edge proxy can push HTTP requests down that existing stream indefinitely. The private server never opens a listening port to the internet; it just never hangs up the outbound connection it made. This is the entire trick behind reverse tunnels, and most engineers' mental model of &ldquo;private&rdquo; assumes a listening socket has to exist somewhere on the public side of the boundary. It doesn&rsquo;t.</p>
+</blockquote>
 <h2 id="the-taxonomy-of-proxies">The Taxonomy of Proxies</h2>
 <p>&ldquo;Proxy&rdquo; is used loosely enough in casual conversation that it&rsquo;s worth being precise. Four distinct architectures get called by the same name, and they protect different things and route traffic in different directions.</p>
 <table>
@@ -268,14 +263,9 @@ sequenceDiagram
 </script>
 
 <p><strong>Service mesh sidecars</strong> apply the reverse-proxy idea to east-west traffic between your own services rather than north-south traffic from the internet - every instance gets its own small Envoy process handling load balancing, retries, and mTLS for its outbound calls. Load Balancing &amp; Proxies covers how the sidecar model and its control plane actually work; here it matters mainly as the fourth entry in this taxonomy.</p>
-<div class="discomfort-check">
-  <p class="discomfort-check-label">Discomfort Check</p>
-  <p class="discomfort-check-title">A Reverse Tunnel Is Not a Backdoor</p>
-  <p>The instinctive worry is that a private machine holding a persistent outbound connection open to the public internet has effectively handed an attacker a permanent way in.</p>
-<p>That&rsquo;s not what a reverse tunnel does, and the reason is what flows through the tunnel, not the tunnel&rsquo;s existence. The private machine only ever acts as a TLS <em>client</em> connecting outward to a certificate it has verified; it never listens for inbound connections from arbitrary hosts. The edge proxy authenticates and authorizes every user request <em>before</em> anything is forwarded down the tunnel, and it signs the forwarded request with a private key that the private agent validates against a known public key before executing anything. The private machine&rsquo;s external attack surface, the set of things an internet scanner can even attempt to connect to, stays at zero open inbound ports throughout. The tunnel is a pipe the private side controls the far end of, not a hole in its perimeter.</p>
-
-</div>
-
+<blockquote>
+<p><strong>Discomfort check.</strong> The instinctive worry is that a private machine holding a persistent outbound connection open to the public internet has effectively handed an attacker a permanent way in. That&rsquo;s not what a reverse tunnel does, and the reason is what flows through the tunnel, not the tunnel&rsquo;s existence. The private machine only ever acts as a TLS <em>client</em> connecting outward to a certificate it has verified; it never listens for inbound connections from arbitrary hosts. The edge proxy authenticates and authorizes every user request <em>before</em> anything is forwarded down the tunnel, and it signs the forwarded request with a private key that the private agent validates against a known public key before executing anything. The private machine&rsquo;s external attack surface, the set of things an internet scanner can even attempt to connect to, stays at zero open inbound ports throughout. The tunnel is a pipe the private side controls the far end of, not a hole in its perimeter.</p>
+</blockquote>
 <h2 id="zero-trust-the-edge-translation-pattern">Zero Trust: The Edge Translation Pattern</h2>
 <p>Getting a request across the network boundary is only half the problem. The more consequential failure mode in distributed systems is what happens <em>after</em> the request is inside.</p>
 <p>The common anti-pattern, sometimes called &ldquo;hard shell, soft center,&rdquo; authenticates the user once at the API gateway, strips the auth headers, and forwards plain, unauthenticated HTTP calls internally on the assumption that the internal network is inherently safe. It&rsquo;s a reasonable-sounding assumption until any single container in the call path is compromised: the moment that happens, the attacker has unauthenticated lateral access to every service downstream, because none of them ever checked anything.</p>
@@ -300,14 +290,9 @@ sequenceDiagram
 </script>
 
 <p>Nothing downstream of the gateway ever sees the user&rsquo;s original OAuth token or session cookie again.</p>
-<div class="discomfort-check">
-  <p class="discomfort-check-label">Discomfort Check</p>
-  <p class="discomfort-check-title">Passing the Raw User ID Downstream Looks Like a Shortcut</p>
-  <p>Since every service can already verify a signed token locally in zero milliseconds, minting an entirely new internal token can look like unnecessary ceremony. It seems simpler to just let every microservice parse the user&rsquo;s raw email or ID out of the original credential and write a plain equality check against it.</p>
-<p>Hardcoding an identity schema across every microservice is a coupling problem disguised as a shortcut. If services parse a numeric user ID directly, you cannot add SAML or a second enterprise identity provider without touching every service that ever checked identity. If services log request headers for debugging, which they will, eventually, somewhere, forwarding the original OAuth token risks a long-lived, replayable user credential ending up in a log aggregator. An opaque internal principal, something like <code>principal://auth/workforce/okta/alice</code>, decouples &ldquo;who issued this identity&rdquo; from &ldquo;what does this service need to check,&rdquo; which is what lets you swap or federate identity providers later without a rewrite.</p>
-
-</div>
-
+<blockquote>
+<p><strong>Discomfort check.</strong> Since every service can already verify a signed token locally in zero milliseconds, minting an entirely new internal token can look like unnecessary ceremony. It seems simpler to just let every microservice parse the user&rsquo;s raw email or ID out of the original credential and write a plain equality check against it. But hardcoding an identity schema across every microservice is a coupling problem disguised as a shortcut. If services parse a numeric user ID directly, you cannot add SAML or a second enterprise identity provider without touching every service that ever checked identity. If services log request headers for debugging, which they will, eventually, somewhere, forwarding the original OAuth token risks a long-lived, replayable user credential ending up in a log aggregator. An opaque internal principal, something like <code>principal://auth/workforce/okta/alice</code>, decouples &ldquo;who issued this identity&rdquo; from &ldquo;what does this service need to check,&rdquo; which is what lets you swap or federate identity providers later without a rewrite.</p>
+</blockquote>
 <h2 id="authorization-at-scale-from-acl-tables-to-relationship-graphs">Authorization at Scale: From ACL Tables to Relationship Graphs</h2>
 <p>Establishing <em>who</em> the caller is only answers half the question that matters before any mutation. The other half, <em>what</em> they&rsquo;re allowed to touch, is where naive designs collapse first at scale.</p>
 <p>The obvious starting point is a permissions table and a query:</p>
@@ -329,14 +314,9 @@ graph LR
 </script>
 
 <p>A permission check becomes a graph-reachability question: can you get from Alice to RecoveryPlan by following edges that compose into &ldquo;editor&rdquo;? It&rsquo;s evaluated in memory with localized caching, typically in under 5 milliseconds regardless of how deep the hierarchy is. It&rsquo;s the same reason graph traversal beats repeated SQL joins for any deeply nested relationship: the structure is native to the query instead of being reconstructed from flat tables every time.</p>
-<div class="discomfort-check">
-  <p class="discomfort-check-label">Discomfort Check</p>
-  <p class="discomfort-check-title">Fast Tokens Don&#39;t Mean Fast Revocation</p>
-  <p>Stateless signed tokens are attractive because services verify them in zero milliseconds without a database round-trip. The uncomfortable corollary is that if someone is terminated right now, they still have working access until their token happens to expire.</p>
-<p>That&rsquo;s exactly why identity and authorization have to be decoupled deliberately rather than treated as one solved problem. Internal tokens are kept deliberately short-lived, two to five minutes is typical, which bounds the exposure window on its own. Authorization is checked separately and freshly on every state-changing call, against an engine like OpenFGA, which reflects a group membership revocation the instant it happens rather than whenever a cached token expires. For genuinely urgent lockouts, the identity provider increments a per-user <code>token_epoch</code>; the edge gateway rejects any refresh request for a stale epoch immediately, which caps the damage to whatever the current short-lived token can still do until it expires on its own. The token proves <em>who</em> someone is; it was never meant to prove they still <em>should</em> be able to do something.</p>
-
-</div>
-
+<blockquote>
+<p><strong>Discomfort check.</strong> Stateless signed tokens are attractive because services verify them in zero milliseconds without a database round-trip. The uncomfortable corollary is that if someone is terminated right now, they still have working access until their token happens to expire. That&rsquo;s exactly why identity and authorization have to be decoupled deliberately rather than treated as one solved problem. Internal tokens are kept deliberately short-lived, two to five minutes is typical, which bounds the exposure window on its own. Authorization is checked separately and freshly on every state-changing call, against an engine like OpenFGA, which reflects a group membership revocation the instant it happens rather than whenever a cached token expires. For genuinely urgent lockouts, the identity provider increments a per-user <code>token_epoch</code>; the edge gateway rejects any refresh request for a stale epoch immediately, which caps the damage to whatever the current short-lived token can still do until it expires on its own. The token proves <em>who</em> someone is; it was never meant to prove they still <em>should</em> be able to do something.</p>
+</blockquote>
 <h2 id="the-anatomy-of-a-production-request">The Anatomy of a Production Request</h2>
 <p>Put every piece together and a single &ldquo;delete record&rdquo; click traces a path like this:</p>
 <div class="mermaid">
