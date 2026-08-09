@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="author" content="Megha Bose" />
     <meta name="description" content="" />
-    <link rel="stylesheet" href="/css/main.min.4ff66bac5420a45426474b92071ab79f3919b3f4a8a257ad2a63aa809bf2b634.css" />
+    <link rel="stylesheet" href="/css/main.min.a1db1b8ce9a92b75e235fb3c5134d044a974213914e4d61a5f7bb0ba2bae36f6.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 
     
@@ -269,11 +269,16 @@ user_id | status    | created_at              | pointer
 <p>But hashing destroys ordering. A hash index cannot serve range queries, prefix matches, or ORDER BY. It is exclusively for <code>WHERE column = exact_value</code>. For high-cardinality columns where you only ever query for exact values - UUIDs, session tokens, email addresses - hash indexes seem ideal.</p>
 <p>In practice, most engineers default to B-tree even for equality-only workloads. The reasons: PostgreSQL&rsquo;s hash indexes were historically not crash-safe (not WAL-logged until version 10 - the WAL, or Write-Ahead Log, is the journal the database writes changes to before applying them, ensuring they survive crashes; anything not WAL-logged can be lost or corrupted on an unexpected shutdown). More fundamentally, a B-tree equality lookup is log₂(n) - at 50 million rows that is 26 comparisons, which takes microseconds. The theoretical advantage of hash lookup over B-tree lookup is barely measurable in practice. The inflexibility of hash indexes often is not worth the marginal gain.</p>
 <hr>
-<h2 id="discomfort-check-more-indexes-does-not-mean-faster">Discomfort Check: More Indexes Does Not Mean Faster</h2>
-<p>This is the most common index misconception. Indexes have a write cost. Every INSERT, UPDATE, or DELETE must update every index on that table. A table with eight indexes takes roughly eight times as many disk writes as an unindexed table for every write operation.</p>
+<div class="discomfort-check">
+  <p class="discomfort-check-label">Discomfort Check</p>
+  <p class="discomfort-check-title">More Indexes Does Not Mean Faster</p>
+  <p>This is the most common index misconception. Indexes have a write cost. Every INSERT, UPDATE, or DELETE must update every index on that table. A table with eight indexes takes roughly eight times as many disk writes as an unindexed table for every write operation.</p>
 <p>For read-heavy tables (a product catalog, a user profile store), this is usually acceptable. For write-heavy tables - a time-series events table ingesting thousands of rows per second, an order processing table under peak load - excessive indexing directly degrades write throughput.</p>
 <p>Concrete example: a logging table that receives 10,000 inserts per second. Adding six indexes to support various analytics queries may reduce the sustainable insert rate to 3,000 per second. You have improved read performance at the cost of crippling write performance.</p>
 <p><code>pg_stat_user_indexes</code> shows how often each index is actually used. Indexes with zero or near-zero usage should be candidates for removal. <code>pg_stat_user_tables</code> shows the ratio of sequential scans to index scans - if a table has high sequential scan count despite having indexes, either the indexes are not matching queries or the planner correctly deems them unhelpful.</p>
+
+</div>
+
 <hr>
 <h2 id="composite-indexes-and-the-leftmost-prefix-rule">Composite Indexes and the Leftmost Prefix Rule</h2>
 <p>A composite index covers multiple columns: <code>CREATE INDEX idx_orders_user_status ON orders(user_id, status)</code>.</p>

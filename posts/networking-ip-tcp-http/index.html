@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="author" content="Megha Bose" />
     <meta name="description" content="" />
-    <link rel="stylesheet" href="/css/main.min.4ff66bac5420a45426474b92071ab79f3919b3f4a8a257ad2a63aa809bf2b634.css" />
+    <link rel="stylesheet" href="/css/main.min.a1db1b8ce9a92b75e235fb3c5134d044a974213914e4d61a5f7bb0ba2bae36f6.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 
     
@@ -206,9 +206,14 @@
 <h3 id="the-slow-start-problem-and-why-it-killed-http11">The Slow Start Problem (and Why It Killed HTTP/1.1)</h3>
 <p>Slow start was designed for long-lived connections - bulk data transfers where the ramp-up period is a small fraction of the total. But web pages are different. Each HTTP/1.1 request fetches a small resource (a script, an image, a CSS file) over a new connection, or at best a keep-alive connection that may have gone idle. A connection that goes idle resets its congestion window. A new request must ramp up from scratch.</p>
 <p>For short connections - 20 packets or fewer - TCP often never leaves slow start. You&rsquo;re paying the ramp-up cost for every single resource. This is the fundamental inefficiency HTTP/2 was designed to fix.</p>
-<h2 id="a-discomfort-check-tcp-is-reliable-but-not-what-you-think">A Discomfort Check: TCP Is Reliable, But Not What You Think</h2>
-<p>&ldquo;TCP guarantees ordered delivery&rdquo; is technically true and practically confusing. If TCP receives packet 3 before packet 2, it buffers packet 3 and waits for packet 2 to be retransmitted. From the application&rsquo;s perspective, packets always arrive in order. But this creates <strong>head-of-line blocking</strong>: if one packet is lost in a multiplexed HTTP/2 stream, all other streams stall waiting for that one packet to be recovered. HTTP/2 multiplexes multiple requests over one TCP connection - great in theory, but a single dropped packet blocks every stream because TCP&rsquo;s ordering guarantee applies at the connection level, not the stream level.</p>
+<div class="discomfort-check">
+  <p class="discomfort-check-label">Discomfort Check</p>
+  <p class="discomfort-check-title">TCP Is Reliable, But Not What You Think</p>
+  <p>&ldquo;TCP guarantees ordered delivery&rdquo; is technically true and practically confusing. If TCP receives packet 3 before packet 2, it buffers packet 3 and waits for packet 2 to be retransmitted. From the application&rsquo;s perspective, packets always arrive in order. But this creates <strong>head-of-line blocking</strong>: if one packet is lost in a multiplexed HTTP/2 stream, all other streams stall waiting for that one packet to be recovered. HTTP/2 multiplexes multiple requests over one TCP connection - great in theory, but a single dropped packet blocks every stream because TCP&rsquo;s ordering guarantee applies at the connection level, not the stream level.</p>
 <p>This is not a bug in TCP. It&rsquo;s doing exactly what it promised. The problem is that multiplexing wants per-stream ordering, but TCP only knows about connection-level ordering.</p>
+
+</div>
+
 <h2 id="udp-when-speed-beats-reliability">UDP: When Speed Beats Reliability</h2>
 <p>UDP is TCP without the guarantees. No handshake, no acknowledgements, no flow control, no ordering. A UDP datagram either arrives or it doesn&rsquo;t. The application must decide what to do.</p>
 <p>This is the right tradeoff in several scenarios. DNS queries are tiny and idempotent - if the reply is lost, the client retries immediately. The overhead of a TCP handshake would dwarf the query itself. Live video calling cannot wait for retransmitted packets; a delayed frame is more disruptive than a corrupted one, so WebRTC uses UDP with its own lightweight reliability layer. Online games need sub-50ms updates; they&rsquo;d rather skip a position update than wait for recovery.</p>
