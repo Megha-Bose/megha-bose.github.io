@@ -174,7 +174,7 @@ The naive answer is &ldquo;a load balancer,&rdquo; but that is a starting point,
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          13 min read
+          15 min read
         </div>
       </div>
     </header>
@@ -189,6 +189,12 @@ The naive answer is &ldquo;a load balancer,&rdquo; but that is a starting point,
 <p>Ten servers. One million requests per second. How do you distribute work fairly - and what happens when three of those servers die at 2am?</p>
 <p>The naive answer is &ldquo;a load balancer,&rdquo; but that is a starting point, not a conclusion. The real question is: which algorithm distributes work fairly for <em>your</em> workload, what happens when the load balancer itself fails, and how does the statefulness of your application change every assumption in the design?</p>
 <p>This is a story that evolved over about thirty years, from a DNS hack to globally-aware routing. The evolution is worth tracing because each step was a response to a concrete failure mode of the previous approach.</p>
+<hr>
+<h2 id="what-a-proxy-actually-is">What a Proxy Actually Is</h2>
+<p>A proxy is any intermediary that sits between a client and a server, receiving requests on one side and relaying them to the other. Nothing in that definition says which side it&rsquo;s protecting, and the distinction matters more than the definition itself.</p>
+<p>A <strong>forward proxy</strong> sits in front of clients and represents them to the outside world. A corporate network routing employee traffic through a filtering proxy, or a VPN client tunneling requests through an exit node, is a forward proxy: the destination server sees the proxy&rsquo;s IP, never the client&rsquo;s. The proxy is chosen and configured by the client side.</p>
+<p>A <strong>reverse proxy</strong> sits in front of servers and represents them to the outside world. When a browser hits <code>api.example.com</code>, it&rsquo;s talking to Nginx or Envoy, not the application server directly - the reverse proxy is chosen and configured by the backend side, and the client typically has no idea it exists. This is the role a load balancer plays: a load balancer is a reverse proxy whose specific job is deciding <em>which</em> backend instance gets each request, on top of whatever else it does (TLS termination, request routing, rate limiting).</p>
+<p>Everything in the rest of this post is about that second kind. The load-balancing decision only exists because a reverse proxy is standing between the client and a pool of backends in the first place.</p>
 <hr>
 <h2 id="the-two-levels-what-a-load-balancer-can-see">The Two Levels: What a Load Balancer Can See</h2>
 <p>Before anything else, you need to understand what a load balancer actually has access to when a request arrives, because that determines everything it can do.</p>
