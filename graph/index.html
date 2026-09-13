@@ -759,10 +759,21 @@
     return ts;
   }
 
-   
-   
+  
+
   const FOOT_W = 10, FOOT_H = 16;
-  const footstepMeta = edges.map(e => {
+  const footstepMeta = edges.map(e => ({ edge: e, grp: null, els: null, activeCount: 0 }));
+
+   
+  const footstepsByNode = {};
+  footstepMeta.forEach(meta => {
+    const sId = meta.edge.source.id, tId = meta.edge.target.id;
+    (footstepsByNode[sId] = footstepsByNode[sId] || []).push(meta);
+    (footstepsByNode[tId] = footstepsByNode[tId] || []).push(meta);
+  });
+
+  function ensureFootstepDom(meta) {
+    if (meta.grp) return;
     const grp = footG.append('g');
     const els = [];
     for (let s = 0; s < FOOT_MAX_COUNT; s++) {
@@ -777,8 +788,29 @@
         .node();
       els.push(el);
     }
-    return { edge: e, grp: grp.node(), els, activeCount: FOOT_MAX_COUNT };
-  });
+    meta.grp = grp.node();
+    meta.els = els;
+    meta.activeCount = FOOT_MAX_COUNT;
+  }
+
+   
+  let activeFootstepMetas = [];
+  function showFootstepsFor(node) {
+    const metas = footstepsByNode[node.id] || [];
+    metas.forEach(meta => {
+      ensureFootstepDom(meta);
+      updateFootsteps(meta);
+      const op = footOpacityValue(meta);
+      meta.els.forEach((el, s) => el.style.opacity = s < meta.activeCount ? op : 0);
+    });
+    activeFootstepMetas = metas;
+  }
+  function clearFootsteps() {
+    activeFootstepMetas.forEach(meta => {
+      if (meta.els) meta.els.forEach(el => el.style.opacity = '0');
+    });
+    activeFootstepMetas = [];
+  }
 
    
   function updateFootsteps(meta) {
@@ -895,7 +927,7 @@
 
    
   function renderPositions() {
-    footstepMeta.forEach(updateFootsteps);
+    activeFootstepMetas.forEach(updateFootsteps);
     nodeEls.attr('transform', d => `translate(${d.x},${d.y}) scale(${nodeScale(d)})`);
     labelEls.attr('x', d => d.x).attr('y', d => d.y);
   }
@@ -979,10 +1011,8 @@
         .attr('transform', `translate(${d.x},${d.y}) scale(${nodeScale(d)})`)
         .style('opacity', nodeOpacity(d));
     });
-    footstepMeta.forEach(meta => {
-      const op = footOpacityValue(meta);
-      meta.els.forEach((el, s) => el.style.opacity = s < meta.activeCount ? op : 0);
-    });
+    clearFootsteps();
+    if (activeNode) showFootstepsFor(activeNode);
   }
 
   /* ── click: select node ── */
@@ -1063,9 +1093,7 @@
     clampNodeToRoom(d);
     d3.select(this).attr('transform', `translate(${d.x},${d.y}) scale(${nodeScale(d)})`);
     labelEls.filter(n => n === d).attr('x', d.x).attr('y', d.y);
-    footstepMeta.forEach(meta => {
-      if (meta.edge.source === d || meta.edge.target === d) updateFootsteps(meta);
-    });
+    (footstepsByNode[d.id] || []).forEach(meta => { if (meta.grp) updateFootsteps(meta); });
   }
   function dragEnd(event, d) {}
 
@@ -1112,7 +1140,8 @@
           .style('opacity', op);
       });
     labelEls.attr('display', d => d._visible ? null : 'none');
-    footstepMeta.forEach(meta => {
+    activeFootstepMetas.forEach(meta => {
+      if (!meta.grp) return;
       const sId = meta.edge.source.id || meta.edge.source;
       const tId = meta.edge.target.id || meta.edge.target;
       meta.grp.style.display = (nodeById[sId]?._visible && nodeById[tId]?._visible) ? '' : 'none';
