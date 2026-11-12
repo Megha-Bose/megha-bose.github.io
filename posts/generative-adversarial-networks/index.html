@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>GANs - Two Networks Playing a Game Neither Can Win Alone // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="/css/main.min.50c6a374f84378d37dd5a1ea78cb5b1ddd45f1a6ef4980398d8eb058b23378ad.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://megha-bose.github.io/avatar.jpg"/>
+
+<meta name="twitter:title" content="GANs - Two Networks Playing a Game Neither Can Win Alone"/>
+<meta name="twitter:description" content="Consider the problem of learning to draw. A student artist makes a sketch and submits it to a critic who says &ldquo;fake&rdquo; or &ldquo;real.&rdquo; The student does not know the rules of good drawing in advance - no one has written them down - but the critic&rsquo;s feedback is enough. Over thousands of iterations the student&rsquo;s sketches improve, the critic learns to spot subtler flaws, and eventually the student produces work indistinguishable from genuine art."/>
+
+    <meta property="og:title" content="GANs - Two Networks Playing a Game Neither Can Win Alone" />
+<meta property="og:description" content="Consider the problem of learning to draw. A student artist makes a sketch and submits it to a critic who says &ldquo;fake&rdquo; or &ldquo;real.&rdquo; The student does not know the rules of good drawing in advance - no one has written them down - but the critic&rsquo;s feedback is enough. Over thousands of iterations the student&rsquo;s sketches improve, the critic learns to spot subtler flaws, and eventually the student produces work indistinguishable from genuine art." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://megha-bose.github.io/posts/generative-adversarial-networks/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-07-10T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-07-10T00:00:00+00:00" />
+
+
+    <meta property="fb:app_id" content="3721256308022480" />
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social app-header-social-primary">
+        
+          
+          <a href="mailto:megh.bose@gmail.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-mail">
+  <title>Email</title>
+  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+      <div class="app-header-social app-header-social-secondary">
+        
+          
+        
+          
+        
+          
+        
+          
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/whimsymeg.art/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Art</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.youtube.com/@Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-youtube">
+  <title>YouTube</title>
+  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://meghabose10.wordpress.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-globe">
+  <title>Old Website</title>
+  <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+          </a>
+          
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="https://megha-bose.github.io/categories/ml/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">GANs - Two Networks Playing a Game Neither Can Win Alone</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Jul 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          17 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <hr>
+<p>Consider the problem of learning to draw. A student artist makes a sketch and submits it to a critic who says &ldquo;fake&rdquo; or &ldquo;real.&rdquo; The student does not know the rules of good drawing in advance - no one has written them down - but the critic&rsquo;s feedback is enough. Over thousands of iterations the student&rsquo;s sketches improve, the critic learns to spot subtler flaws, and eventually the student produces work indistinguishable from genuine art. Neither party is given a loss function describing what &ldquo;good art&rdquo; looks like. They only play against each other.</p>
+<p>Generative Adversarial Networks, introduced by Goodfellow et al. in 2014, formalize this intuition precisely. Two neural networks compete in a minimax game. The generator $G$ takes random noise as input and produces synthetic data. The discriminator $D$ takes data as input and outputs a probability that the data is real rather than generated. The generator wants to fool the discriminator; the discriminator wants to catch the generator. The remarkable claim is that this adversarial pressure, sustained long enough, drives the generator to learn the true data distribution - not because anyone told it what the data distribution is, but because that is the only strategy that defeats a perfect discriminator.</p>
+<p>The framework is philosophically different from maximum likelihood estimation. MLE asks the model to assign high probability to training data. GANs ask the model to produce samples that cannot be distinguished from training data. These are not the same objective, and the distinction matters. MLE requires a tractable density; GANs do not. This makes GANs applicable to high-dimensional continuous distributions - images, audio, video - where explicit density estimation is computationally intractable.</p>
+<hr>
+<h2 id="the-setup">The Setup</h2>
+<p>The GAN framework involves two objects: a data distribution and two parameterized networks.</p>
+<p>Let $p_{\text{data}}$ denote the true data distribution over some space $\mathcal{X}$ (e.g., the space of natural images $\mathbb{R}^{d}$). We have access to samples from $p_{\text{data}}$ but not to the density itself. The goal is to construct a distribution $p_G$ that matches $p_{\text{data}}$ so closely that samples from $p_G$ are indistinguishable from samples from $p_{\text{data}}$.</p>
+<p>The <strong>generator</strong> $G_\theta: \mathcal{Z} \to \mathcal{X}$ is a neural network mapping from a latent space $\mathcal{Z}$ to the data space $\mathcal{X}$. The latent distribution $p_z$ is fixed and simple - typically the standard Gaussian $\mathcal{N}(0, I)$ or the uniform distribution on $[0,1]^k$. The generator implicitly defines a distribution $p_G$ as the pushforward of $p_z$ through $G$: if $z \sim p_z$, then $G(z) \sim p_G$. Crucially, $G$ never needs to compute $p_G$ explicitly - it only needs to produce samples.</p>
+<p>The <strong>discriminator</strong> $D_\phi: \mathcal{X} \to [0,1]$ is a neural network that acts as a binary classifier. On input $x$, it outputs $D(x)$, interpreted as the probability that $x$ was drawn from $p_{\text{data}}$ rather than from $p_G$. When $D(x) \approx 1$ the discriminator believes $x$ is real; when $D(x) \approx 0$ it believes $x$ is fake.</p>
+<p>The latent space $\mathcal{Z}$ is low-dimensional relative to $\mathcal{X}$. For image generation, $\mathcal{X}$ might be $\mathbb{R}^{64 \times 64 \times 3}$ while $\mathcal{Z}$ might be $\mathbb{R}^{100}$. The generator must learn a mapping from this compact manifold to the high-dimensional data space, in effect learning to navigate the data manifold - the low-dimensional curved surface within $\mathcal{X}$ on which real data concentrates. Think of all possible human face images as a thin curved surface within the space of all possible pixel grids. The generator must learn to walk along that surface.</p>
+<hr>
+<h2 id="the-zero-sum-game">The Zero-Sum Game</h2>
+<p>The GAN objective is a minimax game:</p>
+<p>$$\min_G \max_D ; V(D, G) = \mathbb{E}<em>{x \sim p</em>{\text{data}}}[\log D(x)] + \mathbb{E}_{z \sim p_z}[\log(1 - D(G(z)))]$$</p>
+<p>To understand why each term appears, consider each player&rsquo;s incentives separately.</p>
+<p>The <strong>discriminator</strong> $D$ wants to maximize $V$:</p>
+<ul>
+<li>The first term $\mathbb{E}<em>{x \sim p</em>{\text{data}}}[\log D(x)]$ is maximized when $D(x) \approx 1$ on real data - the discriminator correctly identifies real samples.</li>
+<li>The second term $\mathbb{E}_{z \sim p_z}[\log(1 - D(G(z)))]$ is maximized when $D(G(z)) \approx 0$ on generated samples - the discriminator correctly identifies fakes.</li>
+</ul>
+<p>The <strong>generator</strong> $G$ wants to minimize $V$. It has no influence over the first term (it does not produce real data), so it focuses on the second: it wants $D(G(z)) \approx 1$, meaning the discriminator classifies generated samples as real. Minimizing $\mathbb{E}[\log(1 - D(G(z)))]$ is equivalent to maximizing $\mathbb{E}[D(G(z))]$.</p>
+<p>This is a zero-sum game: the payoff to $G$ is exactly $-V(D,G)$ and the payoff to $D$ is $+V(D,G)$. Every gain for one player is a loss for the other. Game theory tells us that such games have <strong>Nash equilibria</strong> - pairs $(D^<em>, G^</em>)$ from which neither player benefits by unilaterally deviating. The GAN framework bets that gradient descent finds this equilibrium, and that the equilibrium corresponds to $p_G = p_{\text{data}}$.</p>
+<p>Notice that the value function $V$ is also the cross-entropy loss for a binary classifier. The first term is the expected log-likelihood of labeling real data as real; the second is the expected log-likelihood of labeling generated data as fake. Training the discriminator to maximize $V$ is exactly training a binary classifier with cross-entropy loss on a balanced dataset of real and generated samples. This connection makes implementation straightforward: discriminator training is standard supervised learning.</p>
+<hr>
+<h2 id="optimal-discriminator">Optimal Discriminator</h2>
+<p>For a fixed generator $G$ (and hence fixed $p_G$), what is the optimal discriminator? We want the function $D: \mathcal{X} \to [0,1]$ that maximizes $V(D, G)$.</p>
+<p><strong>Key observation</strong>: $V$ decomposes into a sum over points in $\mathcal{X}$. At each individual point $x$, the discriminator chooses its output $D(x) \in (0,1)$ independently. So we can maximize $V$ by independently maximizing the integrand at each $x$ - a pointwise optimization.</p>
+<p>Rewrite $V$ as an integral:</p>
+<p>$$V(D, G) = \int_x \left[ p_{\text{data}}(x) \log D(x) + p_G(x) \log(1 - D(x)) \right] dx$$</p>
+<p>For a fixed $x$, maximize $f(d) = p_{\text{data}}(x) \log d + p_G(x) \log(1 - d)$ over $d \in (0, 1)$:</p>
+<p>$$\frac{df}{dd} = \frac{p_{\text{data}}(x)}{d} - \frac{p_G(x)}{1 - d} = 0$$</p>
+<p>$$p_{\text{data}}(x)(1 - d) = p_G(x) \cdot d$$</p>
+<p>$$p_{\text{data}}(x) = d \left( p_{\text{data}}(x) + p_G(x) \right)$$</p>
+<p>$$\boxed{D^*(x) = \frac{p_{\text{data}}(x)}{p_{\text{data}}(x) + p_G(x)}}$$</p>
+<p><strong>What does this mean?</strong> This is the Bayes-optimal classifier for the binary task of distinguishing $p_{\text{data}}$ from $p_G$. Given a point $x$ drawn with equal probability from either distribution, the posterior probability that it came from $p_{\text{data}}$ is exactly $D^*(x)$.</p>
+<p>The formula is geometrically clear:</p>
+<ul>
+<li>Where $p_{\text{data}}(x) \gg p_G(x)$: the point is much more likely to be real, so $D^*(x) \approx 1$.</li>
+<li>Where $p_G(x) \gg p_{\text{data}}(x)$: the point is likely generated, so $D^*(x) \approx 0$.</li>
+<li>Where $p_{\text{data}}(x) = p_G(x)$: the discriminator is maximally uncertain, $D^*(x) = 1/2$.</li>
+</ul>
+<p>When the generator perfectly matches the data distribution, $D^* = 1/2$ everywhere - it cannot do better than random guessing. This is the generator &ldquo;winning&rdquo;: a perfect discriminator is indistinguishable from a coin flip.</p>
+<hr>
+<h2 id="optimal-generator-and-the-nash-equilibrium">Optimal Generator and the Nash Equilibrium</h2>
+<p>Now substitute $D^*$ back into $V$ to find the objective the generator effectively faces. This tells us what the generator is actually optimizing when the discriminator plays optimally.</p>
+<p>$$C(G) = V(D^*, G) = \mathbb{E}<em>{x \sim p</em>{\text{data}}} \left[ \log \frac{p_{\text{data}}(x)}{p_{\text{data}}(x) + p_G(x)} \right] + \mathbb{E}<em>{x \sim p_G} \left[ \log \frac{p_G(x)}{p</em>{\text{data}}(x) + p_G(x)} \right]$$</p>
+<p>To identify what this expression equals, we rewrite it by inserting a factor of 2 in the denominators (and subtracting $\log 2$ twice to compensate):</p>
+<p>$$C(G) = \mathbb{E}<em>{x \sim p</em>{\text{data}}} \left[ \log \frac{p_{\text{data}}(x)}{\frac{p_{\text{data}}(x) + p_G(x)}{2}} \right] + \mathbb{E}<em>{x \sim p_G} \left[ \log \frac{p_G(x)}{\frac{p</em>{\text{data}}(x) + p_G(x)}{2}} \right] - \log 4$$</p>
+<p>The first expectation is $\text{KL}!\left(p_{\text{data}} ,\Big|, \frac{p_{\text{data}} + p_G}{2}\right)$ and the second is $\text{KL}!\left(p_G ,\Big|, \frac{p_{\text{data}} + p_G}{2}\right)$, where $\text{KL}(P | Q) = \mathbb{E}_{x \sim P}[\log P(x) - \log Q(x)]$ is the Kullback-Leibler divergence.</p>
+<p>Recall the Jensen-Shannon divergence between two distributions $P$ and $Q$:</p>
+<p>$$\text{JSD}(P | Q) = \frac{1}{2} \text{KL}!\left(P ,\Big|, \frac{P+Q}{2}\right) + \frac{1}{2} \text{KL}!\left(Q ,\Big|, \frac{P+Q}{2}\right)$$</p>
+<p>Therefore:</p>
+<p>$$\boxed{C(G) = 2 \cdot \text{JSD}(p_{\text{data}} | p_G) - \log 4}$$</p>
+<p>This is the central theoretical result. When the discriminator plays optimally, minimizing the generator&rsquo;s objective is equivalent to minimizing the Jensen-Shannon divergence between the true data distribution and the generated distribution.</p>
+<p>Since $\text{JSD}(P | Q) \geq 0$ always, we have $C(G) \geq -\log 4$, with equality if and only if $p_G = p_{\text{data}}$. The Nash equilibrium is therefore:</p>
+<ul>
+<li>The generator produces the true data distribution: $p_G = p_{\text{data}}$</li>
+<li>The discriminator is uniformly $1/2$: $D^* = 1/2$ everywhere</li>
+<li>The minimax value is $V^* = -\log 4$</li>
+</ul>
+<p><strong>Why JSD and not KL?</strong> KL divergence is asymmetric and infinite when $p_G$ assigns zero probability to regions where $p_{\text{data}}$ is positive (mode dropping). JSD is symmetric and always finite, because it measures KL to the mixture $\frac{p_{\text{data}} + p_G}{2}$, which is positive wherever either component is. More importantly: the discriminator&rsquo;s job is to estimate $p_{\text{data}}(x) / (p_{\text{data}}(x) + p_G(x))$, which is exactly the ratio needed to compute the JSD - without ever computing the individual densities explicitly. The discriminator converts an intractable density estimation problem into a tractable classification problem.</p>
+<p><strong>Why can&rsquo;t we just minimize KL directly?</strong> $\text{KL}(p_G | p_{\text{data}})$ (mode-seeking) penalizes heavily when $p_G$ puts mass where $p_{\text{data}}$ has none - leading to sharp but incomplete coverage. $\text{KL}(p_{\text{data}} | p_G)$ (mode-covering) penalizes missing modes of $p_{\text{data}}$ - but requires computing the density ratio, which is intractable in high dimensions. JSD is estimated via classification accuracy: a tractable stand-in for an intractable density problem.</p>
+<hr>
+<h2 id="training-procedure">Training Procedure</h2>
+<p>The theory requires simultaneous minimax optimization. In practice, this is approximated by alternating gradient updates:</p>
+<p><strong>For each training iteration:</strong></p>
+<ol>
+<li>Sample a minibatch of $m$ noise vectors $z^{(1)}, \ldots, z^{(m)}$ from $p_z$.</li>
+<li>Sample a minibatch of $m$ real data points $x^{(1)}, \ldots, x^{(m)}$ from $p_{\text{data}}$.</li>
+<li>Update the discriminator by ascending its stochastic gradient:</li>
+</ol>
+<p>$$\nabla_\phi \frac{1}{m} \sum_{i=1}^m \left[ \log D_\phi(x^{(i)}) + \log(1 - D_\phi(G_\theta(z^{(i)}))) \right]$$</p>
+<ol start="4">
+<li>Sample a fresh minibatch of noise $z^{(1)}, \ldots, z^{(m)}$.</li>
+<li>Update the generator by descending its stochastic gradient:</li>
+</ol>
+<p>$$\nabla_\theta \frac{1}{m} \sum_{i=1}^m \log(1 - D_\phi(G_\theta(z^{(i)})))$$</p>
+<p>In the original paper, step 3 is performed $k$ times for each step 5. In practice $k = 1$ is standard.</p>
+<p><strong>The saturating gradient problem.</strong> There is a critical issue with the generator&rsquo;s objective $\min_G \mathbb{E}[\log(1 - D(G(z)))]$. Consider what happens early in training. The generator is essentially random and produces garbage, so the discriminator easily identifies all generated samples as fake: $D(G(z)) \approx 0$. Plugging in, $\log(1 - D(G(z))) \approx \log(1) = 0$. The function $\log(1 - d)$ is nearly flat near $d \approx 0$, so its gradient $\partial/\partial d [\log(1-d)] = -1/(1-d)$ is small in magnitude when $d \approx 0$. The generator receives almost no gradient signal precisely when it needs guidance the most - an early-training death spiral.</p>
+<p><strong>Non-saturating loss.</strong> The fix is simple: instead of minimizing $\mathbb{E}[\log(1 - D(G(z)))]$, the generator maximizes $\mathbb{E}[\log D(G(z))]$. Near $d \approx 0$, the gradient of $\log d$ is $1/d$, which is large - providing strong signal when the discriminator is winning. The two objectives have the same Nash equilibrium (both are minimized at $D^* = 1/2$, $p_G = p_{\text{data}}$) but have completely different gradient landscapes. In the original formulation, the gradient vanishes when the discriminator is winning; in the non-saturating version, the gradient is strongest when the discriminator is winning. This is the version used in essentially all practical GAN implementations.</p>
+<hr>
+<h2 id="training-instabilities">Training Instabilities</h2>
+<p>The elegant theory gives way to significant practical difficulties. Training a GAN requires navigating a minimax landscape that gradient descent was not designed for.</p>
+<h3 id="mode-collapse">Mode Collapse</h3>
+<p>Mode collapse is the most common failure: the generator produces a narrow range of outputs that fool the discriminator, but ignores large portions of the true data distribution. A face GAN might generate hundreds of variants of the same person instead of the full diversity of human faces.</p>
+<p><strong>Why it happens.</strong> Suppose $G$ finds a region where $D$ currently outputs high values (classifies as real). $G$ has a strong incentive to concentrate all its probability mass in that region - placing all mass on one mode makes $\mathbb{E}_z[\log D(G(z))]$ large. Spreading mass across modes would trade probability on the discovered mode for probability on undiscovered modes, which $D$ may not yet reward. So $G$ collapses.</p>
+<p>$D$ then adapts: it learns to detect this specific repeated output. $G$ then shifts to a different mode. The cycle continues. This is a coordination failure: $G$ and $D$ are updated alternately with finite batches, not simultaneously at equilibrium. The optimal discriminator $D^*$ for a given $G$ is only optimal for that specific $G$ - it tells $G$ nothing about how it will be evaluated after $D$ updates.</p>
+<h3 id="vanishing-gradients">Vanishing Gradients</h3>
+<p>If the discriminator is trained to near-optimality before the generator has learned much, $D(G(z)) \approx 0$ for essentially all $z$. Even the non-saturating loss suffers: when $\log D(G(z))$ becomes very negative, floating-point representations lose precision. Training stalls.</p>
+<h3 id="non-convergence">Non-Convergence</h3>
+<p>Gradient descent on a minimax objective does not necessarily converge. The generator overshoots to beat the current discriminator; the discriminator updates to catch the new generator; neither settles. This oscillation is theoretically guaranteed to happen for some loss landscapes and learning rates. Standard minimization convergence guarantees do not apply to saddle-point problems.</p>
+<p><strong>Practical stabilization techniques:</strong></p>
+<ul>
+<li>Label smoothing: replace the real label &ldquo;1&rdquo; with 0.9 to prevent the discriminator from becoming overconfident.</li>
+<li>Spectral normalization of discriminator weights: clips the discriminator&rsquo;s Lipschitz constant, preventing it from becoming too powerful.</li>
+<li>Dropout in the discriminator: adds noise that prevents overfitting to the current generator.</li>
+<li>Separate learning rates: often $\eta_D &lt; \eta_G$ to keep the discriminator from running too far ahead.</li>
+<li>Minibatch discrimination: the discriminator looks at multiple samples at once, making it harder for the generator to collapse to a single output.</li>
+</ul>
+<hr>
+<h2 id="wasserstein-gan">Wasserstein GAN</h2>
+<p>The instability of standard GAN training is intimately connected to the JSD as a distance measure. Early in training, $p_G$ and $p_{\text{data}}$ are almost certainly supported on non-overlapping regions of $\mathcal{X}$ - a random generator produces noise, not natural images. When supports are disjoint, the JSD equals the constant $\log 2$ regardless of how close the distributions are geometrically. The gradient of JSD with respect to generator parameters is exactly zero. The discriminator becomes a perfect classifier and provides no gradient to the generator at all. Training stalls.</p>
+<p>To build intuition: the earth mover&rsquo;s distance (also called Wasserstein-1) measures the minimum &ldquo;work&rdquo; needed to reshape one distribution into another, where work is mass times distance. Imagine $p_{\text{data}}$ and $p_G$ as two piles of sand. JSD either says &ldquo;not the same pile&rdquo; or &ldquo;identical&rdquo; with no gradation when supports are disjoint. The earth mover&rsquo;s distance instead says: it would cost this much (in grams times meters) to move the sand from one pile to match the other. Even when the piles don&rsquo;t overlap, the distance is finite and varies smoothly as the generator pile moves. This smooth variation gives useful gradients throughout training.</p>
+<p>Formally, the <strong>Wasserstein-1 distance</strong> between distributions $P$ and $Q$ over metric space $(\mathcal{X}, d)$ is:</p>
+<p>$$W_1(P, Q) = \inf_{\gamma \in \Pi(P,Q)} \mathbb{E}_{(x,y) \sim \gamma}[d(x, y)]$$</p>
+<p>where $\Pi(P,Q)$ is the set of all joint distributions (couplings) $\gamma(x,y)$ with marginals $P$ and $Q$. The coupling specifies which &ldquo;sand particle&rdquo; from $P$ gets transported to which location in $Q$; the infimum is over all possible transportation plans.</p>
+<p>This infimum over all couplings is computationally intractable. But by the <strong>Kantorovich-Rubinstein duality theorem</strong>, there is an equivalent formulation:</p>
+<p>$$W_1(P, Q) = \sup_{|f|<em>L \leq 1} \left[ \mathbb{E}</em>{x \sim P}[f(x)] - \mathbb{E}_{x \sim Q}[f(x)] \right]$$</p>
+<p>where the supremum is over all 1-Lipschitz functions $f: \mathcal{X} \to \mathbb{R}$ (functions that don&rsquo;t change the output by more than 1 per unit change in input). The intuition: the best &ldquo;witness function&rdquo; $f$ that is 1-Lipschitz and maximally separates the two distributions is exactly measuring the earth mover&rsquo;s cost.</p>
+<p>This dual form is amenable to learning: instead of a discriminator outputting probabilities, WGAN uses a <strong>critic</strong> $f_w: \mathcal{X} \to \mathbb{R}$ (no final sigmoid, so output is an unbounded real number) trained to maximize $\mathbb{E}<em>{x \sim p</em>{\text{data}}}[f_w(x)] - \mathbb{E}<em>{z \sim p_z}[f_w(G</em>\theta(z))]$ subject to $f_w$ being 1-Lipschitz.</p>
+<p>The WGAN objective is:</p>
+<p>$$\min_G \max_{|f|<em>L \leq 1} ; \mathbb{E}</em>{x \sim p_{\text{data}}}[f(x)] - \mathbb{E}_{z \sim p_z}[f(G(z))]$$</p>
+<p>Enforcing the Lipschitz constraint is the main technical challenge. The original WGAN paper proposes weight clipping: after each discriminator update, clip all weights to $[-c, c]$. Weight clipping works but constrains the critic toward very simple functions.</p>
+<p><strong>Gradient Penalty (WGAN-GP).</strong> A better enforcement is to penalize the gradient norm of the critic (Gulrajani et al., 2017). A 1-Lipschitz function has $|\nabla f|_2 \leq 1$ everywhere; the optimal transport function has $|\nabla f|_2 = 1$ along transport paths. So we penalize deviations from norm 1 along straight lines between real and generated samples:</p>
+<p>$$\mathcal{L}<em>{\text{GP}} = \lambda ; \mathbb{E}</em>{\hat{x} \sim p_{\hat{x}}} \left[ \left( |\nabla_{\hat{x}} f_w(\hat{x})|_2 - 1 \right)^2 \right]$$</p>
+<p>where $\hat{x} = \epsilon x + (1-\epsilon) G(z)$ with $\epsilon \sim \text{Uniform}[0,1]$.</p>
+<p><strong>WGAN practical advantages:</strong></p>
+<ul>
+<li>The critic loss $\mathbb{E}<em>{p</em>{\text{data}}}[f] - \mathbb{E}<em>{p_z}[f(G(z))]$ estimates $W_1(p</em>{\text{data}}, p_G)$ and decreases monotonically with sample quality - unlike the standard GAN discriminator loss, which oscillates and is uninterpretable.</li>
+<li>Training is more stable, mode collapse is less frequent.</li>
+<li>No architectural constraints on the critic (batch normalization, etc.) beyond enforcing Lipschitz.</li>
+<li>The cost: slower training (critics must be near-optimal before each generator update, so the original paper uses 5 critic updates per generator update) and sensitivity to the gradient penalty weight $\lambda$.</li>
+</ul>
+<hr>
+<h2 id="conditional-gan">Conditional GAN</h2>
+<p>The standard GAN generates samples unconditionally - it learns $p_{\text{data}}(x)$ without control over what it generates. Conditional GAN (cGAN) extends this to learn the conditional distribution $p_{\text{data}}(x \mid y)$, where $y$ is a conditioning variable: a class label, a text description, a paired reference image, or any other signal.</p>
+<p>Both networks are conditioned on $y$:</p>
+<ul>
+<li>Generator: $G(z, y) \to x$ - given noise and condition, produce a sample consistent with $y$</li>
+<li>Discriminator: $D(x, y) \to [0,1]$ - given a sample and condition, output probability that $x$ is real given label $y$</li>
+</ul>
+<p>The objective becomes:</p>
+<p>$$\min_G \max_D ; V(D, G) = \mathbb{E}<em>{(x,y) \sim p</em>{\text{data}}}[\log D(x, y)] + \mathbb{E}_{z \sim p_z, y \sim p_y}[\log(1 - D(G(z, y), y))]$$</p>
+<p>The discriminator now assesses whether a sample is not only realistic but also consistent with the given condition. This prevents the generator from producing realistic samples of the wrong class. Conditioning is typically implemented by concatenating the label embedding (or other signal) to the input of both networks, or via feature-wise linear modulation (FiLM) layers that use the condition to shift and scale intermediate feature maps.</p>
+<p><strong>Pix2Pix</strong> (Isola et al., 2017) uses a conditional GAN where $y$ is an entire image: paired training examples $(y, x)$ where $y$ is a source image (a semantic label map, a daytime photo, a sketch) and $x$ is the corresponding target image (a photograph, a nighttime photo, a realistic rendering). Because the discriminator sees both the output and the conditioning image, it detects not just unrealistic outputs but outputs that fail to correspond to the input. The pix2pix objective also adds an L1 reconstruction term to prevent blurriness.</p>
+<hr>
+<h2 id="applications">Applications</h2>
+<p><strong>Image synthesis.</strong> Progressive GAN, StyleGAN, and BigGAN produce photorealistic images at high resolution. StyleGAN2 generates faces indistinguishable from photographs in controlled studies. The key architectural innovation in StyleGAN is the style-based generator: instead of feeding the latent code $z$ directly into the network, it is mapped through a series of fully connected layers to a style code $w$ that controls affine transformations (scale and shift) of feature maps at every layer of the synthesis network. This disentangles high-level semantic attributes (identity, pose) from fine-grained details (texture, lighting) and enables meaningful interpolation in latent space.</p>
+<p><strong>Data augmentation.</strong> Generated samples can augment training sets, particularly where labeled data is scarce. Medical imaging is a canonical example: synthetic CT scans, histology slides, or retinal images improve classifier performance when real annotated examples are expensive.</p>
+<p><strong>Domain adaptation.</strong> CycleGAN addresses unpaired domain transfer: two generators $G_{A \to B}$ and $G_{B \to A}$ together with two discriminators $D_A$ and $D_B$, with a cycle-consistency loss $|G_{B \to A}(G_{A \to B}(x)) - x|_1$ that prevents degenerate mappings. This allows style transfer without paired training data.</p>
+<p><strong>Scientific applications.</strong> GANs have been applied to molecule generation for drug discovery (generators on graph-structured molecular representations), turbulence simulation (high-resolution fluid dynamics from coarse simulations), and anomaly detection (using the discriminator as an anomaly scorer after training on normal data only).</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key formula or fact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GAN objective</td>
+<td>$\min_G \max_D ; \mathbb{E}<em>{p</em>{\text{data}}}[\log D(x)] + \mathbb{E}_{p_z}[\log(1 - D(G(z)))]$</td>
+</tr>
+<tr>
+<td>Optimal discriminator</td>
+<td>$D^*(x) = p_{\text{data}}(x) / (p_{\text{data}}(x) + p_G(x))$</td>
+</tr>
+<tr>
+<td>Generator objective under $D^*$</td>
+<td>$C(G) = 2 \cdot \text{JSD}(p_{\text{data}} | p_G) - \log 4$</td>
+</tr>
+<tr>
+<td>Nash equilibrium</td>
+<td>$p_G = p_{\text{data}}$, $V^* = -\log 4$, $D^* = 1/2$ everywhere</td>
+</tr>
+<tr>
+<td>Non-saturating loss</td>
+<td>Maximize $\mathbb{E}[\log D(G(z))]$ instead of minimize $\mathbb{E}[\log(1-D(G(z)))]$; avoids vanishing gradient</td>
+</tr>
+<tr>
+<td>Mode collapse</td>
+<td>$p_G$ concentrates on a subset of the support of $p_{\text{data}}$; coordination failure between $G$ and $D$</td>
+</tr>
+<tr>
+<td>Wasserstein distance</td>
+<td>$W_1(P,Q) = \inf_\gamma \mathbb{E}_\gamma[d(x,y)]$; finite and smooth even when supports are disjoint</td>
+</tr>
+<tr>
+<td>Kantorovich-Rubinstein</td>
+<td>$W_1(P,Q) = \sup_{|f|_L \leq 1} \mathbb{E}_P[f] - \mathbb{E}_Q[f]$; converts to critic training</td>
+</tr>
+<tr>
+<td>Gradient penalty</td>
+<td>Penalize $(|\nabla_{\hat{x}} f(\hat{x})|_2 - 1)^2$ on interpolated samples; better than weight clipping</td>
+</tr>
+<tr>
+<td>Conditional GAN</td>
+<td>Condition $G(z,y)$ and $D(x,y)$ on label or image $y$; enables controllable generation</td>
+</tr>
+</tbody>
+</table>
+<p>GANs represent a fundamental shift in how generative models are trained - not by maximizing likelihood but by winning a game. The theory is clean and the practical results are striking, but the gap between them - mode collapse, training instability, oscillation - remains an active research area. Wasserstein GANs address the gradient signal problem by replacing JSD with a geometrically sensible distance. Diffusion models, which have largely superseded GANs for image synthesis, address the stability problem by replacing adversarial training with a fixed denoising objective. Understanding why GANs fail in specific ways is as important as understanding why they succeed.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/variational-autoencoders/" target="_blank" rel="noopener noreferrer">Variational Autoencoders - Encoding Structure Into the Latent Space</a>
+</li>
+<li><a href="/posts/score-based-diffusion/" target="_blank" rel="noopener noreferrer">Score-Based Diffusion - Learning to Reverse Noise</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

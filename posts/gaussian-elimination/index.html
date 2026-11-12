@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Gaussian Elimination - Solving Linear Systems, Row by Row // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="/css/main.min.50c6a374f84378d37dd5a1ea78cb5b1ddd45f1a6ef4980398d8eb058b23378ad.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://megha-bose.github.io/avatar.jpg"/>
+
+<meta name="twitter:title" content="Gaussian Elimination - Solving Linear Systems, Row by Row"/>
+<meta name="twitter:description" content="Helpful context:
+ Vector Spaces &amp; Subspaces - The Geometry of Abstract Addition and Scaling    The previous two posts built up to a clean formulation of the central problem of linear algebra: solve $A\mathbf{x} = \mathbf{b}$. We know what the equation means - find the combination of columns of $A$ that produces $\mathbf{b}$. We know what the solution set looks like - a particular solution plus the null space."/>
+
+    <meta property="og:title" content="Gaussian Elimination - Solving Linear Systems, Row by Row" />
+<meta property="og:description" content="Helpful context:
+ Vector Spaces &amp; Subspaces - The Geometry of Abstract Addition and Scaling    The previous two posts built up to a clean formulation of the central problem of linear algebra: solve $A\mathbf{x} = \mathbf{b}$. We know what the equation means - find the combination of columns of $A$ that produces $\mathbf{b}$. We know what the solution set looks like - a particular solution plus the null space." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://megha-bose.github.io/posts/gaussian-elimination/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-12-11T00:00:00+00:00" />
+<meta property="article:modified_time" content="2020-12-11T00:00:00+00:00" />
+
+
+    <meta property="fb:app_id" content="3721256308022480" />
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social app-header-social-primary">
+        
+          
+          <a href="mailto:megh.bose@gmail.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-mail">
+  <title>Email</title>
+  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+      <div class="app-header-social app-header-social-secondary">
+        
+          
+        
+          
+        
+          
+        
+          
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/whimsymeg.art/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Art</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.youtube.com/@Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-youtube">
+  <title>YouTube</title>
+  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://meghabose10.wordpress.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-globe">
+  <title>Old Website</title>
+  <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+          </a>
+          
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="https://megha-bose.github.io/categories/math/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">Gaussian Elimination - Solving Linear Systems, Row by Row</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Dec 2020
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          35 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/vector-spaces-and-subspaces/" target="_blank" rel="noopener noreferrer">Vector Spaces &amp; Subspaces - The Geometry of Abstract Addition and Scaling</a>
+</li>
+</ul>
+<hr>
+<p>The previous two posts built up to a clean formulation of the central problem of linear algebra: solve $A\mathbf{x} = \mathbf{b}$. We know what the equation means - find the combination of columns of $A$ that produces $\mathbf{b}$. We know what the solution set looks like - a particular solution plus the null space. We even know, from the vector spaces post, what &ldquo;column space&rdquo; and &ldquo;null space&rdquo; mean structurally.</p>
+<p>What we have not answered is the practical question: <strong>given a concrete $A$ and $\mathbf{b}$, how do you actually find $\mathbf{x}$?</strong></p>
+<p>For a $2 \times 2$ system with small numbers, you can subtract one equation from another and get the answer in two steps. But what about a $100 \times 100$ system? What about $1000 \times 1000$? The method needs to be systematic - a procedure that works every time, never gets confused, and along the way tells you whether there is one solution, no solution, or infinitely many.</p>
+<p>That procedure is Gaussian elimination. It is the foundation of computational linear algebra. Every serious linear system solver - whether in Python&rsquo;s NumPy, MATLAB, or the software guiding a spacecraft - is, at its core, a carefully engineered version of the same idea you are about to see.</p>
+<h2 id="the-intuition-simplify-until-obvious">The Intuition: Simplify Until Obvious</h2>
+<p>Before any formalism, here is the core idea in one sentence: <strong>repeatedly use one equation to kill a variable in all the others, until what remains is trivially solvable.</strong></p>
+<p>Say you have three equations in three unknowns and the first equation involves $x_1$. Use it to eliminate $x_1$ from equations 2 and 3 - subtract appropriate multiples. Now equations 2 and 3 involve only $x_2$ and $x_3$. Take equation 2 and use it to eliminate $x_2$ from equation 3. Now equation 3 involves only $x_3$: solve it. Plug $x_3$ into equation 2: solve for $x_2$. Plug both into equation 1: solve for $x_1$.</p>
+<p>That is it. The rest of this post is just making that idea precise, tracking what can go wrong, and understanding what it reveals about the structure of the system.</p>
+<h2 id="a-brief-history">A Brief History</h2>
+<p>The method is named after Carl Friedrich Gauss, but the idea is considerably older. Chinese mathematicians used essentially the same procedure in <em>The Nine Chapters on the Mathematical Art</em> (九章算術), compiled around 200 BCE. The text describes arranging counting rods in a table and performing column operations to solve systems - what we would recognize today as row reduction on an augmented matrix. The method was rediscovered in Europe over the following millennia, and Gauss himself described a refined version in his 1809 work on least squares. The name &ldquo;Gaussian elimination&rdquo; became standard only in the 20th century, after numerical analysts recognized it as the right foundation for computational linear algebra.</p>
+<p>The word <strong>echelon</strong> comes from the French <em>échelon</em>, meaning a rung of a ladder. A row echelon form looks like a staircase: each row&rsquo;s leading nonzero entry (the pivot) sits strictly to the right of the pivot in the row above, creating a stepped pattern down the matrix. The military used &ldquo;echelon formation&rdquo; to describe troops arranged in a diagonal staggered pattern - the same staircase shape. The pivot itself takes its name from French as well: <em>pivot</em> meaning the pin on which a lever turns, the fixed point everything else rotates around. In a row operation, the pivot is exactly that: the fixed entry you use to rotate away (zero out) all the entries below it.</p>
+<p><strong>Where did pivots come from conceptually?</strong> The key insight, present in the Chinese rod-arithmetic method and made explicit by Gauss, is that you only need one nonzero entry per column to drive the elimination of that variable from all other rows. That entry - whatever it happens to be - does all the work. Calling it the pivot captures this: everything in its column below it gets zeroed by subtracting the right multiple of its row.</p>
+<hr>
+<h2 id="what-operations-are-allowed">What Operations Are Allowed?</h2>
+<p>The question is: what can you do to a system of equations without changing its solutions?</p>
+<p>Write the system explicitly. Say we have three equations in three unknowns:</p>
+<p>$$\begin{aligned} a_{11} x_1 + a_{12} x_2 + a_{13} x_3 &amp;= b_1 \\ a_{21} x_1 + a_{22} x_2 + a_{23} x_3 &amp;= b_2 \\ a_{31} x_1 + a_{32} x_2 + a_{33} x_3 &amp;= b_3 \end{aligned}$$</p>
+<p>Any $\mathbf{x}$ that satisfies all three equations simultaneously is a solution. The question is: if you modify the system, which modifications preserve this solution set exactly?</p>
+<p>Three operations do:</p>
+<p><strong>Operation 1: Swap two equations.</strong> If $\mathbf{x}$ satisfies equation 1 and equation 2, it satisfies them in either order. The solution set does not change.</p>
+<p><strong>Operation 2: Multiply an equation by a nonzero constant.</strong> If $\mathbf{x}$ satisfies $2x_1 + x_2 = 5$, it also satisfies $4x_1 + 2x_2 = 10$, and vice versa (divide both sides by 2). The nonzero requirement is essential: multiplying by zero destroys information.</p>
+<p><strong>Operation 3: Add a multiple of one equation to another.</strong> This is the key operation. Suppose $\mathbf{x}$ satisfies both equation 1 (call it $E_1$) and equation 2 (call it $E_2$). Form a new equation: $E_1 + c \cdot E_2$. Any $\mathbf{x}$ satisfying $E_1$ and $E_2$ also satisfies $E_1 + c \cdot E_2$ (just add $c$ times the second equality to the first). And conversely, if $\mathbf{x}$ satisfies $E_1 + c \cdot E_2$ and $E_2$, then it satisfies $E_1 = (E_1 + c \cdot E_2) - c \cdot E_2$. So replacing $E_1$ with $E_1 + c \cdot E_2$ gives an equivalent system.</p>
+<p>These three operations are called <strong>elementary row operations</strong>. Applying any sequence of them transforms the system into an equivalent one - same solution set, different appearance.</p>
+<p>The strategy of Gaussian elimination: use operation 3 relentlessly to create zeros below the diagonal, transforming the system into a triangular shape that is trivially solvable.</p>
+<hr>
+<h2 id="why-triangular-systems-are-easy">Why Triangular Systems Are Easy</h2>
+<p>Before eliminating, see why triangular is the target. A $3 \times 3$ upper triangular system looks like:</p>
+<p>$$\begin{pmatrix} u_{11} &amp; u_{12} &amp; u_{13} \\ 0 &amp; u_{22} &amp; u_{23} \\ 0 &amp; 0 &amp; u_{33} \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \\ x_3 \end{pmatrix} = \begin{pmatrix} c_1 \\ c_2 \\ c_3 \end{pmatrix}$$</p>
+<p>The bottom equation involves only $x_3$: solve it directly. The middle equation involves $x_2$ and $x_3$: substitute $x_3$, solve for $x_2$. The top equation involves all three: substitute the known $x_2$ and $x_3$, solve for $x_1$.</p>
+<p>Each equation has exactly one more unknown than the one below it, but by the time you reach it, all later unknowns are already known. This bottom-up solving process is called <strong>back substitution</strong>, and it takes $O(n^2)$ operations for an $n \times n$ triangular system.</p>
+<p>The entire effort of Gaussian elimination is to reach this triangular form.</p>
+<hr>
+<h2 id="the-augmented-matrix">The Augmented Matrix</h2>
+<p>Instead of writing out full equations at each step, encode everything in a matrix. The <strong>augmented matrix</strong> $[A \mid \mathbf{b}]$ places $\mathbf{b}$ as a final column:</p>
+<p>$$\left(\begin{array}{ccc|c} a_{11} &amp; a_{12} &amp; a_{13} &amp; b_1 \\ a_{21} &amp; a_{22} &amp; a_{23} &amp; b_2 \\ a_{31} &amp; a_{32} &amp; a_{33} &amp; b_3 \end{array}\right)$$</p>
+<p>Each row represents one equation. Elementary row operations on equations become row operations on this matrix. Every operation applied to the coefficient columns must also be applied to the right-hand side column - which is why $\mathbf{b}$ is included.</p>
+<hr>
+<h2 id="forward-elimination-building-the-triangle">Forward Elimination: Building the Triangle</h2>
+<p>Here is a concrete $3 \times 3$ system:</p>
+<p>$$A = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 2 &amp; 5 &amp; 2 \\ 1 &amp; 5 &amp; 9 \end{pmatrix}, \qquad \mathbf{b} = \begin{pmatrix} 5 \\ 14 \\ 20 \end{pmatrix}$$</p>
+<p>Write the augmented matrix:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 2 &amp; 0 &amp; 5 \\ 2 &amp; 5 &amp; 2 &amp; 14 \\ 1 &amp; 5 &amp; 9 &amp; 20 \end{array}\right)$$</p>
+<p><strong>Step 1: Eliminate $x_1$ from rows 2 and 3.</strong></p>
+<p>The entry in position $(1,1)$ is 1. This is the first <strong>pivot</strong> - the entry we use to create zeros below it in column 1.</p>
+<p>The entry in position $(2,1)$ is 2. To zero it out, subtract $2 \times$ row 1 from row 2. The number 2 is the <strong>multiplier</strong> $m_{21} = 2$:</p>
+<p>$$R_2 \leftarrow R_2 - 2 R_1: \quad (2-2, 5-4, 2-0, 14-10) = (0, 1, 2, 4)$$</p>
+<p>The entry in position $(3,1)$ is 1. Subtract $1 \times$ row 1 from row 3. The multiplier is $m_{31} = 1$:</p>
+<p>$$R_3 \leftarrow R_3 - 1 R_1: \quad (1-1, 5-2, 9-0, 20-5) = (0, 3, 9, 15)$$</p>
+<p>After step 1:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 2 &amp; 0 &amp; 5 \\ 0 &amp; 1 &amp; 2 &amp; 4 \\ 0 &amp; 3 &amp; 9 &amp; 15 \end{array}\right)$$</p>
+<p>Column 1 below the pivot is now all zeros.</p>
+<p><strong>Step 2: Eliminate $x_2$ from row 3.</strong></p>
+<p>The new entry in position $(2,2)$ is 1. This is the second pivot.</p>
+<p>The entry in position $(3,2)$ is 3. Subtract $3 \times$ row 2 from row 3. Multiplier $m_{32} = 3$:</p>
+<p>$$R_3 \leftarrow R_3 - 3 R_2: \quad (0, 3-3, 9-6, 15-12) = (0, 0, 3, 3)$$</p>
+<p>After step 2:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 2 &amp; 0 &amp; 5 \\ 0 &amp; 1 &amp; 2 &amp; 4 \\ 0 &amp; 0 &amp; 3 &amp; 3 \end{array}\right)$$</p>
+<p>Upper triangular. The three pivots are 1, 1, 3 (the diagonal entries of the resulting matrix $U$).</p>
+<hr>
+<h2 id="back-substitution">Back Substitution</h2>
+<p>Read off the solution from the triangular system, bottom to top.</p>
+<p><strong>Row 3:</strong> $3 x_3 = 3$, so $x_3 = 1$.</p>
+<p><strong>Row 2:</strong> $x_2 + 2 x_3 = 4$. Substitute $x_3 = 1$: $x_2 = 2$.</p>
+<p><strong>Row 1:</strong> $x_1 + 2 x_2 + 0 \cdot x_3 = 5$. Substitute $x_2 = 2$: $x_1 = 1$.</p>
+<p><strong>Solution: $(x_1, x_2, x_3) = (1, 2, 1)$.</strong></p>
+<p>Verify directly: $A\mathbf{x}$:</p>
+<ul>
+<li>Row 1: $1(1) + 2(2) + 0(1) = 5$ ✓</li>
+<li>Row 2: $2(1) + 5(2) + 2(1) = 14$ ✓</li>
+<li>Row 3: $1(1) + 5(2) + 9(1) = 20$ ✓</li>
+</ul>
+<hr>
+<h2 id="when-the-pivot-is-zero">When the Pivot Is Zero</h2>
+<p>What if the pivot position is zero? You cannot divide by zero, so you cannot use it as a pivot.</p>
+<p><strong>The fix: row swap.</strong> Look below the zero for any row with a nonzero entry in the same column. Swap that row up. If a nonzero entry exists somewhere below, the swap gives you a valid pivot and elimination continues.</p>
+<p>Example: suppose after some steps you have:</p>
+<p>$$\left(\begin{array}{ccc|c} 2 &amp; 4 &amp; 1 &amp; 7 \\ 0 &amp; 0 &amp; 3 &amp; 6 \\ 0 &amp; 2 &amp; 5 &amp; 8 \end{array}\right)$$</p>
+<p>The pivot candidate for column 2 is the $(2,2)$ entry, which is 0. Row 3 has a nonzero entry in column 2. Swap rows 2 and 3:</p>
+<p>$$\left(\begin{array}{ccc|c} 2 &amp; 4 &amp; 1 &amp; 7 \\ 0 &amp; 2 &amp; 5 &amp; 8 \\ 0 &amp; 0 &amp; 3 &amp; 6 \end{array}\right)$$</p>
+<p>Now column 2 has a valid pivot (the 2), and column 3 is already zero below its pivot (the 3). Triangular form achieved without further work.</p>
+<p>In practice, solvers often swap to the row with the <strong>largest</strong> entry in the column, not just any nonzero one. This is called <strong>partial pivoting</strong> and it controls numerical errors when computing with floating-point numbers.</p>
+<hr>
+<h2 id="when-no-pivot-exists-two-outcomes">When No Pivot Exists: Two Outcomes</h2>
+<p>Suppose after eliminating column $k$, every entry below the pivot position is zero - including the pivot position itself. No swap can help: the entire column below row $k$ is zero. The variable $x_k$ has no pivot.</p>
+<p>This situation signals either that the system has <strong>no solution</strong> or <strong>infinitely many solutions</strong>. The right-hand side entry in that row determines which.</p>
+<p><strong>Case 1: Inconsistent system (no solution).</strong></p>
+<p>The row reduces to $(0, 0, \ldots, 0 \mid c)$ with $c \neq 0$. The equation it represents is $0 = c$, which is false for any $\mathbf{x}$. No solution exists.</p>
+<p><strong>Example:</strong></p>
+<p>$$\left(\begin{array}{cc|c} 1 &amp; 1 &amp; 3 \\ 2 &amp; 2 &amp; 7 \end{array}\right)$$</p>
+<p>$R_2 \leftarrow R_2 - 2R_1$:</p>
+<p>$$\left(\begin{array}{cc|c} 1 &amp; 1 &amp; 3 \\ 0 &amp; 0 &amp; 1 \end{array}\right)$$</p>
+<p>Row 2 says $0 = 1$. No solution. Geometrically: two parallel lines that never meet. The destination $\mathbf{b} = (3, 7)^T$ is not in the column space of $A$.</p>
+<p><strong>Case 2: Free variable (infinitely many solutions).</strong></p>
+<p>The row reduces to $(0, 0, \ldots, 0 \mid 0)$: the equation $0 = 0$, which is true for every $\mathbf{x}$. The variable in that column has no constraint from this row. It can take any value - it is a <strong>free variable</strong>. For each value of the free variable, you get a different solution.</p>
+<p><strong>Example:</strong></p>
+<p>$$A = \begin{pmatrix} 1 &amp; 2 &amp; 3 \\ 2 &amp; 4 &amp; 6 \\ 0 &amp; 1 &amp; 2 \end{pmatrix}, \qquad \mathbf{b} = \begin{pmatrix} 1 \\ 2 \\ 1 \end{pmatrix}$$</p>
+<p>Note: row 2 of $A$ is exactly 2 times row 1. The augmented matrix:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 2 &amp; 3 &amp; 1 \\ 2 &amp; 4 &amp; 6 &amp; 2 \\ 0 &amp; 1 &amp; 2 &amp; 1 \end{array}\right)$$</p>
+<p>$R_2 \leftarrow R_2 - 2R_1$: row 2 becomes $(0, 0, 0, 0)$. Swap rows 2 and 3 to bring the pivot up:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 2 &amp; 3 &amp; 1 \\ 0 &amp; 1 &amp; 2 &amp; 1 \\ 0 &amp; 0 &amp; 0 &amp; 0 \end{array}\right)$$</p>
+<p>Only two pivots (columns 1 and 2). Column 3 has no pivot: $x_3$ is free.</p>
+<p>Set $x_3 = t$ for any $t \in \mathbb{R}$:</p>
+<ul>
+<li>Row 2: $x_2 + 2t = 1 \Rightarrow x_2 = 1 - 2t$</li>
+<li>Row 1: $x_1 + 2(1-2t) + 3t = 1 \Rightarrow x_1 = -1 + t$</li>
+</ul>
+<p>The complete solution is:</p>
+<p>$$\mathbf{x} = \begin{pmatrix} -1 \\ 1 \\ 0 \end{pmatrix} + t \begin{pmatrix} 1 \\ -2 \\ 1 \end{pmatrix}, \qquad t \in \mathbb{R}$$</p>
+<p>The first vector is a <strong>particular solution</strong> (set $t = 0$). The second vector $(1, -2, 1)^T$ is a <strong>null space vector</strong> - check: $A(1, -2, 1)^T = (1-4+3, 2-8+6, 0-2+2)^T = (0,0,0)^T$ ✓.</p>
+<p>This is the structure from the vector spaces post: the solution set is a particular solution plus the null space. Gaussian elimination finds both automatically.</p>
+<p><strong>What if the free variable is not the last one?</strong></p>
+<p>The example above had $x_3$ as the free variable because the last row vanished. But a free variable can appear in the middle of the variable list too, when an entire column has no nonzero entry at or below the current pivot position - not because a row vanished, but because the column simply has no candidates.</p>
+<p><strong>Example.</strong> Consider:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 1 &amp; 1 &amp; b_1 \\ 0 &amp; 0 &amp; 1 &amp; b_2 \\ 0 &amp; 0 &amp; 2 &amp; b_3 \end{array}\right)$$</p>
+<p>Column 1 already has zeros below the pivot. Move to column 2. The pivot candidate is position $(2,2)$, which is 0. Look below: row 3 also has 0 in column 2. No swap can help - the entire column 2 below and at the pivot row is zero. <strong>$x_2$ is immediately a free variable.</strong> Do not advance the row counter. Move the pivot search to column 3, still on row 2.</p>
+<p>Column 3, row 2: entry is 1. This is the second pivot. Eliminate below it: $R_3 \leftarrow R_3 - 2R_2$:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 1 &amp; 1 &amp; b_1 \\ 0 &amp; 0 &amp; 1 &amp; b_2 \\ 0 &amp; 0 &amp; 0 &amp; b_3 - 2b_2 \end{array}\right)$$</p>
+<p>Now the last row gives a consistency check: we need $b_3 - 2b_2 = 0$, i.e. $b_3 = 2b_2$. If not, no solution. If yes, back-substitute: $x_3 = b_2$, $x_2 = t$ (free), $x_1 = b_1 - t - b_2$. The full solution is:</p>
+<p>$$\mathbf{x} = \begin{pmatrix} b_1 - b_2 \\ 0 \\ b_2 \end{pmatrix} + t \begin{pmatrix} -1 \\ 1 \\ 0 \end{pmatrix}, \qquad t \in \mathbb{R}$$</p>
+<p><strong>The key procedure point:</strong> when looking for a pivot in column $k$ and every entry from the current row downward is zero, declare column $k$&rsquo;s variable free and advance the column counter without advancing the row counter. The pivot &ldquo;skips&rdquo; the dead column and latches onto the next column that has something to work with.</p>
+<hr>
+<h2 id="three-possible-outcomes-summarized">Three Possible Outcomes, Summarized</h2>
+<table>
+<thead>
+<tr>
+<th>What you see after elimination</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$n$ pivots, no zero rows on right</td>
+<td>Unique solution</td>
+</tr>
+<tr>
+<td>A row $(0, \ldots, 0 \mid c)$ with $c \neq 0$</td>
+<td>No solution; $\mathbf{b} \notin \text{col}(A)$</td>
+</tr>
+<tr>
+<td>A row $(0, \ldots, 0 \mid 0)$, $k &lt; n$ pivots</td>
+<td>Infinitely many solutions; $n - k$ free variables</td>
+</tr>
+</tbody>
+</table>
+<p>The number of pivots is the <strong>rank</strong> of $A$. The number of free variables is $n - \text{rank}(A)$ = the <strong>nullity</strong> of $A$. Rank plus nullity equals $n$: rank-nullity, confirmed by elimination.</p>
+<hr>
+<h2 id="going-further-reduced-row-echelon-form">Going Further: Reduced Row Echelon Form</h2>
+<p>Forward elimination creates zeros below each pivot. You can go further: also create zeros <strong>above</strong> each pivot, and scale each pivot to 1. The result is called <strong>reduced row echelon form (RREF)</strong>.</p>
+<p>Starting from the triangular form of our first example:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 2 &amp; 0 &amp; 5 \\ 0 &amp; 1 &amp; 2 &amp; 4 \\ 0 &amp; 0 &amp; 3 &amp; 3 \end{array}\right)$$</p>
+<p><strong>Scale row 3</strong> to make the pivot 1. Divide by 3:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 2 &amp; 0 &amp; 5 \\ 0 &amp; 1 &amp; 2 &amp; 4 \\ 0 &amp; 0 &amp; 1 &amp; 1 \end{array}\right)$$</p>
+<p><strong>Eliminate above pivot 3.</strong> The entry $(2,3)$ is 2. Subtract $2 \times$ row 3 from row 2:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 2 &amp; 0 &amp; 5 \\ 0 &amp; 1 &amp; 0 &amp; 2 \\ 0 &amp; 0 &amp; 1 &amp; 1 \end{array}\right)$$</p>
+<p><strong>Eliminate above pivot 2.</strong> The entry $(1,2)$ is 2. Subtract $2 \times$ row 2 from row 1:</p>
+<p>$$\left(\begin{array}{ccc|c} 1 &amp; 0 &amp; 0 &amp; 1 \\ 0 &amp; 1 &amp; 0 &amp; 2 \\ 0 &amp; 0 &amp; 1 &amp; 1 \end{array}\right)$$</p>
+<p>The right-hand column reads off the solution directly: $x_1 = 1$, $x_2 = 2$, $x_3 = 1$. No back substitution needed.</p>
+<p>For systems with free variables, RREF makes the null space explicit. The columns without pivots are free variables; each pivot variable is expressed directly as a linear combination of free variables plus a constant.</p>
+<hr>
+<h2 id="computing-the-matrix-inverse">Computing the Matrix Inverse</h2>
+<p>Gaussian elimination does not just solve $A\mathbf{x} = \mathbf{b}$ for one $\mathbf{b}$. With a small extension, it computes $A^{-1}$ directly.</p>
+<p><strong>The idea, from first principles.</strong> Notice what RREF does to $[A \mid \mathbf{b}]$: it transforms the left block into $I$ and the right block into the solution $\mathbf{x}$. The left side went from $A$ to $I$; the right side went from $\mathbf{b}$ to the answer. This is not a coincidence - whatever row operations turned the left block into identity had to be applied equally to the right block, and the right block absorbed exactly the effect of $A^{-1}$ being applied to $\mathbf{b}$.</p>
+<p>Now run the same process but put $I$ on the right instead of a single $\mathbf{b}$:</p>
+<p>$$[A \mid I] \xrightarrow{\text{RREF}} [I \mid ,?]$$</p>
+<p>The left block becomes $I$ by the same elimination. The right block, starting as $I$, absorbs the same operations - and ends up as $A^{-1}$, for exactly the same reason: whatever turned $A$ into $I$ is, by definition, $A^{-1}$, and applying it to $I$ gives $A^{-1} \cdot I = A^{-1}$.</p>
+<p>Reading it column by column makes this concrete. The $j$-th column of $I$ is $\mathbf{e}_j$. So the $j$-th column of $[A \mid I]$ on the right is just $\mathbf{e}_j$ - a single right-hand side. After RREF, that column becomes the solution $\mathbf{p}_j$ to $A\mathbf{p}_j = \mathbf{e}_j$. And $A^{-1}$ is precisely the matrix whose $j$-th column is the solution to $A\mathbf{p}_j = \mathbf{e}_j$. So the right block after reduction is $A^{-1}$, column by column.</p>
+<p>The matrix $A^{-1}$ satisfies $A \cdot A^{-1} = I$. We can solve all $n$ columns simultaneously by augmenting $A$ with the full identity matrix and reducing to RREF:</p>
+<p>$$[A \mid I] \xrightarrow{\text{RREF}} [I \mid A^{-1}].$$</p>
+<p><strong>Why this works (algebraically).</strong> Each row operation is left-multiplication by an invertible elementary matrix $E_k$. If the sequence of operations reduces $A$ to $I$: $E_r \cdots E_1 A = I$, then $E_r \cdots E_1 = A^{-1}$. Applying those same operations to the right block: $E_r \cdots E_1 \cdot I = A^{-1}$. The right block becomes $A^{-1}$.</p>
+<h3 id="worked-example">Worked Example</h3>
+<p>Let $A = \begin{pmatrix} 1 &amp; 0 &amp; 1 \\ 0 &amp; 2 &amp; 1 \\ 1 &amp; 1 &amp; 1 \end{pmatrix}$. Form the augmented matrix:</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 \\ 0 &amp; 2 &amp; 1 &amp; 0 &amp; 1 &amp; 0 \\ 1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 1 \end{array}\right)$$</p>
+<p>$R_3 \leftarrow R_3 - R_1$ (zero out position $(3,1)$):</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 \\ 0 &amp; 2 &amp; 1 &amp; 0 &amp; 1 &amp; 0 \\ 0 &amp; 1 &amp; 0 &amp; -1 &amp; 0 &amp; 1 \end{array}\right)$$</p>
+<p>$R_2 \leftrightarrow R_3$ (bring the simpler pivot into position):</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 &amp; -1 &amp; 0 &amp; 1 \\ 0 &amp; 2 &amp; 1 &amp; 0 &amp; 1 &amp; 0 \end{array}\right)$$</p>
+<p>$R_3 \leftarrow R_3 - 2R_2$:</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 &amp; -1 &amp; 0 &amp; 1 \\ 0 &amp; 0 &amp; 1 &amp; 2 &amp; 1 &amp; -2 \end{array}\right)$$</p>
+<p>$R_1 \leftarrow R_1 - R_3$ (eliminate above the third pivot):</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 0 &amp; 0 &amp; -1 &amp; -1 &amp; 2 \\ 0 &amp; 1 &amp; 0 &amp; -1 &amp; 0 &amp; 1 \\ 0 &amp; 0 &amp; 1 &amp; 2 &amp; 1 &amp; -2 \end{array}\right)$$</p>
+<p>The left block is $I$, so the right block is:</p>
+<p>$$A^{-1} = \begin{pmatrix} -1 &amp; -1 &amp; 2 \\ -1 &amp; 0 &amp; 1 \\ 2 &amp; 1 &amp; -2 \end{pmatrix}.$$</p>
+<p>Verify: $A \cdot (-1, -1, 2)^T = ((-1+0+2), (0-2+2), (-1-1+2))^T = (1, 0, 0)^T = \mathbf{e}_1$. ✓</p>
+<h3 id="when-no-inverse-exists">When No Inverse Exists</h3>
+<p>If $A$ is singular, forward elimination will produce a zero row in the left block while the corresponding row in the right block is nonzero. That row represents the equation $0 = c$ for some $c \neq 0$: the sub-system $A\mathbf{x} = \mathbf{e}_j$ has no solution, and no $j$-th column of $A^{-1}$ can be constructed.</p>
+<p><strong>Example:</strong> $A = \begin{pmatrix} 1 &amp; 2 &amp; 3 \\ 4 &amp; 5 &amp; 6 \\ 7 &amp; 8 &amp; 9 \end{pmatrix}$ (each row is an arithmetic progression with common difference 3; rank 2).</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 2 &amp; 3 &amp; 1 &amp; 0 &amp; 0 \\ 4 &amp; 5 &amp; 6 &amp; 0 &amp; 1 &amp; 0 \\ 7 &amp; 8 &amp; 9 &amp; 0 &amp; 0 &amp; 1 \end{array}\right)$$</p>
+<p>$R_2 \leftarrow R_2 - 4R_1$, $R_3 \leftarrow R_3 - 7R_1$:</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 2 &amp; 3 &amp; 1 &amp; 0 &amp; 0 \\ 0 &amp; -3 &amp; -6 &amp; -4 &amp; 1 &amp; 0 \\ 0 &amp; -6 &amp; -12 &amp; -7 &amp; 0 &amp; 1 \end{array}\right)$$</p>
+<p>$R_3 \leftarrow R_3 - 2R_2$:</p>
+<p>$$\left(\begin{array}{ccc|ccc} 1 &amp; 2 &amp; 3 &amp; 1 &amp; 0 &amp; 0 \\ 0 &amp; -3 &amp; -6 &amp; -4 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; 1 &amp; -2 &amp; 1 \end{array}\right)$$</p>
+<p>Row 3&rsquo;s left block is all zeros - no third pivot. But row 3&rsquo;s right block is $(1, -2, 1) \neq \mathbf{0}$. For each of the three sub-systems this row says $0 = 1$, $0 = -2$, $0 = 1$ respectively - each a contradiction. None of the three columns of $A^{-1}$ can be solved for; $A^{-1}$ does not exist.</p>
+<p>The rule is clean: <strong>if elimination on $[A \mid I]$ ever reaches a column where the entire sub-column at and below the pivot position is zero - so no row swap can rescue it - then $A$ is singular and has no inverse.</strong> A zero at the pivot position alone is not enough; that might just require a row swap. Singularity is confirmed only when there is no nonzero entry anywhere below (or at) that pivot position, leaving that column without a pivot no matter what.</p>
+<hr>
+<h2 id="what-elimination-actually-does-a--lu">What Elimination Actually Does: $A = LU$</h2>
+<h3 id="the-intuition">The Intuition</h3>
+<p>Every time Gaussian elimination subtracts a multiple of one row from another, it is doing something reversible: it is recording exactly how to undo that step. The central insight of $LU$ factorization is that these &ldquo;undo instructions&rdquo; - the multipliers - assemble into a lower triangular matrix $L$, and the result of elimination is the upper triangular matrix $U$. Together: $A = LU$.</p>
+<p>Why is this useful? Because solving $A\mathbf{x} = \mathbf{b}$ requires only forward elimination and back substitution - $O(n^3)$ work. But once you have $L$ and $U$, you can solve for any new $\mathbf{b}$ in $O(n^2)$: no elimination needed again. For a problem with hundreds of right-hand sides and the same $A$, this is a massive saving. It is also the reason $LU$ factorization is what numerical libraries (NumPy, LAPACK, MATLAB) actually store when you &ldquo;solve a linear system.&rdquo;</p>
+<h3 id="where-l-comes-from">Where $L$ Comes From</h3>
+<p>Each elimination step subtracts $m_{ij}$ times row $i$ from row $j$ to zero out position $(j, i)$. The multiplier $m_{ji}$ is just the ratio:</p>
+<p>$$m_{ji} = \frac{a_{ji}}{a_{ii}}$$</p>
+<p>where $a_{ii}$ is the current pivot. After using row $i$ to clear column $i$ in all rows below, that multiplier is set aside. At the end of all elimination, build a matrix $L$ by placing each multiplier $m_{ji}$ at position $(j, i)$ below the diagonal, and putting 1s on the diagonal:</p>
+<p>$$L_{ji} = m_{ji} \quad (j &gt; i), \qquad L_{ii} = 1, \qquad L_{ji} = 0 \quad (j &lt; i).$$</p>
+<p>The claim is that this $L$, multiplied by the triangular result $U$, exactly reconstructs $A$. The rest of this section builds this up step by step.</p>
+<h3 id="step-by-step-tracking-one-elimination-as-a-matrix-operation">Step-by-Step: Tracking One Elimination as a Matrix Operation</h3>
+<p>From the earlier section on elementary matrices: subtracting $m$ times row $i$ from row $j$ is left-multiplication by:</p>
+<p>$$E_{ji}(m) = I \text{ with } -m \text{ at position } (j,i).$$</p>
+<p>The inverse of this operation (add $m$ times row $i$ back to row $j$) is:</p>
+<p>$$E_{ji}(m)^{-1} = I \text{ with } +m \text{ at position } (j,i).$$</p>
+<p>Applying a sequence of such operations reduces $A$ to $U$:</p>
+<p>$$E_k \cdots E_2 E_1 , A = U.$$</p>
+<p>Multiply both sides on the left by $E_1^{-1}, E_2^{-1}, \ldots, E_k^{-1}$ in order:</p>
+<p>$$A = E_1^{-1} E_2^{-1} \cdots E_k^{-1} , U.$$</p>
+<p>Define $L = E_1^{-1} E_2^{-1} \cdots E_k^{-1}$. The key fact: when there are no row swaps and the operations are applied left to right column by column, the inverses multiply together cleanly - each $+m_{ji}$ just drops into position $(j,i)$ of $L$ without disturbing any other entry. The product of all the inverses is exactly the lower triangular matrix with the multipliers below the diagonal and 1s on the diagonal.</p>
+<h3 id="worked-example-in-full-detail">Worked Example in Full Detail</h3>
+<p>We eliminate $A$ from earlier:</p>
+<p>$$A = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 2 &amp; 5 &amp; 2 \\ 1 &amp; 5 &amp; 9 \end{pmatrix}$$</p>
+<p><strong>Step 1: Zero out column 1, rows 2 and 3.</strong></p>
+<p>Multiplier for row 2: $m_{21} = 2/1 = 2$. Operation: $R_2 \leftarrow R_2 - 2 R_1$.</p>
+<p>Multiplier for row 3: $m_{31} = 1/1 = 1$. Operation: $R_3 \leftarrow R_3 - 1 R_1$.</p>
+<p>As elementary matrices:</p>
+<p>$$E_{21} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ -2 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}, \qquad E_{31} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ -1 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>After both operations, the matrix becomes:</p>
+<p>$$\begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 3 &amp; 9 \end{pmatrix}$$</p>
+<p>Record: $m_{21} = 2$ goes to position $(2,1)$ of $L$. $m_{31} = 1$ goes to position $(3,1)$ of $L$.</p>
+<p><strong>Step 2: Zero out column 2, row 3.</strong></p>
+<p>The current pivot for column 2 is the $(2,2)$ entry, which is 1.</p>
+<p>Multiplier for row 3: $m_{32} = 3/1 = 3$. Operation: $R_3 \leftarrow R_3 - 3 R_2$.</p>
+<p>As an elementary matrix:</p>
+<p>$$E_{32} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; -3 &amp; 1 \end{pmatrix}$$</p>
+<p>After this operation:</p>
+<p>$$U = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 0 &amp; 3 \end{pmatrix}$$</p>
+<p>Record: $m_{32} = 3$ goes to position $(3,2)$ of $L$.</p>
+<p><strong>Assembling $L$.</strong></p>
+<p>Place all three multipliers below the diagonal, 1s on the diagonal, 0s above:</p>
+<p>$$L = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 2 &amp; 1 &amp; 0 \\ 1 &amp; 3 &amp; 1 \end{pmatrix}$$</p>
+<p>The 2 is at $(2,1)$ because it was the multiplier used to clear row 2 using row 1. The 1 is at $(3,1)$ for the same reason on row 3. The 3 is at $(3,2)$ because it cleared row 3 using row 2.</p>
+<p><strong>Verifying $A = LU$.</strong></p>
+<p>$$LU = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 2 &amp; 1 &amp; 0 \\ 1 &amp; 3 &amp; 1 \end{pmatrix} \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 0 &amp; 3 \end{pmatrix}$$</p>
+<p>Row 1 of $LU$: $(1)(1,2,0) + (0)(\cdots) + (0)(\cdots) = (1, 2, 0)$. Matches row 1 of $A$.</p>
+<p>Row 2 of $LU$: $(2)(1,2,0) + (1)(0,1,2) + (0)(\cdots) = (2,4,0) + (0,1,2) = (2, 5, 2)$. Matches row 2 of $A$.</p>
+<p>Row 3 of $LU$: $(1)(1,2,0) + (3)(0,1,2) + (1)(0,0,3) = (1,2,0) + (0,3,6) + (0,0,3) = (1, 5, 9)$. Matches row 3 of $A$.</p>
+<p>$$LU = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 2 &amp; 5 &amp; 2 \\ 1 &amp; 5 &amp; 9 \end{pmatrix} = A \checkmark$$</p>
+<p>Why does this work out so cleanly? The row 2 of $L$ says: row 2 of $A$ is $2 \times$ (row 1 of $U$) $+ 1 \times$ (row 2 of $U$). That is exactly what we did during elimination - row 2 of $A$ was row 1 scaled by 2 (the part we subtracted) plus the result row 2 of $U$ (what remained). $L$ encodes the &ldquo;recipe&rdquo; for reconstructing each row of $A$ from the rows of $U$, using the multipliers as the coefficients.</p>
+<h3 id="using-lu-to-solve-multiple-right-hand-sides">Using $LU$ to Solve Multiple Right-Hand Sides</h3>
+<p>Given $A = LU$, the system $A\mathbf{x} = \mathbf{b}$ becomes $LU\mathbf{x} = \mathbf{b}$. Let $\mathbf{y} = U\mathbf{x}$. Then:</p>
+<ol>
+<li><strong>Forward substitution:</strong> Solve $L\mathbf{y} = \mathbf{b}$. Since $L$ is lower triangular, this goes top to bottom: $y_1$ is immediate from row 1, then $y_2$ from row 2 using $y_1$, and so on.</li>
+<li><strong>Back substitution:</strong> Solve $U\mathbf{x} = \mathbf{y}$. Since $U$ is upper triangular, go bottom to top.</li>
+</ol>
+<p>Each stage costs $O(n^2)$. Factoring $A$ into $LU$ costs $O(n^3)$ once. Every subsequent solve for a new $\mathbf{b}$ costs only $O(n^2)$.</p>
+<p><strong>Worked forward substitution</strong> for $\mathbf{b} = (5, 14, 20)^T$:</p>
+<p>$$L\mathbf{y} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 2 &amp; 1 &amp; 0 \\ 1 &amp; 3 &amp; 1 \end{pmatrix} \begin{pmatrix} y_1 \\ y_2 \\ y_3 \end{pmatrix} = \begin{pmatrix} 5 \\ 14 \\ 20 \end{pmatrix}$$</p>
+<ul>
+<li>Row 1: $y_1 = 5$.</li>
+<li>Row 2: $2(5) + y_2 = 14 \Rightarrow y_2 = 4$.</li>
+<li>Row 3: $1(5) + 3(4) + y_3 = 20 \Rightarrow y_3 = 3$.</li>
+</ul>
+<p>So $\mathbf{y} = (5, 4, 3)^T$. Notice: these are exactly the right-hand side values that appeared during forward elimination earlier. That is not a coincidence - forward substitution through $L$ is just replaying the elimination steps on $\mathbf{b}$.</p>
+<p><strong>Worked back substitution</strong> for $U\mathbf{x} = (5, 4, 3)^T$:</p>
+<p>$$U\mathbf{x} = \begin{pmatrix} 1 &amp; 2 &amp; 0 \\ 0 &amp; 1 &amp; 2 \\ 0 &amp; 0 &amp; 3 \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \\ x_3 \end{pmatrix} = \begin{pmatrix} 5 \\ 4 \\ 3 \end{pmatrix}$$</p>
+<ul>
+<li>Row 3: $3 x_3 = 3 \Rightarrow x_3 = 1$.</li>
+<li>Row 2: $x_2 + 2(1) = 4 \Rightarrow x_2 = 2$.</li>
+<li>Row 1: $x_1 + 2(2) + 0(1) = 5 \Rightarrow x_1 = 1$.</li>
+</ul>
+<p>Solution: $(x_1, x_2, x_3) = (1, 2, 1)$, matching what direct elimination gave. The $LU$ factorization stores the complete elimination process so it never needs to be repeated.</p>
+<hr>
+<h2 id="the-connection-back-to-vector-spaces">The Connection Back to Vector Spaces</h2>
+<p>Gaussian elimination is not just a solving algorithm. It reveals the complete structure of a linear map.</p>
+<p><strong>Rank from pivots.</strong> The number of pivots equals the rank of $A$: the dimension of the column space. Pivot columns of $A$ (the original columns, not the eliminated version) form a basis for the column space.</p>
+<p><strong>Nullity from free variables.</strong> The number of free variables equals the nullity: the dimension of the null space. RREF makes null space vectors explicit - set one free variable to 1 and all others to 0, solve for pivot variables.</p>
+<p>Why does this equal the dimension? The intuition: free variables are genuinely independent degrees of freedom. Each one can be set to any value without affecting the others, and once the free variables are chosen, the pivot variables are forced (RREF expresses each pivot variable as a fixed linear combination of the free ones). So the null space has exactly as many independent directions as there are free variables.</p>
+<p>The proof constructs a basis for the null space explicitly. Suppose there are $k$ free variables and $r = n - k$ pivot variables. Label the free variables $f_1, \ldots, f_k$. For each $j = 1, \ldots, k$, define a vector $\mathbf{v}_j$ by setting free variable $f_j$ to 1, all other free variables to 0, and solving for the pivot variables from the RREF with zero right-hand side. This gives a unique solution because RREF expresses each pivot variable as a linear combination of the free variables.</p>
+<p><strong>Each $\mathbf{v}_j$ is in the null space.</strong> It was constructed by solving $A\mathbf{x} = \mathbf{0}$, so $A\mathbf{v}_j = \mathbf{0}$ by construction.</p>
+<p><strong>The $\mathbf{v}_j$ are linearly independent.</strong> Suppose $c_1 \mathbf{v}_1 + \cdots + c_k \mathbf{v}_k = \mathbf{0}$. Look at the component for free variable $f_j$: in $\mathbf{v}_j$ it equals 1, in every other $\mathbf{v}_i$ with $i \neq j$ it equals 0 (we set exactly one free variable to 1 per basis vector). So the $f_j$ component of the linear combination is $c_j \cdot 1 = c_j$. For the sum to be $\mathbf{0}$, we need $c_j = 0$ for every $j$. The vectors are independent.</p>
+<p><strong>The $\mathbf{v}_j$ span the null space.</strong> Let $\mathbf{x}$ be any null space vector, and let $\alpha_j$ denote its value at free variable $f_j$. Form $\mathbf{y} = \mathbf{x} - \alpha_1 \mathbf{v}_1 - \cdots - \alpha_k \mathbf{v}_k$. This is in the null space. The value of $\mathbf{y}$ at free variable $f_j$ is $\alpha_j - \alpha_j \cdot 1 = 0$, so all free variables of $\mathbf{y}$ are zero. But RREF pins each pivot variable as a linear combination of the free variables: if all free variables are zero, all pivot variables are zero too. So $\mathbf{y} = \mathbf{0}$, meaning $\mathbf{x} = \alpha_1 \mathbf{v}_1 + \cdots + \alpha_k \mathbf{v}_k$.</p>
+<p>Since ${\mathbf{v}_1, \ldots, \mathbf{v}_k}$ is linearly independent and spans the null space, it is a basis. The dimension of the null space is exactly $k$, the number of free variables.</p>
+<p><strong>Rank-nullity.</strong> Every column is either a pivot column or a free-variable column. So rank plus nullity equals the total number of columns: $n$. Gaussian elimination proves rank-nullity constructively - it literally partitions the columns into two groups.</p>
+<p><strong>Invertibility.</strong> $A$ is invertible if and only if every column has a pivot - i.e., rank equals $n$. In that case there are no free variables, the null space is $\{\mathbf{0}\}$, and every $\mathbf{b}$ has a unique solution. The $LU$ factorization has no zero pivots.</p>
+<hr>
+<h2 id="the-rigorous-underpinning">The Rigorous Underpinning</h2>
+<h3 id="elementary-matrices-what-they-are">Elementary Matrices: What They Are</h3>
+<p>An <strong>elementary matrix</strong> is the identity matrix $I$ with exactly one modification - one column changed to encode a single row operation. There are three types, one per row operation.</p>
+<h3 id="the-column-interpretation-why-left-multiplication-performs-a-row-operation">The Column Interpretation: Why Left-Multiplication Performs a Row Operation</h3>
+<p>Before defining the three types, we need the right lens to see why left-multiplication works. The key is the <strong>column interpretation of matrix multiplication</strong>.</p>
+<p>When you multiply a matrix $E$ by a vector $\mathbf{b} = (b_1, b_2, \ldots, b_n)^T$, the result is a linear combination of the columns of $E$, with the entries of $\mathbf{b}$ as the weights:</p>
+<p>$$E\mathbf{b} = b_1 \mathbf{c}_1 + b_2 \mathbf{c}_2 + \cdots + b_n \mathbf{c}_n$$</p>
+<p>where $\mathbf{c}_k$ denotes column $k$ of $E$.</p>
+<p>Now, the product $EA$ is just $E$ applied to each column of $A$ separately. Column $k$ of $EA$ = $E \times$ (column $k$ of $A$). So the formula above governs every column of the result simultaneously.</p>
+<p><strong>Why the identity matrix does nothing.</strong> The identity matrix has $\mathbf{c}_k = \mathbf{e}_k$ (the $k$-th standard basis vector: 1 at position $k$, zeros elsewhere). So $I\mathbf{b} = b_1 \mathbf{e}_1 + \cdots + b_n \mathbf{e}_n$. Each term $b_k \mathbf{e}_k$ puts $b_k$ at position $k$ and zeros everywhere else. Summing: position $k$ gets exactly $b_k$. The vector is unchanged.</p>
+<p><strong>What changes when we modify one column.</strong> An elementary matrix is $I$ with exactly one column altered. All terms in the sum $b_1 \mathbf{c}_1 + \cdots + b_n \mathbf{c}_n$ behave exactly like the identity - except the one term involving the modified column. That single term carries all the action.</p>
+<hr>
+<p><strong>Type 1: Row addition</strong> (subtract $m$ times row $j$ from row $i$, i.e., $R_i \leftarrow R_i - m R_j$).</p>
+<p>Start with $I$ and replace column $j$ with $\mathbf{e}_j - m\mathbf{e}_i$: keep the 1 at position $j$, but add $-m$ at position $i$. For a $3 \times 3$ matrix, subtracting $m$ times row 2 from row 1 ($R_1 \leftarrow R_1 - m R_2$) gives:</p>
+<p>$$E = \begin{pmatrix} 1 &amp; -m &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>Column 1 = $\mathbf{e}_1$, column 2 = $\mathbf{e}_2 - m\mathbf{e}_1$, column 3 = $\mathbf{e}_3$.</p>
+<p><strong>Why does left-multiplication by this perform the row operation?</strong> Take any column of $A$ and call its entries $b_1, b_2, b_3$. Compute $E\mathbf{b}$ using the column interpretation:</p>
+<p>$$E\mathbf{b} = b_1 \mathbf{e}_1 + b_2 (\mathbf{e}_2 - m\mathbf{e}_1) + b_3 \mathbf{e}_3$$</p>
+<p>Expand and collect by position:</p>
+<ul>
+<li>The $b_1 \mathbf{e}_1$ term puts $b_1$ at position 1 and zeros elsewhere.</li>
+<li>The $b_2(\mathbf{e}_2 - m\mathbf{e}_1)$ term puts $b_2$ at position 2, but also $-m b_2$ at position 1.</li>
+<li>The $b_3 \mathbf{e}_3$ term puts $b_3$ at position 3 and zeros elsewhere.</li>
+</ul>
+<p>Sum everything up position by position:</p>
+<ul>
+<li><strong>Position 1:</strong> $b_1 + (-m b_2) = b_1 - m b_2$. This is the modified row.</li>
+<li><strong>Position 2:</strong> $b_2$. Unchanged.</li>
+<li><strong>Position 3:</strong> $b_3$. Unchanged.</li>
+</ul>
+<p>Position 1 became $b_1 - m b_2$ - which is exactly entry 1 of (row 1) $- m \times$ (row 2). The $-m b_2$ came entirely from the modified column: the only term that places anything at position 1 beyond $b_1$ is $b_2 \cdot (\mathbf{e}_2 - m\mathbf{e}_1)$, because that column has a $-m$ at position 1.</p>
+<p>Since this holds for every column of $A$ (with $b_1, b_2, b_3$ being the entries of whichever column we pick), every column of $EA$ has its first entry equal to (original first entry) $- m \times$ (original second entry). That is precisely the row operation $R_1 \leftarrow R_1 - m R_2$ applied to all columns at once - which is the same as applying it to the matrix $A$.</p>
+<p><strong>Inverse:</strong> replace $-m$ with $+m$ in column $j$. The modified column becomes $\mathbf{e}_j + m\mathbf{e}_i$, which undoes the subtraction by adding back $m$ times row $j$:</p>
+<p>$$E^{-1} = \begin{pmatrix} 1 &amp; m &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>The inverse is obtained by flipping the sign of the single off-diagonal entry. No matrix inversion needed.</p>
+<hr>
+<p><strong>Type 2: Row swap</strong> (exchange rows $i$ and $j$).</p>
+<p>Start with $I$ and swap columns $i$ and $j$. For swapping rows 2 and 3:</p>
+<p>$$P_{23} = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 1 \\ 0 &amp; 1 &amp; 0 \end{pmatrix}$$</p>
+<p>Column 1 = $\mathbf{e}_1$, column 2 = $\mathbf{e}_3$, column 3 = $\mathbf{e}_2$.</p>
+<p>For any column of $A$ with entries $(b_1, b_2, b_3)$:</p>
+<p>$$P_{23}\mathbf{b} = b_1\mathbf{e}_1 + b_2\mathbf{e}_3 + b_3\mathbf{e}_2$$</p>
+<ul>
+<li>Position 1 gets $b_1$. Unchanged.</li>
+<li>Position 2 gets $b_3$ (came from $b_3 \mathbf{e}_2$, whose component at position 2 is 1). This is the old row 3.</li>
+<li>Position 3 gets $b_2$ (came from $b_2 \mathbf{e}_3$, whose component at position 3 is 1). This is the old row 2.</li>
+</ul>
+<p>Rows 2 and 3 swapped. Every column of $A$ gets the same treatment, so the entire matrix has rows 2 and 3 exchanged.</p>
+<p><strong>Inverse:</strong> swap again. $P_{23}^{-1} = P_{23}$ - swapping twice returns to the original. Every row-swap matrix is its own inverse.</p>
+<hr>
+<p><strong>Type 3: Row scaling</strong> (multiply row $i$ by a nonzero scalar $c$).</p>
+<p>Start with $I$ and replace column $i$&rsquo;s entry at position $i$ (the diagonal) with $c$. Scaling row 2 by $c$:</p>
+<p>$$D_2(c) = \begin{pmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; c &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}$$</p>
+<p>Column 2 = $c\mathbf{e}_2$ (scaled standard basis vector).</p>
+<p>For any column of $A$ with entries $(b_1, b_2, b_3)$:</p>
+<p>$$D_2(c)\mathbf{b} = b_1\mathbf{e}_1 + b_2 (c\mathbf{e}_2) + b_3\mathbf{e}_3$$</p>
+<p>Position 2 gets $c b_2$; everything else is unchanged. Row 2 of every column is scaled by $c$, so row 2 of $A$ is scaled by $c$.</p>
+<p><strong>Inverse:</strong> scale by $1/c$. The condition $c \neq 0$ (required for this operation to be legal) is exactly the condition needed for the inverse to exist.</p>
+<hr>
+<h3 id="stringing-operations-together-a--lu">Stringing Operations Together: $A = LU$</h3>
+<p>Gaussian elimination applies a sequence of Type-1 operations $E_1, E_2, \ldots, E_k$ (plus possible swaps handled separately) to reduce $A$ to upper triangular $U$:</p>
+<p>$$E_k \cdots E_2 E_1 A = U.$$</p>
+<p>Each $E_i$ is invertible, so:</p>
+<p>$$A = E_1^{-1} E_2^{-1} \cdots E_k^{-1} U.$$</p>
+<p>Define $L = E_1^{-1} E_2^{-1} \cdots E_k^{-1}$. Each $E_i^{-1}$ is a Type-1 elementary matrix with the sign of the off-diagonal entry flipped. Multiplying lower-triangular matrices (each with 1s on the diagonal and a single off-diagonal entry) produces a lower-triangular matrix. The multiplier $m_{ij}$ used to zero out position $(i,j)$ ends up sitting at position $(i,j)$ of $L$, with its sign restored. This is why $L$&rsquo;s below-diagonal entries are exactly the multipliers recorded during elimination - no additional computation needed.</p>
+<p><strong>Why operations preserve solutions (formal).</strong> $A\mathbf{x} = \mathbf{b}$ and $EA\mathbf{x} = E\mathbf{b}$ have identical solution sets. If $\mathbf{x}$ satisfies $A\mathbf{x} = \mathbf{b}$, multiply both sides by $E$: $EA\mathbf{x} = E\mathbf{b}$. Conversely, if $\mathbf{x}$ satisfies $EA\mathbf{x} = E\mathbf{b}$, multiply both sides by $E^{-1}$: $A\mathbf{x} = E^{-1}E\mathbf{b} = \mathbf{b}$. Since $E$ is invertible, both directions hold.</p>
+<p><strong>Pivoting and $PA = LU$.</strong> When row swaps are needed, their swap matrices (Type-2 operations) accumulate into a single permutation matrix $P$. The factorization becomes $PA = LU$: first permute the rows of $A$ into the right order, then the remaining elimination runs without any swaps. Every invertible matrix has a $PA = LU$ factorization.</p>
+<p><strong>Uniqueness of RREF.</strong> Every matrix has exactly one RREF. No matter what sequence of row operations you apply, if you reduce to RREF you always get the same result. This makes RREF a canonical form: two matrices have the same RREF if and only if they have the same row space.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Write augmented $[A \mid \mathbf{b}]$</td>
+<td>Encode both $A$ and $\mathbf{b}$ in one matrix</td>
+</tr>
+<tr>
+<td>Forward elimination</td>
+<td>Create zeros below each pivot; record multipliers</td>
+</tr>
+<tr>
+<td>Row swap if pivot is zero</td>
+<td>Find the largest entry in the column below; swap</td>
+</tr>
+<tr>
+<td>No possible pivot</td>
+<td>Free variable (if RHS is 0) or no solution (if RHS is nonzero)</td>
+</tr>
+<tr>
+<td>Back substitution</td>
+<td>Solve triangular system from bottom to top</td>
+</tr>
+<tr>
+<td>RREF (optional)</td>
+<td>Eliminate above pivots too; read solution directly</td>
+</tr>
+<tr>
+<td>$A = LU$</td>
+<td>Multipliers form $L$; triangular result is $U$</td>
+</tr>
+<tr>
+<td>Count pivots</td>
+<td>Rank = dim(col space); $n$ - rank = nullity = dim(null space)</td>
+</tr>
+</tbody>
+</table>
+<p>The algorithm is mechanical: for each column left to right, find a pivot, eliminate below it, record the multiplier. Repeat. The final triangular system tells you everything: whether a solution exists, how many there are, and what they look like.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/determinants/" target="_blank" rel="noopener noreferrer">Determinants - One Number That Tells You Everything About a Linear Map</a>
+</li>
+<li><a href="/posts/linear-transformations/" target="_blank" rel="noopener noreferrer">Linear Transformations - Geometry Encoded as Arithmetic</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

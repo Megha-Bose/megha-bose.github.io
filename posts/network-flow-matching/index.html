@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Network Flow &amp; Matching - The Max, the Min, and Why They&#39;re Equal // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="/css/main.min.50c6a374f84378d37dd5a1ea78cb5b1ddd45f1a6ef4980398d8eb058b23378ad.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://megha-bose.github.io/avatar.jpg"/>
+
+<meta name="twitter:title" content="Network Flow &amp; Matching - The Max, the Min, and Why They&#39;re Equal"/>
+<meta name="twitter:description" content="Helpful context:
+ Shortest Paths - When Greed Works and When It Doesn&rsquo;t  Greedy Algorithms - The Art of Never Looking Back    During World War II, the Soviet Union moved supplies - ammunition, food, fuel - along railroad lines from central cities to the front. US military planners, thinking about how to disrupt the supply chain, wanted to answer a precise question: what is the maximum tonnage of material that can move from the interior to the front per day?"/>
+
+    <meta property="og:title" content="Network Flow &amp; Matching - The Max, the Min, and Why They&#39;re Equal" />
+<meta property="og:description" content="Helpful context:
+ Shortest Paths - When Greed Works and When It Doesn&rsquo;t  Greedy Algorithms - The Art of Never Looking Back    During World War II, the Soviet Union moved supplies - ammunition, food, fuel - along railroad lines from central cities to the front. US military planners, thinking about how to disrupt the supply chain, wanted to answer a precise question: what is the maximum tonnage of material that can move from the interior to the front per day?" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://megha-bose.github.io/posts/network-flow-matching/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00" />
+
+
+    <meta property="fb:app_id" content="3721256308022480" />
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social app-header-social-primary">
+        
+          
+          <a href="mailto:megh.bose@gmail.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-mail">
+  <title>Email</title>
+  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+      <div class="app-header-social app-header-social-secondary">
+        
+          
+        
+          
+        
+          
+        
+          
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/whimsymeg.art/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Art</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.youtube.com/@Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-youtube">
+  <title>YouTube</title>
+  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://meghabose10.wordpress.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-globe">
+  <title>Old Website</title>
+  <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+          </a>
+          
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="https://megha-bose.github.io/categories/algorithms/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">Network Flow &amp; Matching - The Max, the Min, and Why They&#39;re Equal</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Aug 2021
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          15 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/shortest-paths-dijkstra-bellman-ford/" target="_blank" rel="noopener noreferrer">Shortest Paths - When Greed Works and When It Doesn&rsquo;t</a>
+</li>
+<li><a href="/posts/greedy-algorithms/" target="_blank" rel="noopener noreferrer">Greedy Algorithms - The Art of Never Looking Back</a>
+</li>
+</ul>
+<hr>
+<p>During World War II, the Soviet Union moved supplies - ammunition, food, fuel - along railroad lines from central cities to the front. US military planners, thinking about how to disrupt the supply chain, wanted to answer a precise question: what is the maximum tonnage of material that can move from the interior to the front per day?</p>
+<p>And they noticed something: that number is exactly equal to a completely different quantity - the minimum number of rail lines you&rsquo;d need to cut to halt all supply movement entirely.</p>
+<p>These two problems, which seem unrelated at first, have the same answer. In 1956, L. R. Ford Jr. and D. R. Fulkerson proved this rigorously. Their <strong>max-flow min-cut theorem</strong> is one of the most elegant results in combinatorial optimization - and it has applications far beyond military logistics. It also turns out to be a special case of something much deeper: <strong>LP duality</strong>.</p>
+<hr>
+<h2 id="flow-networks">Flow Networks</h2>
+<p>A <strong>flow network</strong> is a directed graph $G = (V, E)$ with:</p>
+<ul>
+<li>A <strong>capacity function</strong> $c(u, v) \geq 0$ on each edge</li>
+<li>A designated <strong>source</strong> $s$ (where flow originates)</li>
+<li>A designated <strong>sink</strong> $t$ (where flow terminates)</li>
+</ul>
+<p>A <strong>flow</strong> is an assignment $f(u, v)$ to each edge satisfying two conditions:</p>
+<p><strong>Capacity constraint:</strong> $0 \leq f(u, v) \leq c(u, v)$ for all edges.</p>
+<p><strong>Flow conservation:</strong> For every vertex $v$ other than $s$ and $t$, the total flow in equals the total flow out:
+$$\sum_u f(u, v) = \sum_w f(v, w)$$</p>
+<p>The <strong>value</strong> of the flow is the total amount leaving the source:
+$$|f| = \sum_v f(s, v) - \sum_v f(v, s)$$</p>
+<p><strong>The max-flow problem:</strong> Find a feasible flow of maximum value.</p>
+<p><strong>Example.</strong> Consider the following network with edge capacities labeled.</p>
+<div class="mermaid">
+flowchart LR
+    s(["s"]) -->|4| A(["A"])
+    s -->|2| B(["B"])
+    A -->|3| t(["t"])
+    A -->|1| B
+    B -->|2| t
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The network can carry at most 5 units from $s$ to $t$: route 3 units along $s \to A \to t$ (saturating $A \to t$) and 2 units along $s \to B \to t$ (saturating both $s \to B$ and $B \to t$). One unit of capacity remains on $s \to A$, but every path continuing from $A$ toward $t$ is blocked. Maximum flow is 5. We will see this confirmed by the min-cut shortly.</p>
+<hr>
+<h2 id="the-residual-graph">The Residual Graph</h2>
+<p>To reason about how to improve a flow, we use the <strong>residual graph</strong> $G_f$. For each edge $(u, v)$ with capacity $c$ and current flow $f$:</p>
+<ul>
+<li>Add a <strong>forward edge</strong> $(u, v)$ with residual capacity $c - f$ (room to push more flow)</li>
+<li>Add a <strong>backward edge</strong> $(v, u)$ with residual capacity $f$ (room to cancel existing flow)</li>
+</ul>
+<p>An <strong>augmenting path</strong> is any path from $s$ to $t$ in the residual graph. The <strong>bottleneck</strong> of the path is the minimum residual capacity along it. Pushing flow along an augmenting path increases the total flow by the bottleneck amount.</p>
+<p>After routing 3 units $s \to A \to t$ and 2 units $s \to B \to t$, the residual graph (showing only edges with nonzero residual capacity) is:</p>
+<div class="mermaid">
+flowchart LR
+    s(["s"]) -->|"1"| A(["A"])
+    A -->|"3"| s
+    B -->|"2"| s
+    A -->|"1"| B(["B"])
+    t(["t"]) -->|"3"| A
+    t -->|"2"| B
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>From $s$ we can reach $A$ (1 unit of forward capacity), and from $A$ we can reach $B$ (1 unit). But $A \to t$ and $B \to t$ are both saturated: $t$ is unreachable from $s$. No augmenting path exists - the flow is optimal.</p>
+<p>The backward edges (like $A \to s$ with capacity 3) encode how much previously routed flow could be &ldquo;undone&rdquo; if a future path needed to reroute it.</p>
+<hr>
+<h2 id="ford-fulkerson-augmenting-paths">Ford-Fulkerson: Augmenting Paths</h2>
+<p>The Ford-Fulkerson method repeatedly finds augmenting paths and pushes flow along them until no augmenting path remains. Using BFS to find each path (the Edmonds-Karp choice) gives the polynomial $O(VE^2)$ bound:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque, defaultdict
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">ford_fulkerson</span>(capacity, source, sink):
+    <span style="color:#75715e"># capacity[u][v] = capacity of edge u -&gt; v</span>
+    <span style="color:#75715e"># Build residual graph as a copy of capacity (missing edges default to 0)</span>
+    residual <span style="color:#f92672">=</span> defaultdict(<span style="color:#66d9ef">lambda</span>: defaultdict(int))
+    <span style="color:#66d9ef">for</span> u <span style="color:#f92672">in</span> capacity:
+        <span style="color:#66d9ef">for</span> v, cap <span style="color:#f92672">in</span> capacity[u]<span style="color:#f92672">.</span>items():
+            residual[u][v] <span style="color:#f92672">+=</span> cap
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bfs</span>():
+        <span style="color:#75715e"># Returns parent map if augmenting path exists, else None</span>
+        parent <span style="color:#f92672">=</span> {source: <span style="color:#66d9ef">None</span>}
+        queue <span style="color:#f92672">=</span> deque([source])
+        <span style="color:#66d9ef">while</span> queue:
+            u <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+            <span style="color:#66d9ef">for</span> v, cap <span style="color:#f92672">in</span> residual[u]<span style="color:#f92672">.</span>items():
+                <span style="color:#66d9ef">if</span> v <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> parent <span style="color:#f92672">and</span> cap <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>:
+                    parent[v] <span style="color:#f92672">=</span> u
+                    <span style="color:#66d9ef">if</span> v <span style="color:#f92672">==</span> sink:
+                        <span style="color:#66d9ef">return</span> parent
+                    queue<span style="color:#f92672">.</span>append(v)
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">None</span>
+
+    max_flow <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">while</span> <span style="color:#66d9ef">True</span>:
+        parent <span style="color:#f92672">=</span> bfs()
+        <span style="color:#66d9ef">if</span> parent <span style="color:#f92672">is</span> <span style="color:#66d9ef">None</span>:
+            <span style="color:#66d9ef">break</span>
+        <span style="color:#75715e"># Trace path back from sink to find bottleneck capacity</span>
+        bottleneck <span style="color:#f92672">=</span> float(<span style="color:#e6db74">&#39;inf&#39;</span>)
+        v <span style="color:#f92672">=</span> sink
+        <span style="color:#66d9ef">while</span> v <span style="color:#f92672">!=</span> source:
+            u <span style="color:#f92672">=</span> parent[v]
+            bottleneck <span style="color:#f92672">=</span> min(bottleneck, residual[u][v])
+            v <span style="color:#f92672">=</span> u
+        <span style="color:#75715e"># Push bottleneck units along path, update residual graph</span>
+        v <span style="color:#f92672">=</span> sink
+        <span style="color:#66d9ef">while</span> v <span style="color:#f92672">!=</span> source:
+            u <span style="color:#f92672">=</span> parent[v]
+            residual[u][v] <span style="color:#f92672">-=</span> bottleneck
+            residual[v][u] <span style="color:#f92672">+=</span> bottleneck  <span style="color:#75715e"># backward edge</span>
+            v <span style="color:#f92672">=</span> u
+        max_flow <span style="color:#f92672">+=</span> bottleneck
+
+    <span style="color:#66d9ef">return</span> max_flow
+</code></pre></div><p>When no augmenting path exists from $s$ to $t$ in the residual graph, we have found a maximum flow.</p>
+<p><strong>But why?</strong> This is the content of the max-flow min-cut theorem.</p>
+<hr>
+<h2 id="max-flow-min-cut">Max-Flow Min-Cut</h2>
+<p><strong>Max-flow min-cut theorem.</strong> The value of a maximum flow equals the capacity of a minimum $s$-$t$ cut.</p>
+<p>An <strong>$s$-$t$ cut</strong> $(S, T)$ partitions $V$ into $S$ (containing $s$) and $T$ (containing $t$). Its capacity is the total capacity of edges directed from $S$ to $T$:</p>
+<p>$$\text{cap}(S, T) = \sum_{\substack{u \in S, v \in T \\ (u,v) \in E}} c(u, v)$$</p>
+<p><strong>Flow is always $\leq$ cut capacity.</strong> Any unit of flow traveling from $s$ to $t$ must cross the cut boundary at least once - it starts in $S$ and ends in $T$, so at some point it uses an edge from $S$ to $T$. Since every such crossing uses edge capacity, the total flow is bounded by the total capacity of edges crossing the cut. This holds for every cut: the max flow is a lower bound, every cut is an upper bound.</p>
+<p><strong>At the optimum they meet.</strong> When Ford-Fulkerson terminates, let $S$ = vertices reachable from $s$ in the residual graph, $T = V \setminus S$. Since $t$ is not reachable, $(S, T)$ is a valid cut. Every forward edge from $S$ to $T$ must be saturated - if any residual capacity remained, its endpoint would be in $S$. Every backward edge from $T$ to $S$ carries zero flow - otherwise the residual graph would contain a corresponding forward arc from $S$ reaching further into $T$. Therefore: the current flow value equals this cut&rsquo;s capacity. Since flow $\leq$ any cut and this flow equals this cut, both are optimal simultaneously.</p>
+<p>In the example, $S = \{s, A, B\}$, $T = \{t\}$:</p>
+<div class="mermaid">
+flowchart LR
+    subgraph S ["S = {s, A, B}"]
+        s(["s"])
+        A(["A"])
+        B(["B"])
+    end
+    subgraph T ["T = {t}"]
+        t(["t"])
+    end
+    s -->|4| A
+    s -->|2| B
+    A -.->|"3 - saturated"| t
+    A -->|1| B
+    B -.->|"2 - saturated"| t
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The cut capacity is $c(A, t) + c(B, t) = 3 + 2 = 5$, matching the max flow exactly. The dashed edges are the ones crossing the cut - both saturated, as expected.</p>
+<p><strong>Complexity.</strong> With integer capacities and maximum flow $F$: each augmentation increases the flow by at least 1, so at most $F$ augmentations, each taking $O(E)$ to find a path. Total: $O(EF)$. This is pseudopolynomial - if $F$ is large, this is slow.</p>
+<hr>
+<h2 id="the-lp-view-why-max-equals-min">The LP View: Why Max Equals Min</h2>
+<p>The max-flow min-cut theorem is often presented as a clever combinatorial argument. But it is actually a consequence of <strong>LP duality</strong> - a general theorem about linear programs. Seeing the connection reveals why the equality is structurally inevitable rather than a happy coincidence.</p>
+<h3 id="max-flow-as-a-linear-program">Max-Flow as a Linear Program</h3>
+<p>The max-flow problem has a natural LP formulation. Variables are the edge flows $f(u, v)$; the objective is to maximize the net flow out of $s$:</p>
+<p>$$\textbf{Maximize} \quad \sum_{v} f(s, v)$$</p>
+<p>$$\textbf{subject to} \quad f(u, v) \leq c(u, v) \quad \text{for all } (u, v) \in E \tag{capacity}$$</p>
+<p>$$\sum_{u} f(u, v) = \sum_{w} f(v, w) \quad \text{for all } v \neq s, t \tag{conservation}$$</p>
+<p>$$f(u, v) \geq 0$$</p>
+<p>Every constraint is linear in the flow variables. This is a valid LP with $|E|$ variables.</p>
+<h3 id="the-dual-lp-is-min-cut">The Dual LP Is Min-Cut</h3>
+<p>Every LP has a companion called its <strong>dual</strong>: a new optimization problem whose variables correspond to the constraints of the original. LP strong duality says the optimal values of primal and dual always agree (when both are feasible and bounded, which they are here).</p>
+<p>To build the dual of max-flow, assign a multiplier to each constraint:</p>
+<ul>
+<li>$\alpha(u, v) \geq 0$ for each capacity constraint - think of this as &ldquo;how much of edge $(u, v)$ is in the cut&rdquo;</li>
+<li>$d(v)$ free for each conservation constraint - a &ldquo;potential&rdquo; at vertex $v$, normalized so $d(s) = 1$ and $d(t) = 0$</li>
+</ul>
+<p>Working through the standard dual construction, the dual LP is:</p>
+<p>$$\textbf{Minimize} \quad \sum_{(u,v) \in E} c(u, v) \cdot \alpha(u, v)$$</p>
+<p>$$\textbf{subject to} \quad \alpha(u, v) \geq d(u) - d(v) \quad \text{for all } (u, v) \in E$$</p>
+<p>$$d(s) = 1, \quad d(t) = 0, \quad \alpha(u, v) \geq 0, \quad d(v) \geq 0$$</p>
+<p><strong>Interpreting the dual variables.</strong> Think of $d(v)$ as measuring how firmly $v$ belongs to the source side: $d(s) = 1$ is fully source-side, $d(t) = 0$ is fully sink-side. The constraint $\alpha(u, v) \geq d(u) - d(v)$ says: if edge $(u, v)$ drops in potential (crosses from the source side toward the sink side), you must &ldquo;pay&rdquo; at least the potential drop. The objective minimizes total payment, weighted by capacity.</p>
+<p>In the integer case: $d(v) \in \{0, 1\}$ indicates which side of a cut $v$ belongs to, and $\alpha(u, v) = 1$ for each edge going from $S$ (where $d = 1$) to $T$ (where $d = 0$). The dual objective then equals the cut capacity exactly. So the dual LP is a <strong>fractional relaxation of the min-cut problem</strong>.</p>
+<p>The two programs are:</p>
+<ul>
+<li>Primal: fractional max-flow</li>
+<li>Dual: fractional min-cut</li>
+</ul>
+<p>Strong LP duality immediately gives: <strong>fractional max flow = fractional min cut</strong>.</p>
+<h3 id="integrality-via-total-unimodularity">Integrality via Total Unimodularity</h3>
+<p>LP duality gives the result for fractional solutions, but we want integer flows and integer cuts. This is resolved by total unimodularity.</p>
+<p>The constraint matrix of the max-flow LP is the edge-vertex incidence matrix of a directed graph. It is <strong>totally unimodular (TU)</strong>: every square submatrix has determinant $0$, $+1$, or $-1$. By a classical theorem of LP, when the constraint matrix is TU and all right-hand sides are integers, every extreme point of the feasible polyhedron is an integer vector. Since LP optima occur at extreme points:</p>
+<p>$$\text{LP max flow} = \text{integer max flow}, \qquad \text{LP min cut} = \text{integer min cut}$$</p>
+<p>Combined with LP strong duality:</p>
+<p>$$\text{integer max flow} = \text{integer min cut capacity}$$</p>
+<p>This is the max-flow min-cut theorem - derived entirely from LP structure, with no combinatorial cleverness required.</p>
+<h3 id="complementary-slackness-the-ford-fulkerson-certificate">Complementary Slackness: The Ford-Fulkerson Certificate</h3>
+<p>LP duality comes with an optimality certificate: <strong>complementary slackness</strong>. A primal-dual pair $(f, (d, \alpha))$ is simultaneously optimal if and only if:</p>
+<p><strong>Primal CS:</strong> $\alpha(u, v) &gt; 0 \Rightarrow f(u, v) = c(u, v)$.
+If an edge is &ldquo;in the cut&rdquo; (positive dual weight), it must be saturated.</p>
+<p><strong>Dual CS:</strong> $f(u, v) &gt; 0 \Rightarrow \alpha(u, v) = d(u) - d(v)$.
+If an edge carries flow, the dual constraint must be tight.</p>
+<p>Ford-Fulkerson terminates when $t$ is unreachable from $s$ in the residual. At that moment, define $S$ = reachable vertices from $s$, $T = V \setminus S$, and set $d(v) = 1$ for $v \in S$, $d(v) = 0$ for $v \in T$, $\alpha(u, v) = 1$ for edges from $S$ to $T$.</p>
+<ul>
+<li>Every edge from $S$ to $T$ is saturated (otherwise it would have residual capacity and its endpoint would be reachable into $S$). Primal CS holds.</li>
+<li>Every edge from $T$ to $S$ carries zero flow (otherwise the corresponding backward arc in the residual graph would make that vertex reachable from $s$). Dual CS holds.</li>
+</ul>
+<p>Both conditions are met simultaneously - the current flow and the induced cut are both optimal. Ford-Fulkerson does not merely produce a maximum flow by luck; it terminates precisely when the LP optimality conditions are satisfied.</p>
+<h3 id="the-primal-dual-view-of-augmenting-paths">The Primal-Dual View of Augmenting Paths</h3>
+<p>The <strong>primal-dual method</strong> is a general LP algorithm framework: maintain dual feasibility; find augmenting directions in the &ldquo;tight subgraph&rdquo; (edges where the dual constraint holds with equality); augment the primal; repeat.</p>
+<p>Ford-Fulkerson is exactly this framework applied to flow. The dual solution is the cut potential $d(v)$. Tight edges are those with remaining residual capacity. Augmenting paths are the primal improving directions. When no augmenting path exists, the dual solution certifies optimality through complementary slackness.</p>
+<p>The same primal-dual structure underlies Dijkstra&rsquo;s algorithm (dual variables are shortest-path distances), bipartite matching (dual variables are vertex covers), and many other combinatorial algorithms. What looks like a clever graph trick is, in each case, an instance of one mathematical principle.</p>
+<hr>
+<h2 id="edmonds-karp-polynomial-guarantee">Edmonds-Karp: Polynomial Guarantee</h2>
+<p>Edmonds and Karp fixed the inefficiency of Ford-Fulkerson by always finding augmenting paths using <strong>BFS</strong> (shortest path in terms of number of edges):</p>
+<p><strong>Edmonds-Karp</strong> runs in $O(VE^2)$ time, independent of flow values.</p>
+<p>The key insight: BFS finds the shortest augmenting path. Under BFS, the distance from $s$ to any vertex in the residual graph never decreases across augmentations. Each edge can become a bottleneck at most $O(V)$ times before the $s$-to-$t$ distance strictly increases. Since distances are bounded by $V$, at most $O(VE)$ total augmentations occur. Each takes $O(E)$. Total: $O(VE^2)$.</p>
+<p>This is a polynomial bound, making Edmonds-Karp practical for problems where flow values are large.</p>
+<hr>
+<h2 id="bipartite-matching-via-max-flow">Bipartite Matching via Max-Flow</h2>
+<p>A <strong>bipartite graph</strong> has vertices split into two sets $U$ and $W$ with edges only between sets (never within). A <strong>matching</strong> is a set of edges with no two sharing an endpoint. A <strong>maximum matching</strong> has the largest possible number of edges.</p>
+<p><strong>Reduction to max-flow.</strong> Build a flow network: add source $s$ with edges $c(s, u) = 1$ for each $u \in U$; add sink $t$ with edges $c(w, t) = 1$ for each $w \in W$; set $c(u, w) = 1$ for each $(u, w) \in E$. Run max-flow. The maximum integer flow equals the size of the maximum matching.</p>
+<p>Why does this work? Each unit of flow from $s$ to $t$ represents one matching edge: a unit flows from $s$ into $u$, then along a matching edge to some $w$, then to $t$. The capacity-1 constraints ensure no vertex is used twice.</p>
+<p><strong>König&rsquo;s theorem.</strong> In a bipartite graph:
+$$\text{maximum matching size} = \text{minimum vertex cover size}$$</p>
+<p>A <strong>vertex cover</strong> is a set of vertices touching every edge. This is a direct corollary of max-flow min-cut: a minimum cut in the flow network corresponds exactly to a minimum vertex cover in the bipartite graph. Through the LP lens, König&rsquo;s theorem is LP duality applied to the bipartite matching LP - the same duality principle, a different combinatorial surface.</p>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why do we need backward edges in the residual graph? They feel artificial - why would we ever &ldquo;un-route&rdquo; flow? Without backward edges, the greedy choice of the first augmenting path might be irreversible. Suppose you send flow along path $s \to A \to B \to t$, but the optimal solution needed flow along $s \to A \to C \to t$ and $s \to D \to B \to t$. After routing through $A \to B$, the greedy path has committed that edge. Backward edges let you &ldquo;undo&rdquo; that commitment: a later augmentation can route $s \to D \to B \to A \to C \to t$, where the $B \to A$ backward edge effectively cancels the earlier $A \to B$ routing. The residual graph is not artificial - it encodes all possible ways to reroute existing flow.</p>
+</blockquote>
+<hr>
+<h2 id="applications">Applications</h2>
+<p><strong>Airline scheduling.</strong> Assign aircraft to routes to maximize flights flown subject to maintenance windows, crew hours, and aircraft availability. This reduces to a flow problem on a time-expanded graph.</p>
+<p><strong>Image segmentation.</strong> Model each pixel as a vertex; add edges to source $s$ (foreground) and sink $t$ (background) with capacities encoding how likely each pixel belongs to each class. Add edges between adjacent pixels with capacities encoding color similarity. A minimum $s$-$t$ cut partitions pixels into foreground and background - minimizing the &ldquo;cost&rdquo; of separation while respecting how similar neighboring pixels are. This is the GrabCut algorithm.</p>
+<p><strong>Kidney exchange.</strong> Patients need kidney transplants but their willing donors are incompatible with them. Model donors and patients as vertices; add an edge if donor $D_i$&rsquo;s kidney is compatible with patient $P_j$. Maximum bipartite matching finds the maximum number of transplants that can happen via compatible donor swaps.</p>
+<p><strong>Sports elimination.</strong> Team $i$ is mathematically eliminated if no combination of remaining game outcomes can get them to first place. This reduces to a max-flow problem: if the max flow is less than the total remaining games among a relevant subset of teams, elimination is confirmed.</p>
+<p><strong>Currency arbitrage.</strong> Model currencies as vertices and exchange rates as edge weights $-\log(\text{rate})$. A negative cycle in this graph means a profit-generating sequence of conversions. The same LP duality that underlies max-flow min-cut appears here too: Bellman-Ford&rsquo;s dual variables are exactly the negative-cycle certificates.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Definition</th>
+<th>Key result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flow value</td>
+<td>Net flow leaving source</td>
+<td>Bounded above by every cut capacity</td>
+</tr>
+<tr>
+<td>Residual graph</td>
+<td>Forward and backward residual edges</td>
+<td>Encodes all ways to reroute flow</td>
+</tr>
+<tr>
+<td>Augmenting path</td>
+<td>$s$-$t$ path in residual graph</td>
+<td>Flow is max iff none exist</td>
+</tr>
+<tr>
+<td>Max-flow min-cut</td>
+<td>Max flow = min cut capacity</td>
+<td>Follows from LP strong duality + TU</td>
+</tr>
+<tr>
+<td>Ford-Fulkerson</td>
+<td>Augment via any $s$-$t$ path</td>
+<td>$O(EF)$ - pseudopolynomial</td>
+</tr>
+<tr>
+<td>Edmonds-Karp</td>
+<td>Augment via BFS shortest path</td>
+<td>$O(VE^2)$ - polynomial</td>
+</tr>
+<tr>
+<td>Bipartite matching</td>
+<td>Reduce to unit-capacity max-flow</td>
+<td>Max matching = max flow</td>
+</tr>
+<tr>
+<td>König&rsquo;s theorem</td>
+<td>Max matching = min vertex cover</td>
+<td>LP duality on bipartite matching LP</td>
+</tr>
+<tr>
+<td>Total unimodularity</td>
+<td>Incidence matrix has det $\in \{-1, 0, 1\}$</td>
+<td>Integer LP optima always achieved</td>
+</tr>
+<tr>
+<td>Complementary slackness</td>
+<td>Optimality condition for primal-dual pairs</td>
+<td>Explains Ford-Fulkerson termination</td>
+</tr>
+</tbody>
+</table>
+<p>Ford and Fulkerson proved their theorem thinking about Soviet supply chains. The same framework now runs in image segmentation software, organ transplant systems, and airline scheduling tools. The reason it appears everywhere is the same: they all involve routing something through a constrained network. What makes it remarkable is that the theorem is not just a combinatorial insight - it is a consequence of LP duality, and LP duality applies wherever there is a linear objective and linear constraints. The supply chain problem in 1956 was really a question about the geometry of linear programs, and the answer - max equals min - is one of the deepest structural facts in optimization.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/graph-algorithm-applicability/" target="_blank" rel="noopener noreferrer">Graph Algorithm Applicability - Choosing the Right Tool for the Graph</a>
+</li>
+<li><a href="/posts/pagerank-power-iteration/" target="_blank" rel="noopener noreferrer">PageRank &amp; Power Iteration - Importance as a Fixed Point of a Random Walk</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>How Computers Execute Programs - From Instruction Fetch to Writeback // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="/css/main.min.50c6a374f84378d37dd5a1ea78cb5b1ddd45f1a6ef4980398d8eb058b23378ad.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://megha-bose.github.io/avatar.jpg"/>
+
+<meta name="twitter:title" content="How Computers Execute Programs - From Instruction Fetch to Writeback"/>
+<meta name="twitter:description" content="Helpful context:
+ Binary &amp; Number Systems - How Computers Count  Logic Gates - The Basic Building Blocks of All Computation    Picture this: you type python hello.py and half a second later, &ldquo;Hello, world!&rdquo; appears. What actually happened? From your perspective, magic. From the CPU&rsquo;s perspective, a precise sequence of billions of individual steps - each one embarrassingly simple, each one reducible to transistors switching between two voltage levels."/>
+
+    <meta property="og:title" content="How Computers Execute Programs - From Instruction Fetch to Writeback" />
+<meta property="og:description" content="Helpful context:
+ Binary &amp; Number Systems - How Computers Count  Logic Gates - The Basic Building Blocks of All Computation    Picture this: you type python hello.py and half a second later, &ldquo;Hello, world!&rdquo; appears. What actually happened? From your perspective, magic. From the CPU&rsquo;s perspective, a precise sequence of billions of individual steps - each one embarrassingly simple, each one reducible to transistors switching between two voltage levels." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://megha-bose.github.io/posts/how-computers-execute-programs/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+    <meta property="fb:app_id" content="3721256308022480" />
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social app-header-social-primary">
+        
+          
+          <a href="mailto:megh.bose@gmail.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-mail">
+  <title>Email</title>
+  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+      <div class="app-header-social app-header-social-secondary">
+        
+          
+        
+          
+        
+          
+        
+          
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/whimsymeg.art/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Art</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.youtube.com/@Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-youtube">
+  <title>YouTube</title>
+  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://meghabose10.wordpress.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-globe">
+  <title>Old Website</title>
+  <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+          </a>
+          
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="https://megha-bose.github.io/categories/computer-systems/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">How Computers Execute Programs - From Instruction Fetch to Writeback</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          28 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/binary-number-systems/" target="_blank" rel="noopener noreferrer">Binary &amp; Number Systems - How Computers Count</a>
+</li>
+<li><a href="/posts/logic-gates/" target="_blank" rel="noopener noreferrer">Logic Gates - The Basic Building Blocks of All Computation</a>
+</li>
+</ul>
+<hr>
+<p>Picture this: you type <code>python hello.py</code> and half a second later, &ldquo;Hello, world!&rdquo; appears. What actually happened? From your perspective, magic. From the CPU&rsquo;s perspective, a precise sequence of billions of individual steps - each one embarrassingly simple, each one reducible to transistors switching between two voltage levels. The gap between those two perspectives is what this post closes.</p>
+<h2 id="the-revolution-that-wasnt-obvious-stored-programs">The Revolution That Wasn&rsquo;t Obvious: Stored Programs</h2>
+<p>Before 1945, computers were wired. You wanted a machine to do something different, you rewired it. The ENIAC, completed in 1945, had to be physically reconfigured for each new computation - tens of thousands of wire connections rearranged by hand.</p>
+<p>John von Neumann&rsquo;s insight, articulated in his 1945 report on EDVAC, was deceptively simple: store the program in memory, right alongside the data. Code is just numbers. If code and data live in the same memory, the CPU can read instructions the same way it reads data - and you can write programs that modify other programs, load new code dynamically, or treat functions as values.</p>
+<p>This &ldquo;stored-program concept&rdquo; is why your laptop can run a browser, a music player, and a Python interpreter simultaneously without hardware changes. It is the foundational idea of modern computing, and it still governs every CPU made today.</p>
+<p>Von Neumann architecture has one notorious bottleneck: code and data compete for the same memory bus. Every instruction fetch potentially delays a data load. This is the &ldquo;von Neumann bottleneck,&rdquo; and the entire history of CPU design - caches, out-of-order execution, prefetching - is largely a story of working around it.</p>
+<h2 id="isa-the-contract-between-hardware-and-software">ISA: The Contract Between Hardware and Software</h2>
+<p>You write C. The compiler produces machine code. The CPU executes machine code. The piece that makes this work is the <strong>Instruction Set Architecture</strong> - the ISA - a formal specification of what instructions the CPU understands, what registers exist, how memory is addressed, and what the binary encoding of every operation looks like.</p>
+<p>The ISA is a contract. Hardware teams can redesign the silicon entirely - change the pipeline depth, add execution units, shrink the transistors - as long as they honor the contract. Software compiled for the ISA ten years ago still runs. This is why you can run a binary compiled in 2005 on a modern CPU without recompilation.</p>
+<p>Two ISAs dominate computing today:</p>
+<p><strong>x86-64</strong> (also called AMD64) dominates laptops, desktops, and most cloud servers. It is a CISC architecture - Complex Instruction Set Computer - with variable-length instructions ranging from 1 to 15 bytes. It accumulated decades of extensions (MMX, SSE, AVX, AVX-512) that make its encoding table a historical artifact rather than a clean design. It has 16 general-purpose 64-bit registers: <code>rax</code>, <code>rbx</code>, <code>rcx</code>, <code>rdx</code>, <code>rsi</code>, <code>rdi</code>, <code>rsp</code>, <code>rbp</code>, and <code>r8</code> through <code>r15</code>.</p>
+<p><strong>ARM</strong> (AArch64) dominates mobile, embedded, and increasingly servers. It is RISC - Reduced Instruction Set Computer - with fixed 32-bit instruction width, a simpler instruction set, and a power efficiency advantage that is the direct reason your phone lasts all day and AWS Graviton instances exist.</p>
+<p><strong>RISC-V</strong> is the new entrant: an open ISA, no licensing fees, designed from scratch with 50 years of hindsight. It is fragmentary today but growing fast - SiFive, StarFive, and dozens of chip startups are betting their futures on it.</p>
+<p>Why do cloud providers care about ISA? AWS Graviton (ARM-based) offers the same workloads as x86 instances at 20 - 40% better price-performance. Apple Silicon (also ARM) made the &ldquo;x86 is inevitable&rdquo; argument obsolete almost overnight. The era of x86 monoculture in servers is ending, not because x86 is bad, but because the ISA contract is just as enforceable on ARM.</p>
+<h2 id="registers-the-cpus-working-memory">Registers: The CPU&rsquo;s Working Memory</h2>
+<p>Before the CPU can do anything, it needs somewhere to put the numbers it is working with. That somewhere is registers - a small set of extremely fast storage locations inside the CPU itself, connected directly to the arithmetic logic unit.</p>
+<p>Key registers to know:</p>
+<ul>
+<li><code>rax</code> - the accumulator and the conventional return value register. Function results come back here.</li>
+<li><code>rsp</code> - the stack pointer, always pointing to the top of the current stack.</li>
+<li><code>rip</code> - the instruction pointer (program counter), holding the address of the next instruction to execute. The CPU reads this, executes what it finds, then advances <code>rip</code>.</li>
+<li><code>rbp</code> - the base pointer, historically used to anchor a stack frame&rsquo;s local variables.</li>
+<li><code>rflags</code> - a collection of condition bits set by arithmetic operations. The zero flag, carry flag, overflow flag. Conditional branches read these.</li>
+</ul>
+<p>x86-64 has 16 general-purpose registers, plus SIMD registers (XMM0 - XMM15, YMM, ZMM) for vectorized arithmetic. ARM has 31 general-purpose registers (X0 - X30). RISC-V has 32.</p>
+<p>The number of registers matters enormously for performance. More registers means the compiler can keep more values in fast storage without &ldquo;spilling&rdquo; to the stack. One reason RISC architectures often outperform CISC at equivalent clock speeds is that they have more registers to work with.</p>
+<h2 id="the-fetch-decode-execute-cycle">The Fetch-Decode-Execute Cycle</h2>
+<p>The CPU&rsquo;s fundamental operation is a loop:</p>
+<p><strong>Fetch:</strong> Read the bytes at the address in <code>rip</code> from memory (or, in practice, from the L1 instruction cache). On x86-64, this might be 1 to 15 bytes depending on the instruction.</p>
+<p><strong>Decode:</strong> Parse those bytes. What operation is this? What are the operands? Which registers, which memory addresses? The decode unit translates raw binary opcodes into micro-operations the execution units understand.</p>
+<p><strong>Execute:</strong> Hand the decoded operation to the appropriate execution unit - the ALU for arithmetic, the memory unit for loads and stores, the branch unit for jumps. Produce a result.</p>
+<p><strong>Write back:</strong> Store the result to a register or memory.</p>
+<p>Then increment <code>rip</code> and repeat. Forever.</p>
+<p>On a 3 GHz CPU, this cycle happens roughly three billion times per second per core. But &ldquo;per cycle&rdquo; is a simplification - modern CPUs execute multiple instructions per cycle through techniques that fundamentally complicate the simple loop:</p>
+<p><strong>Pipelining:</strong> Overlap the stages. While instruction N executes, instruction N+1 is being decoded, and instruction N+2 is being fetched. A modern out-of-order CPU has 10 - 20 pipeline stages. The downside: a mispredicted branch flushes the pipeline, wasting those in-flight instructions.</p>
+<p><strong>Out-of-order execution:</strong> The CPU does not execute instructions in program order. It maintains a reorder buffer, finds instructions whose operands are ready, and executes them ahead of later instructions that are stalled waiting for data. The result is committed in order, but execution is opportunistic.</p>
+<p><strong>Branch prediction:</strong> Conditional branches depend on values not yet computed. The CPU predicts which way the branch will go - using history tables tracking recent branch behavior - and speculatively executes the predicted path. Modern predictors are right 95 - 99% of the time. When they are wrong, the speculative work is discarded and the pipeline restarts.</p>
+<p>This is where Spectre and Meltdown came from. Speculative execution crossed security boundaries: the CPU would speculatively read memory it was not authorized to access, leave traces in the cache, and - even after squashing the speculative result - the cache state change persisted. Side-channel attacks could read that trace. Out-of-order execution and branch prediction are why modern CPUs are fast, and they are also why they had the most serious hardware vulnerabilities ever disclosed.</p>
+<h2 id="what-running-means-at-the-silicon-level">What &ldquo;Running&rdquo; Means at the Silicon Level</h2>
+<p>A transistor is a switch. It is either on (passing current, representing 1) or off (blocking current, representing 0). A modern CPU has tens of billions of transistors.</p>
+<p>Logic gates are built from transistors - an AND gate, an OR gate, a NOT gate. Combine gates into adders, multiplexers, flip-flops (one-bit memory cells), and registers. Combine those into an ALU. Add a control unit, a decode unit, caches, execution ports. The result is a CPU.</p>
+<p>The &ldquo;executing&rdquo; in &ldquo;executing a program&rdquo; is just transistors switching states in coordinated patterns, millions of times per nanosecond. Addition is electrons flowing through gates that implement binary addition. A load from memory is signals traveling from cache to register. There is no magic - just physics, at enormous scale and speed.</p>
+<p>This matters for software engineers because transistor switching is not free. Every operation consumes energy, generating heat. This is why CPUs have thermal design points, why laptops throttle under sustained load, and why data center operators obsess over joules per computation. The move to ARM in servers is partly a power story: the same instruction per second, fewer watts.</p>
+<h2 id="system-calls-where-programs-meet-the-kernel">System Calls: Where Programs Meet the Kernel</h2>
+<p>User programs run in <strong>user mode</strong> - a restricted execution context where they cannot directly access hardware, other processes' memory, or kernel data structures. This restriction is enforced by the CPU itself: certain instructions are privileged and raise a fault if executed in user mode.</p>
+<p>To do anything interesting - write to a file, open a network connection, allocate more memory - a program must cross into <strong>kernel mode</strong> via a <strong>system call</strong>.</p>
+<p>On x86-64 Linux, the <code>syscall</code> instruction triggers a controlled mode switch. The CPU saves the current state, switches to a kernel stack, and jumps to the kernel&rsquo;s system call handler. The kernel validates arguments, performs the operation, and returns. The entire round trip costs 100 - 1000 ns.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// This C code:
+</span><span style="color:#75715e"></span>write(<span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#34;hello</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, <span style="color:#ae81ff">6</span>);
+
+<span style="color:#75715e">// Compiles to roughly:
+</span><span style="color:#75715e"></span>mov rax, <span style="color:#ae81ff">1</span>       <span style="color:#75715e">// syscall number for write
+</span><span style="color:#75715e"></span>mov rdi, <span style="color:#ae81ff">1</span>       <span style="color:#75715e">// fd: stdout
+</span><span style="color:#75715e"></span>mov rsi, buf     <span style="color:#75715e">// pointer to string
+</span><span style="color:#75715e"></span>mov rdx, <span style="color:#ae81ff">6</span>       <span style="color:#75715e">// length
+</span><span style="color:#75715e"></span>syscall          <span style="color:#75715e">// trap into kernel
+</span></code></pre></div><p>The kernel boundary matters for performance. Database engines use <code>io_uring</code> (Linux 5.1+) to batch system calls, reducing the per-call overhead. High-performance networking uses DPDK to bypass the kernel entirely for packet processing. Every abstraction the OS provides has a crossing cost.</p>
+<h2 id="the-compilation-pipeline-source-to-silicon">The Compilation Pipeline: Source to Silicon</h2>
+<p>High-level code must be translated into machine instructions before a CPU can run it. For C, that journey has four stages:</p>
+<p><strong>Preprocessor:</strong> Handles <code>#include</code> and <code>#define</code> macros. Pure textual substitution, producing a single translation unit.</p>
+<p><strong>Compiler:</strong> Translates C into assembly. This is where optimization happens - constant folding, dead code elimination, loop unrolling, inlining. Modern compilers (Clang, GCC) produce assembly that routinely outperforms what most humans would write by hand.</p>
+<p><strong>Assembler:</strong> Converts assembly mnemonics into binary machine instructions stored in an <code>.o</code> object file. References to external symbols (like <code>printf</code>) are left as placeholders.</p>
+<p><strong>Linker:</strong> Combines object files and libraries, resolves all symbol references, assigns final virtual addresses, and produces an executable in ELF format (Linux) or Mach-O (macOS) or PE (Windows).</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">gcc -E hello.c -o hello.i        <span style="color:#75715e"># stop after preprocessing</span>
+gcc -S hello.i -o hello.s        <span style="color:#75715e"># stop at assembly</span>
+gcc -c hello.s -o hello.o        <span style="color:#75715e"># stop at object file</span>
+gcc    hello.o -o hello          <span style="color:#75715e"># link into executable</span>
+
+objdump -d -M intel hello.o      <span style="color:#75715e"># disassemble: see the opcodes</span>
+</code></pre></div><p>Watch what the optimizer does to a simple function:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">add</span>(<span style="color:#66d9ef">int</span> a, <span style="color:#66d9ef">int</span> b) { <span style="color:#66d9ef">return</span> a <span style="color:#f92672">+</span> b; }
+</code></pre></div><p>With <code>-O0</code> (no optimization), this generates a full stack frame setup and teardown. With <code>-O2</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-asm" data-lang="asm">add:
+    <span style="color:#a6e22e">lea</span> <span style="color:#66d9ef">eax</span>, [<span style="color:#66d9ef">rdi</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">rsi</span>]
+    <span style="color:#a6e22e">ret</span>
+</code></pre></div><p>Two instructions. The compiler proved the stack frame was unnecessary and eliminated it. That gap - 10 lines of assembly vs 2 - is a preview of why a Python function can be 100x slower than its C equivalent for the same mathematical operation.</p>
+<h2 id="interrupts-the-cpus-attention-mechanism">Interrupts: The CPU&rsquo;s Attention Mechanism</h2>
+<p>The CPU does not poll for external events. Instead, hardware devices signal the CPU via <strong>interrupts</strong> - asynchronous signals that pause the current execution, save state, and jump to an <strong>interrupt handler</strong> registered in the interrupt descriptor table.</p>
+<p>Your keyboard sends an interrupt when you press a key. The NIC sends one when a network packet arrives. The timer chip sends one every millisecond for the scheduler. Without interrupts, the OS would have to busy-poll every device, burning CPU for nothing.</p>
+<p>Interrupts are why your system stays responsive while a CPU-bound process runs. The timer interrupt fires, the kernel preempts the running process, and the scheduler gets to run someone else. The user experience of &ldquo;simultaneous&rdquo; execution on a single core is entirely a product of interrupts.</p>
+<p><strong>Exceptions</strong> are synchronous interrupts raised by the CPU itself - divide-by-zero, invalid opcode, page fault, segmentation fault. <code>SIGSEGV</code> in Unix is the OS translating a page fault exception from the hardware into a signal to the process.</p>
+<h2 id="from-keypress-to-execution-the-full-chain">From Keypress to Execution: The Full Chain</h2>
+<p>Before the steps, three concepts that apply at every layer:</p>
+<p><strong>What &ldquo;reading&rdquo; is.</strong> A read always follows the same pattern. Something presents a binary number (an address) on a set of wires. The storage element at that address - a DRAM cell, a flip-flop in a hardware register, a GPIO pin comparator - drives its current value onto a second set of wires (the data bus). A destination register captures those values on the next clock edge. That is a read, at every scale. A LOAD instruction in the CPU, the MCU reading a key matrix, the kernel reading an MMIO register: same pattern, different wires.</p>
+<p><strong>What triggers sequential reads.</strong> Every processor - the keyboard microcontroller, the main CPU, each GPU shader core - has a program counter register. The clock signal advances it after each instruction. If the current instruction is a LOAD, it presents a memory address and reads from it. If it is a STORE, it presents an address and writes to it. The program, stored as bytes in DRAM, is what determines which addresses get read in which order. The program counter is the engine that drives every sequential step.</p>
+<p><strong>What triggers asynchronous events.</strong> A key closing, a timer firing, an interrupt arriving are voltage changes on dedicated hardware lines. Hardware state machines - circuits that transition through states when signals change - detect these and respond without waiting for any software instruction.</p>
+<hr>
+<p><strong>Step 1: The physical switch.</strong>
+<em>Triggered by:</em> mechanical force.
+<em>Data form:</em> voltage level - 3.3 V (key up) or 0 V (key down). One bit.</p>
+<p>Each column of the key matrix is connected to 3.3 V through a pull-up resistor. When a key is open, nothing pulls the column down - it sits at 3.3 V. When pressed, the switch connects that column to GND, pulling it to 0 V. That is the complete signal at this layer: one voltage on one wire. No encoding yet, no byte, no number. Just electrons and a spring.</p>
+<hr>
+<p><strong>Step 2: The keyboard microcontroller scans the matrix.</strong>
+<em>Triggered by:</em> the MCU&rsquo;s clock advancing its program counter through an infinite scan loop stored in flash memory.
+<em>Data form:</em> 0 V or 3.3 V on a pin → 1 bit in a GPIO input register flip-flop → scan code byte written to MCU RAM.</p>
+<p>The firmware running on the keyboard&rsquo;s microcontroller is an infinite loop. Each iteration:</p>
+<p>A STORE instruction writes to the GPIO output register for row N. This register is a bank of flip-flops wired directly to the row pin&rsquo;s driver transistor. Writing 1 turns the transistor on, pulling the row to 3.3 V.</p>
+<p>A LOAD instruction reads the GPIO input register. This register is a bank of flip-flops whose inputs are physically connected to the column pins. For each column: a comparator inside the MCU checks whether the pin voltage is above or below the logic threshold. If the pin is at 3.3 V, the flip-flop bit is 1. If pulled to 0 V by a pressed key, the bit is 0. The LOAD instruction copies all 8 column bits from those flip-flops into an MCU CPU register in one clock cycle.</p>
+<p>Comparison instructions detect which bit changed from the previous scan (stored in MCU RAM via a LOAD). A change at (row N, column M) maps to a scan code - a number like 0x1C for &lsquo;A&rsquo; - looked up from a table in flash (another LOAD). The scan code is stored to a buffer in MCU RAM (a STORE).</p>
+<p>The debounce filter keeps a counter in MCU RAM that resets on any change and only emits the scan code when the column pin voltage has been stable for several consecutive scans - a few milliseconds. This is LOAD, increment, STORE, compare instructions executing each scan cycle.</p>
+<p>Every &ldquo;read&rdquo; in this step is a LOAD whose address resolves to a flip-flop rather than a DRAM cell. The mechanism is identical.</p>
+<hr>
+<p><strong>Step 3: USB transmission.</strong>
+<em>Triggered by:</em> a hardware timer inside the USB host controller, firing every 1-8 ms. No CPU instruction causes this.
+<em>Data form:</em> scan code byte in MCU RAM → 6-byte USB HID report → serial bit transitions on D+/D- differential pair → bytes in a DMA buffer in system DRAM.</p>
+<p>The USB host controller has its own timer. When it expires, the controller&rsquo;s hardware state machine - logic gates whose transitions are hardwired, not programmed - automatically initiates a poll transaction to the keyboard&rsquo;s USB address. The MCU&rsquo;s USB hardware responds by reading the scan code from its RAM buffer (a LOAD) and feeding it to its USB transmit FIFO, a register that serializes bytes to D+/D-.</p>
+<p>Serialization: the MCU takes each byte, emits one bit per USB clock period as a differential voltage state. For a 1: D+ high, D- low. For a 0: reversed. The encoding (NRZI) converts bits to transitions - a 1 means swap D+/D-, a 0 means hold - so long runs of the same bit keep the wire toggling rather than static, letting the receiver stay synchronized.</p>
+<p>On the host controller, a shift register - 8 flip-flops in a chain - clocks in one D+/D- state per USB bit period. Each clock edge shifts all values right by one position and captures a new bit at the left. After 8 clocks, the shift register holds one byte. The DMA engine then writes that byte to a pre-allocated buffer in system DRAM, placing the buffer&rsquo;s address on the memory bus and the byte on the data bus - exactly what a CPU STORE does, but without CPU involvement.</p>
+<p>At the end of the transaction, the HID report sits as 6-8 bytes in system DRAM. The host controller sets an &ldquo;interrupt pending&rdquo; flip-flop in its status register to 1.</p>
+<hr>
+<p><strong>Step 4: The interrupt.</strong>
+<em>Triggered by:</em> the USB controller setting a status flip-flop, which the APIC detects and signals to the CPU.
+<em>Data form:</em> flip-flop bit in USB controller → message written to APIC address → interrupt vector number (an 8-bit integer) → CPU state save + program counter redirected to kernel handler address.</p>
+<p>The APIC (Advanced Programmable Interrupt Controller) monitors the USB controller&rsquo;s interrupt-pending bit through a message-signaled interrupt: when the USB controller sets its status flip-flop, it writes a specific 32-bit value to a specific memory address that is physically wired to the APIC. The APIC decodes this to an interrupt vector number and asserts a signal to the CPU.</p>
+<p>At the end of every executed instruction, the CPU&rsquo;s control logic checks: is there a pending interrupt, and is the interrupt-enable flag set in <code>rflags</code>? If yes, the CPU&rsquo;s hardwired interrupt sequence begins - this is not a software instruction, it is state-machine logic baked into the CPU&rsquo;s control unit:</p>
+<ol>
+<li>
+<p>The CPU decrements <code>rsp</code> and writes <code>rip</code>, <code>cs</code>, <code>rflags</code>, <code>rsp</code>, <code>ss</code> to the kernel stack - STORE operations where the CPU&rsquo;s register flip-flops drive the data bus, and DRAM cells at the stack addresses capture the values. The current execution context is now frozen in DRAM.</p>
+</li>
+<li>
+<p>The CPU reads the Interrupt Descriptor Table. The <code>IDTR</code> register holds the IDT&rsquo;s base address in DRAM. The CPU computes <code>IDTR.base + (vector_number × 16)</code>, presents that address on the memory bus, and captures 16 bytes from DRAM (or cache). Those 16 bytes contain the handler&rsquo;s address and privilege level. This is a memory read identical in mechanism to any LOAD instruction - address on bus, DRAM drives data, CPU captures.</p>
+</li>
+<li>
+<p>The handler address goes into <code>rip</code>. The next instruction fetch is from the interrupt handler&rsquo;s address in kernel memory.</p>
+</li>
+</ol>
+<hr>
+<p><strong>Step 5: The kernel handler reads the key.</strong>
+<em>Triggered by:</em> <code>rip</code> now holding the handler&rsquo;s first instruction address; the CPU&rsquo;s program counter advancing through handler code instruction by instruction.
+<em>Data form:</em> instructions fetched from kernel text segment in DRAM → executed operations → MMIO address in a LOAD operand → hardware flip-flop value in USB chip → scan code byte → Unicode code point (via table LOAD) → character byte STOREd into ring buffer array in DRAM.</p>
+<p>The interrupt handler is compiled kernel code sitting in DRAM, cached in L1i. The CPU fetches each instruction (LOAD from <code>rip</code>), decodes it, executes it - the same fetch-decode-execute loop as always.</p>
+<p>One instruction is a LOAD with an operand address in the USB controller&rsquo;s MMIO region. This address goes on the memory bus. The system bus address decoder - a network of logic gates comparing the address to hardwired range boundaries - routes the transaction not to DRAM but to the USB controller chip. The USB controller puts the value of its internal status register flip-flops onto the data bus. The CPU captures the byte. From the instruction&rsquo;s point of view this is indistinguishable from a DRAM read - same mechanism, different destination wired to the same address bus.</p>
+<p>Subsequent instructions LOAD the HID report bytes from the DMA buffer address in DRAM, LOAD the scan-code-to-Unicode lookup table entry (an array in kernel DRAM, indexed by scan code), and STORE the resulting Unicode byte into the ring buffer at position <code>ring_buffer_base + write_pointer</code>. An ADD increments <code>write_pointer</code>, a STORE saves the new value. Each of these is one or a few machine instructions, each fetched and executed by the program counter advancing.</p>
+<p><code>iret</code> executes last. The CPU LOADs the saved <code>rip</code>, <code>cs</code>, <code>rflags</code>, <code>rsp</code>, <code>ss</code> from the kernel stack addresses, writes them back into the actual register flip-flops, and resumes. The interrupted program&rsquo;s state is byte-for-byte restored.</p>
+<hr>
+<p><strong>Step 6: The waiting application reads the character.</strong>
+<em>Triggered by:</em> the scheduler LOADing the process&rsquo;s saved <code>rip</code> into the CPU - nothing inside the application triggers this; the kernel does it.
+<em>Data form:</em> byte in ring buffer array in kernel DRAM → copied to user-space buffer address in process memory → returned as integer in <code>rax</code>.</p>
+<p>The application had called <code>read(fd, buf, 1)</code>. The kernel, finding no data, saved the application&rsquo;s register state to its kernel stack (same STORE sequence as the interrupt save), moved the process descriptor from the run queue to a wait queue (pointer updates in kernel DRAM), and switched to another process.</p>
+<p>After the interrupt handler incremented the write pointer, it called a kernel function that moves the process descriptor back to the run queue (updating the same pointer fields in DRAM). The timer interrupt fires roughly every 1 ms, running the scheduler. The scheduler LOADs the run queue head from DRAM, picks the next process, and performs a context switch: it STOREs the current process&rsquo;s registers to its kernel stack, then LOADs the resumed process&rsquo;s saved register values from its kernel stack into the CPU, including restoring <code>rip</code> to the instruction inside <code>read()</code> where execution was suspended.</p>
+<p><code>read()</code> resumes. It finds <code>write_pointer != read_pointer</code> (a LOAD and compare). It LOADs one byte from <code>ring_buffer_base + read_pointer</code> in kernel DRAM, STOREs it to the user-space buffer address, increments <code>read_pointer</code>, and returns 1 in <code>rax</code>. The application&rsquo;s instruction after the <code>read()</code> call now runs.</p>
+<hr>
+<p><strong>Step 7: The character appears on screen.</strong>
+<em>Triggered by:</em> application program counter → GPU shader program counters → display controller hardware timer.
+<em>Data form:</em> Unicode byte → Bezier curve floats (from font file in DRAM) → alpha bitmap (byte array in DRAM) → draw command struct (in shared DRAM) → RGBA values (32 bits/pixel in VRAM) → digital RGB stream on HDMI → voltage per LCD transistor → photon.</p>
+<p>The application STOREs the character into its internal grid array in DRAM and calls its rendering library. The font engine LOADs glyph data from a memory-mapped font file - on first access this triggers a page fault and the kernel reads the font file bytes from disk into DRAM; on subsequent accesses they hit DRAM or cache directly. Glyph outlines are stored as Bezier curve control points: floating-point coordinates. The font engine executes an algorithm that traces those curves at the current pixel size, computing for each pixel in a small bounding box how much of it falls inside the glyph outline. The output is an alpha bitmap - a byte array in DRAM. This is FADD, FMUL, compare, STORE instructions through the normal fetch-decode-execute loop.</p>
+<p>The terminal submits a draw call to the GPU. The CPU STOREs a draw command structure into a region of DRAM shared between CPU and GPU, then writes to a GPU doorbell MMIO address - a flip-flop in the GPU chip that, when written, signals the GPU&rsquo;s command processor. The GPU&rsquo;s command processor LOADs the command from the shared DRAM and dispatches shader programs to the GPU cores.</p>
+<p>Each shader core is a small processor with its own program counter and fetch-decode-execute cycle. Hundreds run simultaneously. Each handles one pixel: LOAD the alpha value from the glyph bitmap at the pixel&rsquo;s position, LOAD foreground and background colors from a constant buffer in DRAM, compute <code>alpha × foreground + (1 - alpha) × background</code> with floating-point instructions, STORE the resulting 32-bit RGBA into the framebuffer at address <code>vram_base + (y × screen_width + x) × 4</code>. The framebuffer is an array in VRAM - GPU memory - one 32-bit value per screen pixel.</p>
+<p>The display controller has a hardware timer that fires at the monitor&rsquo;s refresh rate (every 16.67 ms at 60 Hz). On each fire, a state machine LOADs the framebuffer sequentially from VRAM, one pixel at a time, extracts RGB values, and feeds them to a serializer that converts the parallel pixel data into a high-speed differential bit stream on the HDMI or DisplayPort cable.</p>
+<p>Inside the monitor, the timing controller drives a thin-film transistor (TFT) per pixel. On LCD: the TFT applies a voltage to a liquid crystal cell between two polarizers - voltage rotates the crystals, controlling how much of the LED backlight passes through. On OLED: the TFT drives current through an organic emitter, and the emitter produces photons in proportion to the current.</p>
+<p>The photon reaches your retina.</p>
+<hr>
+<p><strong>The complete chain.</strong> LOAD, STORE, arithmetic, branch. Every step is one of those four things. The keyboard MCU LOADed a GPIO flip-flop, found a changed bit, STOREd a scan code. A USB state machine shifted bits through a chain of flip-flops and DMA-STOREd bytes into DRAM. A status flip-flop was set to 1, the APIC signaled the CPU, the CPU STOREd sixteen register values to DRAM, LOADed a handler address from the IDT array in DRAM, and set <code>rip</code>. The handler&rsquo;s instructions LOADed the scan code from an MMIO flip-flop, LOADed a Unicode value from a table in DRAM, STOREd it into a ring buffer in DRAM, then LOADed the sixteen register values back. The scheduler LOADed the waiting process&rsquo;s <code>rip</code>. The font engine LOADed Bezier floats, computed an alpha bitmap, STOREd it. GPU shader cores each LOADed one alpha and STOREd one RGBA to VRAM. The display controller LOADed VRAM pixel by pixel, serialized to HDMI, drove a transistor, which let light through.</p>
+<p>LOAD. STORE. Add. Branch. That is the complete vocabulary.</p>
+<hr>
+<h2 id="who-keeps-everything-running">Who Keeps Everything Running?</h2>
+<p>One natural question at this point: the keypress example showed the terminal waking up when a key arrived. But what about programs that are always running - the SSH daemon, the window manager, the system logger, the background sync service? Nobody pressed a key to wake them. What drives them? How do they know when to run?</p>
+<p><strong>Processes do not know anything.</strong> A sleeping process is not a program that is waiting and checking. It is a data structure in kernel memory - a struct containing saved register values, a list of open file descriptors, memory mappings - sitting in a queue. No code runs. No clock advances. The process is completely inert.</p>
+<p><strong>The kernel scheduler is the master.</strong> The scheduler runs on every timer interrupt (roughly 1000 times per second on Linux). Each time, it examines the run queue - a list of processes that are ready to execute - and picks the next one. It performs a context switch: STOREs the current CPU state to the outgoing process&rsquo;s kernel stack, LOADs the incoming process&rsquo;s saved state into the CPU. From the resumed process&rsquo;s perspective, no time passed; it simply continues from the next instruction.</p>
+<p><strong>Events move processes between queues.</strong> A process is either:</p>
+<ul>
+<li><strong>Running</strong> - currently executing on a CPU core.</li>
+<li><strong>Runnable</strong> - in the run queue, waiting for a CPU core to become available.</li>
+<li><strong>Sleeping</strong> - in a wait queue, waiting for a specific event.</li>
+</ul>
+<p>The kernel has wait queues for everything: waiting for a file to have data (<code>read()</code>), waiting for a lock to be released, waiting for a timer to expire (<code>sleep()</code>), waiting for a network packet. When a process calls <code>read()</code> and no data is available, the kernel moves it to the wait queue for that file descriptor and runs something else. When data arrives (via an interrupt, exactly as shown above), the interrupt handler moves the process back to the run queue. The process does not &ldquo;check&rdquo; anything - it is moved.</p>
+<p><strong>Daemons wait on events.</strong> The SSH daemon calls <code>accept()</code> and sleeps waiting for a new TCP connection. The system logger calls <code>read()</code> on a socket and sleeps waiting for log messages. The cron scheduler calls <code>nanosleep()</code> and sleeps until its next scheduled job. All of them are in wait queues. When the event they need arrives - a new connection, a log message, a timer expiry - the relevant interrupt handler or kernel subsystem moves them to the run queue. The scheduler gives them CPU time on the next tick.</p>
+<p><strong>The timer interrupt is the heartbeat.</strong> The timer chip (historically the PIT, now the HPET or local APIC timer) is a hardware counter that decrements on every clock cycle and fires an interrupt when it reaches zero. The kernel programs it to fire every 1 ms. This timer interrupt is what drives the scheduler, what wakes <code>sleep()</code> calls, what drives the entire illusion of simultaneous execution. If the timer stopped firing, the system would freeze: one process would run forever and nothing else would get CPU time.</p>
+<p><strong>Kernel threads</strong> are processes that run entirely in kernel space. <code>kswapd</code> wakes up when memory pressure is high and pages memory to disk. <code>ksoftirqd</code> processes network packets that arrived via interrupt but were deferred for later processing. <code>kworker</code> threads run items placed on work queues by device drivers. These threads spend most of their time sleeping; they wake when their work queue has items. The mechanism is the same: they are data structures in wait queues until the interrupt handler or other kernel code moves them to the run queue.</p>
+<p><strong>Nothing is magic.</strong> There is no background &ldquo;tick&rdquo; that programs perceive. There is no invisible thread that checks things. There is a timer that fires an interrupt 1000 times per second, a scheduler function that runs on each interrupt and moves things between queues, and a set of processes that are either running, waiting for a core, or waiting for an event. The entire impression of a &ldquo;live&rdquo; system with dozens of things happening simultaneously is this loop, running continuously, switching between processes faster than any human can perceive.</p>
+<hr>
+<h2 id="memory-layout-where-your-program-lives">Memory Layout: Where Your Program Lives</h2>
+<p>Every process gets a virtual address space laid out in sections:</p>
+<table>
+<thead>
+<tr>
+<th>Segment</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Text</td>
+<td>Executable machine code (read-only)</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>Initialized global variables</td>
+</tr>
+<tr>
+<td>BSS</td>
+<td>Uninitialized globals (zero-filled, no disk space)</td>
+</tr>
+<tr>
+<td>Heap</td>
+<td>Dynamic allocations (<code>malloc</code>) - grows upward</td>
+</tr>
+<tr>
+<td>Stack</td>
+<td>Call frames, local variables - grows downward</td>
+</tr>
+</tbody>
+</table>
+<p>The stack and heap grow toward each other. Stack overflow (no pun intended) occurs when the call stack is so deep it collides with the heap - recursive algorithms without tail-call optimization can hit this.</p>
+<p>The text segment is marked read-only and executable. The stack is writable but not executable by default (the NX bit, or &ldquo;No eXecute&rdquo;). This is a security measure: if an attacker injects shellcode onto the stack, the CPU will refuse to execute it. Return-oriented programming (ROP) is the attacker&rsquo;s answer - instead of executing injected code, chain together existing executable bytes in the text segment.</p>
+<h2 id="why-cloud-vms-feel-like-real-hardware">Why Cloud VMs Feel Like Real Hardware</h2>
+<p>When you launch an EC2 instance, you get what feels like a dedicated server. This illusion is maintained by the ISA abstraction and hardware virtualization.</p>
+<p>Modern CPUs have a hypervisor mode (VMX on Intel, SVM on AMD) that sits below ring 0. The hypervisor can intercept privileged instructions, emulate hardware, and enforce isolation between VMs - all without the guest OS knowing. The guest&rsquo;s <code>syscall</code> instruction lands in the guest kernel, but the guest kernel itself runs in a restricted context where its own privileged instructions are intercepted.</p>
+<p>The ISA is the common language. A VM running x86-64 guest code on an x86-64 host runs nearly at native speed because the instruction set is the same - just the privilege level is virtualized. This is why AWS Graviton (ARM) requires running ARM OS images: the ISA contract is the boundary, and crossing it requires translation (emulation), which is slow.</p>
+<h2 id="the-future-risc-v-and-the-end-of-isa-lock-in">The Future: RISC-V and the End of ISA Lock-In</h2>
+<p>For 30 years, x86-64 won because of backward compatibility and ecosystem momentum. ARM won mobile because of power efficiency. The question for the next decade is whether RISC-V can win on openness.</p>
+<p>RISC-V is not just another ISA. It is an open standard, royalty-free, maintained by a non-profit. Any company can implement it without licensing fees. The base ISA is minimal and clean; extensions are modular. SiFive and Ventana make RISC-V server chips. Google is building RISC-V into Android. Western Digital and Seagate put RISC-V cores in storage devices.</p>
+<p>The risk: ecosystem fragmentation. The modular extensions mean a binary compiled for RISC-V with AVX-equivalent extensions will not run on a bare RISC-V core. The ISA contract is only as strong as the extensions it specifies, and the RISC-V ecosystem is still working this out.</p>
+<p>Apple Silicon demonstrated that a well-executed ARM chip can obliterate x86 chips on performance per watt. The M-series chips are not just fast - they redefined what laptop performance could mean. Every cloud provider is watching and building ARM capacity.</p>
+<p>The x86 monopoly in servers is over. The question now is what the new equilibrium looks like.</p>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key Insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stored-program</td>
+<td>Code is data; both live in memory; changed computing permanently</td>
+</tr>
+<tr>
+<td>ISA</td>
+<td>The hardware-software contract; what makes portability possible</td>
+</tr>
+<tr>
+<td>Fetch-decode-execute</td>
+<td>The CPU&rsquo;s fundamental loop; 3 billion times/second per core</td>
+</tr>
+<tr>
+<td>Registers</td>
+<td>The CPU&rsquo;s working scratch space; more is faster</td>
+</tr>
+<tr>
+<td>System calls</td>
+<td>The user/kernel boundary; 100 - 1000 ns crossing cost</td>
+</tr>
+<tr>
+<td>Out-of-order execution</td>
+<td>Speed via reordering; the root of Spectre/Meltdown</td>
+</tr>
+<tr>
+<td>Interrupts</td>
+<td>How the OS stays in control; timer interrupts power scheduling</td>
+</tr>
+<tr>
+<td>RISC-V</td>
+<td>Open ISA; the end of x86 lock-in, if the ecosystem cooperates</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/memory-management/" target="_blank" rel="noopener noreferrer">Memory Management - The Hidden Allocator in Every Program</a>
+</li>
+<li><a href="/posts/assembly-and-machine-code/" target="_blank" rel="noopener noreferrer">Assembly &amp; Machine Code - The Language the CPU Actually Speaks</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

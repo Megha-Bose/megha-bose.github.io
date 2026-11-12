@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>Shortest Paths - When Greed Works and When It Doesn&#39;t // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="/css/main.min.50c6a374f84378d37dd5a1ea78cb5b1ddd45f1a6ef4980398d8eb058b23378ad.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://megha-bose.github.io/avatar.jpg"/>
+
+<meta name="twitter:title" content="Shortest Paths - When Greed Works and When It Doesn&#39;t"/>
+<meta name="twitter:description" content="Helpful context:
+ Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Dynamic Programming - Never Solve the Same Problem Twice    In 1956, Edsger Dijkstra was on a coffee date with his fiancée in Amsterdam. He had no pen or paper. Sitting at a café table, he worked out an algorithm in his head for finding the shortest path between two cities in a road network."/>
+
+    <meta property="og:title" content="Shortest Paths - When Greed Works and When It Doesn&#39;t" />
+<meta property="og:description" content="Helpful context:
+ Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Dynamic Programming - Never Solve the Same Problem Twice    In 1956, Edsger Dijkstra was on a coffee date with his fiancée in Amsterdam. He had no pen or paper. Sitting at a café table, he worked out an algorithm in his head for finding the shortest path between two cities in a road network." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://megha-bose.github.io/posts/shortest-paths-dijkstra-bellman-ford/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-08-03T00:00:00+00:00" />
+
+
+    <meta property="fb:app_id" content="3721256308022480" />
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social app-header-social-primary">
+        
+          
+          <a href="mailto:megh.bose@gmail.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-mail">
+  <title>Email</title>
+  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+      <div class="app-header-social app-header-social-secondary">
+        
+          
+        
+          
+        
+          
+        
+          
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/whimsymeg.art/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Art</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.youtube.com/@Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-youtube">
+  <title>YouTube</title>
+  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://meghabose10.wordpress.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-globe">
+  <title>Old Website</title>
+  <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+          </a>
+          
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="https://megha-bose.github.io/categories/algorithms/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">Shortest Paths - When Greed Works and When It Doesn&#39;t</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Aug 2021
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          15 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/graph-algorithms-traversal/" target="_blank" rel="noopener noreferrer">Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order</a>
+</li>
+<li><a href="/posts/dynamic-programming/" target="_blank" rel="noopener noreferrer">Dynamic Programming - Never Solve the Same Problem Twice</a>
+</li>
+</ul>
+<hr>
+<p>In 1956, Edsger Dijkstra was on a coffee date with his fiancée in Amsterdam. He had no pen or paper. Sitting at a café table, he worked out an algorithm in his head for finding the shortest path between two cities in a road network.</p>
+<p>He published it three years later. The paper is half a page long - one of the shortest papers in computer science history. It describes one of the most influential algorithms ever written.</p>
+<p>Today, a version of that algorithm runs on every phone that uses GPS navigation. It finds the shortest route between two points on a road network with tens of millions of nodes in milliseconds.</p>
+<hr>
+<h2 id="the-problem">The Problem</h2>
+<p>Given a weighted directed graph $G = (V, E, w)$ and a source vertex $s$, find the shortest (minimum-weight) path from $s$ to every other reachable vertex. Formally:</p>
+<p>$$\delta(s, v) = \min_{p : s \leadsto v} \sum_{e \in p} w(e)$$</p>
+<p>If no path exists, $\delta(s, v) = \infty$. If a negative-weight cycle lies on some path to $v$, the &ldquo;shortest path&rdquo; is $-\infty$ (you can loop forever to reduce the cost).</p>
+<p>The right algorithm depends on two properties of the graph:</p>
+<ul>
+<li>Do edges have negative weights?</li>
+<li>Do you need one source to all others, or all pairs?</li>
+</ul>
+<hr>
+<h2 id="dijkstras-algorithm-greedy-non-negative-weights">Dijkstra&rsquo;s Algorithm: Greedy, Non-Negative Weights</h2>
+<p>Dijkstra&rsquo;s algorithm is a greedy approach that works when all edge weights are non-negative. It maintains a priority queue of tentative distances and finalizes vertices in order of increasing distance.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> heapq
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dijkstra</span>(graph, s):
+    <span style="color:#75715e"># graph[u] = list of (v, weight) pairs</span>
+    dist <span style="color:#f92672">=</span> {v: float(<span style="color:#e6db74">&#39;inf&#39;</span>) <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph}
+    parent <span style="color:#f92672">=</span> {v: <span style="color:#66d9ef">None</span> <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> graph}
+    dist[s] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+    pq <span style="color:#f92672">=</span> [(<span style="color:#ae81ff">0</span>, s)]  <span style="color:#75715e"># (distance, vertex)</span>
+
+    <span style="color:#66d9ef">while</span> pq:
+        d, u <span style="color:#f92672">=</span> heapq<span style="color:#f92672">.</span>heappop(pq)
+        <span style="color:#66d9ef">if</span> d <span style="color:#f92672">&gt;</span> dist[u]:
+            <span style="color:#66d9ef">continue</span>  <span style="color:#75715e"># stale entry; skip</span>
+        <span style="color:#66d9ef">for</span> v, w <span style="color:#f92672">in</span> graph[u]:
+            <span style="color:#66d9ef">if</span> dist[u] <span style="color:#f92672">+</span> w <span style="color:#f92672">&lt;</span> dist[v]:
+                dist[v] <span style="color:#f92672">=</span> dist[u] <span style="color:#f92672">+</span> w
+                parent[v] <span style="color:#f92672">=</span> u
+                heapq<span style="color:#f92672">.</span>heappush(pq, (dist[v], v))
+
+    <span style="color:#66d9ef">return</span> dist, parent
+</code></pre></div><p>The key operation is <strong>relaxation</strong>: if we find a shorter path to $v$ through $u$, update <code>dist[v]</code>.</p>
+<p><strong>Correctness invariant:</strong> When vertex $u$ is extracted from the priority queue, <code>dist[u]</code> equals the true shortest-path distance $\delta(s, u)$.</p>
+<p><strong>Proof.</strong> By induction on the order of extraction.</p>
+<p><em>Base case:</em> $s$ is extracted first with <code>dist[s] = 0 =</code> $\delta(s, s)$.</p>
+<p><em>Inductive step:</em> Assume every vertex extracted before $u$ has a correct <code>dist</code> value. Let <code>dist[u] = d</code>. Suppose for contradiction that $\delta(s, u) &lt; d$. Then there exists a shortest path $P: s \leadsto u$ with total weight $\delta(s, u) &lt; d$.</p>
+<p>Since $s$ is extracted and $u$ is not yet correctly finalized, somewhere along $P$ there must be a transition from an extracted vertex to an unexplored one. Define:</p>
+<ul>
+<li>$x$ = the <strong>last extracted</strong> vertex on path $P$</li>
+<li>$y$ = the <strong>immediate successor</strong> of $x$ on $P$ (so $y$ has not yet been extracted)</li>
+</ul>
+<div class="mermaid">
+flowchart LR
+    subgraph E ["Extracted - dist&#91;v&#93; = δ(s, v)"]
+        s(["s"]) -.->|"path P"| x(["x"])
+    end
+    subgraph U ["Unexplored"]
+        y(["y"]) -.->|"path P"| u(["u"])
+    end
+    x -->|"w(x, y)"| y
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>Since $x$ was extracted before $u$, the inductive hypothesis gives $\text{dist}[x] = \delta(s, x)$. When $x$ was extracted, we relaxed all edges out of $x$, so:</p>
+<p>$$\text{dist}[y] \leq \text{dist}[x] + w(x, y) = \delta(s, x) + w(x, y)$$</p>
+<p>Since $P$ is a shortest path, optimal substructure holds: the sub-path $s \leadsto x \leadsto y$ along $P$ is itself a shortest path from $s$ to $y$, so:</p>
+<p>$$\delta(s, x) + w(x, y) = \delta(s, y)$$</p>
+<p>Since $y$ lies on $P$ and all remaining edges to $u$ have non-negative weight:</p>
+<p>$$\delta(s, y) \leq \delta(s, u)$$</p>
+<p>Chaining all three:</p>
+<p>$$\text{dist}[y] \leq \delta(s, x) + w(x, y) = \delta(s, y) \leq \delta(s, u) &lt; d = \text{dist}[u]$$</p>
+<p>So $\text{dist}[y] &lt; \text{dist}[u]$, which means $y$ would have been extracted from the priority queue <strong>before</strong> $u$ - contradicting our assumption that $y$ is unexplored when $u$ is extracted. Therefore $\delta(s, u) = d$. $\blacksquare$</p>
+<p><strong>Time complexity.</strong> With a binary heap: $V$ <code>extract_min</code> operations at $O(\log V)$ each, plus at most $E$ <code>decrease_key</code> operations at $O(\log V)$ each. Total: $O((V + E) \log V)$.</p>
+<p>With a Fibonacci heap: <code>decrease_key</code> becomes $O(1)$ amortized. Total: $O(E + V \log V)$.</p>
+<p>For dense graphs ($E = \Theta(V^2)$) with an adjacency matrix: scan all vertices to find the minimum, giving $O(V^2)$ - better than the heap version in this regime.</p>
+<hr>
+<h2 id="why-dijkstra-fails-on-negative-edges">Why Dijkstra Fails on Negative Edges</h2>
+<blockquote>
+<p><strong>Discomfort check.</strong> Why can&rsquo;t Dijkstra handle negative edge weights? The invariant depends on a crucial property: once you extract a vertex $u$ and finalize its distance, no future path can be shorter. This holds when all weights are non-negative - any path through a vertex not yet extracted is at least as long as the direct path. But with negative edges, a future path might shortcut back through an already-finalized vertex via a negative edge, improving its distance. By the time you&rsquo;d discover this, you&rsquo;ve already removed $u$ from the queue and assumed its distance was final. Bellman-Ford handles this by simply not finalizing anything prematurely - it repeatedly relaxes all edges.</p>
+</blockquote>
+<hr>
+<h2 id="bellman-ford-dynamic-programming-negative-weights">Bellman-Ford: Dynamic Programming, Negative Weights</h2>
+<p>Bellman-Ford handles negative edge weights (but not negative cycles). It&rsquo;s a DP algorithm: define the subproblem by the number of edges allowed.</p>
+<p>$$\text{dp}[v][k] = \text{shortest path from } s \text{ to } v \text{ using at most } k \text{ edges}$$</p>
+<p>Recurrence:</p>
+<p>$$\text{dp}[v][k] = \min\left(\text{dp}[v][k-1],\ \min_{(u,v) \in E} \text{dp}[u][k-1] + w(u,v)\right)$$</p>
+<p>In practice, we run $V - 1$ rounds of edge relaxation over all edges:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bellman_ford</span>(vertices, edges, s):
+    <span style="color:#75715e"># edges: list of (u, v, weight)</span>
+    dist <span style="color:#f92672">=</span> {v: float(<span style="color:#e6db74">&#39;inf&#39;</span>) <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vertices}
+    dist[s] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+
+    <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(len(vertices) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>):
+        <span style="color:#66d9ef">for</span> u, v, w <span style="color:#f92672">in</span> edges:
+            <span style="color:#66d9ef">if</span> dist[u] <span style="color:#f92672">+</span> w <span style="color:#f92672">&lt;</span> dist[v]:
+                dist[v] <span style="color:#f92672">=</span> dist[u] <span style="color:#f92672">+</span> w
+
+    <span style="color:#75715e"># Detect negative cycles</span>
+    <span style="color:#66d9ef">for</span> u, v, w <span style="color:#f92672">in</span> edges:
+        <span style="color:#66d9ef">if</span> dist[u] <span style="color:#f92672">+</span> w <span style="color:#f92672">&lt;</span> dist[v]:
+            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;Negative cycle detected&#34;</span>)
+
+    <span style="color:#66d9ef">return</span> dist
+</code></pre></div><p><strong>Why does this work?</strong> Here is the core intuition, then the proof.</p>
+<p>Think of Bellman-Ford as sending a wave of information outward from $s$, one hop at a time. After round 1, every vertex knows the best way to reach $s$ in a single hop. After round 2, it knows the best two-hop route. After round $k$, it knows the best $k$-hop route. Since any simple path in a $V$-vertex graph uses at most $V - 1$ edges, running $V - 1$ rounds is enough to settle every reachable vertex.</p>
+<div class="mermaid">
+flowchart LR
+    s(["s"]) -->|"round 1"| A(["v₁"])
+    s -->|"round 1"| B(["v₂"])
+    A -->|"round 2"| C(["v₃"])
+    B -->|"round 2"| D(["v₄"])
+    C -->|"round 3"| E(["v₅"])
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p><strong>Formal claim.</strong> Let $\delta_k(s, v)$ denote the minimum weight of any path from $s$ to $v$ using <strong>at most $k$ edges</strong> ($\infty$ if none exists). After round $k$, for every vertex $v$:</p>
+<p>$$\text{dist}[v] \leq \delta_k(s, v)$$</p>
+<p><strong>Proof by induction on $k$.</strong></p>
+<p><em>Base case ($k = 0$):</em> After initialisation, $\text{dist}[s] = 0 = \delta_0(s, s)$, and $\text{dist}[v] = \infty = \delta_0(s, v)$ for all $v \neq s$, since no 0-edge path to any other vertex exists.</p>
+<p><em>Inductive step:</em> Assume after round $k - 1$, for all $v$:</p>
+<p>$$\text{dist}[v] \leq \delta_{k-1}(s, v)$$</p>
+<p>Fix any vertex $v$ and let $P^\star$ be an optimal path from $s$ to $v$ using at most $k$ edges. Two cases:</p>
+<ul>
+<li>
+<p><strong>Case 1: $P^\star$ uses at most $k - 1$ edges.</strong> The shortest path using at most $k$ edges equals the shortest path using at most $k - 1$ edges, so the inductive hypothesis directly gives $\text{dist}[v] \leq \delta_k(s, v)$ after round $k$.</p>
+</li>
+<li>
+<p><strong>Case 2: $P^\star$ uses exactly $k$ edges.</strong> Let $u$ be the second-to-last vertex on $P^\star$, so $P^\star = s \leadsto u \to v$. The prefix $s \leadsto u$ uses $k - 1$ edges and, by optimal substructure, is itself a shortest $(k-1)$-edge path to $u$. By the inductive hypothesis, after round $k - 1$:</p>
+</li>
+</ul>
+<p>$$\text{dist}[u] \leq \delta_{k-1}(s, u)$$</p>
+<p>In round $k$ we relax edge $(u, v, w)$:</p>
+<p>$$\text{dist}[v] \leq \text{dist}[u] + w \leq \delta_{k-1}(s, u) + w = \delta_k(s, v)$$</p>
+<p><strong>Why $V - 1$ rounds suffice.</strong> In a graph with no negative cycles, every shortest path is simple - it never repeats a vertex, because repeating a vertex would mean traversing a cycle, and any non-negative cycle only adds weight. A simple path on at most $V$ vertices uses at most $V - 1$ edges, so:</p>
+<p>$$\delta_{V-1}(s, v) = \delta(s, v)$$</p>
+<p>After $V - 1$ rounds the claim gives $\text{dist}[v] \leq \delta(s, v)$. Since <code>dist[v]</code> is always the weight of some actual path, $\text{dist}[v] \geq \delta(s, v)$. Together: $\text{dist}[v] = \delta(s, v)$. $\blacksquare$</p>
+<p><strong>Negative cycle detection.</strong> After $V - 1$ rounds we have the best possible simple-path distances. If any edge $(u, v, w)$ can still be relaxed - i.e. $\text{dist}[u] + w &lt; \text{dist}[v]$ - then the only way to improve beyond a simple path is to traverse a cycle. Since non-negative cycles never help, this cycle must be negative. Hence a negative-weight cycle is reachable from $s$.</p>
+<p><strong>Time complexity.</strong> $V - 1$ rounds, each scanning all $E$ edges: $O(VE)$.</p>
+<hr>
+<h2 id="floyd-warshall-all-pairs-shortest-paths">Floyd-Warshall: All-Pairs Shortest Paths</h2>
+<p>Need shortest paths between all pairs of vertices? Floyd-Warshall does it in $O(V^3)$.</p>
+<p><strong>Intuition: grow the set of allowed intermediaries.</strong></p>
+<p>Label the vertices $1, 2, \ldots, V$. Run through them one by one and ask at each step:</p>
+<blockquote>
+<p>For each pair $(i, j)$: what is the shortest path from $i$ to $j$ if only vertices $\{1, 2, \ldots, k\}$ may be used as intermediate stops?</p>
+</blockquote>
+<p>When $k = 0$, no intermediaries are allowed - only direct edges. When $k = V$, all vertices are available: these are the true shortest paths.</p>
+<p>At each step, adding vertex $k$ to the allowed set introduces exactly one new option for every pair $(i, j)$: route through $k$. The shortest path either does not use $k$ (answer unchanged from step $k - 1$) or uses $k$ exactly once, splitting into two sub-paths - $i \leadsto k$ and $k \leadsto j$ - both of which use only intermediaries $\{1, \ldots, k-1\}$.</p>
+<p>A concrete example:</p>
+<div class="mermaid">
+flowchart LR
+    A(["A"]) -->|3| B(["B"])
+    B -->|2| C(["C"])
+    A -->|10| C
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>With no intermediaries ($k = 0$): the only known path from A to C is the direct edge, cost 10. When B enters the allowed set: check $A \to B \to C = 3 + 2 = 5 &lt; 10$. Update. The direct edge is beaten by the two-hop path.</p>
+<p><strong>The recurrence.</strong> Define:</p>
+<p>$$\text{dp}[i][j][k] = \text{shortest distance from } i \text{ to } j \text{ using only vertices } \{1, \ldots, k\} \text{ as intermediaries}$$</p>
+<p>Base case: $\text{dp}[i][j][0] = w(i,j)$ if edge $(i, j)$ exists, else $\infty$; and $\text{dp}[i][i][0] = 0$.</p>
+<p>For $k \geq 1$:</p>
+<p>$$\text{dp}[i][j][k] = \min\Bigl(\underbrace{\text{dp}[i][j][k-1]}<em>{\text{skip } k},\quad \underbrace{\text{dp}[i][k][k-1] + \text{dp}[k][j][k-1]}</em>{\text{route through } k}\Bigr)$$</p>
+<p><strong>Why does this decomposition work?</strong> If the shortest path from $i$ to $j$ routes through $k$, it splits as $i \leadsto k \leadsto j$. Could either sub-path loop back through $k$? In a graph without negative cycles, shortest paths are simple - they visit each vertex at most once. So both sub-paths use only intermediaries from $\{1, \ldots, k-1\}$, and $\text{dp}[\cdot][\cdot][k-1]$ gives their lengths correctly by the inductive hypothesis.</p>
+<p><strong>Correctness.</strong> By induction on $k$. The base case holds by definition. Assuming $\text{dp}[\cdot][\cdot][k-1]$ is correct, the recurrence considers both cases (use $k$ or not) and takes the minimum - which is correct by hypothesis. After $V$ iterations, $\text{dp}[i][j][V] = \delta(i, j)$ for all pairs. $\blacksquare$</p>
+<p>In practice, the $k$ dimension is eliminated by updating in-place. This is safe because $\text{dp}[k][k] = 0$ throughout: routing through $k$ to reach $k$ itself adds nothing, so the values $\text{dp}[i][k]$ and $\text{dp}[k][j]$ used on the right-hand side are already their correct $k - 1$ values.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">floyd_warshall</span>(vertices, edges):
+    <span style="color:#75715e"># edges: list of (u, v, weight)</span>
+    dist <span style="color:#f92672">=</span> {u: {v: float(<span style="color:#e6db74">&#39;inf&#39;</span>) <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vertices} <span style="color:#66d9ef">for</span> u <span style="color:#f92672">in</span> vertices}
+    <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vertices:
+        dist[v][v] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">for</span> u, v, w <span style="color:#f92672">in</span> edges:
+        dist[u][v] <span style="color:#f92672">=</span> w
+
+    <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> vertices:
+        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> vertices:
+            <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> vertices:
+                <span style="color:#66d9ef">if</span> dist[i][k] <span style="color:#f92672">+</span> dist[k][j] <span style="color:#f92672">&lt;</span> dist[i][j]:
+                    dist[i][j] <span style="color:#f92672">=</span> dist[i][k] <span style="color:#f92672">+</span> dist[k][j]
+
+    <span style="color:#66d9ef">return</span> dist
+</code></pre></div><p><strong>Negative cycles:</strong> if <code>dist[i][i]</code> becomes negative, vertex $i$ lies on a negative-weight cycle.</p>
+<p>Floyd-Warshall works with negative edges as long as there are no negative cycles. Time: $O(V^3)$. Space: $O(V^2)$.</p>
+<hr>
+<h2 id="a-dijkstra-with-direction">A*: Dijkstra with Direction</h2>
+<p>Dijkstra finds the shortest path to all vertices. When you only care about one destination $t$, you can stop early and guide the search using a <strong>heuristic</strong> - a function $h(v)$ estimating the remaining cost from $v$ to $t$.</p>
+<p>A* assigns each vertex a priority $f(v) = g(v) + h(v)$, where $g(v)$ is the best known distance from $s$ to $v$. Vertices with low $f$-value get explored first: cheap to reach from $s$ and estimated to be close to $t$.</p>
+<p><strong>Admissibility.</strong> A heuristic is <strong>admissible</strong> if it never overestimates: $h(v) \leq \delta(v, t)$ for all $v$. An admissible heuristic is optimistic - it may underestimate, but never inflates the true remaining cost. This is what guarantees A* finds the optimal path.</p>
+<p><strong>Intuition.</strong> Dijkstra expands outward from $s$ uniformly in all directions - it has no information about where $t$ is. A* biases the expansion toward $t$: a vertex that is cheap to reach but far from $t$ (high $h$) gets deprioritized; a vertex pointing toward $t$ (low $h$) gets promoted to the front of the queue.</p>
+<h3 id="example">Example</h3>
+<div class="mermaid">
+flowchart LR
+    S(["S<br/>h = 4"]) -->|2| A(["A<br/>h = 5"])
+    S -->|3| B(["B<br/>h = 2"])
+    A -->|6| T(["T<br/>h = 0"])
+    B -->|2| T
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+<p>The $h$ values are admissible: $h(S) = 4 \leq 5$, $h(A) = 5 \leq 6$, $h(B) = 2 \leq 2$, $h(T) = 0$. The optimal path is $S \to B \to T$ with cost 5.</p>
+<p><strong>Dijkstra</strong> (priority by $g$):</p>
+<table>
+<thead>
+<tr>
+<th>Extracted</th>
+<th>$g$</th>
+<th>Open set after</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S</td>
+<td>0</td>
+<td>A $(g=2)$, B $(g=3)$</td>
+</tr>
+<tr>
+<td>A</td>
+<td>2</td>
+<td>B $(g=3)$, T $(g=8)$</td>
+</tr>
+<tr>
+<td>B</td>
+<td>3</td>
+<td>T $(g=5)$</td>
+</tr>
+<tr>
+<td>T</td>
+<td>5</td>
+<td>done</td>
+</tr>
+</tbody>
+</table>
+<p>Dijkstra extracts A even though it leads to a suboptimal path - it has no way to know A is a dead end.</p>
+<p><strong>A</strong>* (priority by $f = g + h$):</p>
+<table>
+<thead>
+<tr>
+<th>Extracted</th>
+<th>$f = g + h$</th>
+<th>Open set after</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S</td>
+<td>$0 + 4 = 4$</td>
+<td>A $(f=7)$, B $(f=5)$</td>
+</tr>
+<tr>
+<td>B</td>
+<td>$3 + 2 = 5$</td>
+<td>A $(f=7)$, T $(f=5)$</td>
+</tr>
+<tr>
+<td>T</td>
+<td>$5 + 0 = 5$</td>
+<td>done</td>
+</tr>
+</tbody>
+</table>
+<p>A* never extracts A. The heuristic recognized that A, despite being cheaply reachable ($g = 2$), is estimated to be far from T ($h = 5$), giving total estimated cost 7. B costs a bit more to reach ($g = 3$) but sits close to T ($h = 2$), giving estimated total 5 - matching the true optimal. A* finds the answer with one fewer node explored.</p>
+<h3 id="consistency">Consistency</h3>
+<p>A heuristic is <strong>consistent</strong> (or monotone) if for every edge $(u, v, w)$:</p>
+<p>$$h(u) \leq w + h(v)$$</p>
+<p>This is the triangle inequality on heuristic estimates: the estimated cost to $t$ should not improve by taking a detour through $v$. Consistency implies admissibility. With a consistent heuristic, $f$-values are non-decreasing along any explored path, so A* never needs to re-expand a vertex - it behaves exactly like Dijkstra with modified priorities.</p>
+<p>Euclidean distance satisfies both properties: it never overestimates road distance, and it obeys the geometric triangle inequality.</p>
+<h3 id="proof-of-correctness">Proof of Correctness</h3>
+<p><strong>Claim.</strong> If $h$ is admissible and $h(t) = 0$, then when A* first extracts $t$, $g(t) = \delta(s, t)$.</p>
+<p><em>Proof.</em> Let $P^\star$ be a shortest $s$-$t$ path of cost $\delta(s, t)$.</p>
+<p>At the moment A* is about to extract $t$, consider the vertices of $P^\star$ from $s$ toward $t$. Either all predecessors of $t$ on $P^\star$ have been extracted - in which case the progressive relaxations along $P^\star$ gave $g(t) \leq \delta(s, t)$ already - or there is a first vertex $v$ on $P^\star$ still in the open set.</p>
+<p>In the second case, let $u$ be $v$&rsquo;s predecessor on $P^\star$ (already extracted). By the same inductive argument as Dijkstra&rsquo;s correctness proof, restricted to the extracted prefix of $P^\star$: $g(u) = \delta(s, u)$ when $u$ is extracted. The edge $u \to v$ is then relaxed, giving:</p>
+<p>$$g(v) \leq g(u) + w(u, v) = \delta(s, u) + w(u, v) = \delta(s, v)$$</p>
+<p>where the last equality uses the fact that $u \to v$ is a segment of the optimal path $P^\star$. Applying admissibility:</p>
+<p>$$f(v) = g(v) + h(v) \leq \delta(s, v) + \delta(v, t) = \delta(s, t)$$</p>
+<p>Since A* extracted $t$ before $v$, we have $f(t) \leq f(v) \leq \delta(s, t)$. Since $h(t) = 0$, this gives $g(t) \leq \delta(s, t)$.</p>
+<p>In both cases, $g(t) \leq \delta(s, t)$. Since $g(t)$ is always the weight of some actual path, $g(t) \geq \delta(s, t)$. Therefore $g(t) = \delta(s, t)$. $\blacksquare$</p>
+<h3 id="connection-to-dijkstra">Connection to Dijkstra</h3>
+<p>With $h(v) = 0$ for all $v$, A* reduces to Dijkstra exactly. With the perfect heuristic $h(v) = \delta(v, t)$, the $f$-value of every vertex on an optimal path equals $\delta(s, t)$ - they all share the same priority - and A* reaches $t$ without expanding a single off-path vertex. In practice, a good heuristic can reduce exploration by orders of magnitude on large graphs like road networks.</p>
+<hr>
+<h2 id="applications">Applications</h2>
+<p><strong>GPS navigation.</strong> Google Maps and similar apps use bidirectional Dijkstra or A* on road networks with hundreds of millions of nodes. Contraction hierarchies - a preprocessing technique that &ldquo;shortcutts&rdquo; the graph - allow queries to answer in milliseconds.</p>
+<p><strong>Internet routing.</strong> OSPF (Open Shortest Path First) uses Dijkstra on each router to compute its forwarding table. BGP (Border Gateway Protocol) uses a distributed Bellman-Ford variant.</p>
+<p><strong>Currency arbitrage.</strong> Model currencies as vertices; exchange rates as edge weights $-\log(\text{rate})$. A negative cycle in this graph corresponds to a sequence of conversions that yields a profit. Bellman-Ford detects it: if after $V - 1$ rounds a relaxation is still possible, an arbitrage opportunity exists. Financial systems scan for this constantly.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Handles negative weights?</th>
+<th>Complexity</th>
+<th>Use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dijkstra (binary heap)</td>
+<td>No</td>
+<td>$O((V + E) \log V)$</td>
+<td>Single-source, non-negative weights</td>
+</tr>
+<tr>
+<td>Dijkstra (dense)</td>
+<td>No</td>
+<td>$O(V^2)$</td>
+<td>Dense graphs</td>
+</tr>
+<tr>
+<td>Dijkstra (Fibonacci heap)</td>
+<td>No</td>
+<td>$O(E + V \log V)$</td>
+<td>Single-source, theoretical best</td>
+</tr>
+<tr>
+<td>Bellman-Ford</td>
+<td>Yes (detects negative cycles)</td>
+<td>$O(VE)$</td>
+<td>Single-source, negative weights</td>
+</tr>
+<tr>
+<td>Floyd-Warshall</td>
+<td>Yes (no negative cycles)</td>
+<td>$O(V^3)$</td>
+<td>All-pairs</td>
+</tr>
+<tr>
+<td>A*</td>
+<td>No (same as Dijkstra)</td>
+<td>$O((V + E) \log V)$ worst case</td>
+<td>Single-target, with heuristic</td>
+</tr>
+</tbody>
+</table>
+<p>The shortest path problem is one of the most thoroughly studied in algorithms. Dijkstra&rsquo;s 1959 half-page paper launched a literature that spans decades. What makes it remarkable is not just the algorithm - it&rsquo;s the insight that greedy finalization works when costs are non-negative, that DP on path length works when they&rsquo;re not, and that the two approaches are complementary faces of the same underlying idea.</p>
+<hr>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/network-flow-matching/" target="_blank" rel="noopener noreferrer">Network Flow &amp; Matching - The Max, the Min, and Why They&rsquo;re Equal</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title>System Design - Building Things That Don&#39;t Fall Over // Megha Bose</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.92.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Megha Bose" />
+    <meta name="description" content="" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="/css/main.min.50c6a374f84378d37dd5a1ea78cb5b1ddd45f1a6ef4980398d8eb058b23378ad.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+
+    
+    <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://megha-bose.github.io/avatar.jpg"/>
+
+<meta name="twitter:title" content="System Design - Building Things That Don&#39;t Fall Over"/>
+<meta name="twitter:description" content="Helpful context:
+ Networking - How Packets Find Their Way Across the Internet  Databases &amp; Indexes - The Structures That Make Queries Fast   Picture the scene: a whiteboard, a marker, an interviewer who says &ldquo;design Twitter.&rdquo; Most candidates freeze. Not because they lack knowledge - they can recite what a CDN is, or explain what Redis does - but because they have no mental framework for assembling those pieces under pressure."/>
+
+    <meta property="og:title" content="System Design - Building Things That Don&#39;t Fall Over" />
+<meta property="og:description" content="Helpful context:
+ Networking - How Packets Find Their Way Across the Internet  Databases &amp; Indexes - The Structures That Make Queries Fast   Picture the scene: a whiteboard, a marker, an interviewer who says &ldquo;design Twitter.&rdquo; Most candidates freeze. Not because they lack knowledge - they can recite what a CDN is, or explain what Redis does - but because they have no mental framework for assembling those pieces under pressure." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://megha-bose.github.io/posts/system-design-fundamentals/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-09-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-09-15T00:00:00+00:00" />
+
+
+    <meta property="fb:app_id" content="3721256308022480" />
+
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://megha-bose.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Megha Bose" /></a>
+      <span class="app-header-title">Megha Bose</span><p class="app-header-tagline">Yet another wave in the ocean</p>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/about/">About Me</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/resume/"> Resume</a>
+             <br> 
+          
+          <a class="app-header-menu-item" href="/bookshelf/">Bookshelf</a>
+      </nav>
+      <div class="app-header-social app-header-social-primary">
+        
+          
+          <a href="mailto:megh.bose@gmail.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-mail">
+  <title>Email</title>
+  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://github.com/Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github">
+  <title>Github</title>
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.linkedin.com/in/megha-bose/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin">
+  <title>Linkedin</title>
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle>
+</svg>
+          </a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode">
+        <span class="theme-toggle-icon"></span>
+      </button>
+      <div class="app-header-social app-header-social-secondary">
+        
+          
+        
+          
+        
+          
+        
+          
+          <a href="https://twitter.com/MegsB2001" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-twitter" xmlns="http://www.w3.org/2000/svg">
+  <title>X</title>
+  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L2.25 2.25H9.08l4.254 5.622 4.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/nimbus2o01/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Instagram</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.instagram.com/whimsymeg.art/" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-instagram">
+  <title>Art</title>
+  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://www.youtube.com/@Megha-Bose" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-youtube">
+  <title>YouTube</title>
+  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+</svg>
+          </a>
+          
+        
+          
+          <a href="https://meghabose10.wordpress.com" target="_blank" rel="noreferrer noopener me">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-globe">
+  <title>Old Website</title>
+  <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+          </a>
+          
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <a class="post-back-link" href="https://megha-bose.github.io/categories/computer-systems/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left">
+  <title>arrow-left</title>
+  <line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>
+</svg>Back
+    </a>
+    <header class="post-header">
+      <h1 class ="post-title">System Design - Building Things That Don&#39;t Fall Over</h1>
+      <div class="post-meta">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Sep 2024
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          15 min read
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>Helpful context:</strong></p>
+<ul>
+<li><a href="/posts/networking-ip-tcp-http/" target="_blank" rel="noopener noreferrer">Networking - How Packets Find Their Way Across the Internet</a>
+</li>
+<li><a href="/posts/databases-indexes/" target="_blank" rel="noopener noreferrer">Databases &amp; Indexes - The Structures That Make Queries Fast</a>
+</li>
+</ul>
+<p>Picture the scene: a whiteboard, a marker, an interviewer who says &ldquo;design Twitter.&rdquo; Most candidates freeze. Not because they lack knowledge - they can recite what a CDN is, or explain what Redis does - but because they have no mental framework for <em>assembling</em> those pieces under pressure. The ones who don&rsquo;t freeze have internalized something more valuable than a list of technologies: they have a repeatable thinking process, and they know the numbers that separate plausible from impossible.</p>
+<p>That is what this post is about. System design is not a test of memorization. It is a test of articulated tradeoffs.</p>
+<h2 id="why-system-design-became-a-discipline">Why System Design Became a Discipline</h2>
+<p>In the early days of the web, &ldquo;design&rdquo; meant picking a database and writing some server code. A single machine could handle a modest website. Then traffic scaled, and things got interesting. The 2000s eBay outages, the Twitter fail whale, the early Facebook scaling crises - all of them exposed a gap between software engineering (writing correct programs) and systems engineering (building things that stay up under real-world stress). Google&rsquo;s SRE model, Amazon&rsquo;s internal service decomposition, Netflix&rsquo;s migration to AWS - these weren&rsquo;t just engineering projects. They were the gradual formalization of a discipline: how do you reason about a system you cannot hold entirely in your head?</p>
+<p>System design interviews are, imperfectly, trying to probe that discipline.</p>
+<h2 id="the-framework-six-steps-before-a-single-box-gets-drawn">The Framework: Six Steps Before a Single Box Gets Drawn</h2>
+<p><strong>Step 1 - Clarify requirements.</strong> Separate what the system <em>does</em> (functional) from how it <em>performs</em> (non-functional). &ldquo;Build a URL shortener&rdquo; leaves open: custom aliases? Link expiry? Analytics? How many redirects per second? The questions you ask reveal how you think. Don&rsquo;t assume; ask.</p>
+<p><strong>Step 2 - Estimate scale.</strong> Back-of-envelope calculations identify what will be stressed. They don&rsquo;t need precision - an order of magnitude is enough. This is the step most candidates skip, and it&rsquo;s the one that matters most, because the right architecture at 1,000 RPS is wrong at 1,000,000 RPS.</p>
+<p><strong>Step 3 - Design the data model.</strong> What entities exist? What are the read/write patterns? A write-heavy workload points toward different storage choices than a read-heavy one. The data model drives everything downstream.</p>
+<p><strong>Step 4 - Design the API.</strong> What do clients call, and with what parameters? Doing this <em>before</em> internal design forces clarity: if you can&rsquo;t articulate the API, you don&rsquo;t understand the system.</p>
+<p><strong>Step 5 - Design components top-down.</strong> Work from client to storage. Where does each request go, and why?</p>
+<p><strong>Step 6 - Identify bottlenecks.</strong> Where does this break as scale grows? What fails first - CPU, disk I/O, network, the database? Address each bottleneck with a known pattern.</p>
+<p>There is no &ldquo;correct&rdquo; answer in system design. This is the central discomfort that trips people up. Two experienced engineers can propose very different architectures for the same requirements and both be right - because they&rsquo;ve made different but defensible tradeoff choices. The interview is grading your reasoning, not your conclusion. The more explicitly you name your tradeoffs, the better you perform.</p>
+<h2 id="internalize-these-numbers">Internalize These Numbers</h2>
+<p>This is the Google SRE latency hierarchy, and you should commit it to memory. Not as trivia, but because these numbers instantly reveal whether a design is physically plausible.</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Latency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L1 cache hit</td>
+<td>0.5 ns</td>
+</tr>
+<tr>
+<td>L2 cache hit</td>
+<td>7 ns</td>
+</tr>
+<tr>
+<td>RAM access</td>
+<td>~100 ns</td>
+</tr>
+<tr>
+<td>SSD random read</td>
+<td>~100 µs</td>
+</tr>
+<tr>
+<td>Network round-trip (same datacenter)</td>
+<td>~500 µs</td>
+</tr>
+<tr>
+<td>HDD disk seek</td>
+<td>~10 ms</td>
+</tr>
+<tr>
+<td>Network round-trip (cross-region)</td>
+<td>~100 - 150 ms</td>
+</tr>
+<tr>
+<td>Packet from California to Netherlands</td>
+<td>~150 ms</td>
+</tr>
+</tbody>
+</table>
+<p>What do these numbers tell you? They tell you that accessing a remote database is roughly a million times slower than an L1 cache hit. That cross-region replication adds 100 - 150ms of irreducible latency - physics, not engineering. That if your service makes four serial network calls within a datacenter, you&rsquo;ve already spent ~2ms before doing any actual computation. Design for the numbers, not the words.</p>
+<p>For quick estimation: 1 million requests/day ≈ 12 requests/second (divide by 86,400). A typical web request payload is 1 - 10 KB. A database row is 100 bytes to 1 KB. A single well-tuned PostgreSQL instance handles thousands of reads per second. A single Nginx instance handles tens of thousands of RPS.</p>
+<h2 id="horizontal-vs-vertical-scaling">Horizontal vs Vertical Scaling</h2>
+<p><strong>Vertical scaling</strong> means adding more resources to one machine - bigger CPU, more RAM, faster disk. It is operationally simple and requires no application changes. It also has a hard ceiling, and a single machine is always a single point of failure.</p>
+<p><strong>Horizontal scaling</strong> means adding more machines. It is theoretically unbounded, but it requires one critical architectural property: the application must be <strong>stateless</strong>. If a request can be routed to any server and produce the same result, you can scale horizontally. If request routing depends on which server holds the user&rsquo;s session in memory, adding servers makes things worse.</p>
+<p>Designing services to be stateless from the beginning is the highest-leverage architecture decision. It costs almost nothing early. It enables every scaling strategy later. State - sessions, caches, in-progress work - belongs in an external store: Redis, a database, or a distributed cache, not server memory.</p>
+<p>The AWS Well-Architected Framework calls this out explicitly in its Performance Efficiency pillar: use stateless compute, externalize state, and scale horizontally. GCP&rsquo;s best practices for Compute Engine echo the same principle.</p>
+<h2 id="the-three-bottlenecks-cpu-io-network">The Three Bottlenecks: CPU, I/O, Network</h2>
+<p>Every performance problem is one of three things:</p>
+<p><strong>CPU-bound:</strong> The bottleneck is computation. Encoding video, running ML inference, compressing data. Solutions: more cores, better algorithms, offload to specialized hardware (GPUs, TPUs).</p>
+<p><strong>I/O-bound:</strong> The bottleneck is waiting for disk or database reads. This is the most common bottleneck in web services. Solutions: caching (avoid the I/O entirely), read replicas (distribute I/O across machines), indexing (reduce I/O per query), SSDs over HDDs.</p>
+<p><strong>Network-bound:</strong> The bottleneck is data transfer. Uploading large files, streaming video, high-fan-out notifications. Solutions: compression, CDNs (serve from edge, not origin), batching (fewer round trips).</p>
+<p>A system design that doesn&rsquo;t identify which bottleneck it&rsquo;s solving isn&rsquo;t really a design - it&rsquo;s a list of services.</p>
+<h2 id="the-layered-architecture">The Layered Architecture</h2>
+<p>Most large-scale web systems share a recognizable layered structure. From client to data:</p>
+<p><strong>Client</strong> - Browser, mobile app, or API consumer. The client&rsquo;s job is to make requests and render responses. Keep logic minimal here; it&rsquo;s the layer you control least.</p>
+<p><strong>CDN</strong> - A geographically distributed cache of static assets (images, JS, CSS) and sometimes dynamic responses. A user in Singapore hitting your CDN edge node at 5ms instead of your origin server at 180ms is a free latency win. AWS CloudFront, GCP Cloud CDN, and Cloudflare all operate on this principle.</p>
+<p><strong>Load Balancer</strong> - Distributes requests across your application servers. Provides health checking and horizontal scale. AWS ALB (Application Load Balancer) operates at Layer 7 - it can route based on HTTP path, headers, or host. AWS NLB (Network Load Balancer) operates at Layer 4 - faster, but cannot inspect application-layer content.</p>
+<p><strong>Application Servers</strong> - Stateless compute. These handle business logic and call downstream services. Because they&rsquo;re stateless, you can add or remove them freely.</p>
+<p><strong>Cache Layer</strong> - In-memory key-value stores (Redis, Memcached) that sit between your application and database. The cache-aside pattern: read from cache; on miss, read from database and populate cache; on write, update database and invalidate cache. Redis is the default choice today - it adds persistence, Lua scripting, pub/sub, and richer data structures beyond Memcached&rsquo;s pure key-value model.</p>
+<p><strong>Database</strong> - The system of record. Where data lives durably. The write bottleneck in most systems. Protected by the cache layer for reads; protected by connection pooling (PgBouncer for Postgres) for connection exhaustion.</p>
+<h2 id="the-20-of-patterns-that-cover-80-of-interview-questions">The 20% of Patterns That Cover 80% of Interview Questions</h2>
+<p><strong>Read/Write Split (CQRS-flavored):</strong> Separate your read path from your write path. Writes go to a primary database; reads go to replicas. This handles the common case where reads vastly outnumber writes. AWS Aurora supports up to 15 read replicas. GCP Cloud Spanner handles this with automatic multi-region replication.</p>
+<p><strong>Cache-Aside (Lazy Loading):</strong> Don&rsquo;t preload the cache; populate it on miss. Simple, avoids wasted cache capacity on data that&rsquo;s never read. The risk: a cache stampede when a popular key expires and thousands of requests simultaneously hit the database. Mitigation: probabilistic early expiration (refresh before the key fully expires) or a mutex lock on first population.</p>
+<p><strong>Fan-out on Write vs Fan-out on Read:</strong> When a Twitter user with 10 million followers posts a tweet, do you write that tweet to 10 million followers' feeds immediately (fan-out on write), or do you assemble the feed at read time (fan-out on read)? Fan-out on write means fast reads but expensive writes for high-follower users. Fan-out on read means cheap writes but slow reads for users with many followees. Twitter&rsquo;s actual architecture uses a hybrid: fan-out on write for most users, fan-out on read for celebrity accounts. Knowing this pattern exists is more important than knowing Twitter&rsquo;s exact implementation.</p>
+<p><strong>Event-Driven Decoupling:</strong> Instead of service A calling service B synchronously, A publishes an event to a queue, and B consumes it asynchronously. This decouples availability - B can be down without affecting A - and enables multiple consumers (fan-out). AWS SQS and SNS, Kafka, and GCP Pub/Sub all implement this.</p>
+<h2 id="multi-region-design-considerations">Multi-Region Design Considerations</h2>
+<p>A single-region system, no matter how well designed, is a latency problem for users far from your region and a risk for regional failures. Multi-region design introduces new tradeoffs.</p>
+<p><strong>Active-active multi-region:</strong> All regions serve traffic and accept writes. Requires cross-region replication and conflict resolution (or strong consistency at the cost of cross-region write latency). AWS Global Accelerator routes users to the nearest healthy region. DynamoDB Global Tables provide active-active replication with eventual consistency.</p>
+<p><strong>Active-passive (primary-standby):</strong> One region handles writes; others are warm standbys that serve reads (or stay idle for failover). Simpler consistency model; higher failover latency. AWS RDS Multi-Region read replicas with Route 53 failover is a common pattern here.</p>
+<p><strong>Data sovereignty:</strong> GDPR and similar regulations require that certain user data physically reside within specific geographic boundaries. AWS and GCP both offer region-level data residency guarantees. This isn&rsquo;t optional for EU deployments - it&rsquo;s a legal requirement that constrains your architecture.</p>
+<h2 id="what-actually-breaks-systems">What Actually Breaks Systems</h2>
+<p>The preceding sections describe what to build toward. Equally useful - and often more practically instructive - is asking the opposite question: what concretely causes each property to break down? The failure modes of scalability, reliability, and maintainability are specific, diagnosable, and usually present long before the system actually fails. Knowing them gives you a diagnostic lens: when you see the symptom, you know what&rsquo;s coming.</p>
+<h3 id="what-makes-a-system-non-scalable">What Makes a System Non-Scalable</h3>
+<p>A system fails to scale when its bottlenecks grow linearly with load instead of being absorbed by the architecture.</p>
+<p><strong>Stateful servers.</strong> The moment session data lives in a server&rsquo;s local memory, adding servers makes routing harder, not easier. A user must always hit the same server. You cannot redistribute load freely. You cannot replace a server without losing in-flight sessions. Every horizontal scaling decision is constrained by this one early choice. The fix is cheap - externalize state from day one - but the damage of not doing it is compounding.</p>
+<p><strong>Synchronous call chains.</strong> If a request to your service triggers a synchronous chain A → B → C → D, your worst-case latency is the sum of all four hops plus business logic. More critically, the throughput of the entire chain is bounded by its slowest service. You cannot scale around a synchronous dependency; you can only wait for it.</p>
+<p><strong>Write-path centralization.</strong> Reads distribute easily: caches, read replicas, CDNs all absorb read load. Writes are harder because they require coordination and durability. A single primary database handling all writes is the most common scaling ceiling - it looks generous early (a tuned Postgres primary handles thousands of writes/second) and hits like a wall when approached. Systems that never separate their write path from their read path discover this at the worst possible time.</p>
+<p><strong>Hot partitions.</strong> Sharding only helps if the load is actually distributed across shards. Sharding by a non-uniform key - timestamp, geographic region, a user attribute that clusters - concentrates traffic on a few shards. One shard runs hot and becomes the bottleneck. The system looks sharded but behaves as if it weren&rsquo;t. Uniform hash-based sharding by a randomly distributed key (e.g., hashed user ID) is the standard countermeasure.</p>
+<p><strong>Unbounded resource accumulation.</strong> Memory that grows without bound, database connections that are never returned to the pool, file descriptors that leak, queues that grow faster than they drain - these are all forms of the same failure: a resource that accumulates under load until the process crashes or slows to a halt. They don&rsquo;t show up in synthetic load tests. They appear in production after sustained traffic.</p>
+<h3 id="what-makes-a-system-non-reliable">What Makes a System Non-Reliable</h3>
+<p>A system fails to be reliable when individual failures propagate outward rather than being contained.</p>
+<p><strong>Single points of failure.</strong> Any component with no redundancy means a single failure takes down the system. This includes the obvious (one server, one availability zone) and the less obvious: a shared configuration database, a single deployment pipeline, a manually maintained server that no one knows how to recreate, a third-party API with no fallback. The question to ask of every component: what happens when this specific thing fails? If the answer is &ldquo;everything stops,&rdquo; that&rsquo;s your single point of failure.</p>
+<p><strong>Cascading failures.</strong> When service B becomes slow, A&rsquo;s threads pile up waiting for it. A&rsquo;s thread pool exhausts. A becomes unresponsive. A&rsquo;s callers time out and pile up. The failure propagates upstream through the call graph, taking down services that had nothing to do with the original problem. This is the most common failure mode in microservices architectures. The countermeasures - timeouts, circuit breakers, bulkheads - must be present before the failure, not added after. A circuit breaker that doesn&rsquo;t exist cannot trip.</p>
+<p><strong>No graceful degradation.</strong> A system that returns an error when any single dependency fails has made those dependencies part of its critical path. The search page that errors out because the recommendations service is down, instead of showing results without recommendations, has coupled two things that didn&rsquo;t need to be coupled. Every external dependency is a potential failure injection point. The design question is not &ldquo;will this dependency fail?&rdquo; but &ldquo;what should the system do when it does?&rdquo;</p>
+<p><strong>Invisible failures.</strong> A system without metrics, without structured logging, without health endpoints, without alerting, doesn&rsquo;t fail loudly - it degrades silently. By the time a user reports it, the failure has been real for minutes or hours. The system was already broken; it just wasn&rsquo;t observable. Observability is not an operational nicety added after the system works. It is a reliability property: a system you cannot observe is a system you cannot trust.</p>
+<p><strong>Large blast radius deployments.</strong> Releasing a change to all production traffic simultaneously means every bug is a production-wide incident. Canary deployments, feature flags, and staged rollouts are not process overhead; they are the mechanism by which the cost of a bug is bounded. A bad deploy that reaches 1% of traffic before rollback is a near-miss. The same deploy to 100% is an incident.</p>
+<h3 id="what-makes-a-system-non-maintainable">What Makes a System Non-Maintainable</h3>
+<p>A system becomes unmaintainable when the cost of understanding and changing it grows faster than the team that owns it.</p>
+<p><strong>Tight coupling.</strong> When changing service A requires coordinating changes in B, C, and D, the services share a boundary in name only. Every feature requires a multi-team deployment window. Every bug fix risks breaking something in another service. The system has the operational complexity of microservices without the independence that makes microservices worth the complexity. This is a distributed monolith, and it is worse than an actual monolith because at least a monolith deploys as a unit.</p>
+<p><strong>Implicit contracts.</strong> A service that returns undocumented fields that callers depend on, that has timing behavior other services assume, or that makes ordering guarantees it never explicitly promised, accumulates hidden coupling. The contract is real; it&rsquo;s just invisible. When it changes - because the owning team didn&rsquo;t know about it - something downstream breaks in a way that is difficult to trace. Explicit, versioned APIs are the mechanism for making implicit contracts explicit before they become incidents.</p>
+<p><strong>Snowflake infrastructure.</strong> Servers that were manually configured at some point in the past, whose configuration is not in source control, that cannot be reproduced from scratch in a reasonable time, and which no one fully understands are not components - they are organizational risks. When they fail, they become extended incidents rather than routine replacements. Infrastructure as code is the difference between a replaceable part and a sacred artifact that no one wants to touch.</p>
+<p><strong>No operational tooling.</strong> A system that cannot be deployed safely, rolled back quickly, diagnosed under load, or reproduced locally resists change. Each change requires either courage or extensive manual testing. Engineers avoid changes they should make because the operational risk of making them exceeds the pain of leaving them alone. Technical debt accumulates not because engineers don&rsquo;t see it but because the cost of paying it down is too high. The solution is investment in deployment pipelines, rollback mechanisms, local development environments, and runbooks - before the debt is too heavy to lift.</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Key Insight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stateless services</td>
+<td>Required for horizontal scaling; externalize all state</td>
+</tr>
+<tr>
+<td>Back-of-envelope math</td>
+<td>Order of magnitude is enough; use it to find bottlenecks</td>
+</tr>
+<tr>
+<td>The latency hierarchy</td>
+<td>L1 cache to cross-region: 7 orders of magnitude difference</td>
+</tr>
+<tr>
+<td>Cache-aside pattern</td>
+<td>Populate on miss; invalidate on write</td>
+</tr>
+<tr>
+<td>Read/write split</td>
+<td>Replicas absorb read load; primaries handle writes</td>
+</tr>
+<tr>
+<td>Fan-out tradeoffs</td>
+<td>Write-time vs read-time materialization</td>
+</tr>
+<tr>
+<td>Multi-region</td>
+<td>Active-active vs active-passive; data sovereignty constraints</td>
+</tr>
+<tr>
+<td>System design interviews</td>
+<td>Grade reasoning, not conclusions; name your tradeoffs</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>Read Next:</strong></p>
+<ul>
+<li><a href="/posts/latency-throughput-queues/" target="_blank" rel="noopener noreferrer">Latency, Throughput &amp; Queues - The Physics of System Performance</a>
+</li>
+<li><a href="/posts/load-balancing-proxies/" target="_blank" rel="noopener noreferrer">Load Balancing &amp; Proxies - Distributing Work So No Single Machine Drowns</a>
+</li>
+<li><a href="/posts/cdn-and-content-delivery/" target="_blank" rel="noopener noreferrer">CDN and Content Delivery - How Data Gets Everywhere Fast</a>
+</li>
+<li><a href="/posts/caching-strategies/" target="_blank" rel="noopener noreferrer">Caching Strategies - The Trade-off Between Speed and Truth</a>
+</li>
+</ul>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+      onload="renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ]
+      });"></script>
+    <script>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        function applyTheme(theme, save) {
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          if (save) localStorage.setItem('theme', theme);
+        }
+        btn.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'light' ? 'dark' : 'light', true);
+        });
+        
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            applyTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark', false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
