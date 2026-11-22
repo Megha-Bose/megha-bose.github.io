@@ -13,6 +13,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795370196" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795370802" defer></script>
+    <script src="/js/big-o.js?v=1795368999" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +24,13 @@
 
 <meta name="twitter:title" content="Amortized Analysis - The True Cost of a Sequence"/>
 <meta name="twitter:description" content="Helpful context:
- Data Structures - Storage Is Strategy    A dynamic array doubles its capacity when full. You&rsquo;re appending elements one by one. Most appends are instant - you write one value into the next slot and you&rsquo;re done. But every so often, the array is full and you have to allocate a new, larger block of memory and copy everything over. If the array has $n$ elements, that copying costs $O(n)$."/>
+ Data Structures - Storage Is Strategy    A dynamic array doubles its capacity when it fills up. Most appends just write a value into the next free slot. But every so often the array is full, and the append has to allocate a bigger block and copy all $n$ elements across: $O(n)$.
+So is appending $O(n)$? For that one unlucky call, yes. But ask what $n$ appends cost in total, starting from empty, and the answer is $O(n)$: linear, not quadratic."/>
 
     <meta property="og:title" content="Amortized Analysis - The True Cost of a Sequence" />
 <meta property="og:description" content="Helpful context:
- Data Structures - Storage Is Strategy    A dynamic array doubles its capacity when full. You&rsquo;re appending elements one by one. Most appends are instant - you write one value into the next slot and you&rsquo;re done. But every so often, the array is full and you have to allocate a new, larger block of memory and copy everything over. If the array has $n$ elements, that copying costs $O(n)$." />
+ Data Structures - Storage Is Strategy    A dynamic array doubles its capacity when it fills up. Most appends just write a value into the next free slot. But every so often the array is full, and the append has to allocate a bigger block and copy all $n$ elements across: $O(n)$.
+So is appending $O(n)$? For that one unlucky call, yes. But ask what $n$ appends cost in total, starting from empty, and the answer is $O(n)$: linear, not quadratic." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/amortized-analysis/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -153,7 +159,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          9 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -164,87 +170,57 @@
 </li>
 </ul>
 <hr>
-<p>A dynamic array doubles its capacity when full. You&rsquo;re appending elements one by one. Most appends are instant - you write one value into the next slot and you&rsquo;re done. But every so often, the array is full and you have to allocate a new, larger block of memory and copy everything over. If the array has $n$ elements, that copying costs $O(n)$.</p>
-<p>Does this mean dynamic array append is an $O(n)$ operation?</p>
-<p>The honest answer is: yes, sometimes, for that single operation. But if you ask &ldquo;what&rsquo;s the total cost of $n$ appends, starting from an empty array?&rdquo;, the answer is $O(n)$ - linear, not quadratic. The cost of those rare expensive operations gets spread across the many cheap ones.</p>
-<p>This is amortized analysis: instead of asking &ldquo;how expensive can a single operation be?&rdquo;, ask &ldquo;what is the average cost per operation across any sequence of operations?&rdquo; The average is sometimes dramatically lower than the worst-case single-operation cost. And crucially, the amortized bound is exact - not an approximation.</p>
+<p>A dynamic array doubles its capacity when it fills up. Most appends just write a value into the next free slot. But every so often the array is full, and the append has to allocate a bigger block and copy all $n$ elements across: $O(n)$.</p>
+<p>So is appending $O(n)$? For that one unlucky call, yes. But ask what $n$ appends cost <em>in total</em>, starting from empty, and the answer is $O(n)$: linear, not quadratic. The rare expensive steps are paid for by the many cheap ones.</p>
+<p>That&rsquo;s <strong>amortized analysis</strong>: instead of the worst single operation, bound the cost <em>per operation over any sequence</em>. It&rsquo;s often dramatically lower, and it&rsquo;s a guarantee, not an estimate.</p>
 <blockquote>
-<p><strong>Not the same as average-case analysis.</strong> This is a common point of confusion. Average-case analysis asks: &ldquo;for a random input, what is the expected cost of one operation?&rdquo; It assumes something about the distribution of inputs. Amortized analysis makes no assumptions about inputs - it is a worst-case guarantee. It asks: &ldquo;over any sequence of $n$ operations, what is the cost per operation in the worst case?&rdquo; The &ldquo;average&rdquo; in amortized is an average over time (across a sequence of operations), not an average over inputs. Similarly, amortized analysis is not best-case analysis (which describes the most favorable single input) or worst-case single-operation analysis (which describes the most expensive single call). It is a tighter, more informative statement about sequences.</p>
+<p><strong>Not average-case analysis.</strong> Average-case analysis assumes something about random inputs. Amortized analysis assumes nothing: it&rsquo;s a worst-case bound on <em>sequences</em>. &ldquo;Average&rdquo; here means averaged over time, over the operations in one run, not averaged over possible inputs.</p>
 </blockquote>
-<hr>
-<h2 id="the-core-idea">The Core Idea</h2>
-<p>Amortized analysis is useful when:</p>
-<ul>
-<li>Some operations in a data structure are expensive</li>
-<li>Those expensive operations are rare</li>
-<li>The expensive operations are always preceded by many cheap operations that &ldquo;set up&rdquo; the expensive one</li>
-</ul>
-<p>The classic examples are dynamic arrays (rare doubling followed by many cheap appends), hash tables (rare rehashing followed by many cheap lookups), and certain tree structures that occasionally restructure themselves.</p>
-<p>There are three standard techniques. All three give the same final bound - they differ in what intuition they expose and which is easiest to apply to a given problem.</p>
+<p>Amortization pays off when some operations are expensive, they&rsquo;re rare, and the cheap ones before them &ldquo;set them up&rdquo;. The classic cases are dynamic arrays, hash tables that occasionally rehash, and trees that occasionally restructure. There are three ways to make the argument. They all reach the same bound; they just tell the story differently.</p>
 <hr>
 <h2 id="method-1-the-aggregate-method">Method 1: The Aggregate Method</h2>
-<p>The aggregate method is the most direct. Compute the total cost $T(n)$ of any sequence of $n$ operations, then divide: the amortized cost per operation is $T(n)/n$.</p>
-<p><strong>Dynamic array append, analyzed by aggregate.</strong></p>
-<p>Start with an empty array of capacity 1. Do $n$ appends. Regular appends (no resizing) cost 1 each. A resize at capacity $k$ copies all $k$ elements, costing $k$.</p>
-<p>Resizes happen when the array is full: at sizes 1, 2, 4, 8, 16, &hellip;, up to $2^{\lfloor \log n \rfloor}$. The total copying cost is:</p>
-<p>$$1 + 2 + 4 + 8 + \cdots + 2^{\lfloor \log n \rfloor} \lt 2n$$</p>
-<p>(Geometric series: each term is twice the previous, so the sum is less than twice the last term, which is at most $n$.)</p>
-<p>Total cost of $n$ appends: at most $n$ (the regular appends) plus less than $2n$ (the copying) equals less than $3n$. Amortized cost per append: $3n/n = 3 = O(1)$.</p>
-<p>The worst-case cost of a single append is $O(n)$. But amortized over a sequence of $n$ appends, each costs $O(1)$.</p>
+<p>Add up the total cost $T(n)$ of any $n$ operations, and divide by $n$.</p>
+<div class="sf" data-sf="amortized">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Start with capacity 1 and append $n$ times. Every append writes once: $n$ in total. Resizes happen at sizes 1, 2, 4, 8, &hellip;, and each copies everything present:</p>
+<p>$$1 + 2 + 4 + \cdots + 2^{\lfloor \log_2 n \rfloor} &lt; 2n$$</p>
+<p>since each term is double the one before, so the sum is less than twice the largest term, which is at most $n$. Total: less than $n + 2n = 3n$. <strong>Per append: at most 3, so $O(1)$ amortized</strong>, even though one append can cost $O(n)$.</p>
 <hr>
 <h2 id="method-2-the-accounting-method">Method 2: The Accounting Method</h2>
-<p>The accounting method assigns each operation a &ldquo;charge&rdquo; - an amount of credit it pays when it runs. Cheap operations can be charged more than their actual cost, storing the surplus as credit. Expensive operations draw on stored credit. The rule: credit can never go negative (you can&rsquo;t borrow against the future).</p>
-<p>If you can assign charges so that credit is always non-negative, and every operation&rsquo;s charge is $O(f)$, then the amortized cost per operation is $O(f)$.</p>
-<p><strong>Dynamic array, analyzed by accounting.</strong></p>
-<p>Charge each append 3 credits: 1 to pay for the append itself, and 2 stored on the new element.</p>
-<p>When a resize occurs on an array of capacity $k$ (it was half-full, so $k/2$ elements are being copied):</p>
-<ul>
-<li>The last $k/2$ elements inserted (since the previous resize) each stored 2 credits.</li>
-<li>Total stored credit: $k/2 \times 2 = k$ credits.</li>
-<li>Cost of the resize: copying $k$ elements costs $k$.</li>
-<li>Credit balance after resize: $k - k = 0$.</li>
-</ul>
-<p>Credit never goes negative. Every append is charged 3 credits = $O(1)$. Therefore the amortized cost per append is $O(1)$.</p>
-<p>The accounting method makes explicit the &ldquo;pre-payment&rdquo; structure: cheap operations save credit that future expensive operations will consume. When you can make this story precise (each cheap operation saves exactly enough for the next expensive one), the proof falls into place.</p>
+<p>Charge each operation a fixed fee. When an operation costs less than its fee, bank the difference as credit. When one costs more, pay from the bank. The single rule: <strong>the bank must never go negative.</strong> If a fee of $f$ always keeps the bank solvent, every operation is $O(f)$ amortized.</p>
+<div class="sf" data-sf="player" data-src="/data/amortized-analysis/accounting.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>For the dynamic array, charge <strong>3 credits</strong> per append: 1 pays for writing the value, and 2 are stored on the new element. When an array of capacity $k$ is full, the $k/2$ elements added since the last resize carry 2 credits each, which is $k$ credits: exactly the cost of copying all $k$ elements. The bank never goes negative, so appends are $O(1)$ amortized.</p>
+<p>This method makes the <em>pre-payment</em> explicit: every cheap operation saves just enough for its share of the next expensive one.</p>
 <hr>
 <h2 id="method-3-the-potential-method">Method 3: The Potential Method</h2>
-<p>The potential method is the most general. Think of it like stored energy in a physical system. Define a <strong>potential function</strong> $\Phi$ that maps the current state of the data structure to a non-negative number. The potential captures &ldquo;how much deferred work is waiting.&rdquo;</p>
-<p>The <strong>amortized cost</strong> of operation $i$ is defined as:</p>
-<p>$$\hat c_i = c_i + \Delta\Phi_i = c_i + \Phi(D_i) - \Phi(D_{i-1})$$</p>
-<p>where $c_i$ is the actual cost and $D_i$ is the state after operation $i$.</p>
-<p>Summing over all $n$ operations:</p>
+<p>The most general method. Define a <strong>potential</strong> $\Phi$, a non-negative number computed from the data structure&rsquo;s current state, like energy stored in a spring. It measures how much deferred work is waiting. The amortized cost of operation $i$ is its actual cost plus the change in potential:</p>
+<p>$$\hat c_i = c_i + \Phi(D_i) - \Phi(D_{i-1})$$</p>
+<p>Summed over a sequence, the potential terms telescope:</p>
 <p>$$\sum_{i=1}^{n} \hat c_i = \sum_{i=1}^{n} c_i + \Phi(D_n) - \Phi(D_0)$$</p>
-<p>So long as $\Phi(D_n) \geq \Phi(D_0)$ (we start at low potential and end at at least as much potential), the total actual cost is at most the total amortized cost. This means: if you can show $\hat c_i = O(f)$ for every operation, the total actual cost is $O(nf)$.</p>
-<p>The trick is choosing $\Phi$ so that expensive operations see a drop in potential that absorbs their actual cost, while cheap operations see a slight rise in potential (storing &ldquo;energy&rdquo; for later).</p>
-<p><strong>Dynamic array, analyzed by potential.</strong></p>
-<p>Define $\Phi(D) = 2 \cdot \text{size}(D) - \text{capacity}(D)$.</p>
-<p>Right after a resize, size is $k+1$ (the element that triggered it plus all previous) and capacity is $2k$, so $\Phi = 2(k+1) - 2k = 2$. The potential is low, as expected - the array just expanded and has lots of room.</p>
-<p>As elements are added, potential grows: when the array is full ($\text{size} = k$, $\text{capacity} = k$), $\Phi = 2k - k = k$. The potential is high, encoding that a resize is imminent.</p>
-<p><strong>Ordinary append (no resize):</strong> $c_i = 1$, size increases by 1, capacity unchanged, $\Delta\Phi = 2$.</p>
-<p>$$\hat c_i = 1 + 2 = 3 = O(1)$$</p>
-<p><strong>Resize append:</strong> array is full ($\text{size} = k = \text{capacity}$), doubles to $2k$. Cost: copy $k$ elements and do 1 append, so $c_i = k + 1$. After resize: size $= k+1$, capacity $= 2k$, $\Phi$ goes from $k$ to $2(k+1) - 2k = 2$. So $\Delta\Phi = 2 - k$.</p>
-<p>$$\hat c_i = (k+1) + (2-k) = 3 = O(1)$$</p>
-<p>In both cases the amortized cost is $O(1)$. The potential drops sharply during the resize, absorbing the large actual cost and keeping $\hat c_i$ small.</p>
+<p>So as long as the potential ends at least where it started, the real total is at most the amortized total. The art is choosing $\Phi$ so that it <strong>rises a little on cheap operations and drops sharply on expensive ones</strong>, cancelling out their cost.</p>
+<p>For the dynamic array, take $\Phi = 2 \cdot \text{size} - \text{capacity}$. Just after a resize it&rsquo;s small, 2; just before the next, when the array is full at size $k$, it&rsquo;s $k$.</p>
+<ul>
+<li><strong>Ordinary append:</strong> actual cost 1, size up by 1, so $\Phi$ rises by 2. Amortized: $1 + 2 = 3$.</li>
+<li><strong>Resizing append:</strong> actual cost $k + 1$ (copy $k$, write 1). $\Phi$ falls from $k$ to $2(k+1) - 2k = 2$, a change of $2 - k$. Amortized: $(k + 1) + (2 - k) = 3$.</li>
+</ul>
+<p>Every append is exactly 3 amortized: the potential&rsquo;s drop swallows the copying cost.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> &ldquo;Why not just say worst-case $O(n)$ for append and be done with it?&rdquo; Because $O(n)$ is catastrophically pessimistic for sequences of appends. If you believe each append costs $O(n)$, you&rsquo;d estimate $n$ appends costs $O(n^2)$. But we just proved the total is $O(n)$. Using the per-operation worst case as if it applies to every operation overcounts by a factor of $n$. Dynamic arrays would look no better than linked lists, which is wrong - they&rsquo;re dramatically faster in practice. Amortized analysis gives you the accurate picture.</p>
+<p><strong>&ldquo;Why not just call append $O(n)$ worst case?&quot;</strong> Because charging every operation its worst case badly overcounts. That would put $n$ appends at $O(n^2)$, when we&rsquo;ve just proved they cost $O(n)$. Dynamic arrays would look no better than linked lists, when in practice they&rsquo;re far faster. Amortized analysis gives the accurate picture.</p>
 </blockquote>
 <hr>
 <h2 id="application-splay-trees">Application: Splay Trees</h2>
-<p>Splay trees are binary search trees with no balance information stored at all. Every access - search, insert, delete - rotates the accessed node all the way to the root (this is called &ldquo;splaying&rdquo;). Over time, frequently accessed nodes migrate toward the root.</p>
-<p>The potential function is:</p>
-<p>$$\Phi(T) = \sum_{x \in T} \log(\text{size of subtree rooted at } x)$$</p>
-<p>This captures the &ldquo;disorder&rdquo; in the tree. The amortized cost of splaying node $x$ to the root is $O(\log n)$. Any sequence of $m$ operations on a splay tree with $n$ elements costs $O((m + n) \log n)$ total - so $O(\log n)$ amortized per operation.</p>
-<p>What&rsquo;s remarkable: splay trees achieve this without storing any balance information at all, and they adapt to access patterns. If you repeatedly access the same element, it stays at the root, making subsequent accesses $O(1)$.</p>
+<p>A <strong>splay tree</strong> is a binary search tree that stores no balance information at all. Every access rotates the accessed node all the way up to the root (&ldquo;splaying&rdquo;), so frequently used keys drift toward the top.</p>
+<p>With the potential</p>
+<p>$$\Phi(T) = \sum_{x \in T} \log(\text{size of the subtree rooted at } x)$$</p>
+<p>splaying a node costs $O(\log n)$ amortized, so any $m$ operations on $n$ keys cost $O((m + n)\log n)$. Single operations can be slow, but the sequence is fast. And the tree adapts: access one key over and over, and it stays at the root, where it&rsquo;s cheap to reach.</p>
 <hr>
 <h2 id="application-union-find">Application: Union-Find</h2>
-<p>Union-Find supports two operations on a collection of disjoint sets:</p>
+<p><strong>Union-Find</strong> tracks a collection of disjoint sets with two operations: <em>find</em> the representative of $x$&rsquo;s set, and <em>union</em> two sets. Two tricks make it fast:</p>
 <ul>
-<li><strong>Find(x):</strong> return the representative (root) of x&rsquo;s set.</li>
-<li><strong>Union(x, y):</strong> merge the sets containing x and y.</li>
+<li><strong>Path compression:</strong> on every find, point each node on the path straight at the root.</li>
+<li><strong>Union by rank:</strong> attach the shallower tree under the deeper one.</li>
 </ul>
-<p>With two optimizations - path compression (during Find, rewire all nodes on the path to point directly to the root) and union by rank (always attach the smaller tree under the larger one) - both operations have amortized cost $O(\alpha(n))$, where $\alpha$ is the inverse Ackermann function.</p>
-<p>The inverse Ackermann function grows so slowly that it&rsquo;s effectively constant for any practical input size. For $n$ less than the number of atoms in the observable universe, $\alpha(n) \leq 4$. This means Union-Find is essentially $O(1)$ per operation in practice.</p>
-<p>The proof is one of the more involved amortized analyses in computer science - the potential function captures the structure of the trees and how path compression changes it. But the punchline is simple: path compression makes future operations dramatically cheaper by flattening the tree, and union by rank keeps the tree shallow enough that path compression doesn&rsquo;t have to do too much work.</p>
+<p>Together they give $O(\alpha(n))$ amortized per operation, where $\alpha$ is the <strong>inverse Ackermann function</strong>. It grows so slowly that $\alpha(n) \leq 4$ for any $n$ smaller than the number of atoms in the observable universe: constant in every practical sense. The proof is one of the harder amortized analyses, but the intuition is simple: compression flattens the trees, so future finds get cheaper, and union by rank keeps the trees shallow enough that compressing never costs much. <a href="/posts/minimum-spanning-trees-union-find/" target="_blank" rel="noopener noreferrer">Minimum Spanning Trees &amp; Union-Find</a>
+ puts it to work.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -252,28 +228,28 @@
 <tr>
 <th>Method</th>
 <th>Core idea</th>
-<th>When to use</th>
+<th>Use it when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Aggregate</td>
-<td>Sum total cost, divide by $n$</td>
-<td>Simple operations where you can count total work</td>
+<td>Total cost of $n$ operations, divided by $n$</td>
+<td>You can count the total work directly</td>
 </tr>
 <tr>
 <td>Accounting</td>
-<td>Assign credits; cheap ops save for expensive ones</td>
-<td>When there&rsquo;s a natural &ldquo;pre-payment&rdquo; story</td>
+<td>Fixed fees; cheap operations save for expensive ones</td>
+<td>There&rsquo;s a natural pre-payment story</td>
 </tr>
 <tr>
 <td>Potential</td>
-<td>Define energy $\Phi$; amortized cost = actual + $\Delta\Phi$</td>
-<td>Complex structures; most general; finds the right $\Phi$</td>
+<td>Amortized = actual + change in stored &ldquo;energy&rdquo; $\Phi$</td>
+<td>Complex structures; the most general</td>
 </tr>
 </tbody>
 </table>
-<p>The choice of method is a matter of what makes the proof clearest. The potential method is the most general: once you find the right $\Phi$, the algebra is mechanical. Finding the right $\Phi$ is the art - but a good heuristic is that $\Phi$ should be large just before expensive operations and small just after.</p>
+<p>With the potential method, once you have the right $\Phi$ the algebra is mechanical. Finding $\Phi$ is the art, and a good rule of thumb is to make it large just before the expensive operations and small just after them.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
