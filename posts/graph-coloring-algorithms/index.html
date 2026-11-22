@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795371947" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795372479" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Graph Coloring - Assigning Colors So No Two Neighbors Agree"/>
 <meta name="twitter:description" content="Helpful context:
- Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  NP-Completeness - Why Some Problems Are All the Same Problem    In 1852, Francis Guthrie tried to color a map of England&rsquo;s counties so that no two adjacent counties shared the same color. He noticed four colors always seemed to be enough - no matter how complicated the map, he couldn&rsquo;t find a counterexample requiring five."/>
+ Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  NP-Completeness - Why Some Problems Are All the Same Problem    In 1852 Francis Guthrie, coloring a map of England&rsquo;s counties, noticed that four colors always seemed enough to keep neighbouring counties different. His brother passed the question to Augustus De Morgan, who wrote about it to William Rowan Hamilton within days. In 1879 Alfred Kempe published a proof that stood for eleven years before Percy Heawood found the flaw."/>
 
     <meta property="og:title" content="Graph Coloring - Assigning Colors So No Two Neighbors Agree" />
 <meta property="og:description" content="Helpful context:
- Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  NP-Completeness - Why Some Problems Are All the Same Problem    In 1852, Francis Guthrie tried to color a map of England&rsquo;s counties so that no two adjacent counties shared the same color. He noticed four colors always seemed to be enough - no matter how complicated the map, he couldn&rsquo;t find a counterexample requiring five." />
+ Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  NP-Completeness - Why Some Problems Are All the Same Problem    In 1852 Francis Guthrie, coloring a map of England&rsquo;s counties, noticed that four colors always seemed enough to keep neighbouring counties different. His brother passed the question to Augustus De Morgan, who wrote about it to William Rowan Hamilton within days. In 1879 Alfred Kempe published a proof that stood for eleven years before Percy Heawood found the flaw." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/graph-coloring-algorithms/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -166,7 +169,7 @@
 </li>
 </ul>
 <hr>
-<p>In 1852, Francis Guthrie tried to color a map of England&rsquo;s counties so that no two adjacent counties shared the same color. He noticed four colors always seemed to be enough - no matter how complicated the map, he couldn&rsquo;t find a counterexample requiring five. He asked his brother, who asked his professor, who asked nobody else for 124 years. When the answer finally came, it required a computer to check 1,834 cases. It was the first major theorem in mathematics proved with computer assistance, and it remains controversial in some circles today.</p>
+<p>In 1852 Francis Guthrie, coloring a map of England&rsquo;s counties, noticed that four colors always seemed enough to keep neighbouring counties different. His brother passed the question to Augustus De Morgan, who wrote about it to William Rowan Hamilton within days. In 1879 Alfred Kempe published a proof that stood for eleven years before Percy Heawood found the flaw. The answer finally came in 1976, and it needed a computer to check over a thousand cases: the first major theorem proved with computer assistance.</p>
 <p>That&rsquo;s graph coloring: a question simple enough to pose on a napkin, hard enough to hold off professional mathematicians for over a century, and practically important enough to show up in compilers, scheduling algorithms, and Sudoku solvers.</p>
 <hr>
 <h2 id="the-setup">The Setup</h2>
@@ -201,7 +204,9 @@
 <p>The simplest algorithm: fix an ordering of the vertices, process them one by one, assign each vertex the smallest color not used by any already-colored neighbor.</p>
 <p><strong>Theorem.</strong> Greedy uses at most $\Delta + 1$ colors, where $\Delta$ is the maximum degree.</p>
 <p>The proof is one line: when we color vertex $v$, it has at most $\Delta$ already-colored neighbors, so at most $\Delta$ colors are forbidden, and color $\Delta + 1$ is always available.</p>
-<p>This bound is achievable - a star graph has $\Delta = n-1$ and clearly needs only 2 colors, but a bad ordering gives $n$ colors. The bound is tight in the worst case, not a guarantee of optimality.</p>
+<p>That&rsquo;s a guarantee, not a promise of optimality, and the vertex order matters enormously:</p>
+<div class="sf" data-sf="player" data-src="/data/graph-coloring-algorithms/greedy-order.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>The crown graph on $2n$ vertices is bipartite, so it needs only 2 colors. Process the vertices in the right order and greedy finds them; alternate between the two sides and greedy is forced to use $n$. And there is always <em>some</em> order in which greedy is optimal: color an optimal solution&rsquo;s classes one after another.</p>
 <p><strong>Better orderings.</strong> The <strong>degeneracy</strong> $d(G)$ of a graph is the smallest $k$ such that every subgraph has a vertex of degree $\leq k$. Process vertices in degeneracy order (repeatedly peel off minimum-degree vertices, process in reverse order) and greedy uses at most $d(G) + 1$ colors. For planar graphs, $d \leq 5$, giving a 6-coloring greedily. For forests, $d \leq 1$, giving a 2-coloring.</p>
 <hr>
 <h2 id="brooks-theorem">Brooks' Theorem</h2>
@@ -213,7 +218,7 @@
 <hr>
 <h2 id="the-four-color-theorem">The Four Color Theorem</h2>
 <p>Every planar graph is 4-colorable.</p>
-<p>Guthrie&rsquo;s observation from 1852 was finally proved in 1976 by Kenneth Appel and Wolfgang Haken - with a computer. The proof reduced the problem to checking whether any of 1,834 specific graph configurations could appear as a &ldquo;bad&rdquo; subgraph. No human checked all 1,834 cases; a computer did.</p>
+<p>Guthrie&rsquo;s observation was finally proved in 1976 by Kenneth Appel and Wolfgang Haken, with a computer. The proof reduced the problem to a finite list of well over a thousand configurations, each checked by machine; no human checked them all.</p>
 <p>The proof structure uses two ideas:</p>
 <ul>
 <li><strong>Unavoidability</strong>: every planar graph must contain at least one configuration from a specific finite list.</li>
@@ -230,7 +235,8 @@
 <p>For a graph $G$, the <strong>chromatic polynomial</strong> $P_G(k)$ counts the number of proper $k$-colorings of $G$. It is literally a polynomial in $k$.</p>
 <p>For a path on $n$ vertices: $P_G(k) = k(k-1)^{n-1}$. The first vertex has $k$ choices; each subsequent vertex has $k-1$ choices (avoid the previous one).</p>
 <p>For a cycle $C_n$: $P_G(k) = (k-1)^n + (-1)^n (k-1)$.</p>
-<p>The chromatic number $\chi(G)$ is the smallest positive integer $k$ for which $P_G(k) &gt; 0$. Computing the chromatic polynomial is $#P$-hard - harder than just deciding $\chi(G)$.</p>
+<p>The chromatic number $\chi(G)$ is the smallest positive integer $k$ for which $P_G(k) &gt; 0$. Computing the chromatic polynomial is #P-hard: <a href="/posts/complexity-classes/#counting-p" target="_blank" rel="noopener noreferrer">counting</a>
+ colorings is even harder than deciding whether one exists.</p>
 <hr>
 <h2 id="applications">Applications</h2>
 <p><strong>Register allocation in compilers.</strong> When a compiler assigns variables to CPU registers, it needs to ensure two variables whose values are both needed at the same moment get different registers. Build the <strong>interference graph</strong>: one vertex per variable, one edge between two variables whose live ranges overlap. Register allocation is exactly graph coloring with $k$ = number of registers. NP-completeness means optimal allocation is hard in general; real compilers use greedy heuristics with &ldquo;spilling&rdquo; (storing overflow variables in memory).</p>
@@ -256,7 +262,7 @@
 <tr>
 <td>3-coloring</td>
 <td>NP-complete</td>
-<td>Exponential exact; best approx uses $\tilde{O}(n^{0.2})$ colors</td>
+<td>Exponential exact; coloring a 3-colorable graph efficiently takes about $n^{0.2}$ colors at best known</td>
 </tr>
 <tr>
 <td>$k$-coloring, $k \geq 3$</td>
@@ -276,11 +282,11 @@
 <tr>
 <td>4-coloring planar graphs</td>
 <td>$P$</td>
-<td>$O(V)$ (follows from four color theorem)</td>
+<td>$O(V^2)$ (Robertson, Sanders, Seymour, Thomas)</td>
 </tr>
 <tr>
 <td>Chromatic polynomial</td>
-<td>$#P$-hard</td>
+<td>#P-hard</td>
 <td>Exponential exact</td>
 </tr>
 </tbody>
