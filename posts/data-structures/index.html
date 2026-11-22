@@ -13,6 +13,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795369382" />
+    <script src="/js/algo-demos.js?v=1795368931" defer></script>
+    <script src="/js/player.js?v=1795369382" defer></script>
+    <script src="/js/big-o.js?v=1795368999" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,13 +24,11 @@
 
 <meta name="twitter:title" content="Data Structures - Storage Is Strategy"/>
 <meta name="twitter:description" content="Helpful context:
- Big-O - Why the Right Algorithm Beats Faster Hardware    In 1969, the Apollo 11 guidance computer had 4 kilobytes of RAM. Every decision about where to store data was consequential - engineers argued over individual bytes. A wrong choice could mean a program too slow to navigate a lunar approach.
-Today your phone has roughly 6 billion times more memory. And yet the question hasn&rsquo;t gone away."/>
+ Big-O - Why the Right Algorithm Beats Faster Hardware    The Apollo 11 guidance computer had about 4 kilobytes of working memory, and engineers argued over individual bytes. A phone today has around two million times more. The argument hasn&rsquo;t gone away. Pick the wrong data structure and code that should take seconds takes minutes, and a service built for millions of users falls over at ten thousand."/>
 
     <meta property="og:title" content="Data Structures - Storage Is Strategy" />
 <meta property="og:description" content="Helpful context:
- Big-O - Why the Right Algorithm Beats Faster Hardware    In 1969, the Apollo 11 guidance computer had 4 kilobytes of RAM. Every decision about where to store data was consequential - engineers argued over individual bytes. A wrong choice could mean a program too slow to navigate a lunar approach.
-Today your phone has roughly 6 billion times more memory. And yet the question hasn&rsquo;t gone away." />
+ Big-O - Why the Right Algorithm Beats Faster Hardware    The Apollo 11 guidance computer had about 4 kilobytes of working memory, and engineers argued over individual bytes. A phone today has around two million times more. The argument hasn&rsquo;t gone away. Pick the wrong data structure and code that should take seconds takes minutes, and a service built for millions of users falls over at ten thousand." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/data-structures/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -155,7 +157,7 @@ Today your phone has roughly 6 billion times more memory. And yet the question h
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          15 min read
+          8 min read
         </div>
       </div>
     </header>
@@ -166,210 +168,117 @@ Today your phone has roughly 6 billion times more memory. And yet the question h
 </li>
 </ul>
 <hr>
-<p>In 1969, the Apollo 11 guidance computer had 4 kilobytes of RAM. Every decision about where to store data was consequential - engineers argued over individual bytes. A wrong choice could mean a program too slow to navigate a lunar approach.</p>
-<p>Today your phone has roughly 6 billion times more memory. And yet the question hasn&rsquo;t gone away. Choose the wrong data structure and an algorithm that should run in seconds will take minutes. A program that should handle millions of users will grind to a halt at ten thousand. The hardware got faster. The tradeoffs stayed the same.</p>
-<p>An algorithm is only a sequence of operations - comparisons, insertions, lookups, deletions. How long each of those operations takes depends entirely on how the data is stored and accessed, which is what the data structure determines. The same algorithm can be fast or slow depending purely on the structure underneath it.</p>
+<p>The Apollo 11 guidance computer had about 4 kilobytes of working memory, and engineers argued over individual bytes. A phone today has around two million times more. The argument hasn&rsquo;t gone away. Pick the wrong data structure and code that should take seconds takes minutes, and a service built for millions of users falls over at ten thousand.</p>
+<p>An algorithm is just a sequence of operations: look something up, insert, delete, compare. How much each one costs depends entirely on how the data is stored. <strong>The data structure decides which operations are cheap.</strong> Everything below is that one idea, applied structure by structure.</p>
 <hr>
 <h2 id="arrays-memory-in-a-line">Arrays: Memory in a Line</h2>
-<p>An array stores elements in a contiguous block of memory. Every element sits right next to the previous one, with no gaps.</p>
-<p>This one fact gives you $O(1)$ random access. If you want the element at index $i$, the computer computes its address directly:</p>
+<p>An array stores its elements in one contiguous block of memory, side by side, with no gaps. That one fact gives you <strong>$O(1)$ access by index</strong>: the address of element $i$ is plain arithmetic.</p>
 <p>$$\text{address}(i) = \text{base} + i \times \text{element size}$$</p>
-<p>No searching. No traversal. One arithmetic operation and you&rsquo;re there.</p>
-<div class="mermaid">
-flowchart LR
-    A["12"] --- B["5"] --- C["8"] --- D["3"] --- E["9"]
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
-<p>Contiguous memory also means excellent cache behavior. Modern CPUs don&rsquo;t load one byte at a time from memory - they load a whole &ldquo;cache line&rdquo; (typically 64 bytes). When you read element $i$, you automatically get elements $i+1$, $i+2$, and a few more for free, because they&rsquo;re all in the same cache line. Sequential array traversal is one of the most cache-friendly things you can do on modern hardware.</p>
-<p>The cost is rigidity. Inserting an element in the middle requires shifting every subsequent element one position right: $O(n)$ in the worst case. Same for deletion. If you need to insert and delete frequently, you&rsquo;re paying for that rigidity every time.</p>
+<p>The same fact makes inserting in the middle expensive. There&rsquo;s no gap to put the new element in, so everything after it has to shift one place right:</p>
+<div class="sf" data-sf="player" data-src="/data/data-structures/array-insert.json">This is an interactive animation. It needs JavaScript to run.</div>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">nums <span style="color:#f92672">=</span> [<span style="color:#ae81ff">12</span>, <span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">9</span>]
-
-print(nums[<span style="color:#ae81ff">2</span>])        <span style="color:#75715e"># O(1): 8 - direct address computation</span>
-nums<span style="color:#f92672">.</span>insert(<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">99</span>)    <span style="color:#75715e"># O(n): shifts elements 2..end right</span>
-nums<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>)           <span style="color:#75715e"># O(n): shifts everything left</span>
-nums<span style="color:#f92672">.</span>append(<span style="color:#ae81ff">7</span>)        <span style="color:#75715e"># O(1) amortized: add to end</span>
-</code></pre></div><p><strong>Under the hood:</strong> Arrays are the primitive - they map directly to a contiguous region of raw memory. There is no simpler structure beneath them. Everything else in this post is built on top of arrays, either directly or indirectly.</p>
+nums[<span style="color:#ae81ff">2</span>]            <span style="color:#75715e"># O(1): computed address, no searching</span>
+nums<span style="color:#f92672">.</span>insert(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">99</span>) <span style="color:#75715e"># O(n): shifts everything after index 1</span>
+nums<span style="color:#f92672">.</span>append(<span style="color:#ae81ff">7</span>)     <span style="color:#75715e"># O(1) amortized: the end has room</span>
+nums<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>)        <span style="color:#75715e"># O(n): shifts everything left</span>
+</code></pre></div><p>Arrays are also <strong>cache-friendly</strong>. A CPU never fetches one number from memory; it fetches a whole 64-byte <em>cache line</em>. Read element $i$ and the next several elements arrive with it, already in the fastest memory the CPU has. Walking an array in order is one of the fastest things a computer can do.</p>
 <hr>
-<h2 id="dynamic-arrays-getting-amortized-o1-appends">Dynamic Arrays: Getting Amortized O(1) Appends</h2>
-<p>A fixed-size array has to know its size upfront. Real programs often don&rsquo;t. The solution is a dynamic array - Python&rsquo;s <code>list</code>, Java&rsquo;s <code>ArrayList</code>, C++&rsquo;s <code>std::vector</code>.</p>
-<p>The idea is simple: wrap a fixed array, and when it fills up, allocate a new one twice as large and copy everything over.</p>
-<p>The doubling strategy is the key. You might think: &ldquo;occasionally this costs $O(n)$ to copy, so appends are $O(n)$ in the worst case.&rdquo; That&rsquo;s true per individual append - but it misses the picture.</p>
-<p>Ask instead: how much total copying happens across $n$ appends? The copies happen at sizes $1, 2, 4, 8, \cdots, n/2$. The total copying is:</p>
-<p>$$1 + 2 + 4 + \cdots + \frac{n}{2} = n - 1 &lt; n$$</p>
-<p>So $n$ appends causes less than $n$ total copy operations, on top of $n$ regular insertions. Total work: $O(n)$ for $n$ appends. Average work per append: $O(1)$. We call this $O(1)$ amortized - the occasional expensive operation gets spread across the many cheap ones. Think of it like a bank account: one large deposit doesn&rsquo;t mean every transaction is expensive. (We&rsquo;ll formalize this in <a href="/posts/amortized-analysis/" target="_blank" rel="noopener noreferrer">Amortized Analysis - The True Cost of a Sequence</a>
-.)</p>
-<p><strong>Under the hood:</strong> A dynamic array wraps a fixed-size array. Internally it stores three things: a pointer to that underlying array, the current number of elements, and the allocated capacity. When capacity is exceeded, a new array is allocated, everything is copied over, and the old array is freed.</p>
+<h2 id="dynamic-arrays-amortized-o1-appends">Dynamic Arrays: Amortized $O(1)$ Appends</h2>
+<p>A plain array needs its size up front. Python&rsquo;s <code>list</code>, Java&rsquo;s <code>ArrayList</code> and C++&rsquo;s <code>std::vector</code> grow instead: when the array is full, they allocate one <strong>twice as large</strong> and copy everything across.</p>
+<div class="sf" data-sf="amortized">This is an interactive demo. It needs JavaScript to run.</div>
+<p>One unlucky append copies everything. But copies only happen at sizes 1, 2, 4, 8 and so on, so across $n$ appends all the copying adds up to less than $n$:</p>
+<p>$$1 + 2 + 4 + \cdots + \frac{n}{2} &lt; n$$</p>
+<p>That&rsquo;s $O(n)$ total for $n$ appends, or <strong>$O(1)$ amortized</strong> each. <a href="/posts/amortized-analysis/" target="_blank" rel="noopener noreferrer">Amortized Analysis</a>
+ makes this precise.</p>
 <hr>
 <h2 id="linked-lists-flexibility-at-a-cost">Linked Lists: Flexibility at a Cost</h2>
-<p>A linked list stores each element in a node containing two things: the value, and a pointer to the next node. The nodes can be anywhere in memory - they&rsquo;re connected by pointers, not by physical proximity.</p>
-<p>This gives you something arrays can&rsquo;t easily do: $O(1)$ insertion and deletion at a known position. To insert between nodes A and B, you create a new node and rewire two pointers. No shifting required.</p>
-<p>But you pay for this flexibility in two ways.</p>
-<p><strong>Pointer chasing.</strong> To find element at index $i$, you start at the head and follow pointers one by one. That&rsquo;s $O(n)$ for random access. There&rsquo;s no shortcut - you can&rsquo;t compute the address of an element from its index.</p>
-<p><strong>Cache misses.</strong> This is the hidden cost that Big-O doesn&rsquo;t show you. In an array, adjacent elements are adjacent in memory. In a linked list, the node you want could be anywhere on the heap - the pointer takes you to a completely different part of memory. Every such jump likely causes a cache miss: the CPU has to wait for data to arrive from RAM, which can cost 100-300 clock cycles instead of 1-4. For traversal-heavy workloads, linked lists can be 10-50 times slower than arrays in practice, even when both are $O(n)$ in theory.</p>
-<p>There is a subtle limitation with a singly linked list: even if you have a pointer directly to a node you want to delete, you still need to update the previous node&rsquo;s <code>next</code> pointer - and to find that previous node, you have to traverse from the head. That&rsquo;s $O(n)$. A doubly linked list adds a <code>prev</code> pointer to each node, so given a pointer to any node you can reach its predecessor instantly and delete in $O(1)$.</p>
-<div class="mermaid">
-flowchart LR
-    A["12"] -->|next| B["5"] -->|next| C["8"] -->|next| D["3"] -->|next| N["∅"]
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
+<p>A linked list stores each element in its own <strong>node</strong>: the value, plus a pointer to the next node. Nodes can sit anywhere in memory; only the pointers hold the list together. So inserting doesn&rsquo;t shift anything. It only rewires pointers.</p>
+<div class="sf" data-sf="player" data-src="/data/data-structures/list-insert.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>The price comes in two parts:</p>
+<ul>
+<li><strong>No shortcut to index $i$.</strong> You have to start at the head and follow $i$ pointers: $O(n)$.</li>
+<li><strong>Cache misses.</strong> The next node can be anywhere, so each step tends to miss the cache and wait on main memory, at roughly 100 times the cost of a cache hit. Both an array walk and a list walk are $O(n)$, but in practice a list walk is often several times slower, sometimes ten times or more. The constant hidden inside Big-O here is huge.</li>
+</ul>
+<p>A singly linked list can&rsquo;t delete a node on its own either, because the node <em>before</em> it holds the pointer that has to change, and there&rsquo;s no way back to it. A <strong>doubly</strong> linked list adds a <code>prev</code> pointer to each node, making deletion $O(1)$ when you already hold the node.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Node</span>:
     <span style="color:#66d9ef">def</span> __init__(self, val):
-        self<span style="color:#f92672">.</span>val <span style="color:#f92672">=</span> val
-        self<span style="color:#f92672">.</span>next <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+        self<span style="color:#f92672">.</span>val, self<span style="color:#f92672">.</span>next <span style="color:#f92672">=</span> val, <span style="color:#66d9ef">None</span>
 
-<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LinkedList</span>:
-    <span style="color:#66d9ef">def</span> __init__(self):
-        self<span style="color:#f92672">.</span>head <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">prepend</span>(self, val):       <span style="color:#75715e"># O(1): just update head pointer</span>
-        node <span style="color:#f92672">=</span> Node(val)
-        node<span style="color:#f92672">.</span>next <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>head
-        self<span style="color:#f92672">.</span>head <span style="color:#f92672">=</span> node
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">find</span>(self, val):          <span style="color:#75715e"># O(n): must walk the chain</span>
-        cur <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>head
-        <span style="color:#66d9ef">while</span> cur:
-            <span style="color:#66d9ef">if</span> cur<span style="color:#f92672">.</span>val <span style="color:#f92672">==</span> val:
-                <span style="color:#66d9ef">return</span> cur
-            cur <span style="color:#f92672">=</span> cur<span style="color:#f92672">.</span>next
-        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">None</span>
-</code></pre></div><p><strong>In Python, linked lists are rarely the right answer.</strong> Python nodes carry object overhead (reference counts, type pointer, GC fields) - a single integer node takes ~60 bytes, not 8. For the use case where you need $O(1)$ front insertion and deletion, reach for <code>collections.deque</code> instead. It is a doubly-linked list of fixed-size memory blocks, giving you the flexibility without the per-node allocation overhead.</p>
-<p><strong>Under the hood:</strong> Each node is a small struct with two fields - a value and a pointer (a memory address). The nodes are allocated individually anywhere on the heap. The &ldquo;list&rdquo; is nothing more than these structs chained together by following pointers. There is no array involved.</p>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">prepend</span>(head, val):   <span style="color:#75715e"># O(1): the new node becomes the head</span>
+    node <span style="color:#f92672">=</span> Node(val)
+    node<span style="color:#f92672">.</span>next <span style="color:#f92672">=</span> head
+    <span style="color:#66d9ef">return</span> node
+</code></pre></div><p><strong>In Python, you almost never want to build one.</strong> Every node is a full object carrying dozens of bytes of bookkeeping. For fast operations at both ends, use <code>collections.deque</code>, which stores elements in blocks to avoid the per-node cost.</p>
 <hr>
-<h2 id="cache-locality-why-arrays-win-in-practice">Cache Locality: Why Arrays Win in Practice</h2>
-<p>Despite linked lists' theoretical advantages in insertion and deletion, arrays dominate in practice for almost all workloads on modern hardware. The reason is cache locality.</p>
-<p>When you access <code>array[i]</code>, the CPU loads not just that element but an entire cache line - typically 64 bytes, or 8 to 16 adjacent elements. If you then access <code>array[i+1]</code>, it is already in cache. The CPU&rsquo;s hardware prefetcher also detects sequential access patterns and loads ahead. Array traversal is extraordinarily cache-friendly.</p>
-<p>Linked list traversal follows a pointer to a node that could be anywhere in the virtual address space. Each node access is likely a cache miss. Even though both traversals are $O(n)$ in theory, on modern hardware iterating a million-element array is routinely 5-10x faster than iterating a million-element linked list. The constant factor hidden inside Big-O is not hiding a small difference - it is hiding an order-of-magnitude difference.</p>
-<p>This is why production systems in Rust, C++, and Go push toward array-backed structures by default, and why you should reach for <code>list</code> or <code>deque</code> in Python before ever building a custom linked list.</p>
-<hr>
-<h2 id="stacks-and-queues-disciplined-access">Stacks and Queues: Disciplined Access</h2>
-<p>Some problems only need to access data in a specific order. Restricting access to enforce discipline is often a feature, not a limitation.</p>
-<p><strong>A stack</strong> gives you LIFO: last in, first out. You can only push to the top and pop from the top. Python lists work perfectly as stacks because <code>.append()</code> and <code>.pop()</code> are both $O(1)$:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">stack <span style="color:#f92672">=</span> []
-stack<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;first&#34;</span>)
-stack<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;second&#34;</span>)
-stack<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;third&#34;</span>)
-
-top <span style="color:#f92672">=</span> stack<span style="color:#f92672">.</span>pop()   <span style="color:#75715e"># &#34;third&#34; - O(1)</span>
-print(stack)        <span style="color:#75715e"># [&#34;first&#34;, &#34;second&#34;]</span>
-</code></pre></div><p>The most important stack in your computer is the <strong>call stack</strong>. Every function call pushes a frame (local variables, return address); every return pops one. This is why infinite recursion raises <code>RecursionError</code> - it overflows the stack. Other places stacks appear: undo/redo, expression parsing, DFS traversal, browser history.</p>
-<p><strong>A queue</strong> gives you FIFO: first in, first out. Elements are added at the back and removed from the front. The critical mistake is using a plain Python list as a queue - <code>list.pop(0)</code> is $O(n)$ because Python shifts every element left. Use <code>collections.deque</code>:</p>
+<h2 id="stacks-and-queues-restricting-access-on-purpose">Stacks and Queues: Restricting Access on Purpose</h2>
+<p>Sometimes the useful thing is to allow <em>fewer</em> operations.</p>
+<p><strong>A stack</strong> is last in, first out: push on top, pop from the top. A Python list is a perfect stack, since <code>append</code> and <code>pop</code> are both $O(1)$. The most important stack in your computer is the <strong>call stack</strong>: each function call pushes a frame, each return pops one, which is why runaway recursion ends in <code>RecursionError</code>. Stacks also power undo, expression parsing, and <a href="/posts/context-free-grammars-parsing/" target="_blank" rel="noopener noreferrer">checking that brackets match</a>
+.</p>
+<p><strong>A queue</strong> is first in, first out: join at the back, leave from the front. Never use <code>list.pop(0)</code> for this; it&rsquo;s $O(n)$, because everything shifts left. Use <code>collections.deque</code>, which is $O(1)$ at both ends:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque
 
-queue <span style="color:#f92672">=</span> deque()
-queue<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;first&#34;</span>)
-queue<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;second&#34;</span>)
+queue <span style="color:#f92672">=</span> deque([<span style="color:#e6db74">&#34;first&#34;</span>, <span style="color:#e6db74">&#34;second&#34;</span>])
 queue<span style="color:#f92672">.</span>append(<span style="color:#e6db74">&#34;third&#34;</span>)
+queue<span style="color:#f92672">.</span>popleft()      <span style="color:#75715e"># &#34;first&#34;, in O(1)</span>
+</code></pre></div><p>Queues run event loops (Node.js, asyncio), message brokers (Kafka, RabbitMQ, SQS), and <a href="/posts/graph-algorithms-traversal/" target="_blank" rel="noopener noreferrer">breadth-first search</a>
+, where the queue is exactly what makes the search go level by level.</p>
+<details>
+<summary>Under the hood, and a deque trick: sliding window maximum</summary>
+<p>A stack is an array plus one integer marking the top. A queue is usually a <strong>circular</strong> array with two integers, front and back, that wrap around at the end, so nothing ever shifts.</p>
+<p>Because a deque is $O(1)$ at both ends, it solves <em>sliding window maximum</em> - the maximum of every window of $k$ consecutive elements - in $O(n)$ instead of $O(nk)$. The deque keeps indices of possible maximums, largest first:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque
 
-front <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()   <span style="color:#75715e"># &#34;first&#34; - O(1)</span>
-</code></pre></div><p>Queues appear everywhere in real systems: event loops (Node.js and Python asyncio process events from a queue), message brokers (Kafka, RabbitMQ, SQS), print spoolers, and BFS traversal.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bfs</span>(graph: dict, start: str) <span style="color:#f92672">-&gt;</span> list:
-    visited <span style="color:#f92672">=</span> set()
-    queue <span style="color:#f92672">=</span> deque([start])
-    order <span style="color:#f92672">=</span> []
-    <span style="color:#66d9ef">while</span> queue:
-        node <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
-        <span style="color:#66d9ef">if</span> node <span style="color:#f92672">in</span> visited:
-            <span style="color:#66d9ef">continue</span>
-        visited<span style="color:#f92672">.</span>add(node)
-        order<span style="color:#f92672">.</span>append(node)
-        <span style="color:#66d9ef">for</span> neighbor <span style="color:#f92672">in</span> graph<span style="color:#f92672">.</span>get(node, []):
-            queue<span style="color:#f92672">.</span>append(neighbor)
-    <span style="color:#66d9ef">return</span> order
-
-graph <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;A&#34;</span>: [<span style="color:#e6db74">&#34;B&#34;</span>, <span style="color:#e6db74">&#34;C&#34;</span>], <span style="color:#e6db74">&#34;B&#34;</span>: [<span style="color:#e6db74">&#34;D&#34;</span>], <span style="color:#e6db74">&#34;C&#34;</span>: [<span style="color:#e6db74">&#34;D&#34;</span>], <span style="color:#e6db74">&#34;D&#34;</span>: []}
-print(bfs(graph, <span style="color:#e6db74">&#34;A&#34;</span>))   <span style="color:#75715e"># [&#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;]</span>
-</code></pre></div><p>The queue is what makes BFS traverse level by level rather than depth-first. The structure determines the algorithm&rsquo;s behavior.</p>
-<p><strong><code>collections.deque</code> supports $O(1)$ operations on both ends.</strong> This makes it the right tool for any problem where you need efficient access to both the front and back - not just queues. The sliding window maximum is a classic example: given an array and a window size $k$, find the maximum in each window as it slides across. Naively $O(nk)$; with a deque, $O(n)$:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sliding_window_max</span>(nums: list[int], k: int) <span style="color:#f92672">-&gt;</span> list[int]:
-    dq <span style="color:#f92672">=</span> deque()   <span style="color:#75715e"># stores indices, front always holds index of current max</span>
-    result <span style="color:#f92672">=</span> []
-    <span style="color:#66d9ef">for</span> i, num <span style="color:#f92672">in</span> enumerate(nums):
-        <span style="color:#66d9ef">while</span> dq <span style="color:#f92672">and</span> dq[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&lt;</span> i <span style="color:#f92672">-</span> k <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>:   <span style="color:#75715e"># remove indices outside window</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sliding_window_max</span>(nums, k):
+    dq, result <span style="color:#f92672">=</span> deque(), []
+    <span style="color:#66d9ef">for</span> i, x <span style="color:#f92672">in</span> enumerate(nums):
+        <span style="color:#66d9ef">if</span> dq <span style="color:#f92672">and</span> dq[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&lt;=</span> i <span style="color:#f92672">-</span> k:          <span style="color:#75715e"># front index has left the window</span>
             dq<span style="color:#f92672">.</span>popleft()
-        <span style="color:#66d9ef">while</span> dq <span style="color:#f92672">and</span> nums[dq[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]] <span style="color:#f92672">&lt;</span> num:   <span style="color:#75715e"># remove smaller elements</span>
+        <span style="color:#66d9ef">while</span> dq <span style="color:#f92672">and</span> nums[dq[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]] <span style="color:#f92672">&lt;</span> x:     <span style="color:#75715e"># smaller values can never be the max now</span>
             dq<span style="color:#f92672">.</span>pop()
         dq<span style="color:#f92672">.</span>append(i)
         <span style="color:#66d9ef">if</span> i <span style="color:#f92672">&gt;=</span> k <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>:
             result<span style="color:#f92672">.</span>append(nums[dq[<span style="color:#ae81ff">0</span>]])
     <span style="color:#66d9ef">return</span> result
-</code></pre></div><p><strong>The balanced parentheses problem</strong> is the canonical stack application - it appears in almost every compiler and interview:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">is_balanced</span>(s: str) <span style="color:#f92672">-&gt;</span> bool:
-    stack <span style="color:#f92672">=</span> []
-    pairs <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;)&#34;</span>: <span style="color:#e6db74">&#34;(&#34;</span>, <span style="color:#e6db74">&#34;]&#34;</span>: <span style="color:#e6db74">&#34;[&#34;</span>, <span style="color:#e6db74">&#34;}&#34;</span>: <span style="color:#e6db74">&#34;{&#34;</span>}
-    <span style="color:#66d9ef">for</span> char <span style="color:#f92672">in</span> s:
-        <span style="color:#66d9ef">if</span> char <span style="color:#f92672">in</span> <span style="color:#e6db74">&#34;([{&#34;</span>:
-            stack<span style="color:#f92672">.</span>append(char)
-        <span style="color:#66d9ef">elif</span> char <span style="color:#f92672">in</span> <span style="color:#e6db74">&#34;)]}&#34;</span>:
-            <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> stack <span style="color:#f92672">or</span> stack[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">!=</span> pairs[char]:
-                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
-            stack<span style="color:#f92672">.</span>pop()
-    <span style="color:#66d9ef">return</span> len(stack) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>
-
-print(is_balanced(<span style="color:#e6db74">&#34;({[]})&#34;</span>))   <span style="color:#75715e"># True</span>
-print(is_balanced(<span style="color:#e6db74">&#34;({[)&#34;</span>))     <span style="color:#75715e"># False</span>
-</code></pre></div><p><strong>Under the hood:</strong> A stack is an array with a single integer tracking the top index. A queue is typically a circular array with two integers (front and back) that wrap around when they reach the end, avoiding the need to shift elements. <code>collections.deque</code> is implemented in C as a doubly-linked list of fixed-size memory blocks - it avoids per-node allocation overhead while still getting $O(1)$ on both ends.</p>
+</code></pre></div></details>
 <hr>
-<h2 id="hash-tables-o1-by-design">Hash Tables: O(1) by Design</h2>
-<p>A hash table solves the problem of finding things by key in expected $O(1)$ time - for both lookup and insertion. This is one of the most used guarantees in practical programming.</p>
-<p>The idea: instead of storing elements at sequential indices, use a hash function to compute which bucket to put each key in.</p>
-<p>$$\text{bucket}(k) = h(k) \mod m$$</p>
-<p>where $m$ is the number of buckets. If the hash function distributes keys uniformly, each bucket will have roughly $n/m$ elements (the load factor $\alpha = n/m$). If $\alpha$ stays small (say, below 0.7), each lookup scans only a constant number of elements - hence $O(1)$ expected.</p>
-<p><strong>Collisions</strong> are inevitable: two different keys might hash to the same bucket. There are two main ways to handle them.</p>
-<p><strong>Chaining:</strong> each bucket holds a linked list of all keys that hashed there. Lookup just scans the list. When $\alpha$ is small, the lists are short and lookup is fast.</p>
-<p><strong>Open addressing:</strong> all elements live in the table itself. On a collision, probe to the next slot (linearly, or using a second hash function). This is more cache-friendly than chaining because everything is in one array, but it degrades faster as the table fills up.</p>
+<h2 id="hash-tables-o1-by-design">Hash Tables: $O(1)$ by Design</h2>
+<p>A hash table finds anything by key in <strong>expected $O(1)$ time</strong>. The trick is to <em>compute</em> where a key lives instead of searching for it: run the key through a hash function and take the remainder by the number of buckets.</p>
+<p>$$\text{bucket}(k) = h(k) \bmod m$$</p>
+<div class="sf" data-sf="player" data-src="/data/data-structures/hash-table.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>Two keys landing in the same bucket is a <strong>collision</strong>, and with enough keys it&rsquo;s guaranteed. There are two standard fixes:</p>
+<ul>
+<li><strong>Chaining</strong>, as in the animation: each bucket holds a short list of everything that hashed there.</li>
+<li><strong>Open addressing</strong>: keep everything in one flat array, and on a collision probe for the next free slot. It&rsquo;s friendlier to the cache, but degrades faster as the table fills.</li>
+</ul>
+<p>What keeps chains short is the <strong>load factor</strong> $\alpha = n / m$, the average number of keys per bucket. Real tables keep $\alpha$ below a threshold, around 0.7, by doubling the bucket count and rehashing everything when they cross it. Like the growing array above, that occasional $O(n)$ rebuild keeps insertion $O(1)$ amortized.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> &ldquo;Hash tables are $O(1)$ but I&rsquo;ve seen them take $O(n)$ in benchmarks.&rdquo; Both are true. The $O(1)$ is expected, assuming a good hash function and bounded load factor. Two things can blow it up: a bad hash function that puts most keys in the same bucket (making every lookup scan a long list), or a high load factor (too many keys for the number of buckets). A well-implemented hash table keeps load factor below a threshold and rehashes when that threshold is crossed. Also worth knowing: hash table iteration order is undefined in most implementations. Do not rely on it.</p>
+<p><strong>&ldquo;But I&rsquo;ve seen hash tables take $O(n)$.&quot;</strong> Both are true. The $O(1)$ is <em>expected</em>, assuming a good hash function and a bounded load factor. A bad hash that sends most keys to one bucket turns every lookup into a long scan. And don&rsquo;t rely on iteration order: in most hash table implementations it isn&rsquo;t defined.</p>
 </blockquote>
-<p>When the load factor exceeds the threshold, the table is resized - a new, larger table is allocated and all elements are rehashed. This costs $O(n)$ but happens rarely enough that amortized insertion stays $O(1)$.</p>
-<p><strong>Under the hood:</strong> An array of buckets. In chaining, each bucket is a linked list of all keys that hash there. In open addressing, it&rsquo;s a flat array and the probing strategy decides which slot to try next. Either way, it reduces to arrays and (optionally) linked lists.</p>
 <hr>
 <h2 id="priority-queues-and-heaps">Priority Queues and Heaps</h2>
-<p>A priority queue gives you two operations: insert an element with a priority, and extract the element with the highest (or lowest) priority. Both in $O(\log n)$.</p>
-<p>Before going further - a <strong>tree</strong> is a collection of nodes where each node holds a value and pointers to its <strong>child</strong> nodes. One node is designated the <strong>root</strong> (the top). There are no cycles - you can only move downward. A <strong>binary tree</strong> is one where each node has at most two children, called left and right. Nodes with no children are called <strong>leaves</strong>.</p>
-<p>The standard implementation is a binary heap: a complete binary tree where every parent is larger than its children (for a max-heap).</p>
-<div class="mermaid">
-flowchart TD
-    A["9"] --> B["7"] & C["8"]
-    B --> D["4"] & E["6"]
-    C --> F["5"]
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
-<p><strong>Under the hood:</strong> A binary heap is stored as a flat array - no tree nodes, no pointers. The root sits at index $0$. For any node at index $i$, its children are at $2i+1$ and $2i+2$, and its parent is at $\lfloor(i-1)/2\rfloor$. The tree structure is entirely implicit in the index arithmetic.</p>
-<p>We&rsquo;ll cover heaps in full in the <a href="/posts/trees-and-heaps/" target="_blank" rel="noopener noreferrer">Trees &amp; Heaps - When Flat Structures Hit Their Limit</a>
- post. For now, the key point: priority queues are not queues (despite the name). They don&rsquo;t give you FIFO - they give you highest-priority-first. This makes them essential for algorithms like Dijkstra&rsquo;s shortest path and Huffman coding.</p>
+<p>A <strong>priority queue</strong> always hands you the highest-priority item next, not the oldest. Insert and extract-max both run in $O(\log n)$. It&rsquo;s the engine inside <a href="/posts/shortest-paths-dijkstra-bellman-ford/" target="_blank" rel="noopener noreferrer">Dijkstra&rsquo;s shortest paths</a>
+ and <a href="/posts/huffman-coding/" target="_blank" rel="noopener noreferrer">Huffman coding</a>
+.</p>
+<p>The standard implementation is a <strong>binary heap</strong>: a tree in which every parent is at least as large as its children. It&rsquo;s stored as a flat array with no pointers at all - the children of index $i$ live at $2i + 1$ and $2i + 2$. <a href="/posts/trees-and-heaps/" target="_blank" rel="noopener noreferrer">Trees &amp; Heaps</a>
+ builds one step by step.</p>
 <hr>
-<blockquote>
-<p><strong>Discomfort check.</strong> &ldquo;Do arrays in modern languages actually work this way?&rdquo; It depends. In C, C++, Rust, and Go - yes, an array is literally a contiguous block of memory exactly as described. NumPy arrays too, which is why they&rsquo;re fast. But Python&rsquo;s <code>list</code> is a dynamic array of <em>pointers</em> - the pointers are contiguous, but the actual objects live scattered on the heap, so there&rsquo;s an extra indirection on every access. This is also why a Python list can hold mixed types. JavaScript arrays are stranger still: V8 internally uses contiguous storage when your array holds a single type, but silently degrades to a hash map if you mix types or create sparse arrays. Java splits the difference - <code>int[]</code> is genuinely contiguous raw memory, but <code>Object[]</code> holds references, not values. The model described in this post is what everything is built on at some level, and the cache behavior argument still holds - even Python&rsquo;s pointer array benefits from cache lines. But in high-level languages, you&rsquo;re often one layer of indirection away from the raw memory.</p>
-</blockquote>
+<details>
+<summary>Do real languages actually store arrays like this?</summary>
+<p>In C, C++, Rust and Go, and in NumPy, an array is exactly the contiguous block described above, which is why they&rsquo;re fast.</p>
+<p>Python&rsquo;s <code>list</code> is a contiguous array of <em>pointers</em>: the pointers sit side by side, but the objects they point to are scattered across memory, which costs one extra hop per access. That&rsquo;s also why a list can hold mixed types. Java splits the difference: <code>int[]</code> is raw contiguous memory, while <code>Object[]</code> holds references. JavaScript engines like V8 use contiguous storage while an array holds a single type, and quietly switch to something like a hash map if you mix types or leave big holes.</p>
+<p>So in high-level languages you&rsquo;re often one indirection away from the raw model, but the model is still what everything is built on, and the cache-line argument still holds.</p>
+</details>
 <hr>
 <h2 id="choosing-the-right-structure">Choosing the Right Structure</h2>
-<p>Every data structure makes tradeoffs. The right choice depends on what operations you need most.</p>
-<p>Think through these questions:</p>
+<p>Decide by what you need to be cheap:</p>
 <ul>
-<li>Do you need random access by index? Use an array.</li>
-<li>Do you need fast insert/delete at arbitrary positions? Use a linked list (if you have a pointer to the position).</li>
-<li>Do you need fast lookup by key? Use a hash table.</li>
-<li>Do you need to always access the &ldquo;best&rdquo; element? Use a priority queue.</li>
-<li>Do you need ordered iteration or range queries? Use a balanced BST - a tree where each node&rsquo;s left subtree holds smaller values and right subtree holds larger ones, kept roughly equal in height so no operation takes more than $O(\log n)$.</li>
-<li>Do you need LIFO discipline? Stack. FIFO? Queue. Both ends? Deque.</li>
+<li><strong>Access by position?</strong> An array.</li>
+<li><strong>Insert and delete in the middle, holding a pointer?</strong> A linked list. Check first whether an array is faster anyway, thanks to the cache.</li>
+<li><strong>Find by key?</strong> A hash table.</li>
+<li><strong>Always take the most important item next?</strong> A priority queue.</li>
+<li><strong>Keep things sorted, or ask range queries?</strong> A balanced binary search tree, where smaller keys go left and larger go right, kept shallow so every operation is $O(\log n)$.</li>
+<li><strong>Last in first out?</strong> A stack. <strong>First in first out?</strong> A queue. <strong>Both ends?</strong> A deque.</li>
 </ul>
-<p>The worst situation is choosing based on intuition alone. Think about access patterns first.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -392,15 +301,15 @@ flowchart TD
 </tr>
 <tr>
 <td>Dynamic array</td>
-<td>$O(1)$ amortized end</td>
+<td>$O(1)$ amortized at end</td>
 <td>$O(n)$ middle</td>
 <td>$O(1)$ by index</td>
-<td>Preferred default sequence</td>
+<td>The default sequence</td>
 </tr>
 <tr>
 <td>Linked list</td>
-<td>$O(1)$ at pointer</td>
-<td>$O(1)$ at pointer</td>
+<td>$O(1)$ at a pointer</td>
+<td>$O(1)$ at a pointer</td>
 <td>$O(n)$ by index</td>
 <td>Poor cache behavior</td>
 </tr>
@@ -409,21 +318,21 @@ flowchart TD
 <td>$O(1)$ push</td>
 <td>$O(1)$ pop</td>
 <td>$O(1)$ peek</td>
-<td>LIFO only</td>
+<td>Last in, first out</td>
 </tr>
 <tr>
 <td>Queue</td>
 <td>$O(1)$ enqueue</td>
 <td>$O(1)$ dequeue</td>
 <td>$O(1)$ peek</td>
-<td>FIFO only; use <code>deque</code> in Python</td>
+<td>First in, first out; <code>deque</code> in Python</td>
 </tr>
 <tr>
 <td>Deque</td>
 <td>$O(1)$ either end</td>
 <td>$O(1)$ either end</td>
 <td>$O(1)$ peek</td>
-<td>Both ends; sliding window, BFS</td>
+<td>Both ends</td>
 </tr>
 <tr>
 <td>Hash table</td>
@@ -436,19 +345,19 @@ flowchart TD
 <td>Priority queue</td>
 <td>$O(\log n)$</td>
 <td>$O(\log n)$ extract-max</td>
-<td>$O(1)$ peek-max</td>
-<td>Backed by heap</td>
+<td>$O(1)$ peek</td>
+<td>Backed by a heap</td>
 </tr>
 <tr>
 <td>Balanced BST</td>
 <td>$O(\log n)$</td>
 <td>$O(\log n)$</td>
 <td>$O(\log n)$</td>
-<td>Ordered; supports range queries</td>
+<td>Ordered; range queries</td>
 </tr>
 </tbody>
 </table>
-<p>Every algorithm is only as fast as the data structure beneath it. You can have the most elegant algorithm in the world and still produce a slow program if the underlying structure makes the wrong operation cheap.</p>
+<p>An algorithm is only as fast as the structure underneath it. Make the right operations cheap, and the algorithm often writes itself.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
