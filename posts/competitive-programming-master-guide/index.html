@@ -151,23 +151,52 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          38 min read
+          59 min read
         </div>
       </div>
     </header>
     <div class="post-content">
-      <p>This is an attempt to write the guide I wished existed when I was starting out: not a collection of algorithm explanations, but a map of how to think. There is no shortage of resources that explain what Dijkstra&rsquo;s algorithm does. There is a severe shortage of resources that explain how to recognize that Dijkstra&rsquo;s algorithm is what a problem is asking for. That recognition - the act of looking at a problem and knowing which mental shelf to reach for - is the actual skill. Everything else is just details that can be looked up.</p>
+      <link rel="stylesheet" href="/css/solving-framework.css?v=1">
+<p>This is an attempt to write the guide I wished existed when I was starting out: not a collection of algorithm explanations, but a map of how to think. There is no shortage of resources that explain what Dijkstra&rsquo;s algorithm does. There is a severe shortage of resources that explain how to recognize that Dijkstra&rsquo;s algorithm is what a problem is asking for. That recognition - the act of looking at a problem and knowing which mental shelf to reach for - is the actual skill. Everything else is just details that can be looked up.</p>
 <p>Competitive programming is pattern recognition under time pressure. A problem that seems novel almost never is. Underneath the story, the unusual characters, and the elaborate setup, it is one of about forty archetypal problems wearing a costume. The job is to see through the costume.</p>
+<p>The only thing this guide assumes is that you can write loops, functions, and arrays in some language. Every other term is explained where it first appears. The first half is a method: six steps, always in the same order. The second half is the toolkit those steps choose from. The boxed demos are playable - press Play, or Step through them at your own pace - and each one exists because the idea it shows is easier to watch than to read.</p>
+<p>One honest caveat before starting. No method makes a hard problem easy. What a method does is guarantee that you always know what to try next, which is the difference between being stuck and being slow. Slow gets fixed by practice. Stuck does not.</p>
 <hr>
-<h2 id="before-anything-else-how-to-read-a-problem">Before Anything Else: How to Read a Problem</h2>
+<h2 id="the-whole-method-on-one-page">The Whole Method on One Page</h2>
+<ol>
+<li><strong><a href="#step-1---understand-how-to-read-a-problem">Understand</a>.</strong> Read the problem three times and solve the sample inputs by hand.</li>
+<li><strong><a href="#step-2---budget-the-algorithm-is-already-written">Budget</a>.</strong> Read the constraints and work out how slow your solution is allowed to be.</li>
+<li><strong><a href="#step-3---name-the-question">Name the question</a>.</strong> Is it asking you to optimize, count, decide, or construct?</li>
+<li><strong><a href="#step-4---write-the-brute-force-first">Write the brute force</a>.</strong> Find the obviously correct solution, however slow.</li>
+<li><strong><a href="#step-5---find-the-waste">Find the waste</a>.</strong> Ask what the brute force does over and over, and pick the tool that removes exactly that repetition.</li>
+<li><strong><a href="#step-6---attack-it-before-you-trust-it">Attack it before you trust it</a>.</strong> Try to break your idea on tiny and awkward inputs, then code it.</li>
+</ol>
+<p>Every section below is one of these steps. When you are stuck, you are stuck at a specific step, and knowing which one is half the cure. If you cannot do the samples by hand, the trouble is at step 1 and no algorithm will help. If you have a correct idea that is too slow, you are at step 5, and that step has a very short list of things to try.</p>
+<hr>
+<h2 id="step-1---understand-how-to-read-a-problem">Step 1 - Understand: How to Read a Problem</h2>
 <p>Most wrong approaches begin with a misread problem. Read it three times with three different questions.</p>
 <p><strong>First read</strong>: what is the story? Get a rough picture. Do not try to solve anything.</p>
-<p><strong>Second read</strong>: what exactly am I computing? Strip the story away. The problem is a mathematical function from input to output. What is the input, precisely? What is the output, precisely? What counts as a valid answer? Work through each provided example by hand before reading further. If you cannot reproduce the expected output from the input using only the problem statement, your understanding is incomplete.</p>
-<p><strong>Third read</strong>: constraints. These are not footnotes. They are the most important part of the problem. Read: $n$, $m$, the range of values, the number of test cases, the time limit, the memory limit. These numbers tell you which algorithm to write before you understand the problem deeply.</p>
+<p><strong>Second read</strong>: what exactly am I computing? Strip the story away. The problem is a function from input to output. What is the input, precisely? What is the output, precisely? What counts as a valid answer? Then work through each provided example by hand. If you cannot reproduce the expected output from the input using only the problem statement, your understanding is incomplete, and it is far cheaper to find that out now than after writing code.</p>
+<p><strong>Third read</strong>: constraints. These are not footnotes. They are the most important part of the problem. Read: $n$, $m$, the range of values, the number of test cases, the time limit, the memory limit. These numbers tell you which algorithm to write before you understand the problem deeply. Step 2 is about exactly this.</p>
+<p>A good test of the second read is whether you can restate the problem in one plain sentence with no story in it. &ldquo;Groups of friends want to share taxis&rdquo; becomes &ldquo;pack numbers between 1 and 4 into as few bins of capacity 4 as possible&rdquo;. If you cannot produce that sentence, read again.</p>
+<p>Some words in problem statements carry precise meanings that are easy to skim past:</p>
+<ul>
+<li><strong>Subarray</strong> or <strong>substring</strong>: a run of <em>neighbouring</em> elements. From $[5, 1, 4]$ the subarrays are $[5]$, $[1]$, $[4]$, $[5, 1]$, $[1, 4]$ and $[5, 1, 4]$.</li>
+<li><strong>Subsequence</strong>: keep the order but skip whatever you like. $[5, 4]$ is a subsequence of $[5, 1, 4]$ but not a subarray.</li>
+<li><strong>Subset</strong>: order does not matter at all.</li>
+<li><strong>Distinct</strong>: no two equal. <strong>Non-decreasing</strong>: each element is at least the one before it, so equal neighbours are allowed. <strong>Strictly increasing</strong>: they are not.</li>
+<li><strong>At most</strong>, <strong>at least</strong>, <strong>exactly</strong>: three different problems. Confusing them is the most common misread there is.</li>
+<li><strong>&ldquo;Print the answer modulo $10^9 + 7$&quot;</strong>: the true answer is astronomically large, so you only print its remainder after dividing by that number. It is also a strong hint that the problem is about counting.</li>
+</ul>
 <p>A common mistake is jumping to implementation after the first read. The second common mistake is not working through examples manually. If you have not traced through an example by hand, you have not understood the problem.</p>
 <hr>
-<h2 id="the-constraint-table-the-algorithm-is-already-written">The Constraint Table: The Algorithm Is Already Written</h2>
-<p>The time limit tells you how many operations are acceptable. A modern computer executes roughly $10^8$ to $10^9$ simple operations per second. A 2-second time limit allows roughly $2 \times 10^8$ operations. This means: given $n$, you can immediately determine what complexity class the intended solution lives in. This is the single most useful heuristic in competitive programming.</p>
+<h2 id="step-2---budget-the-algorithm-is-already-written">Step 2 - Budget: The Algorithm Is Already Written</h2>
+<p>A computer does a fixed amount of work per second. A good working figure is about $10^8$ simple operations - an addition, a comparison, an array access - per second in a fast language like C++. Python is slower, closer to $10^7$. The time limit, usually one or two seconds, therefore gives you a budget of roughly $10^8$ steps.</p>
+<p>The other half is how many steps your idea needs, and that is what Big-O notation describes. $O(n^2)$ means &ldquo;about $n \times n$ steps for an input of size $n$&quot;: if you compare every element with every other element, that is $n^2$ comparisons. $O(n \log n)$ means &ldquo;about $n$ times the number of times you can halve $n$&rdquo;, which is what sorting costs. If this notation is new, <a href="/posts/algorithmic-thinking-big-o/" target="_blank" rel="noopener noreferrer">Big-O - Why the Right Algorithm Beats Faster Hardware</a>
+ builds it from scratch.</p>
+<p>Put the two together and you get the single most useful heuristic in competitive programming: <strong>plug the largest $n$ from the constraints into your idea&rsquo;s step count. If the result is far above $10^8$, the idea is dead before you write a line of it.</strong> Try it:</p>
+<div class="sf" data-sf="budget">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Drag the slider to $n = 20$ and then to $n = 50$ and watch $O(2^n)$ go from ten milliseconds to four months. That cliff is why problem setters choose the limits they do: the constraint is a message about the intended solution. Read backwards, the same arithmetic gives this table.</p>
 <table>
 <thead>
 <tr>
@@ -214,286 +243,449 @@
 </tr>
 </tbody>
 </table>
-<p>When there are $T$ test cases with per-case work $f(n)$, the total is $T \cdot f(n)$. A constraint of $T \leq 10^5$ test cases and $n \leq 10^5$ per case with an $O(n)$ solution is fine; with an $O(n^2)$ solution it is not.</p>
-<p>Memory: 256MB holds roughly 64 million integers or 32 million 64-bit integers. An $n \times n$ 2D array of integers with $n = 10^4$ uses $10^8$ bytes - too large. This catches many DP state designs before you even implement them.</p>
+<p>Do not worry if half the names in the last column mean nothing yet. They are all in the toolkit below. What matters now is the left-to-middle mapping: a constraint picks a complexity, and a complexity leaves only two or three candidate techniques.</p>
+<p>When there are $T$ test cases with per-case work $f(n)$, the total is $T \cdot f(n)$. A constraint of $T \leq 10^5$ test cases and $n \leq 10^5$ per case with an $O(n)$ solution is $10^{10}$ steps - too slow - unless the statement also promises that the <em>sum</em> of $n$ over all test cases is at most $10^5$. Look for that sentence. It is almost always there, and it changes everything.</p>
+<p>Memory has a budget too. 256MB holds roughly 64 million 32-bit integers, or 32 million 64-bit ones. An $n \times n$ table of integers with $n = 10^4$ has $10^8$ entries and needs 400MB - too large. This catches many dynamic programming designs before you implement them.</p>
 <p><strong>Read the constraints before you think about the solution.</strong> The constraints collapse the solution space from infinite to roughly two or three candidates.</p>
 <hr>
-<h2 id="categorizing-the-problem">Categorizing the Problem</h2>
-<p>Before reaching for any algorithm, decide what category the problem belongs to. A wrong categorization sends you down the wrong path entirely. Categories are not mutually exclusive - many problems combine two.</p>
-<p><strong>Optimization</strong>: find the minimum or maximum of something. Suggests greedy, DP, or binary search on the answer.</p>
-<p><strong>Counting</strong>: how many ways / paths / configurations exist? Suggests DP or combinatorics.</p>
-<p><strong>Decision</strong>: is it possible? Can it be done? Suggests BFS/DFS for reachability, or DP for feasibility.</p>
-<p><strong>Construction</strong>: produce a valid answer, not just determine if one exists. Suggests greedy or careful construction.</p>
-<p><strong>Graph problem</strong>: nodes, edges, paths, connectivity, flow. Suggests graph algorithms directly.</p>
-<p><strong>String problem</strong>: operations on characters, substrings, patterns. Suggests hashing, KMP, Z-algorithm, Trie.</p>
+<h2 id="step-3---name-the-question">Step 3 - Name the Question</h2>
+<p>Before reaching for any algorithm, decide what kind of question is being asked. A wrong categorization sends you down the wrong path entirely. Categories are not mutually exclusive - many problems combine two.</p>
+<p><strong>Optimization</strong>: find the minimum or maximum of something. Suggests greedy, dynamic programming, or binary search on the answer.</p>
+<p><strong>Counting</strong>: how many ways, paths, or configurations exist? Suggests dynamic programming or combinatorics.</p>
+<p><strong>Decision</strong>: is it possible? Can it be done? Suggests a search for reachability, or simply finding the condition that decides it.</p>
+<p><strong>Construction</strong>: produce a valid answer, not just determine whether one exists. Suggests greedy or a careful step-by-step build.</p>
+<p>Alongside the kind of question, notice the kind of <em>object</em>, because it tells you which shelf of the toolkit to open:</p>
+<p><strong>Graph</strong>: things and connections between them - cities and roads, tasks and dependencies, states and moves. Suggests graph algorithms directly.</p>
+<p><strong>String</strong>: operations on characters, substrings, patterns. Suggests hashing, KMP, Z-algorithm, Trie.</p>
 <p><strong>Geometric</strong>: points, lines, distances, areas. Suggests computational geometry.</p>
-<p><strong>Mathematical</strong>: number theory, combinatorics, algebra. Suggests math-specific techniques.</p>
-<p>The category tells you which section of your mental toolkit to open. Once you are in the right section, the specific algorithm usually becomes apparent from the constraints.</p>
+<p><strong>Mathematical</strong>: divisibility, remainders, counting formulas. Suggests number theory and combinatorics.</p>
+<p>One trick is worth learning immediately because it crosses categories: a hard optimization question can often be traded for an easy decision question. &ldquo;What is the largest $x$ that works?&rdquo; becomes &ldquo;does this particular $x$ work?&rdquo;, asked a handful of times. That trade is binary search on the answer, and it gets its own demo below.</p>
 <hr>
-<h2 id="the-algorithm-arsenal">The Algorithm Arsenal</h2>
-<p>What follows is every major technique, with the signal that tells you to use it and the core idea behind it. This is not meant to replace learning each algorithm deeply - it is a map of what exists and when to reach for it.</p>
-<h3 id="greedy">Greedy</h3>
-<p><strong>When</strong>: you can make a locally optimal choice at each step and prove that local optima compose into a global optimum.</p>
-<p><strong>The signal</strong>: problems about scheduling, selecting a subset, ordering elements, interval coverage, or any problem where &ldquo;always take the best available option&rdquo; seems defensible.</p>
-<p><strong>The core idea</strong>: process elements in a deliberate order (often sorted), and at each step commit to the locally best choice. The crucial step is proving correctness, usually via an exchange argument: suppose the greedy did not match the optimal solution at some point. Show that you can swap the greedy choice with the optimal choice without making the solution worse - which means the greedy solution is at least as good as optimal.</p>
-<p><strong>Classic patterns</strong>:</p>
-<ul>
-<li>Interval scheduling (select maximum non-overlapping intervals): sort by end time, always pick the interval that ends earliest.</li>
-<li>Fractional knapsack: sort items by value/weight ratio, take the best ratio items first.</li>
-<li>Activity selection with deadlines: sort by deadline, use a greedy priority queue.</li>
-<li>Minimum number of coins/platforms/meeting rooms: think about what is &ldquo;available&rdquo; at each step.</li>
-</ul>
-<p><strong>The trap</strong>: greedy works when it works, and produces subtly wrong answers when it doesn&rsquo;t. If you cannot construct an exchange argument proof, the greedy is likely wrong. Test it on adversarial inputs. The classic failure: 0/1 knapsack (you cannot take fractions, so the fractional greedy fails).</p>
+<h2 id="step-4---write-the-brute-force-first">Step 4 - Write the Brute Force First</h2>
+<p>The brute force is the solution you get by doing exactly what the problem says, in the most direct way, with no cleverness: try every pair, every subarray, every subset, every order. It is almost always too slow. Write it anyway, at least in your head, for four reasons.</p>
+<ol>
+<li><strong>It proves you understood the problem.</strong> If you cannot even write the slow solution, you are still at step 1.</li>
+<li><strong>Sometimes it is the answer.</strong> If the constraints say $n \leq 10$, the brute force <em>is</em> the intended solution, and looking for something smarter is how people lose an hour.</li>
+<li><strong>It is your referee.</strong> Later, you will test your fast solution by comparing it with the slow one on thousands of small random inputs.</li>
+<li><strong>It shows you the waste.</strong> A fast algorithm is nearly always a brute force with one specific kind of repeated work removed. You cannot remove repetition from a solution you never wrote down.</li>
+</ol>
+<p>Here is the whole idea on one small problem. <em>Given $n$ positive numbers and a limit, find the longest run of neighbouring numbers whose sum is at most the limit.</em></p>
+<p>The brute force tries every run. A run is fixed by where it starts, <code>l</code>, and where it ends, <code>r</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">best <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+<span style="color:#66d9ef">for</span> l <span style="color:#f92672">in</span> range(n):
+    <span style="color:#66d9ef">for</span> r <span style="color:#f92672">in</span> range(l, n):
+        <span style="color:#66d9ef">if</span> sum(a[l:r <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>]) <span style="color:#f92672">&lt;=</span> limit:
+            best <span style="color:#f92672">=</span> max(best, r <span style="color:#f92672">-</span> l <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)
+</code></pre></div><p>Three nested pieces of work: every <code>l</code>, every <code>r</code>, and a <code>sum</code> that walks the whole run. That is $O(n^3)$. For $n = 10^5$ the budget calculator above says about 116 days.</p>
+<p>Now look for the waste. Going from <code>r</code> to <code>r + 1</code>, the code re-adds the entire run from scratch, when the new sum is just the old sum plus one number. Keep a running total and the inner walk disappears. That is $O(n^2)$ - still 1.7 minutes.</p>
+<p>Look again. For each new <code>l</code>, the code restarts <code>r</code> at <code>l</code> and re-grows a run that it already knew was fine. If the run from <code>l</code> to <code>r</code> fit under the limit, then the run from <code>l + 1</code> to <code>r</code> fits too, because removing a positive number can only shrink the sum. So <code>r</code> never needs to move backwards. Neither does <code>l</code>. Two markers that each cross the array once is $2n$ moves in total:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">best <span style="color:#f92672">=</span> total <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+l <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+<span style="color:#66d9ef">for</span> r <span style="color:#f92672">in</span> range(n):
+    total <span style="color:#f92672">+=</span> a[r]
+    <span style="color:#66d9ef">while</span> total <span style="color:#f92672">&gt;</span> limit:        <span style="color:#75715e"># too big: give up numbers from the left</span>
+        total <span style="color:#f92672">-=</span> a[l]
+        l <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+    best <span style="color:#f92672">=</span> max(best, r <span style="color:#f92672">-</span> l <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)
+</code></pre></div><p>That is $O(n)$, about a millisecond, and nothing about it was invented from thin air. It is the brute force with two kinds of waste deleted. Watch it run:</p>
+<div class="sf" data-sf="window">This is an interactive demo. It needs JavaScript to run.</div>
+<p>This technique has a name, <strong>two pointers</strong> or the <strong>sliding window</strong>, and it appears in the toolkit. But notice that you did not need to know the name to find it. You needed the brute force and one question: <em>what is this code doing more than once?</em></p>
 <hr>
-<h3 id="binary-search">Binary Search</h3>
-<p><strong>When</strong>: you need to find a value in a sorted structure, OR the answer has a monotonic property (if $X$ is achievable, then all values $\leq X$ or $\geq X$ are also achievable).</p>
-<p><strong>The signal</strong>:</p>
-<ul>
-<li>&ldquo;Find the minimum value such that condition $P$ holds&rdquo; - binary search on the answer.</li>
-<li>&ldquo;Maximum of minimums&rdquo; or &ldquo;minimum of maximums&rdquo; - almost always binary search on answer.</li>
-<li>Sorted array, first/last occurrence of something.</li>
-<li>Parametric search: you can check whether a given answer is feasible in $O(f(n))$, but computing the answer directly seems hard.</li>
-</ul>
-<p><strong>The core idea for binary search on answer</strong>: instead of computing the answer directly, ask: &ldquo;is the answer $\leq m$?&rdquo; for various $m$. If this question has a monotone structure (once the answer becomes &ldquo;yes&rdquo; it stays &ldquo;yes&rdquo; as $m$ increases), binary search over $m$ and solve the decision version. The decision version is often dramatically easier than the optimization version.</p>
-<p>Example: &ldquo;find the minimum rope length such that you can cut $k$ ropes of that length from $n$ ropes.&rdquo; Directly optimizing is hard. But &ldquo;can I cut $k$ ropes of length $m$?&rdquo; is trivially answered by $\sum \lfloor r_i / m \rfloor \geq k$. Binary search on $m$.</p>
-<p><strong>Complexity</strong>: $O(\log(\text{range}) \cdot f(n))$ where $f(n)$ is the check cost.</p>
-<p><strong>Implementation</strong>: be careful with the boundary. The invariant is: maintain <code>lo</code> and <code>hi</code> such that the answer is always in $[\text{lo}, \text{hi}]$. Update <code>mid = lo + (hi - lo) / 2</code> to avoid overflow. Know whether you want the first index where condition holds or the last.</p>
+<h2 id="step-5---find-the-waste">Step 5 - Find the Waste</h2>
+<p>That question has a small number of possible answers, and each answer has a standard cure. This table is the bridge between &ldquo;I have a slow solution&rdquo; and &ldquo;I know which technique to use&rdquo;. It is worth more than any list of algorithms, because it tells you <em>why</em> each one exists.</p>
+<table>
+<thead>
+<tr>
+<th>What the brute force keeps doing</th>
+<th>The tool that removes it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Adding up the same stretch of numbers again</td>
+<td>Prefix sums</td>
+</tr>
+<tr>
+<td>Scanning a list to ask &ldquo;have I seen this value?&rdquo;</td>
+<td>Hash map or hash set</td>
+</tr>
+<tr>
+<td>Re-growing a window it already knew about</td>
+<td>Two pointers, sliding window</td>
+</tr>
+<tr>
+<td>Testing candidate answers one by one when &ldquo;works&rdquo; flips to &ldquo;fails&rdquo; only once</td>
+<td>Binary search</td>
+</tr>
+<tr>
+<td>Solving the same smaller problem again and again</td>
+<td>Dynamic programming</td>
+</tr>
+<tr>
+<td>Exploring choices that can be proven never to help</td>
+<td>Greedy</td>
+</tr>
+<tr>
+<td>Re-scanning for the nearest bigger or smaller element</td>
+<td>Monotone stack</td>
+</tr>
+<tr>
+<td>Re-walking the same squares or states to find a shortest route</td>
+<td>Breadth-first search</td>
+</tr>
+<tr>
+<td>Recomputing a whole range after one small change</td>
+<td>Fenwick tree, segment tree</td>
+</tr>
+<tr>
+<td>Re-checking whether two things are connected</td>
+<td>Union-Find</td>
+</tr>
+<tr>
+<td>Comparing the same strings character by character</td>
+<td>Hashing, KMP</td>
+</tr>
+<tr>
+<td>Looping over every pair just to add up a total</td>
+<td>Count each element&rsquo;s contribution once</td>
+</tr>
+</tbody>
+</table>
+<p>The rest of this guide is these tools, one at a time.</p>
 <hr>
-<h3 id="two-pointers-and-sliding-window">Two Pointers and Sliding Window</h3>
-<p><strong>When</strong>: you need to find a subarray or substring with some property, or count pairs that satisfy a constraint, in a sorted or structured array.</p>
-<p><strong>The signal</strong>:</p>
-<ul>
-<li>&ldquo;Find the longest/shortest subarray with sum $\leq k$.&rdquo;</li>
-<li>&ldquo;Count pairs $(i, j)$ with $A[i] + A[j] = S$.&rdquo;</li>
-<li>&ldquo;Minimum window substring.&rdquo;</li>
-<li>The constraint involves contiguous subarrays or the array is sorted and you are looking for pairs.</li>
-</ul>
-<p><strong>The core idea</strong>: instead of testing every pair $(l, r)$ in $O(n^2)$, maintain two pointers $l$ and $r$ and move them based on whether the current window is too large, too small, or just right. The key insight is that as you move one pointer forward, the other never needs to go backward - giving $O(n)$ total moves instead of $O(n^2)$.</p>
-<p>Sliding window with a fixed size $k$: maintain a window of size $k$, slide it across, update the aggregate in $O(1)$ per step.</p>
-<p>Variable-size sliding window: maintain <code>l</code> and <code>r</code>. Expand <code>r</code> to include the next element. If the window violates the constraint, advance <code>l</code> until it is valid again. If the window is valid, record the result.</p>
-<hr>
-<h3 id="prefix-sums-and-difference-arrays">Prefix Sums and Difference Arrays</h3>
-<p><strong>When</strong>: you need range sum queries, or you need to apply range updates and then query point values.</p>
-<p><strong>The signal</strong>:</p>
-<ul>
-<li>&ldquo;Sum of elements from index $l$ to $r$&rdquo; repeatedly.</li>
-<li>&ldquo;After applying $m$ range increment operations, what are the final values?&rdquo;</li>
-<li>&ldquo;Count subarrays with sum equal to $k$.&rdquo;</li>
-</ul>
-<p><strong>Prefix sum</strong>: precompute $P[i] = A[0] + A[1] + \ldots + A[i-1]$. Then $\text{sum}(l, r) = P[r+1] - P[l]$ in $O(1)$. 2D prefix sums allow $O(1)$ rectangle sum queries after $O(n^2)$ preprocessing.</p>
-<p><strong>Difference array</strong>: for range updates. If you want to add $v$ to all elements in $[l, r]$: set $D[l] += v$, $D[r+1] -= v$. After all updates, take the prefix sum of $D$ to recover the final array. This turns $m$ range updates + $n$ point queries from $O(mn)$ to $O(m + n)$.</p>
-<p><strong>&ldquo;Count subarrays with sum $= k$&quot;</strong>: let $P[i]$ be the prefix sum up to index $i$. You want pairs $(j, i)$ with $P[i] - P[j] = k$, i.e., $P[j] = P[i] - k$. Walk left to right, maintain a hashmap of seen prefix sums. For each $i$, query the hashmap for $P[i] - k$. $O(n)$ total.</p>
-<hr>
+<h2 id="the-toolkit">The Toolkit</h2>
+<p>For each technique: the waste it removes, the signal in a problem statement that should make you think of it, the core idea, and the trap. This is a map of what exists and when to reach for it, not a replacement for learning each one properly, so most entries link to a full post.</p>
+<p>The first nine entries solve the large majority of problems you will meet. The ones after that are more specialized: know that they exist and what they are for, and learn them when a problem forces you to.</p>
 <h3 id="hashing">Hashing</h3>
-<p><strong>When</strong>: you need $O(1)$ frequency counting, duplicate detection, or substring comparison.</p>
+<p><strong>The waste it removes</strong>: scanning a whole list to answer &ldquo;is this value here?&rdquo; or &ldquo;how many times have I seen it?&rdquo;. A hash map answers both in $O(1)$ on average - one step, no matter how much is stored. <a href="/posts/hash-maps-and-o1-lookup/" target="_blank" rel="noopener noreferrer">Hash Maps - Trading Space for Constant-Time Lookup</a>
+ explains how.</p>
 <p><strong>The signal</strong>:</p>
 <ul>
 <li>&ldquo;Count how many times each value appears.&rdquo;</li>
 <li>&ldquo;Find if any two elements are equal.&rdquo;</li>
-<li>&ldquo;Compare two substrings efficiently.&rdquo;</li>
+<li>&ldquo;Is there a pair that adds up to $S$?&rdquo; For each $x$, ask the map whether $S - x$ has been seen.</li>
 </ul>
-<p><strong>Rolling hash for strings</strong>: assign each character a value, compute the polynomial hash of each prefix. The hash of substring $[l, r]$ is computable in $O(1)$ after $O(n)$ preprocessing. Use two different hash bases and moduli to avoid collisions (birthday paradox: with one modulus around $10^9$, collisions become likely with large inputs).</p>
-<p><strong>The trap</strong>: hash collisions are rare but nonzero. In competitive programming, a deterministic approach is safer when the judge is adversarial. Use random bases or double hashing.</p>
+<p><strong>Rolling hash for strings</strong>: turn each prefix of a string into a number, so that the number for any substring can be computed in $O(1)$ after $O(n)$ preparation. Two substrings with different numbers are certainly different; two with the same number are almost certainly equal.</p>
+<p><strong>The trap</strong>: &ldquo;almost certainly&rdquo; is not &ldquo;certainly&rdquo;. Two different strings can collide. Use two different hash bases and moduli together, or a random base, so that an adversarial test cannot be built against your code in advance.</p>
+<hr>
+<h3 id="prefix-sums-and-difference-arrays">Prefix Sums and Difference Arrays</h3>
+<p><strong>The waste it removes</strong>: re-adding the same stretch of numbers.</p>
+<p><strong>The signal</strong>:</p>
+<ul>
+<li>&ldquo;Sum of elements from index $l$ to $r$&rdquo;, asked many times.</li>
+<li>&ldquo;After applying $m$ range increments, what are the final values?&rdquo;</li>
+<li>&ldquo;Count subarrays with sum equal to $k$.&rdquo;</li>
+</ul>
+<p><strong>Prefix sum</strong>: precompute $P[i] = A[0] + A[1] + \ldots + A[i-1]$, the total of the first $i$ elements. Then the sum of any run is one subtraction: $\text{sum}(l, r) = P[r+1] - P[l]$. Think of an odometer: the distance between two towns is the reading at the second minus the reading at the first, and you never re-drive the road. 2D prefix sums do the same for rectangles.</p>
+<p><strong>Difference array</strong>: the same idea run backwards, for updates. To add $v$ to every element in $[l, r]$, set $D[l] += v$ and $D[r+1] -= v$. After all updates, take the prefix sum of $D$ to recover the final array. This turns $m$ range updates on $n$ elements from $O(mn)$ into $O(m + n)$.</p>
+<p><strong>&ldquo;Count subarrays with sum $= k$&quot;</strong> combines prefix sums with a hash map, and is one of the most reused patterns there is. A run ending at position $i$ has sum $k$ exactly when some earlier prefix total equals $P[i] - k$. So walk left to right, keep a map of the totals seen so far, and at each position ask the map one question:</p>
+<div class="sf" data-sf="prefix">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Notice that this works with negative numbers, where a sliding window would not.</p>
+<hr>
+<h3 id="two-pointers-and-sliding-window">Two Pointers and Sliding Window</h3>
+<p><strong>The waste it removes</strong>: re-growing a window from scratch for every starting point.</p>
+<p><strong>The signal</strong>:</p>
+<ul>
+<li>&ldquo;Find the longest or shortest subarray with sum $\leq k$.&rdquo;</li>
+<li>&ldquo;Count pairs $(i, j)$ with $A[i] + A[j] = S$&rdquo; in a sorted array.</li>
+<li>&ldquo;Minimum window substring.&rdquo;</li>
+<li>The constraint involves neighbouring elements, or the array is sorted and you are looking for pairs.</li>
+</ul>
+<p><strong>The core idea</strong>: instead of testing every pair $(l, r)$ in $O(n^2)$, keep two markers and move each one only forward. Step 4 above derived it and showed it running. Each pointer crosses the array once, so the total is $O(n)$.</p>
+<p>Fixed-size window: keep a window of exactly $k$ elements, slide it one step at a time, and update the total by adding the element that enters and subtracting the one that leaves.</p>
+<p>Variable-size window: expand the right end. While the window breaks the rule, advance the left end. Whenever the window is valid, record it.</p>
+<p><strong>The trap</strong>: the method relies on a promise - <em>making the window bigger never makes it better, and making it smaller never makes it worse</em> (or the reverse). With positive numbers and a sum limit, the promise holds. Add negative numbers and it breaks: a window that is too big might become fine again by growing. When the promise fails, use prefix sums instead.</p>
+<hr>
+<h3 id="binary-search">Binary Search</h3>
+<p><strong>The waste it removes</strong>: testing candidates one by one when you could discard half of them with each test.</p>
+<p>Everyone meets binary search as &ldquo;find a value in a sorted array&rdquo;: look at the middle, discard the half that cannot contain it, repeat. <a href="/posts/searching-algorithms-binary-search/" target="_blank" rel="noopener noreferrer">Searching Algorithms</a>
+ covers that version. The far more powerful use is <strong>binary search on the answer</strong>.</p>
+<p><strong>When</strong>: the question is &ldquo;find the largest (or smallest) value that works&rdquo;, and &ldquo;works&rdquo; is <strong>monotonic</strong> - once it stops working, it never starts again. If a piece of length 200 can be cut, so can every shorter piece. If length 201 cannot, neither can anything longer. The yes/no answers look like yes, yes, yes, no, no, no, and all you need is the place where they flip.</p>
+<p><strong>The signal</strong>:</p>
+<ul>
+<li>&ldquo;Find the minimum value such that condition $P$ holds.&rdquo;</li>
+<li>&ldquo;Maximize the minimum&rdquo; or &ldquo;minimize the maximum&rdquo; - almost always binary search on the answer.</li>
+<li>You can easily <em>check</em> a proposed answer, but computing the best one directly seems hard.</li>
+</ul>
+<p><strong>The core idea</strong>: do not compute the answer. Guess it, and check the guess. Example: you have ropes and need $k$ pieces of equal length; what is the longest possible piece? Optimizing directly is awkward. But checking a guess $m$ is trivial: rope $r_i$ gives $\lfloor r_i / m \rfloor$ pieces, so add those up and compare with $k$.</p>
+<div class="sf" data-sf="bsearch">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Ten checks instead of 802. If the lengths went up to a billion it would be thirty checks.</p>
+<p><strong>Complexity</strong>: $O(\log(\text{range}) \cdot f(n))$ where $f(n)$ is the cost of one check.</p>
+<p><strong>Implementation</strong>: the boundary handling is where everyone slips, so use one template and stick to it. For the largest value that works:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">lo, hi <span style="color:#f92672">=</span> smallest_candidate, largest_candidate
+<span style="color:#66d9ef">while</span> lo <span style="color:#f92672">&lt;</span> hi:
+    mid <span style="color:#f92672">=</span> (lo <span style="color:#f92672">+</span> hi <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">//</span> <span style="color:#ae81ff">2</span>
+    <span style="color:#66d9ef">if</span> works(mid):
+        lo <span style="color:#f92672">=</span> mid          <span style="color:#75715e"># mid works: the answer is mid or higher</span>
+    <span style="color:#66d9ef">else</span>:
+        hi <span style="color:#f92672">=</span> mid <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>      <span style="color:#75715e"># mid fails: the answer is below mid</span>
+<span style="color:#75715e"># lo is now the largest value that works</span>
+</code></pre></div><p>Two things must hold when you start: <code>lo</code> definitely works and nothing above <code>hi</code> does. The <code>+ 1</code> in <code>mid</code> matters. Without it, when <code>hi = lo + 1</code> the middle is <code>lo</code>, <code>lo = mid</code> changes nothing, and the loop runs forever. For the <em>smallest</em> value that works, mirror everything: <code>mid = (lo + hi) // 2</code>, then <code>hi = mid</code> if it works and <code>lo = mid + 1</code> if it does not.</p>
+<hr>
+<h3 id="greedy">Greedy</h3>
+<p><strong>The waste it removes</strong>: exploring choices that can be proven never to help.</p>
+<p><strong>When</strong>: you can make the best-looking choice at each step, never revisit it, and still end with the best overall result.</p>
+<p><strong>The signal</strong>: scheduling, selecting a subset, ordering elements, covering intervals - any problem where &ldquo;always take the best available option&rdquo; seems defensible.</p>
+<p><strong>The core idea</strong>: process elements in a deliberate order, usually sorted, and at each step commit to the locally best choice. The hard part is not the code, which is often five lines. The hard part is knowing that it is correct, and the standard tool for that is the <strong>exchange argument</strong>: take any best solution that disagrees with greedy&rsquo;s first choice, and show you can swap greedy&rsquo;s choice in without making it worse. If that swap always works, a best solution that agrees with greedy must exist.</p>
+<p>A concrete one. You have meetings with start and end times, one room, and want to hold as many as possible. Greedy says: always pick the meeting that <em>ends earliest</em> among those still possible. Why is that safe? Take any best schedule. Its first meeting ends no earlier than greedy&rsquo;s first pick, by definition. Swap greedy&rsquo;s pick in: it ends sooner, so it cannot clash with anything that came after. Same number of meetings, now agreeing with greedy. Repeat the argument for the second pick, and the third.</p>
+<p><strong>Classic patterns</strong>:</p>
+<ul>
+<li>Interval scheduling (most non-overlapping intervals): sort by end time, always take the one that ends earliest.</li>
+<li>Fractional knapsack: sort items by value per unit of weight, take the best ratio first.</li>
+<li>Deadlines and penalties: sort by deadline, keep a priority queue of what you have accepted.</li>
+<li>Minimum number of platforms or meeting rooms: sweep through time and track what is in use.</li>
+</ul>
+<p><strong>The trap</strong>: greedy works when it works, and produces subtly wrong answers when it does not. Paying an amount with the fewest coins by always taking the largest coin is right for ordinary currency and wrong in general: with coins of 1, 3 and 4, greedy pays 6 as $4 + 1 + 1$, three coins, when $3 + 3$ is two. If you cannot find an exchange argument, hunt for a small counterexample like that one before trusting the idea. When greedy fails, dynamic programming is usually what works. <a href="/posts/greedy-algorithms/" target="_blank" rel="noopener noreferrer">Greedy Algorithms - The Art of Never Looking Back</a>
+ goes deeper.</p>
 <hr>
 <h3 id="graph-algorithms">Graph Algorithms</h3>
-<p>Graphs are ubiquitous because many problems that appear unrelated to graphs can be modeled as one. The first skill is recognizing the graph. The second is picking the right algorithm.</p>
-<p><strong>Modeling as a graph</strong>: if the problem has &ldquo;states&rdquo; and &ldquo;transitions&rdquo; between states, it is a graph. States are nodes; valid transitions are edges. The question &ldquo;what is the minimum number of moves from state A to state B?&rdquo; is a shortest path problem. &ldquo;Is state B reachable from state A?&rdquo; is a connectivity problem.</p>
+<p>A <strong>graph</strong> is a set of things, called nodes, and connections between pairs of them, called edges. Graphs are everywhere because many problems that never mention one can be modeled as one. The first skill is recognizing the graph. The second is picking the right algorithm.</p>
+<p><strong>Modeling as a graph</strong>: if the problem has &ldquo;states&rdquo; and &ldquo;moves&rdquo; between states, it is a graph. States are nodes; valid moves are edges. A puzzle position is a node, and one legal move is an edge. The question &ldquo;what is the minimum number of moves from state A to state B?&rdquo; is a shortest path problem. &ldquo;Can B be reached from A at all?&rdquo; is a connectivity problem.</p>
 <p><strong>BFS (Breadth-First Search)</strong>:</p>
 <ul>
-<li>Use when: finding the shortest path in an unweighted graph; any problem where you need minimum number of steps.</li>
-<li>Core idea: explore nodes level by level. The first time you reach a node, you have found the shortest path to it.</li>
-<li>0-1 BFS: when edge weights are either 0 or 1, use a deque. Push weight-0 neighbors to the front, weight-1 neighbors to the back. Runs in $O(V + E)$ instead of Dijkstra&rsquo;s $O((V+E) \log V)$.</li>
-<li>Multi-source BFS: if you want the distance from <em>any</em> of a set of source nodes, push all sources into the queue simultaneously at the start.</li>
+<li>Use when: finding the shortest path where every move costs the same; any problem asking for the minimum number of steps.</li>
+<li>Core idea: explore in waves. First everything one move away, then everything two moves away, and so on. The first time the wave touches a node, it has found the shortest route to it, because every shorter route would have arrived in an earlier wave.</li>
+</ul>
+<div class="sf" data-sf="bfs">This is an interactive demo. It needs JavaScript to run.</div>
+<p>The code is short enough to memorize. A queue hands nodes back in the order they were added, which is exactly what keeps the waves in order:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque
+
+dist <span style="color:#f92672">=</span> {start: <span style="color:#ae81ff">0</span>}
+queue <span style="color:#f92672">=</span> deque([start])
+<span style="color:#66d9ef">while</span> queue:
+    node <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+    <span style="color:#66d9ef">for</span> nxt <span style="color:#f92672">in</span> neighbours(node):
+        <span style="color:#66d9ef">if</span> nxt <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> dist:             <span style="color:#75715e"># first visit is the shortest</span>
+            dist[nxt] <span style="color:#f92672">=</span> dist[node] <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+            queue<span style="color:#f92672">.</span>append(nxt)
+</code></pre></div><ul>
+<li>0-1 BFS: when moves cost either 0 or 1, use a double-ended queue. Push cost-0 neighbours to the front and cost-1 neighbours to the back. Runs in $O(V + E)$, where $V$ is the number of nodes and $E$ the number of edges.</li>
+<li>Multi-source BFS: if you want the distance from the <em>nearest</em> of several starting nodes, put all of them in the queue at the start.</li>
 </ul>
 <p><strong>DFS (Depth-First Search)</strong>:</p>
 <ul>
 <li>Use when: detecting cycles, finding connected components, topological ordering, tree traversals, problems where you explore all paths.</li>
-<li>Core idea: go deep before going wide. DFS on undirected graphs colors nodes white → gray (in stack) → black (done). A back edge (gray → gray) means a cycle.</li>
-<li>In directed graphs, DFS produces a discovery time and finish time per node, from which topological order and strongly connected components (Kosaraju&rsquo;s, Tarjan&rsquo;s) are derived.</li>
+<li>Core idea: go as deep as possible before backing up. It is usually written as a recursive function; see <a href="/posts/recursion-when-functions-call-themselves/" target="_blank" rel="noopener noreferrer">Recursion</a>
+ if that is unfamiliar. Mark each node as <em>in progress</em> when you enter it and <em>done</em> when you leave. In a directed graph, running into a node that is still in progress means you have found a cycle.</li>
+<li>The order in which nodes finish gives topological order and, with a little more work, strongly connected components (Kosaraju&rsquo;s and Tarjan&rsquo;s algorithms).</li>
 </ul>
 <p><strong>Dijkstra&rsquo;s Algorithm</strong>:</p>
 <ul>
-<li>Use when: shortest paths in a graph with non-negative edge weights.</li>
-<li>Core idea: greedily expand the closest unvisited node. Maintain a priority queue of (distance, node) pairs. When you pop a node, its distance is final.</li>
+<li>Use when: shortest paths where moves have different, non-negative costs.</li>
+<li>Core idea: repeatedly settle the closest node not yet settled. Keep a priority queue of (distance, node) pairs. When a node comes out of the queue, its distance is final.</li>
 <li>Complexity: $O((V + E) \log V)$ with a binary heap.</li>
-<li>The trap: fails with negative edges. The assumption is that the shortest path to a node cannot be improved by going through a later-discovered node - which breaks with negative weights.</li>
+<li>The trap: fails with negative costs. Its whole argument is that a settled node cannot be improved by a longer detour, and a negative edge can make a detour cheaper.</li>
 </ul>
 <p><strong>Bellman-Ford</strong>:</p>
 <ul>
-<li>Use when: negative edge weights exist; or detecting negative-weight cycles.</li>
-<li>Core idea: relax all edges $V - 1$ times. After $k$ iterations, you know the shortest paths using at most $k$ edges. If running a $V$-th iteration still relaxes any edge, a negative cycle exists.</li>
+<li>Use when: negative edge weights exist, or you need to detect a cycle whose total weight is negative.</li>
+<li>Core idea: try to improve every edge, $V - 1$ times over. After $k$ rounds you know the shortest paths that use at most $k$ edges. If a $V$-th round still improves something, a negative cycle exists.</li>
 <li>Complexity: $O(VE)$.</li>
 </ul>
 <p><strong>Floyd-Warshall</strong>:</p>
 <ul>
-<li>Use when: all-pairs shortest paths; $V \leq 500$ or so.</li>
-<li>Core idea: $dp[k][i][j]$ = shortest path from $i$ to $j$ using only nodes ${1, \ldots, k}$ as intermediates. Transition: $dp[k][i][j] = \min(dp[k-1][i][j],; dp[k-1][i][k] + dp[k-1][k][j])$.</li>
+<li>Use when: shortest paths between <em>all</em> pairs of nodes, with $V \leq 500$ or so.</li>
+<li>Core idea: $dp[k][i][j]$ = shortest path from $i$ to $j$ using only nodes $1, \ldots, k$ as stopovers. Transition: $dp[k][i][j] = \min(dp[k-1][i][j],; dp[k-1][i][k] + dp[k-1][k][j])$.</li>
 <li>Complexity: $O(V^3)$.</li>
 </ul>
 <p><strong>Topological Sort</strong>:</p>
 <ul>
-<li>Use when: ordering tasks with dependencies; finding longest path in a DAG; any problem on a directed acyclic graph where processing order matters.</li>
-<li>Core idea: Kahn&rsquo;s algorithm (repeatedly remove nodes with zero in-degree) or DFS finishing order (nodes finish in reverse topological order).</li>
-<li>Longest path in a DAG: process nodes in topological order, relax edges. $O(V + E)$.</li>
+<li>Use when: ordering tasks with dependencies; finding the longest path in a graph with no cycles (a DAG); any problem where processing order matters.</li>
+<li>Core idea: Kahn&rsquo;s algorithm repeatedly removes a node that nothing points to. Alternatively, DFS finishing order reversed.</li>
+<li>Longest path in a DAG: process nodes in topological order and update each neighbour. $O(V + E)$.</li>
 </ul>
-<p><strong>Minimum Spanning Tree</strong>:</p>
+<p><strong>Minimum Spanning Tree</strong> (the cheapest set of edges that connects everything):</p>
 <ul>
-<li>Kruskal&rsquo;s: sort edges by weight, add each edge if it doesn&rsquo;t create a cycle (use Union-Find to detect). $O(E \log E)$.</li>
-<li>Prim&rsquo;s: like Dijkstra but on a dense graph; use when $E \approx V^2$. $O(V^2)$ or $O(E \log V)$ with a heap.</li>
+<li>Kruskal&rsquo;s: sort edges by weight, add each edge unless it would close a loop. Detect loops with Union-Find. $O(E \log E)$.</li>
+<li>Prim&rsquo;s: grow one tree outward, always adding the cheapest edge leaving it. Good when the graph is dense. $O(V^2)$, or $O(E \log V)$ with a heap.</li>
 </ul>
+<p>Full treatments: <a href="/posts/graph-algorithms-traversal/" target="_blank" rel="noopener noreferrer">Graph Algorithms &amp; Traversal</a>
+, <a href="/posts/shortest-paths-dijkstra-bellman-ford/" target="_blank" rel="noopener noreferrer">Shortest Paths</a>
+, <a href="/posts/minimum-spanning-trees-union-find/" target="_blank" rel="noopener noreferrer">Minimum Spanning Trees &amp; Union-Find</a>
+, and for choosing between them, <a href="/posts/graph-algorithm-applicability/" target="_blank" rel="noopener noreferrer">Graph Algorithm Applicability</a>
+.</p>
 <hr>
 <h3 id="union-find-disjoint-set-union">Union-Find (Disjoint Set Union)</h3>
-<p><strong>When</strong>: dynamic connectivity queries - &ldquo;are $u$ and $v$ connected?&rdquo; after a sequence of &ldquo;merge $u$ and $v$&rdquo; operations. Also: Kruskal&rsquo;s MST, detecting cycles in undirected graphs, grouping elements.</p>
-<p><strong>The core idea</strong>: maintain a forest of trees where each tree is a connected component. Each node points to its parent. The root is the representative. Two nodes are connected iff they have the same root. Find: walk to root (with path compression: make every visited node point directly to root). Union: attach one root to the other (by rank: attach the smaller tree under the larger).</p>
-<p>With path compression and union by rank, find and union are effectively $O(\alpha(n))$ where $\alpha$ is the inverse Ackermann function - essentially constant.</p>
-<p><strong>What you cannot do</strong>: split (undo a union) in the standard version. Offline rollback with a stack enables &ldquo;union-find with undo&rdquo; for some problems.</p>
+<p><strong>The waste it removes</strong>: re-exploring a graph every time someone asks &ldquo;are these two connected?&rdquo;.</p>
+<p><strong>When</strong>: connections are added over time and you need to answer &ldquo;are $u$ and $v$ connected?&rdquo; in between. Also: Kruskal&rsquo;s MST, detecting cycles in undirected graphs, grouping elements.</p>
+<p><strong>The core idea</strong>: every group has one representative. Each node stores a pointer to a &ldquo;parent&rdquo;, and following parents leads to the representative. Two nodes are connected exactly when they lead to the same one. <em>Find</em>: walk to the representative, and on the way back make every node you visited point straight at it, so the next walk is short (path compression). <em>Union</em>: point one representative at the other, smaller group under larger.</p>
+<p>With both tricks, find and union cost $O(\alpha(n))$, where $\alpha$ is a function that grows so slowly it is below 5 for any input that fits in the universe. Treat it as constant.</p>
+<p><strong>What you cannot do</strong>: split a group, in the standard version. Some problems can be handled by processing the operations in reverse, or by a variant that records changes on a stack so they can be undone.</p>
 <hr>
 <h3 id="dynamic-programming">Dynamic Programming</h3>
-<p>DP is the hardest technique to learn because it is not a single algorithm but a problem-solving paradigm. The difficulty is not coding it - it is finding the right state.</p>
-<p><strong>When</strong>: the problem asks for an optimum or a count, and the problem has both:</p>
+<p><strong>The waste it removes</strong>: solving the same smaller problem again and again.</p>
+<p>Dynamic programming, DP for short, is the hardest technique to learn because it is not a single algorithm but a way of designing one. The difficulty is not coding it. It is deciding what to store.</p>
+<p>Start with the picture. Count the routes across a grid from the top-left square to the bottom-right, moving only right or down. A recursive function can do it: the routes to a square are the routes to the square above plus the routes to the square on the left. But that function asks about the same squares over and over, from different directions, and its work explodes. The cure is almost embarrassingly simple: the first time you work out a square&rsquo;s answer, write it in a table, and never compute it twice.</p>
+<div class="sf" data-sf="dp">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Thirty squares filled once each, against hundreds of recursive calls for the same answer - and the gap grows explosively with the size of the grid. Block a few squares and run it again: the method does not change, which is the real strength of DP. It handles awkward variations that would wreck a formula.</p>
+<p><strong>When</strong>: the problem asks for an optimum or a count, and it has both:</p>
 <ol>
-<li><strong>Optimal substructure</strong>: the solution to the full problem can be assembled from solutions to subproblems.</li>
-<li><strong>Overlapping subproblems</strong>: the same subproblem is solved repeatedly in a naive recursive approach.</li>
+<li><strong>Optimal substructure</strong>: the answer to the full problem can be assembled from answers to smaller versions of the same problem.</li>
+<li><strong>Overlapping subproblems</strong>: those smaller versions repeat, so storing their answers saves work.</li>
 </ol>
-<p><strong>The four questions to design a DP</strong>:</p>
+<p><strong>The four questions to design a DP</strong>, with the grid as the running example:</p>
 <ol>
 <li>
-<p><strong>What is the state?</strong> What information do I need to uniquely describe a subproblem? The state must contain everything needed to compute the answer for that subproblem - and nothing more (excess state increases complexity exponentially).</p>
+<p><strong>What is the state?</strong> What information pins down one subproblem? For the grid: which square you are on. The state must contain everything needed to finish the job from there, and nothing more, because every extra piece of information multiplies the size of the table.</p>
 </li>
 <li>
-<p><strong>What is the base case?</strong> The smallest subproblem whose answer is known without recursion.</p>
+<p><strong>What is the base case?</strong> The smallest subproblem, whose answer you know without any work. For the grid: there is exactly one way to be at the start.</p>
 </li>
 <li>
-<p><strong>What is the transition?</strong> How do I compute the answer for state $s$ from smaller states? Express $dp[s]$ as a function of $dp[s']$ for states $s'$ that are &ldquo;before&rdquo; $s$ in some ordering.</p>
+<p><strong>What is the transition?</strong> How does the answer for one state follow from smaller states? For the grid: routes(square) = routes(above) + routes(left).</p>
 </li>
 <li>
-<p><strong>What is the answer?</strong> Which state or combination of states contains the final answer?</p>
+<p><strong>What is the answer?</strong> Which state holds the final result? For the grid: the bottom-right square.</p>
 </li>
 </ol>
-<p><strong>The canonical DP patterns</strong>:</p>
-<p><strong>0/1 Knapsack</strong>: $n$ items, each with weight $w_i$ and value $v_i$; capacity $W$. Choose items to maximize value without exceeding capacity.
-State: $dp[i][j]$ = max value using first $i$ items with remaining capacity $j$.
+<p><strong>The state is everything.</strong> The most common mistake is a state that is too small, so that two situations needing different answers share one table entry, or too large, so that the table does not fit in memory. Two tests: given only the state, can I compute the answer without knowing how I got here? If not, the state is missing something. Can I delete part of the state and still compute correctly? If yes, it is carrying dead weight.</p>
+<p><strong>Think about what changes.</strong> A DP builds its answer one decision at a time: include one more element, move to the next position, spend one more unit of some resource. The state records everything that matters about the decisions already made, and the transition describes one more decision.</p>
+<p><strong>DP versus greedy.</strong> A greedy knows the right choice at each step. A DP does not: it tries every choice and keeps the best. If you cannot prove that a greedy choice is always safe, use DP. It costs more time and memory, but it cannot be fooled by the coin example above, because it does consider $3 + 3$.</p>
+<p><strong>Memoization versus tabulation.</strong> Two ways to write the same thing. <em>Memoization</em> (top-down): write the recursive function and cache its results. <em>Tabulation</em> (bottom-up): fill a table in an order that guarantees every answer you need is already there, as the demo does. Memoization is easier to write and only touches the states you actually need. Tabulation avoids deep recursion, which matters because a recursion a million levels deep will crash.</p>
+<p><strong>The canonical DP patterns</strong>. Most DP problems are variations on one of these, so they are worth knowing by name.</p>
+<p><strong>0/1 Knapsack</strong>: $n$ items, each with weight $w_i$ and value $v_i$; a bag of capacity $W$. Choose items to maximize value without exceeding capacity.
+State: $dp[i][j]$ = best value using the first $i$ items with capacity $j$.
 Transition: either skip item $i$ ($dp[i-1][j]$) or take it ($dp[i-1][j - w_i] + v_i$, if $j \geq w_i$).
-Optimization: 1D array, iterate $j$ from $W$ down to $w_i$.</p>
-<p><strong>Unbounded Knapsack</strong>: same but you can take each item multiple times. Iterate $j$ upward instead of downward.</p>
-<p><strong>Longest Common Subsequence (LCS)</strong>: given strings $A$ and $B$, find the length of their LCS.
-State: $dp[i][j]$ = LCS length of $A[1..i]$ and $B[1..j]$.
-Transition: if $A[i] = B[j]$, then $dp[i][j] = dp[i-1][j-1] + 1$; else $\max(dp[i-1][j], dp[i][j-1])$.</p>
-<p><strong>Longest Increasing Subsequence (LIS)</strong>: $O(n^2)$ DP is straightforward. The $O(n \log n)$ version maintains a &ldquo;patience sorting&rdquo; array: for each element, binary search for where it fits, replacing the existing element. The array length at the end is the LIS length. (The array does not contain an actual LIS, just its length.)</p>
-<p><strong>Interval DP</strong>: problems on a range of elements where the solution for $[l, r]$ depends on solutions for sub-ranges.
-Classic example: matrix chain multiplication, optimal polygon triangulation, burst balloons.
-State: $dp[l][r]$ = answer for the subproblem on range $[l, r]$.
-Transition: try every split point $k$ in $[l, r]$: combine $dp[l][k]$ and $dp[k+1][r]$ somehow.
-Order: iterate by length (short ranges before long ones).</p>
-<p><strong>DP on trees</strong>: process subtrees bottom-up. $dp[u][s]$ = something about the subtree rooted at $u$ with state $s$.
-Classic: find the maximum independent set on a tree. $dp[u][0]$ = max independent set in $u$&rsquo;s subtree if $u$ is not selected; $dp[u][1]$ = if $u$ is selected (then none of its children can be).</p>
-<p><strong>Bitmask DP</strong>: when $n \leq 20$ and the state is a subset of elements.
-State: $dp[\text{mask}]$ = answer for having processed the subset represented by <code>mask</code>.
-Classic: Travelling Salesman Problem - $dp[\text{mask}][i]$ = minimum cost path visiting exactly the nodes in <code>mask</code> and ending at node $i$.</p>
-<p><strong>Digit DP</strong>: count numbers in $[L, R]$ satisfying some digit-level property.
-State: $dp[\text{position}][\text{tight}][\text{other relevant info}]$. <code>tight</code> is a boolean - are we still constrained to be $\leq$ the upper bound digit by digit? Standard pattern: build the number digit by digit from the most significant.</p>
-<p><strong>DP with transition optimization</strong>: when the naive transition is $O(n)$ and you need $O(\log n)$ or $O(1)$.</p>
+Optimization: a 1D array, iterating $j$ from $W$ down to $w_i$.</p>
+<p><strong>Unbounded Knapsack</strong>: the same, but each item can be taken any number of times. Iterate $j$ upward instead of downward.</p>
+<p><strong>Longest Common Subsequence (LCS)</strong>: given strings $A$ and $B$, find the length of the longest sequence of characters that appears in both, in order.
+State: $dp[i][j]$ = LCS length of the first $i$ characters of $A$ and the first $j$ of $B$.
+Transition: if $A[i] = B[j]$, then $dp[i][j] = dp[i-1][j-1] + 1$; otherwise $\max(dp[i-1][j], dp[i][j-1])$.</p>
+<p><strong>Longest Increasing Subsequence (LIS)</strong>: the $O(n^2)$ DP is straightforward: $dp[i]$ = longest increasing subsequence ending at position $i$. The $O(n \log n)$ version keeps an array where entry $k$ is the smallest value that can end an increasing subsequence of length $k + 1$; each new element binary-searches for its place and overwrites what is there. The array&rsquo;s final length is the answer. (The array is not itself an LIS, only its length is right.)</p>
+<p><strong>Interval DP</strong>: problems on a range of elements where the answer for $[l, r]$ depends on answers for smaller ranges inside it. Classic examples: matrix chain multiplication, optimal polygon triangulation, burst balloons.
+State: $dp[l][r]$ = answer for the range $[l, r]$.
+Transition: try every split point $k$ and combine $dp[l][k]$ with $dp[k+1][r]$.
+Order: by length, short ranges before long ones.</p>
+<p><strong>DP on trees</strong>: process subtrees from the leaves up. $dp[u][s]$ = something about the subtree under node $u$ in situation $s$.
+Classic: the largest set of nodes with no two adjacent. $dp[u][0]$ = best in $u$&rsquo;s subtree if $u$ is left out; $dp[u][1]$ = best if $u$ is taken, in which case none of its children can be.</p>
+<p><strong>Bitmask DP</strong>: when $n \leq 20$ and the state is &ldquo;which elements have been used&rdquo;. A set of up to 20 elements fits in one integer, one bit per element - that integer is the <em>mask</em>.
+State: $dp[\text{mask}]$ = answer after using exactly the elements in <code>mask</code>.
+Classic: Travelling Salesman - $dp[\text{mask}][i]$ = cheapest path that visits exactly the nodes in <code>mask</code> and ends at node $i$.</p>
+<p><strong>Digit DP</strong>: count the numbers in $[L, R]$ whose digits have some property.
+State: $dp[\text{pos}][\text{tight}][\text{extra}]$, where <code>extra</code> is whatever the property needs you to remember. <code>tight</code> is a yes/no flag: are the digits chosen so far still equal to the upper bound&rsquo;s digits, so the next digit is restricted? Build the number one digit at a time from the most significant.</p>
+<p><strong>DP with faster transitions</strong>: when the transition itself is a loop and that loop is the bottleneck.</p>
 <ul>
-<li>Monotone queue (deque) optimization: for transitions of the form $dp[i] = \min_{j \leq i - k} (dp[j] + \text{cost})$, if <code>cost</code> is linear in <code>j</code>, maintain a deque of useful states.</li>
-<li>Divide and conquer DP: when the optimal $j$ for $dp[i]$ is monotonically non-decreasing in $i$.</li>
-<li>Convex Hull Trick: when the transition looks like $dp[i] = \min_j (A[j] \cdot B[i] + C[j])$ - this is a family of linear functions in $B[i]$, and you want the minimum over all $j$. Maintain a convex hull of the lines; query in $O(\log n)$ or $O(1)$ if $B[i]$ is monotone.</li>
+<li>Monotone queue optimization: for transitions of the form $dp[i] = \min_{j \geq i - k} (dp[j]) + \text{cost}(i)$, a minimum over a sliding window of earlier states, kept in a deque.</li>
+<li>Divide and conquer DP: when the best $j$ for $dp[i]$ never moves backwards as $i$ grows.</li>
+<li>Convex Hull Trick: when the transition looks like $dp[i] = \min_j (A[j] \cdot B[i] + C[j])$. Each $j$ is a straight line in $B[i]$, and you want the lowest line at one point. Keep only the lines that are ever lowest; query in $O(\log n)$.</li>
 </ul>
+<p><a href="/posts/dynamic-programming/" target="_blank" rel="noopener noreferrer">Dynamic Programming - Never Solve the Same Problem Twice</a>
+ works through these properly.</p>
 <hr>
 <h3 id="monotone-stack">Monotone Stack</h3>
-<p><strong>When</strong>: &ldquo;next greater element,&rdquo; &ldquo;previous smaller element,&rdquo; &ldquo;largest rectangle in histogram,&rdquo; problems where you need to find, for each element, the nearest element to the left/right that is smaller/larger.</p>
-<p><strong>The core idea</strong>: maintain a stack of elements in monotonically increasing (or decreasing) order. When a new element arrives, pop elements from the stack that violate monotonicity - and as you pop, you have found the &ldquo;next smaller&rdquo; (or &ldquo;next greater&rdquo;) element for those popped elements.</p>
-<p>This is $O(n)$ total because each element is pushed and popped at most once.</p>
+<p><strong>The waste it removes</strong>: scanning to the right (or left) from every element to find the nearest bigger or smaller one.</p>
+<p><strong>The signal</strong>: &ldquo;next greater element&rdquo;, &ldquo;previous smaller element&rdquo;, &ldquo;largest rectangle in a histogram&rdquo;, or any problem where each element needs its nearest neighbour that is smaller or larger.</p>
+<p><strong>The core idea</strong>: read the elements left to right, keeping a stack of the ones still waiting for their answer. When a new element arrives that is bigger than the one on top of the stack, it <em>is</em> the answer for that one, so pop it, and keep popping while that stays true. Then the new element joins the wait. The elements on the stack are always in decreasing order - that is the &ldquo;monotone&rdquo; - because anything smaller than a later arrival has already been popped.</p>
+<div class="sf" data-sf="stack">This is an interactive demo. It needs JavaScript to run.</div>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">answer <span style="color:#f92672">=</span> [<span style="color:#66d9ef">None</span>] <span style="color:#f92672">*</span> n
+stack <span style="color:#f92672">=</span> []                              <span style="color:#75715e"># positions still waiting</span>
+<span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(n):
+    <span style="color:#66d9ef">while</span> stack <span style="color:#f92672">and</span> a[stack[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]] <span style="color:#f92672">&lt;</span> a[i]:
+        answer[stack<span style="color:#f92672">.</span>pop()] <span style="color:#f92672">=</span> a[i]
+    stack<span style="color:#f92672">.</span>append(i)
+</code></pre></div><p>There is a loop inside a loop, yet this is $O(n)$ in total, not $O(n^2)$: every element is pushed once and popped at most once, so the inner loop cannot run more than $n$ times across the whole run. Counting total work across all steps like this, instead of multiplying worst cases, is called <a href="/posts/amortized-analysis/" target="_blank" rel="noopener noreferrer">amortized analysis</a>
+. The sliding window was fast for the same reason.</p>
 <p><strong>Classic problems</strong>:</p>
 <ul>
-<li>Largest rectangle in histogram: for each bar, find the first bar to its left and right that is shorter. The rectangle extending left and right from bar $i$ has width determined by these bounds. Use monotone stack to find these bounds in $O(n)$.</li>
+<li>Largest rectangle in a histogram: for each bar, find the first shorter bar on each side. Those bounds give the widest rectangle of that bar&rsquo;s height.</li>
 <li>Stock span problem.</li>
 <li>Next greater element in a circular array.</li>
-<li>Sum of subarray minimums (classic application with contribution technique).</li>
+<li>Sum of subarray minimums: for each element, the nearest smaller on each side tells you how many subarrays it is the minimum of.</li>
 </ul>
 <hr>
 <h3 id="segment-trees-and-fenwick-trees">Segment Trees and Fenwick Trees</h3>
-<p><strong>When</strong>: you need to answer range queries (sum, min, max) and handle point or range updates, both efficiently.</p>
+<p><strong>The waste they remove</strong>: recomputing a range from scratch after one small change. Prefix sums answer range queries instantly, but one update forces rebuilding the whole prefix array. These structures make both the query and the update cheap.</p>
 <p><strong>Fenwick Tree (Binary Indexed Tree)</strong>:</p>
 <ul>
-<li>Supports: point update, prefix sum query.</li>
-<li>Complexity: $O(\log n)$ per update and query.</li>
-<li>Why it exists: simpler and smaller constant than a segment tree for prefix sum queries. The &ldquo;responsible range&rdquo; of each index is derived from its lowest set bit.</li>
-<li>Extend to range updates + point queries by using a difference array under the hood.</li>
-<li>Extend to range updates + range queries using two Fenwick trees (requires careful derivation).</li>
+<li>Supports: change one element; query the sum of a prefix.</li>
+<li>Complexity: $O(\log n)$ for each.</li>
+<li>Why it exists: far shorter to write than a segment tree, and faster in practice. Each index is responsible for a block of elements whose size is given by the lowest 1-bit of the index.</li>
+<li>Range updates with point queries: store a difference array inside it.</li>
+<li>Range updates with range queries: two Fenwick trees and a careful derivation.</li>
 </ul>
 <p><strong>Segment Tree</strong>:</p>
 <ul>
-<li>Supports: any associative operation on ranges, with point or range updates.</li>
+<li>Supports: any <strong>associative</strong> operation over a range - one where grouping does not matter, like sum, min, max, gcd - with point or range updates.</li>
 <li>Complexity: $O(\log n)$ per update and query.</li>
-<li>Lazy propagation: for range updates, instead of updating every element in a range (which would be $O(n)$ per update), mark the node as &ldquo;pending update&rdquo; and push the lazy tag down only when you need to go deeper. Makes range updates $O(\log n)$.</li>
-<li>When to use a segment tree over a Fenwick tree: when you need range updates, or when the operation is not a prefix sum (e.g., range minimum with updates).</li>
+<li>Lazy propagation: for an update that covers a whole range, do not touch every element. Leave a note on the node that covers the range (&ldquo;everything below me gets $+5$&quot;) and only push the note down when a later operation needs to look inside. Range updates become $O(\log n)$.</li>
+<li>Use a segment tree over a Fenwick tree when you need range updates, or an operation that cannot be undone by subtraction, such as range minimum with updates.</li>
 </ul>
 <p><strong>Sparse Table</strong>:</p>
 <ul>
-<li>Supports: range minimum/maximum queries in $O(1)$ after $O(n \log n)$ preprocessing.</li>
-<li>Works only for idempotent operations (min, max, gcd) - you cannot use it for sum.</li>
-<li>Suitable when there are no updates - the structure is static.</li>
+<li>Supports: range minimum or maximum in $O(1)$ after $O(n \log n)$ preparation.</li>
+<li>Only for <strong>idempotent</strong> operations - ones where counting an element twice changes nothing, like $\min(x, x) = x$. It answers a query with two overlapping blocks, which is fine for min and wrong for sum.</li>
+<li>Only when there are no updates.</li>
 </ul>
+<p>Ready-to-paste implementations of all three are in my <a href="/posts/cp-template/" target="_blank" rel="noopener noreferrer">C++ Competitive Programming Template</a>
+, and <a href="/posts/trees-and-heaps/" target="_blank" rel="noopener noreferrer">Trees &amp; Heaps</a>
+ covers the ideas underneath them.</p>
 <hr>
 <h3 id="string-algorithms">String Algorithms</h3>
 <p><strong>KMP (Knuth-Morris-Pratt)</strong>:</p>
 <ul>
-<li>Use when: finding all occurrences of pattern $P$ in text $T$ in $O(|T| + |P|)$.</li>
-<li>Core idea: precompute the &ldquo;failure function&rdquo; for $P$ - for each position $i$, the length of the longest proper prefix of $P[0..i]$ that is also a suffix. This lets you skip redundant comparisons when a mismatch occurs.</li>
-<li>Also useful for: finding the period of a string, building the Z-array.</li>
+<li>Use when: finding all occurrences of a pattern $P$ in a text $T$ in $O(|T| + |P|)$.</li>
+<li>Core idea: when a match fails partway, you already know the characters you just matched, so you never need to re-read them. Precompute, for each position in $P$, the length of the longest proper prefix of $P$ that is also a suffix ending there. On a mismatch, that number tells you how far the pattern can slide while keeping the part that still matches.</li>
+<li>Also useful for: finding the period of a string.</li>
 </ul>
 <p><strong>Z-algorithm</strong>:</p>
 <ul>
-<li>Computes $Z[i]$ = length of the longest substring starting at position $i$ that matches a prefix of the string. $O(n)$.</li>
-<li>Pattern matching: concatenate pattern + <code>#</code> + text. Positions in the text portion where $Z[i] = |P|$ are match positions.</li>
+<li>Computes $Z[i]$ = length of the longest substring starting at position $i$ that matches the start of the string. $O(n)$.</li>
+<li>Pattern matching: build pattern + <code>#</code> + text. Wherever $Z[i] = |P|$ in the text part, the pattern occurs.</li>
 </ul>
 <p><strong>Trie</strong>:</p>
 <ul>
-<li>Use when: prefix queries, autocomplete, XOR maximization (with binary trie), multi-pattern matching.</li>
-<li>A Trie stores strings as paths from root to leaf. Each node has up to 26 (or 2, for binary) children.</li>
-<li>XOR maximization: build a binary trie of all numbers. For a query number $q$, greedily try to go down the opposite bit at each level - this maximizes XOR.</li>
+<li>Use when: prefix queries, autocomplete, maximizing XOR (with a binary trie), matching many patterns.</li>
+<li>A tree where each edge is a character, so each path from the root spells a string. Words that share a prefix share a path.</li>
+<li>XOR maximization: store all numbers bit by bit in a binary trie. For a query number, walk down trying to take the opposite bit at every level.</li>
 </ul>
 <p><strong>Rolling Hash</strong>:</p>
 <ul>
-<li>Polynomial hash: $H(s) = \sum s[i] \cdot p^i \mod m$.</li>
-<li>After preprocessing, compare any two substrings in $O(1)$.</li>
-<li>Use when: checking if a substring matches a pattern, or in problems involving many substring comparisons.</li>
+<li>Polynomial hash: $H(s) = \sum s[i] \cdot p^i \bmod m$.</li>
+<li>After preparation, compare any two substrings in $O(1)$.</li>
+<li>Use when: a problem needs many substring comparisons.</li>
 </ul>
+<p><a href="/posts/string-algorithms-pattern-matching/" target="_blank" rel="noopener noreferrer">String Algorithms &amp; Pattern Matching</a>
+ has the details.</p>
 <hr>
 <h3 id="bit-manipulation">Bit Manipulation</h3>
-<p><strong>When</strong>: the problem involves subsets (bitmask DP), has small $n$ and you want to represent sets as integers, or arithmetic tricks are useful.</p>
+<p><strong>When</strong>: the problem is about subsets of a small set, or about XOR, AND, OR, or you want to store a set of up to 64 yes/no flags in one integer.</p>
 <p><strong>The essential operations</strong>:</p>
 <ul>
 <li>Check if bit $k$ is set: <code>(x &gt;&gt; k) &amp; 1</code></li>
 <li>Set bit $k$: <code>x | (1 &lt;&lt; k)</code></li>
 <li>Clear bit $k$: <code>x &amp; ~(1 &lt;&lt; k)</code></li>
-<li>Lowest set bit: <code>x &amp; (-x)</code> (two&rsquo;s complement trick)</li>
-<li>Count set bits: <code>__builtin_popcount(x)</code> in GCC</li>
+<li>Lowest set bit: <code>x &amp; (-x)</code></li>
+<li>Count set bits: <code>__builtin_popcount(x)</code> in GCC, <code>bin(x).count(&quot;1&quot;)</code> in Python</li>
 <li>Enumerate all subsets of a mask: <code>for (int sub = mask; sub &gt; 0; sub = (sub - 1) &amp; mask)</code></li>
 </ul>
-<p><strong>Sum over Subsets (SOS DP)</strong>: compute for every mask $m$, the sum of $f[\text{sub}]$ over all submasks <code>sub</code> of $m$. Naive: $O(3^n)$ (each element is in the mask, in the submask, or absent). SOS DP reduces this to $O(n \cdot 2^n)$:</p>
+<p><strong>The key fact about XOR, AND and OR</strong>: every bit position behaves independently of the others. A question about numbers can therefore be split into 30 or 60 separate questions about single bits, each of which is much easier. The last worked example below is built on this.</p>
+<p><strong>Sum over Subsets (SOS DP)</strong>: compute, for every mask $m$, the sum of $f[\text{sub}]$ over all submasks of $m$. Naive: $O(3^n)$. SOS DP reduces this to $O(n \cdot 2^n)$:</p>
 <pre tabindex="0"><code>for (int i = 0; i &lt; n; i++)
     for (int mask = 0; mask &lt; (1 &lt;&lt; n); mask++)
         if (mask &gt;&gt; i &amp; 1)
             dp[mask] += dp[mask ^ (1 &lt;&lt; i)];
 </code></pre><hr>
 <h3 id="divide-and-conquer">Divide and Conquer</h3>
-<p><strong>When</strong>: the problem can be split into independent subproblems of the same form, solved recursively, and combined.</p>
-<p><strong>The signal</strong>: &ldquo;closest pair of points,&rdquo; &ldquo;count inversions,&rdquo; &ldquo;maximum subarray sum&rdquo; (Kadane&rsquo;s is linear, but the divide-and-conquer version makes the pattern visible).</p>
-<p><strong>Key insight</strong>: the difficult part is usually the &ldquo;combine&rdquo; step - counting or optimizing contributions that cross the dividing boundary.</p>
-<p>Counting inversions: split array in half, count inversions entirely in the left, entirely in the right, and crossing the midpoint. Crossing inversions are counted in $O(n)$ during the merge step of merge sort. Total $O(n \log n)$.</p>
+<p><strong>When</strong>: the problem can be split into independent halves of the same form, solved separately, and combined.</p>
+<p><strong>The signal</strong>: &ldquo;closest pair of points&rdquo;, &ldquo;count inversions&rdquo;, &ldquo;maximum subarray sum&rdquo; (there is a simpler linear method for that one, but the divide-and-conquer version makes the pattern visible).</p>
+<p><strong>Key insight</strong>: the halves are easy. The work is in the &ldquo;combine&rdquo; step - handling whatever <em>crosses</em> the dividing line.</p>
+<p>Counting inversions (pairs that are in the wrong order): split the array in half. Count inversions entirely in the left, entirely in the right, and those with one element on each side. The crossing ones can be counted in $O(n)$ while merging the two sorted halves, exactly as merge sort does. Total $O(n \log n)$. See <a href="/posts/divide-and-conquer/" target="_blank" rel="noopener noreferrer">Divide &amp; Conquer</a>
+.</p>
 <hr>
 <h3 id="mathematical-techniques">Mathematical Techniques</h3>
-<p><strong>Modular arithmetic</strong>: almost every counting problem on Codeforces says &ldquo;output the answer modulo $10^9 + 7$.&rdquo; This is because the actual answer is astronomically large. Key operations: $(a + b) \mod m$, $(a \cdot b) \mod m$, $(a - b + m) \mod m$. Division modulo a prime $p$: use Fermat&rsquo;s little theorem: $a^{-1} \equiv a^{p-2} \pmod{p}$, computed via fast exponentiation.</p>
-<p><strong>Fast exponentiation</strong>: compute $a^b \mod m$ in $O(\log b)$ by repeated squaring. Represent $b$ in binary: $a^b = a^{b_0} \cdot (a^2)^{b_1} \cdot (a^4)^{b_2} \cdots$. Multiply only the powers where the corresponding bit is 1.</p>
-<p><strong>Combinatorics</strong>: precompute factorials and inverse factorials mod $p$ to compute $\binom{n}{k} \mod p$ in $O(1)$ per query. Pascal&rsquo;s identity: $\binom{n}{k} = \binom{n-1}{k-1} + \binom{n-1}{k}$ for small $n$.</p>
-<p><strong>Sieve of Eratosthenes</strong>: find all primes up to $N$ in $O(N \log \log N)$. Linear sieve: $O(N)$. Use the sieve to precompute smallest prime factors for $O(\log n)$ factorization.</p>
-<p><strong>GCD / LCM</strong>: $\gcd(a, b) = \gcd(b, a \mod b)$ (Euclidean algorithm). $\text{lcm}(a, b) = ab / \gcd(a, b)$. Compute gcd in $O(\log \min(a, b))$.</p>
-<p><strong>Matrix exponentiation</strong>: if a recurrence can be written as a matrix multiplication, $F(n) = M \cdot F(n-1)$, then $F(n) = M^n \cdot F(0)$, computable in $O(k^3 \log n)$ where $k$ is the matrix dimension. Use for Fibonacci-like recurrences where $n \leq 10^{18}$.</p>
-<p><strong>Inclusion-Exclusion</strong>: count elements satisfying at least one of several properties. $|A_1 \cup A_2 \cup \ldots| = \sum |A_i| - \sum |A_i \cap A_j| + \ldots$. Useful when direct counting is hard but counting intersections of constraints is manageable.</p>
+<p><strong>Modular arithmetic</strong>: counting problems say &ldquo;output the answer modulo $10^9 + 7$&rdquo; because the true count is too big to store. You can take the remainder after every addition and multiplication and the final remainder is still correct: $(a + b) \bmod m$, $(a \cdot b) \bmod m$, and $(a - b + m) \bmod m$ to keep a subtraction from going negative. Division is the exception: modulo a prime $p$, divide by $a$ by multiplying with $a^{p-2}$, a consequence of Fermat&rsquo;s little theorem. See <a href="/posts/modular-arithmetic/" target="_blank" rel="noopener noreferrer">Modular Arithmetic</a>
+.</p>
+<p><strong>Fast exponentiation</strong>: compute $a^b \bmod m$ in $O(\log b)$ by repeated squaring. Write $b$ in binary: $a^b = a^{b_0} \cdot (a^2)^{b_1} \cdot (a^4)^{b_2} \cdots$. Square as you go and multiply in only the powers whose bit is 1.</p>
+<p><strong>Combinatorics</strong>: precompute factorials and their modular inverses to get $\binom{n}{k} \bmod p$ in $O(1)$ per query. For small $n$, Pascal&rsquo;s identity is enough: $\binom{n}{k} = \binom{n-1}{k-1} + \binom{n-1}{k}$.</p>
+<p><strong>Sieve of Eratosthenes</strong>: find all primes up to $N$ in $O(N \log \log N)$ by crossing out multiples. Record the smallest prime factor of every number while you do it, and any number up to $N$ can then be factorized in $O(\log n)$.</p>
+<p><strong>GCD / LCM</strong>: $\gcd(a, b) = \gcd(b, a \bmod b)$, the Euclidean algorithm, in $O(\log \min(a, b))$. $\text{lcm}(a, b) = ab / \gcd(a, b)$.</p>
+<p><strong>Matrix exponentiation</strong>: if each term of a sequence is a fixed combination of the few before it, one step is a matrix multiplication, $F(n) = M \cdot F(n-1)$, so $F(n) = M^n \cdot F(0)$. Fast exponentiation on the matrix gives $O(k^3 \log n)$ for a $k \times k$ matrix. Use it for Fibonacci-like sequences when $n$ is as large as $10^{18}$.</p>
+<p><strong>Inclusion-Exclusion</strong>: to count things with at least one of several properties, add the single properties, subtract the pairs you double-counted, add back the triples, and so on. Useful when &ldquo;has all of these&rdquo; is easy to count and &ldquo;has at least one&rdquo; is not. See <a href="/posts/inclusion-exclusion-principle/" target="_blank" rel="noopener noreferrer">Inclusion-Exclusion</a>
+.</p>
 <hr>
 <h2 id="the-whenever-i-see-x-think-y-recognition-map">The &ldquo;Whenever I See X, Think Y&rdquo; Recognition Map</h2>
-<p>This is the most immediately practical section. It is a map built from patterns, not from derivations.</p>
+<p>This is the most immediately practical section. It is a map built from patterns, not from derivations. Use it after step 3, when you know what kind of question you have and want the short list of candidates.</p>
+<div class="sf" data-sf="mapfilter">This is an interactive filter. It needs JavaScript to run. The full table is below.</div>
 <table>
 <thead>
 <tr>
@@ -512,14 +704,14 @@ State: $dp[\text{position}][\text{tight}][\text{other relevant info}]$. <code>ti
 </tr>
 <tr>
 <td>&ldquo;Count subarrays with sum $= k$&rdquo;</td>
-<td>Prefix sums + hashmap</td>
+<td>Prefix sums + hash map</td>
 </tr>
 <tr>
 <td>&ldquo;Number of subarrays with property $P$&rdquo;</td>
-<td>Two pointers if $P$ is monotone; else prefix sum</td>
+<td>Two pointers if $P$ is monotone; else prefix sums</td>
 </tr>
 <tr>
-<td>&ldquo;Shortest path, no weights&rdquo;</td>
+<td>&ldquo;Shortest path, no weights&rdquo; or &ldquo;minimum number of moves&rdquo;</td>
 <td>BFS</td>
 </tr>
 <tr>
@@ -579,7 +771,7 @@ State: $dp[\text{position}][\text{tight}][\text{other relevant info}]$. <code>ti
 <td>DP or combinatorics</td>
 </tr>
 <tr>
-<td>&ldquo;Select $k$ items to maximize / minimize&rdquo;</td>
+<td>&ldquo;Pick items under a weight or budget limit, maximize value&rdquo;</td>
 <td>0/1 Knapsack DP</td>
 </tr>
 <tr>
@@ -588,7 +780,7 @@ State: $dp[\text{position}][\text{tight}][\text{other relevant info}]$. <code>ti
 </tr>
 <tr>
 <td>&ldquo;Longest increasing subsequence&rdquo;</td>
-<td>Patience sort, $O(n \log n)$</td>
+<td>Binary search version, $O(n \log n)$</td>
 </tr>
 <tr>
 <td>&ldquo;String matching: is $P$ in $T$?&rdquo;</td>
@@ -605,6 +797,10 @@ State: $dp[\text{position}][\text{tight}][\text{other relevant info}]$. <code>ti
 <tr>
 <td>&ldquo;XOR maximize / minimize over a set&rdquo;</td>
 <td>Binary Trie</td>
+</tr>
+<tr>
+<td>&ldquo;Sum of XOR / AND / OR over all pairs&rdquo;</td>
+<td>Count each bit separately</td>
 </tr>
 <tr>
 <td>&ldquo;Pattern matching, multiple patterns&rdquo;</td>
@@ -639,12 +835,16 @@ State: $dp[\text{position}][\text{tight}][\text{other relevant info}]$. <code>ti
 <td>DP or greedy depending on operations</td>
 </tr>
 <tr>
-<td>&ldquo;Graph problem that seems like search&rdquo;</td>
-<td>Model states as nodes, transitions as edges, BFS/DFS</td>
+<td>&ldquo;Repeatedly take the largest / smallest remaining&rdquo;</td>
+<td>Heap (priority queue)</td>
 </tr>
 <tr>
-<td>&ldquo;Permutation / arrangement, $n \leq 8$&rdquo;</td>
-<td>Bitmask DP</td>
+<td>&ldquo;Puzzle with positions and moves&rdquo;</td>
+<td>Model states as nodes, moves as edges, BFS/DFS</td>
+</tr>
+<tr>
+<td>&ldquo;Permutation / arrangement, $n \leq 10$&rdquo;</td>
+<td>Try every permutation</td>
 </tr>
 <tr>
 <td>&ldquo;Two arrays, find something about pairs&rdquo;</td>
@@ -652,154 +852,260 @@ State: $dp[\text{position}][\text{tight}][\text{other relevant info}]$. <code>ti
 </tr>
 <tr>
 <td>&ldquo;Queries offline&rdquo;</td>
-<td>Sort queries by some parameter (Mo&rsquo;s algorithm, offline BFS)</td>
+<td>Sort queries by some parameter (Mo&rsquo;s algorithm, sweep)</td>
 </tr>
 <tr>
 <td>&ldquo;Multiple test cases, shared structure&rdquo;</td>
-<td>Precompute; build offline; or preprocess in $O(n \log n)$ once</td>
+<td>Precompute once, answer each case fast</td>
 </tr>
 </tbody>
 </table>
 <hr>
 <h2 id="the-step-by-step-protocol-when-you-are-stuck">The Step-by-Step Protocol When You Are Stuck</h2>
 <p>This is what to do when you have read the problem and have no idea where to start - or when your first idea is not working.</p>
-<p><strong>Step 1 - Solve a tiny version</strong>. If $n \leq 100$ in the real problem, what if $n = 3$? Solve it by hand. Enumerate all possible answers. Understand the structure of the solution for a small case before worrying about efficiency.</p>
-<p><strong>Step 2 - Identify what changes between cases</strong>. In your small-case solutions, what information do you need to carry from one step to the next? This is the DP state, or the invariant maintained by a greedy, or the graph structure.</p>
-<p><strong>Step 3 - Think about what order to process elements</strong>. Many problems become solvable when elements are processed in the right order: sorted by value, sorted by deadline, in BFS level order, in topological order. Ask: &ldquo;if I knew the right order, what would I do?&rdquo;</p>
-<p><strong>Step 4 - Think about what to ignore</strong>. Many hard-seeming problems have a property that lets you eliminate candidates. &ldquo;The optimal answer always uses the largest element&rdquo; is one example. If you can argue that some subset of options is never optimal, you have simplified the problem.</p>
-<p><strong>Step 5 - Reformulate</strong>. Restate the problem in terms of a graph, or in terms of an array operation, or as a linear program. Sometimes the right reformulation immediately reveals the algorithm. &ldquo;Finding the maximum number of non-overlapping intervals&rdquo; sounds like a combinatorial problem until you realize it is exactly the interval scheduling problem with a known greedy solution.</p>
-<p><strong>Step 6 - Think about the complement</strong>. Instead of &ldquo;count things that satisfy $P$&rdquo;, try &ldquo;total things minus things that don&rsquo;t satisfy $P$.&rdquo; Instead of &ldquo;can I reach $t$?&rdquo;, try &ldquo;which nodes cannot reach $t$?&rdquo; Duality and complementation unlock many problems.</p>
-<p><strong>Step 7 - Try the simplest algorithm that could possibly work</strong>. If the constraint allows $O(n^2)$ and you have an $O(n^2)$ idea that is correct, implement it. Do not prematurely optimize. The time penalty for submitting a correct $O(n^2)$ solution that times out is smaller than the time penalty for getting the wrong answer with an incorrectly-optimized solution.</p>
-<p><strong>Step 8 - If correct but slow, think about what is redundant</strong>. Which part of your $O(n^2)$ or $O(n^3)$ solution is doing repeated work? Can that repeated work be precomputed, stored in a data structure, or eliminated with a smarter ordering?</p>
+<p><strong>1. Solve a tiny version.</strong> If $n \leq 100$ in the real problem, what if $n = 3$? Solve it by hand. Enumerate all possible answers. Understand the structure of the solution for a small case before worrying about efficiency.</p>
+<p><strong>2. Identify what changes between cases.</strong> In your small-case solutions, what information did you need to carry from one step to the next? That is the DP state, or the thing a greedy keeps track of, or the node of a graph.</p>
+<p><strong>3. Think about what order to process elements.</strong> Many problems become solvable when elements are processed in the right order: sorted by value, sorted by deadline, in BFS wave order, in topological order. Ask: &ldquo;if I knew the right order, what would I do?&rdquo; Sorting costs $O(n \log n)$ and is almost always affordable, so &ldquo;what if it were sorted?&rdquo; is one of the cheapest questions you can ask.</p>
+<p><strong>4. Think about what to ignore.</strong> Many hard-seeming problems have a property that lets you eliminate candidates. &ldquo;The optimal answer always uses the largest element&rdquo; is one example. If you can argue that some subset of options is never optimal, you have simplified the problem.</p>
+<p><strong>5. Reformulate.</strong> Restate the problem in terms of a graph, or an array operation, or a set of intervals. Sometimes the right restatement immediately reveals the algorithm. &ldquo;Finding the maximum number of non-overlapping bookings&rdquo; sounds like its own problem until you realize it is exactly interval scheduling, with a known greedy solution.</p>
+<p><strong>6. Think about the complement.</strong> Instead of &ldquo;count things that satisfy $P$&rdquo;, try &ldquo;total things minus things that do not satisfy $P$&rdquo;. Instead of &ldquo;can I reach $t$?&rdquo;, try &ldquo;which nodes cannot reach $t$?&rdquo; Flipping the question unlocks many problems.</p>
+<p><strong>7. Try the simplest algorithm that could possibly work.</strong> If the constraint allows $O(n^2)$ and you have a correct $O(n^2)$ idea, implement it. Do not optimize what the budget does not require you to optimize. Every extra piece of cleverness is another place for a bug.</p>
+<p><strong>8. If correct but slow, go back to the waste.</strong> Which part of your $O(n^2)$ or $O(n^3)$ solution is doing repeated work? Can that work be precomputed, stored in a data structure, or eliminated with a smarter ordering? This is the table in step 5 of the method, applied to your own code.</p>
 <hr>
-<h2 id="dynamic-programming-the-harder-path-through-the-design">Dynamic Programming: The Harder Path Through the Design</h2>
-<p>DP deserves its own section because the recognition problem is harder than for any other technique. There is no single &ldquo;DP signal&rdquo; - it is the answer when greedy fails, when brute force is too slow, and when the problem asks for an optimum or count with a recursive structure.</p>
-<p><strong>The state is everything</strong>. The most common mistake is a state that is either too small (doesn&rsquo;t capture necessary information, leading to wrong transitions) or too large (exponential state space). Ask: given this state, can I compute the answer uniquely? If not, the state is incomplete. Can I remove any component of the state and still compute correctly? If yes, the state is too large.</p>
-<p><strong>Think about what changes</strong>. In a DP, you are building up an answer incrementally. At each step, something changes: you include one more element, you move to the next position, you use one more unit of some resource. The state tracks everything that matters about what you have processed so far, and the transition encodes what happens at this step.</p>
-<p><strong>DP versus greedy</strong>. A greedy always knows the right local choice. A DP does not - it tries all choices and keeps the best. If you cannot prove that a local choice is always safe, try DP. The DP will subsume the greedy: if there is a greedy solution, the DP will also find it.</p>
-<p><strong>Proving correctness of a DP</strong>. The DP is correct if the optimal solution to the full problem can always be assembled from optimal solutions to subproblems. This is optimal substructure. Verify it: suppose the full optimal solution uses a particular solution to a subproblem. Can you replace that subproblem solution with a worse one and still get the full optimal? If yes, the subproblem solution must also be optimal - optimal substructure holds.</p>
-<p><strong>Memoization versus tabulation</strong>. Memoization (top-down): write the recursive function, cache results. Tabulation (bottom-up): fill a table in the right order. Both compute the same thing. Use memoization when: the dependency structure is complex or sparse (you do not need all subproblems). Use tabulation when: the dependency structure is clear and dense, or when stack overflow is a concern (deep recursion with $n = 10^6$ will overflow).</p>
+<h2 id="step-6---attack-it-before-you-trust-it">Step 6 - Attack It Before You Trust It</h2>
+<p>The last step of the method. An idea that feels right and an idea that is right look identical from the inside. Before writing real code, spend two minutes trying to destroy your own solution.</p>
+<p><strong>Hunt for a counterexample.</strong> Take the smallest inputs you can imagine and run your idea on them by hand, deliberately choosing awkward ones. The coin set 1, 3, 4 that breaks greedy change-making is three numbers long. Most wrong ideas die on inputs of size 2 to 5.</p>
+<p><strong>Walk the edge cases.</strong> $n = 1$. All elements equal. Already sorted, and sorted backwards. The smallest and largest allowed values. Zeros and negative numbers, if they are allowed. An answer of zero. An answer so large it does not fit in 32 bits.</p>
+<p><strong>Stress test.</strong> This is the most powerful debugging tool in competitive programming and it takes five minutes. Keep the brute force from step 4. Generate thousands of tiny random inputs, run both solutions, and stop at the first disagreement:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> random
+
+<span style="color:#66d9ef">while</span> <span style="color:#66d9ef">True</span>:
+    a <span style="color:#f92672">=</span> [random<span style="color:#f92672">.</span>randint(<span style="color:#f92672">-</span><span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">5</span>) <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">8</span>))]
+    k <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#f92672">-</span><span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">5</span>)
+    <span style="color:#66d9ef">if</span> fast(a, k) <span style="color:#f92672">!=</span> brute(a, k):
+        print(a, k)
+        <span style="color:#66d9ef">break</span>
+</code></pre></div><p>Keep the inputs tiny on purpose. A failing case with six numbers can be traced by hand; one with a thousand cannot. Every solution in the worked examples below was checked this way.</p>
 <hr>
 <h2 id="debugging">Debugging</h2>
-<p>A solution that produces wrong answers is not a failed attempt - it is an experiment. Debugging is diagnosis.</p>
+<p>A solution that produces wrong answers is not a failed attempt - it is an experiment. Debugging is diagnosis, and the judge&rsquo;s verdict tells you where to look.</p>
 <p><strong>Wrong Answer (WA)</strong>:</p>
 <ul>
 <li>Re-read the problem statement. Is the output format exactly right? (Off-by-one on indexing, missing newline, extra space.)</li>
-<li>Check edge cases: $n = 1$, all elements equal, all elements distinct, the minimum possible value, the maximum possible value, an empty set.</li>
-<li>If the problem involves modular arithmetic, check that you never have negative values before taking modulo (use <code>((x % mod) + mod) % mod</code>).</li>
-<li>Check for integer overflow. If values can reach $10^9$ and you multiply two of them, the product is $10^{18}$, which overflows a 32-bit integer. Use 64-bit integers throughout.</li>
-<li>Generate random small inputs and compare your output with a brute-force solution. This is called a stress test and catches bugs that adversarial examples miss.</li>
+<li>Check the edge cases listed above.</li>
+<li>If the problem involves modular arithmetic, check that nothing goes negative before taking the remainder (use <code>((x % mod) + mod) % mod</code>).</li>
+<li>Check for integer overflow. If values can reach $10^9$ and you multiply two of them, the product is $10^{18}$, which does not fit in a 32-bit integer. In C++ use 64-bit integers whenever in doubt.</li>
+<li>Stress test against the brute force.</li>
 </ul>
 <p><strong>Time Limit Exceeded (TLE)</strong>:</p>
 <ul>
-<li>Count your operations exactly. Is your solution actually within the complexity bound?</li>
-<li>Are there hidden $O(n)$ operations inside a loop? (e.g., <code>string</code> concatenation inside a loop is $O(n^2)$; <code>vector</code> membership test inside a loop is $O(n)$ per test.)</li>
-<li>Are you repeatedly recomputing something you could precompute?</li>
-<li>Is there a faster algorithm? Check whether the constraints suggest a lower complexity bound.</li>
-<li>Consider constant factor optimizations only after ruling out algorithmic improvements: use arrays instead of maps where possible; avoid unnecessary memory allocation inside loops.</li>
+<li>Count your operations exactly. Is your solution actually within the budget?</li>
+<li>Are there hidden loops inside a loop? Building a string by repeated concatenation is $O(n^2)$; testing whether a value is in a list is $O(n)$ per test.</li>
+<li>Are you recomputing something you could compute once?</li>
+<li>Is there a faster algorithm? Check what complexity the constraints point at.</li>
+<li>Tune constant factors only after ruling out algorithmic improvements: arrays instead of maps where possible, no memory allocation inside hot loops, fast input reading.</li>
 </ul>
 <p><strong>Memory Limit Exceeded (MLE)</strong>:</p>
 <ul>
-<li>Calculate the memory your data structures use. An $n \times n$ integer array with $n = 10^4$ uses $4 \times 10^8$ bytes - 400MB.</li>
-<li>Can you reduce DP table dimensions? Many 2D DPs only depend on the previous row and can be reduced to 1D.</li>
-<li>Are you storing the entire path when you only need the path length?</li>
+<li>Calculate what your data structures use. An $n \times n$ integer array with $n = 10^4$ is 400MB.</li>
+<li>Can you shrink the DP table? Many 2D DPs only read the previous row and can keep just two rows, or one.</li>
+<li>Are you storing a whole path when you only need its length?</li>
 </ul>
 <p><strong>Runtime Error (RE)</strong>:</p>
 <ul>
-<li>Array out of bounds: the most common cause. Check your index bounds, especially in DP tables where you access <code>dp[i-1]</code> without verifying $i &gt; 0$.</li>
-<li>Stack overflow: recursion too deep for large $n$. Convert to iterative.</li>
-<li>Integer division by zero.</li>
-<li>Accessing a null or uninitialized pointer.</li>
+<li>Array index out of bounds: the most common cause. Check the boundaries, especially <code>dp[i-1]</code> when $i$ can be 0.</li>
+<li>Stack overflow: recursion too deep for large $n$. Convert to a loop.</li>
+<li>Division by zero.</li>
+<li>Using something that was never initialized.</li>
 </ul>
 <hr>
-<h2 id="the-framework-in-action-one-problem-per-level">The Framework in Action: One Problem Per Level</h2>
-<p>Words about a framework are cheap. The test is whether it actually collapses the solution space in practice. What follows is one representative problem from each Codeforces difficulty tier, walked through exactly the way the framework prescribes - from reading constraints to arriving at the implementation, with no hindsight.</p>
+<h2 id="the-framework-in-action-eight-problems-one-method">The Framework in Action: Eight Problems, One Method</h2>
+<p>Words about a framework are cheap. The test is whether it actually collapses the solution space in practice. What follows is eight real problems, each walked through the same six steps, each leaning on a different tool. The ratings are Codeforces&rsquo;s own, on a scale where 800 is the easiest problem in a contest.</p>
+<p>Try each one for a few minutes before reading the walkthrough. The walkthrough is worth far more once you have your own attempt to compare it with.</p>
 <hr>
-<h3 id="level-a-800---watermelon-cf-4ahttpscodeforcescomproblemsetproblem4a">Level A (~800) - <a href="https://codeforces.com/problemset/problem/4/A" target="_blank" rel="noopener noreferrer">Watermelon (CF 4A)</a>
-</h3>
-<p><strong>The problem</strong>: Given an integer $n$ (the weight of a watermelon), decide whether it can be split into two parts that are both even and both positive. Print YES or NO.</p>
-<p><strong>Read the constraints</strong>: $1 \leq n \leq 100$.</p>
-<p>$n \leq 100$ means $O(n)$ or even $O(n^2)$ is fine - but this is a decision problem with no structure to iterate over. This should be $O(1)$.</p>
-<p><strong>Categorize</strong>: decision problem. &ldquo;Is it possible?&rdquo;</p>
-<p><strong>Think</strong>: two even positive integers sum to what? An even number that is at least $2 + 2 = 4$. So the answer is YES iff $n$ is even AND $n \geq 4$.</p>
-<p>Is $n = 2$ impossible? Yes: the only split is $0 + 2$, but $0$ is not positive. Is $n = 4$ possible? $2 + 2$, yes.</p>
-<p><strong>Answer</strong>: <code>n % 2 == 0 &amp;&amp; n &gt;= 4</code>.</p>
-<p><strong>What the framework did</strong>: constraints ($n \leq 100$, decision problem) immediately told us the answer is $O(1)$ math. Categorizing as &ldquo;decision&rdquo; pointed at checking a condition rather than optimizing one. The &ldquo;tiny case&rdquo; analysis (what are the possible even splits?) took 30 seconds.</p>
+<h3 id="problem-1-watermelon">Problem 1 - <a href="https://codeforces.com/problemset/problem/4/A" target="_blank" rel="noopener noreferrer">Watermelon (CF 4A)</a>, rated 800</h3>
+<p><strong>The problem</strong>: a watermelon weighs $w$ kilos. Can it be cut into two parts that each weigh an even, positive number of kilos? Print YES or NO.</p>
+<p><strong>Understand</strong>: is $w$ a sum of two positive even numbers?</p>
+<p><strong>Budget</strong>: $1 \leq w \leq 100$. Anything fits.</p>
+<p><strong>Name it</strong>: decision. Decision problems usually come down to finding the condition, not searching.</p>
+<p><strong>Brute force</strong>: try every split $1 + (w-1)$, $2 + (w-2)$, and so on, checking whether both parts are even. At most 99 splits. With this budget, that is already a complete, acceptable solution - and it is worth noticing that, because many people spend ten minutes hunting for a formula they did not need.</p>
+<p><strong>The idea</strong>: still, tiny cases make the formula obvious. Two even numbers add up to an even number, and the smallest pair is $2 + 2 = 4$. Any even $w \geq 4$ splits as $2 + (w - 2)$. So the answer is YES exactly when $w$ is even and at least 4.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">watermelon</span>(w):
+    <span style="color:#66d9ef">return</span> w <span style="color:#f92672">%</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">and</span> w <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">4</span>
+</code></pre></div><p><strong>Attack</strong>: the edge case is $w = 2$. It is even, but the only split is $1 + 1$. The <code>w &gt;= 4</code> handles it, and forgetting it is the one way people get this problem wrong.</p>
 <hr>
-<h3 id="level-b-1300---taxi-cf-158bhttpscodeforcescomproblemsetproblem158b">Level B (~1300) - <a href="https://codeforces.com/problemset/problem/158/B" target="_blank" rel="noopener noreferrer">Taxi (CF 158B)</a>
-</h3>
-<p><strong>The problem</strong>: $n$ groups of people want taxis. Each group has size $s_i \in {1, 2, 3, 4}$. A taxi holds exactly 4 people. Groups cannot be split across taxis. Find the minimum number of taxis.</p>
-<p><strong>Read the constraints</strong>: $1 \leq n \leq 10^5$, $1 \leq s_i \leq 4$.</p>
-<p>$n \leq 10^5$ and $s_i \leq 4$ - very small value range. Count the frequency of each size. This should be $O(n)$.</p>
-<p><strong>Categorize</strong>: optimization (minimize number of taxis). The small domain of $s_i$ suggests we can handle each size class independently. This is greedy territory.</p>
-<p><strong>Think</strong>: groups of 4 fill a taxi exactly - they go alone. Groups of 3 go alone but leave one empty seat. The best thing to put in that seat is a group of 1. Groups of 2 pair together perfectly (two groups of 2 per taxi). Groups of 1 fill remaining space.</p>
-<p>Work through the logic: let $c_1, c_2, c_3, c_4$ be the counts.</p>
+<h3 id="problem-2-taxi">Problem 2 - <a href="https://codeforces.com/problemset/problem/158/B" target="_blank" rel="noopener noreferrer">Taxi (CF 158B)</a>, rated 1100</h3>
+<p><strong>The problem</strong>: $n$ groups of friends want taxis. Group $i$ has $s_i$ people, between 1 and 4. A taxi carries at most 4 people, a group must stay together, and several groups may share. Find the minimum number of taxis.</p>
+<p><strong>Understand</strong>: pack numbers between 1 and 4 into the fewest bins of capacity 4.</p>
+<p><strong>Budget</strong>: $n \leq 10^5$, so about $O(n \log n)$ at most. The values are tiny, though - only four possible sizes - and a tiny range of values is always a hint: count how many there are of each, and reason about four counts instead of $10^5$ groups.</p>
+<p><strong>Name it</strong>: optimization, &ldquo;minimum&rdquo;. Candidates: greedy, DP, binary search.</p>
+<p><strong>Brute force and its waste</strong>: try every way of assigning groups to taxis. Hopeless, but thinking about it shows that most assignments are obviously bad - nobody would leave a seat empty that a waiting group could fill. Choices that are provably never better is the signature of greedy.</p>
+<p><strong>The idea</strong>: go through the sizes from most constrained to least.</p>
 <ul>
-<li>$c_4$ taxis used for groups of 4.</li>
-<li>$c_3$ taxis used for groups of 3; each has one leftover seat, so we can fit $\min(c_1, c_3)$ groups of 1 in them. Remaining ones: $c_1' = c_1 - \min(c_1, c_3)$.</li>
-<li>Groups of 2: pairs fill a taxi. $\lfloor c_2 / 2 \rfloor$ taxis. If $c_2$ is odd, one taxi has two empty seats which can fit up to two groups of 1. Remaining ones: $c_1'' = \max(0,; c_1' - 2 \cdot (c_2 % 2))$.</li>
-<li>Remaining groups of 1: $\lceil c_1'' / 4 \rceil$ taxis.</li>
+<li>A group of 4 fills a taxi. No choice to make.</li>
+<li>A group of 3 leaves one seat, and the only thing that fits is a group of 1. Pairing a 3 with a 1 can never hurt: that seat is useless for anything else.</li>
+<li>Groups of 2 pair with each other. If one is left over, its taxi has room for up to two groups of 1.</li>
+<li>Whatever 1s remain ride four to a taxi.</li>
 </ul>
-<p>Total = $c_4 + c_3 + \lfloor c_2 / 2 \rfloor + (c_2 % 2) + \lceil c_1'' / 4 \rceil$.</p>
-<p><strong>What the framework did</strong>: &ldquo;minimize with tiny value domain&rdquo; → greedy by matching. The thought &ldquo;groups of 3 have one leftover seat; best fill it with size 1&rdquo; is the exchange argument in one sentence. No code was written until the logic was complete.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">taxis</span>(groups):
+    c <span style="color:#f92672">=</span> [<span style="color:#ae81ff">0</span>] <span style="color:#f92672">*</span> <span style="color:#ae81ff">5</span>
+    <span style="color:#66d9ef">for</span> s <span style="color:#f92672">in</span> groups:
+        c[s] <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+    cars <span style="color:#f92672">=</span> c[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">+</span> c[<span style="color:#ae81ff">3</span>] <span style="color:#f92672">+</span> c[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">//</span> <span style="color:#ae81ff">2</span>
+    ones <span style="color:#f92672">=</span> max(<span style="color:#ae81ff">0</span>, c[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">-</span> c[<span style="color:#ae81ff">3</span>])          <span style="color:#75715e"># ones left after riding with the threes</span>
+    <span style="color:#66d9ef">if</span> c[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">%</span> <span style="color:#ae81ff">2</span>:                        <span style="color:#75715e"># one group of two left over</span>
+        cars <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+        ones <span style="color:#f92672">=</span> max(<span style="color:#ae81ff">0</span>, ones <span style="color:#f92672">-</span> <span style="color:#ae81ff">2</span>)         <span style="color:#75715e"># it has two free seats</span>
+    cars <span style="color:#f92672">+=</span> (ones <span style="color:#f92672">+</span> <span style="color:#ae81ff">3</span>) <span style="color:#f92672">//</span> <span style="color:#ae81ff">4</span>             <span style="color:#75715e"># round up</span>
+    <span style="color:#66d9ef">return</span> cars
+</code></pre></div><p><strong>Attack</strong>: &ldquo;a 3 should take a 1 because nothing else fits in that seat&rdquo; is an exchange argument in one sentence. Compared against a brute force that tries every packing, on thousands of random inputs of up to nine groups, it never disagrees.</p>
 <hr>
-<h3 id="level-c-1700---counting-subarrays-prefix-sums-pattern">Level C (~1700) - Counting Subarrays (prefix sums pattern)</h3>
-<p><strong>The problem</strong>: given an array of $n$ integers and a target sum $k$, count the number of contiguous subarrays whose sum equals exactly $k$. (<a href="https://codeforces.com/problemset/problem/560/E" target="_blank" rel="noopener noreferrer">CF 560E</a>
- / <a href="https://leetcode.com/problems/subarray-sum-equals-k/" target="_blank" rel="noopener noreferrer">Leetcode 560</a>
- - this exact pattern appears at C level on Codeforces repeatedly.)</p>
-<p><strong>Read the constraints</strong>: $n \leq 10^5$, values can be negative or zero, $k$ can be any integer.</p>
-<p>$n \leq 10^5$ → $O(n \log n)$ or $O(n)$. Brute force ($O(n^2)$) is marginal at best and likely TLE.</p>
-<p><strong>Categorize</strong>: counting. &ldquo;How many subarrays&hellip;&rdquo;</p>
-<p><strong>Look at the recognition table</strong>: &ldquo;Count subarrays with sum $= k$&rdquo; → prefix sums + hashmap. This is a direct match.</p>
-<p><strong>Think through it</strong>: the sum of subarray $[l, r]$ equals $P[r+1] - P[l]$ where $P$ is the prefix sum array. We want $P[r+1] - P[l] = k$, i.e., $P[l] = P[r+1] - k$. For each position $r$, how many previous positions $l$ had prefix sum equal to $P[r+1] - k$? Maintain a hashmap of prefix sum frequencies as you scan left to right. Initialize with ${0: 1}$ (the empty prefix).</p>
-<pre tabindex="0"><code>count = 0, prefix = 0, freq = {0: 1}
-for each element x:
-    prefix += x
-    count += freq[prefix - k]
-    freq[prefix] += 1
-return count
-</code></pre><p>$O(n)$ time, $O(n)$ space.</p>
-<p><strong>What the framework did</strong>: constraints → $O(n)$ needed. Category → counting. Pattern table → prefix sums + hashmap as a direct lookup. Implementation followed immediately from the pattern.</p>
+<h3 id="problem-3-subarray-sum-equals-k">Problem 3 - <a href="https://leetcode.com/problems/subarray-sum-equals-k/" target="_blank" rel="noopener noreferrer">Subarray Sum Equals K (LeetCode 560)</a>, medium</h3>
+<p><strong>The problem</strong>: given $n$ integers, which may be negative, and a target $k$, count the subarrays whose sum is exactly $k$. Take $n$ up to $10^5$.</p>
+<p><strong>Understand</strong>: count pairs (start, end) such that the run between them adds up to $k$.</p>
+<p><strong>Budget</strong>: $n \leq 10^5$ points at $O(n \log n)$ or $O(n)$.</p>
+<p><strong>Name it</strong>: counting.</p>
+<p><strong>Brute force and its waste</strong>: for every start and every end, add up the run: $O(n^3)$. The first waste is re-adding the same stretch, and the cure for that is prefix sums: with $P$ precomputed, a run&rsquo;s sum is $P[\text{end}] - P[\text{start}]$. Now it is $O(n^2)$, which is $10^{10}$ - still too slow. The second waste: for each end, the code scans every start asking &ldquo;is $P[\text{start}]$ equal to $P[\text{end}] - k$?&rdquo;. Scanning a list for a specific value is what a hash map removes.</p>
+<p>A sliding window is tempting here and wrong: negative numbers break its promise.</p>
+<p><strong>The idea</strong>: walk left to right, keep a map from each prefix total to how many times it has occurred, and at each position ask the map how many earlier totals equal the current total minus $k$. This is exactly the prefix-sum demo in the toolkit.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> defaultdict
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">count_subarrays</span>(a, k):
+    seen <span style="color:#f92672">=</span> defaultdict(int)
+    seen[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>                         <span style="color:#75715e"># the empty prefix</span>
+    prefix <span style="color:#f92672">=</span> count <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> a:
+        prefix <span style="color:#f92672">+=</span> x
+        count <span style="color:#f92672">+=</span> seen[prefix <span style="color:#f92672">-</span> k]
+        seen[prefix] <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+    <span style="color:#66d9ef">return</span> count
+</code></pre></div><p><strong>Attack</strong>: the line people forget is <code>seen[0] = 1</code>. Without it, runs that start at the very first element are never counted. The test $a = [7]$, $k = 7$ catches it immediately.</p>
 <hr>
-<h3 id="level-d-2100---constructing-the-array-cf-1353dhttpscodeforcescomproblemsetproblem1353d">Level D (~2100) - <a href="https://codeforces.com/problemset/problem/1353/D" target="_blank" rel="noopener noreferrer">Constructing the Array (CF 1353D)</a>
-</h3>
-<p><strong>The problem</strong>: you have an array of $n$ zeros. At each step, find the subarray with the maximum length; if there are ties, pick the one with the smaller left index. Split it in half (left half if odd length). After $n - 1$ steps, read the values in the array. (Paraphrased from CF 1353D; the actual problem asks you to simulate this efficiently.)</p>
-<p><strong>Read the constraints</strong>: $n \leq 2 \times 10^5$ and up to $n - 1$ steps → brute force simulation is $O(n^2)$. Need $O(n \log n)$.</p>
-<p><strong>Categorize</strong>: simulation/construction. The question is: how do we efficiently maintain the &ldquo;largest subarray&rdquo; across many splits?</p>
-<p><strong>Think</strong>: each &ldquo;subarray&rdquo; is defined by its left and right endpoints. After a split, one subarray becomes two. The operation is: repeatedly extract the maximum subarray, split it, insert two new ones. This is a priority queue problem.</p>
-<p>What goes in the priority queue? Each subarray, with a key that reflects the tiebreaking rule: first maximize length, then minimize left endpoint. A pair <code>(-length, left)</code> as the priority key achieves this with a min-heap (negate length to simulate max-heap behavior on length).</p>
-<p>Each step: pop the max subarray $(l, r)$. If length 1, this position gets assigned the current fill value. Otherwise split: left half is $[l, \text{mid}]$, right half is $[\text{mid}+1, r]$ where $\text{mid} = (l + r - 1) / 2$ (left-biased midpoint). Push both back into the heap.</p>
-<p>$n - 1$ steps, each $O(\log n)$: total $O(n \log n)$.</p>
-<p><strong>What the framework did</strong>: $n \leq 2 \times 10^5$ → $O(n \log n)$. &ldquo;Extract maximum repeatedly&rdquo; is the smell of a heap. Tiebreaking by a second criterion → encode both criteria in the heap key. The implementation is mechanical once the data structure is identified.</p>
+<h3 id="problem-4-maximum-median">Problem 4 - <a href="https://codeforces.com/problemset/problem/1201/C" target="_blank" rel="noopener noreferrer">Maximum Median (CF 1201C)</a>, rated 1400</h3>
+<p><strong>The problem</strong>: an array of $n$ integers, $n$ odd. One operation adds 1 to any element. With at most $k$ operations, make the median - the middle element once sorted - as large as possible.</p>
+<p><strong>Understand</strong>: spend up to $k$ increments to push the middle of the sorted array as high as it will go.</p>
+<p><strong>Budget</strong>: $n \leq 2 \times 10^5$, and both $k$ and the values go up to $10^9$. So about $O(n \log n)$, and nothing may loop over $k$ itself.</p>
+<p><strong>Name it</strong>: optimization, &ldquo;maximum&rdquo;. And it has the smell described in step 3: finding the best median directly is awkward, but <em>checking</em> whether a given median is reachable is easy.</p>
+<p><strong>Brute force and its waste</strong>: try targets $x = 1, 2, 3, \ldots$ and check each. To make the median at least $x$, the upper half of the sorted array, from the median up, must all be at least $x$. The cheapest way is to raise exactly those elements, and only the ones below $x$: the cost is the sum of $\max(0, x - a_i)$ over the upper half. Compare with $k$. That check is $O(n)$, but there are up to $10^9$ targets. The waste: testing targets one at a time, when &ldquo;reachable&rdquo; flips from yes to no exactly once - if $x$ is affordable, so is $x - 1$.</p>
+<p><strong>The idea</strong>: binary search on $x$. The current median certainly works, and the median plus $k$ is the most it could ever be, so those are the starting bounds.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">max_median</span>(a, k):
+    a <span style="color:#f92672">=</span> sorted(a)
+    upper <span style="color:#f92672">=</span> a[len(a) <span style="color:#f92672">//</span> <span style="color:#ae81ff">2</span>:]             <span style="color:#75715e"># the median and everything above it</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">can</span>(x):                         <span style="color:#75715e"># can the median reach x with k steps?</span>
+        <span style="color:#66d9ef">return</span> sum(max(<span style="color:#ae81ff">0</span>, x <span style="color:#f92672">-</span> v) <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> upper) <span style="color:#f92672">&lt;=</span> k
+
+    lo, hi <span style="color:#f92672">=</span> upper[<span style="color:#ae81ff">0</span>], upper[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">+</span> k     <span style="color:#75715e"># lo always works, nothing above hi can</span>
+    <span style="color:#66d9ef">while</span> lo <span style="color:#f92672">&lt;</span> hi:
+        mid <span style="color:#f92672">=</span> (lo <span style="color:#f92672">+</span> hi <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">//</span> <span style="color:#ae81ff">2</span>
+        <span style="color:#66d9ef">if</span> can(mid):
+            lo <span style="color:#f92672">=</span> mid
+        <span style="color:#66d9ef">else</span>:
+            hi <span style="color:#f92672">=</span> mid <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
+    <span style="color:#66d9ef">return</span> lo
+</code></pre></div><p>About 30 checks of $10^5$ additions each: three million steps.</p>
+<p><strong>Attack</strong>: $n = 1$ (the median is the only element, answer $a_1 + k$). All elements equal. And overflow: the cost can reach $10^5 \times 10^9 = 10^{14}$, far beyond 32 bits, so in C++ this needs 64-bit integers.</p>
 <hr>
-<h3 id="level-e-2500---sereja-and-suffixes-cf-380ehttpscodeforcescomproblemsetproblem380e-adjacent-max-pattern">Level E (~2500) - <a href="https://codeforces.com/problemset/problem/380/E" target="_blank" rel="noopener noreferrer">Sereja and Suffixes (CF 380E)</a>
- adjacent max pattern</h3>
-<p><strong>The problem</strong>: given an array of $n$ integers, answer $m$ queries each of the form: among elements $a[l..r]$, how many distinct values appear that are the maximum of some contiguous subarray? (This pattern, associating queries with a structural property computed offline, is archetypal at E level.)</p>
-<p><strong>Read the constraints</strong>: $n, m \leq 10^5$.</p>
-<p>$O((n + m) \log n)$ is the target.</p>
-<p><strong>Categorize</strong>: range query. But it is not a standard range query - the property (being a subarray maximum) is global, not per-element.</p>
-<p><strong>Key observation</strong>: which values are subarray maxima? An element $a[i]$ is the maximum of some subarray iff it is a local maximum or an endpoint, which (with some thought) simplifies to: $a[i]$ is a subarray maximum iff there is no adjacent element larger than it that &ldquo;dominates&rdquo; it from both sides. More precisely: keep only elements that are greater than all elements to their left up to the previous greater element. This is the set of elements that survive after removing those completely dominated - equivalently, build the sequence of &ldquo;right-to-left maxima&rdquo; and &ldquo;left-to-right maxima.&rdquo;</p>
-<p>In practice the key insight is: precompute, for each index $i$, whether it is a &ldquo;prefix maximum&rdquo; from the right (i.e., $a[i] &gt; a[j]$ for all $j &gt; i$ up to the next larger element). The set of elements that can be subarray maxima is exactly the set that appears in the monotone stack during a left-to-right scan.</p>
-<p><strong>Now the query</strong> becomes: in range $[l, r]$, how many elements from the monotone-stack survivor set exist? This is a static range counting query on a precomputed set - answered with a sorted list + binary search in $O(\log n)$ per query.</p>
-<p><strong>What the framework did</strong>: $n, m \leq 10^5$ → $O(n \log n + m \log n)$. &ldquo;Range query with precomputed structure&rdquo; → offline precomputation + binary search. The key step is reducing &ldquo;which elements are subarray maxima?&rdquo; to a monotone stack computation, which is the E-level insight the constraints force you toward.</p>
+<h3 id="problem-5-two-buttons">Problem 5 - <a href="https://codeforces.com/problemset/problem/520/B" target="_blank" rel="noopener noreferrer">Two Buttons (CF 520B)</a>, rated 1400</h3>
+<p><strong>The problem</strong>: a display shows the number $n$. The red button doubles it. The blue button subtracts 1. The number must stay positive. What is the fewest presses needed to show $m$?</p>
+<p><strong>Understand</strong>: shortest sequence of &ldquo;double&rdquo; and &ldquo;minus one&rdquo; turning $n$ into $m$.</p>
+<p><strong>Budget</strong>: $n, m \leq 10^4$. Small. Something that touches every number up to a few times $10^4$ is fine.</p>
+<p><strong>Name it</strong>: optimization, &ldquo;fewest presses&rdquo;. There is no graph anywhere in the statement, but there are <em>states</em> (the number on the display) and <em>moves</em> (the two buttons), and every move costs the same. That is the modeling pattern from the graph section: numbers are nodes, button presses are edges, and &ldquo;fewest presses&rdquo; is a shortest path where all edges cost one - so BFS.</p>
+<p><strong>Brute force and its waste</strong>: try every sequence of presses of length 1, then 2, then 3. That is $2^{\text{length}}$ sequences, and most of them pass through numbers already reached by a shorter sequence. BFS removes exactly that: it never expands a number twice.</p>
+<p><strong>The idea</strong>: BFS from $n$. One thing needs care: doubling forever creates infinitely many states. But once the display is above $m$, the only button that helps is minus one, so doubling a number that is already at least $m$ is never useful. The display therefore never needs to exceed $2m$, and the graph is finite.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">min_clicks</span>(n, m):
+    limit <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> max(n, m)               <span style="color:#75715e"># going higher is never useful</span>
+    dist <span style="color:#f92672">=</span> {n: <span style="color:#ae81ff">0</span>}
+    queue <span style="color:#f92672">=</span> deque([n])
+    <span style="color:#66d9ef">while</span> queue:
+        x <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+        <span style="color:#66d9ef">if</span> x <span style="color:#f92672">==</span> m:
+            <span style="color:#66d9ef">return</span> dist[x]
+        <span style="color:#66d9ef">for</span> y <span style="color:#f92672">in</span> (x <span style="color:#f92672">*</span> <span style="color:#ae81ff">2</span>, x <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>):
+            <span style="color:#66d9ef">if</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;=</span> y <span style="color:#f92672">&lt;=</span> limit <span style="color:#f92672">and</span> y <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> dist:
+                dist[y] <span style="color:#f92672">=</span> dist[x] <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+                queue<span style="color:#f92672">.</span>append(y)
+</code></pre></div><p><strong>Attack</strong>: $n &gt; m$ (the answer is simply $n - m$ presses of blue, and the BFS finds it). $n = m$. $m = 1$.</p>
 <hr>
-<h3 id="level-f-3000---sum-of-xor-over-all-pairs-contribution-technique">Level F (~3000) - Sum of XOR over All Pairs (contribution technique)</h3>
-<p><strong>The problem</strong>: given an array of $n$ integers, compute the sum of $a[i] \oplus a[j]$ over all pairs $i &lt; j$. $n \leq 3 \times 10^5$, values up to $10^{18}$.</p>
-<p><strong>Read the constraints</strong>: $n \leq 3 \times 10^5$, $O(n^2)$ is $9 \times 10^{10}$ - completely infeasible. Need $O(n \log(\max a))$.</p>
-<p><strong>Categorize</strong>: sum over all pairs. Bit operations.</p>
-<p><strong>Key insight at F level</strong>: XOR operates independently on each bit. For each bit position $b$, compute its contribution to the total sum separately. The contribution of bit $b$ is $2^b \times$ (number of pairs where bit $b$ of $a[i] \oplus a[j]$ is 1). Bit $b$ is 1 in $a[i] \oplus a[j]$ iff exactly one of $a[i], a[j]$ has bit $b$ set.</p>
-<p>So for each bit $b$: let $z$ = count of numbers with bit $b$ = 0, and $o$ = count with bit $b$ = 1. The number of pairs where this bit is 1 in the XOR is $z \times o$. The contribution is $2^b \times z \times o$.</p>
-<p>Sum over all bits: $\sum_{b=0}^{60} 2^b \times z_b \times o_b$.</p>
-<p>$O(n \times 60) = O(n \log(\max a))$.</p>
-<p><strong>What the framework did</strong>: $n \leq 3 \times 10^5$ → $O(n \log n)$ or $O(n \log V)$. &ldquo;XOR sum over pairs&rdquo; → bit independence is the unlock. The &ldquo;contribution technique&rdquo; - computing each bit&rsquo;s contribution independently - is the F-level insight that turns an infeasible $O(n^2)$ problem into a linear scan. The actual implementation is five lines once the observation is made.</p>
+<h3 id="problem-6-boredom">Problem 6 - <a href="https://codeforces.com/problemset/problem/455/A" target="_blank" rel="noopener noreferrer">Boredom (CF 455A)</a>, rated 1500</h3>
+<p><strong>The problem</strong>: a list of $n$ numbers. In one move, pick an element with value $v$: you earn $v$ points and that element is deleted, together with <em>every</em> element equal to $v - 1$ or $v + 1$. Maximize the total points.</p>
+<p><strong>Understand</strong>: this one rewards a careful second read. If you take one copy of $v$, all the $v - 1$s and $v + 1$s are gone - so the other copies of $v$ are now free to take, with nothing left to lose. Each value is therefore all or nothing: either you take every copy of $v$, earning $v \times \text{count}(v)$, or none. And the order of the original list does not matter at all. Restated: <em>choose a set of values, no two of them consecutive, maximizing the total gain.</em></p>
+<p><strong>Budget</strong>: $n \leq 10^5$ and values up to $10^5$. A loop over values is fine.</p>
+<p><strong>Name it</strong>: optimization.</p>
+<p><strong>Brute force and its waste</strong>: try every subset of values with no two consecutive. Exponential. Greedy is the first thing to try, and &ldquo;take the most valuable value first&rdquo; is the obvious rule - so attack it. With $[1, 1, 1, 2, 2, 3]$, the gains are 3 for the 1s, 4 for the 2s, 3 for the 3. Greedy takes the 2s, which deletes everything else: 4 points. Taking the 1s and the 3 gives 6. Greedy is dead, on a six-element input.</p>
+<p>So use the tool that tries every choice without repeating work. Going through the values in increasing order, the decision for $v$ is take or skip, and the only thing from the past that matters is whether $v - 1$ was taken. The same smaller problem - &ldquo;best I can do using values up to $v$&rdquo; - comes up again and again inside the brute force.</p>
+<p><strong>The idea</strong>: the four DP questions.</p>
+<ul>
+<li>State: $\text{best}[v]$ = most points using only values up to $v$.</li>
+<li>Base: $\text{best}[0] = 0$ and $\text{best}[1] = \text{gain}[1]$.</li>
+<li>Transition: skip $v$ and keep $\text{best}[v - 1]$, or take $v$ and add its gain to $\text{best}[v - 2]$.</li>
+<li>Answer: $\text{best}$ of the largest value.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">max_points</span>(a):
+    top <span style="color:#f92672">=</span> max(a)
+    gain <span style="color:#f92672">=</span> [<span style="color:#ae81ff">0</span>] <span style="color:#f92672">*</span> (top <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)              <span style="color:#75715e"># gain[v] = v times how often v appears</span>
+    <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> a:
+        gain[v] <span style="color:#f92672">+=</span> v
+    best <span style="color:#f92672">=</span> [<span style="color:#ae81ff">0</span>] <span style="color:#f92672">*</span> (top <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)
+    best[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> gain[<span style="color:#ae81ff">1</span>]
+    <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">2</span>, top <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>):
+        best[v] <span style="color:#f92672">=</span> max(best[v <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>], best[v <span style="color:#f92672">-</span> <span style="color:#ae81ff">2</span>] <span style="color:#f92672">+</span> gain[v])
+    <span style="color:#66d9ef">return</span> best[top]
+</code></pre></div><p><strong>Attack</strong>: all elements equal. And overflow again: $10^5$ copies of $10^5$ is $10^{10}$ points.</p>
+<p><strong>What made it tractable</strong>: the DP itself is four lines. The real work happened in step 1, in noticing that the list could be replaced by a table of gains per value. Choosing the right <em>state</em> usually means choosing the right way to look at the input.</p>
 <hr>
-<p><strong>The pattern of patterns</strong>: at every level, the framework does the same thing. Constraints collapse the complexity class. Category (decision/optimization/counting/construction) points at a family of tools. A specific signal in the problem points at a specific tool. The F-level insight is not that different from the A-level insight - both are observations about structure. The difference is that the F-level observation is harder to see, the encoding is subtler, and the implementation has more pieces. The framework works at every level. The reps are what scale it.</p>
+<h3 id="problem-7-constructing-the-array">Problem 7 - <a href="https://codeforces.com/problemset/problem/1353/D" target="_blank" rel="noopener noreferrer">Constructing the Array (CF 1353D)</a>, rated 1600</h3>
+<p><strong>The problem</strong>: an array of $n$ zeros. Perform $n$ actions. In action $i$: find the longest block of consecutive zeros, taking the leftmost if there is a tie; write $i$ into the middle of that block, or the left of the two middle positions if its length is even. Print the final array.</p>
+<p><strong>Understand</strong>: the statement is itself an algorithm. This is a simulation: the only question is how to run it fast enough.</p>
+<p><strong>Budget</strong>: $n \leq 2 \times 10^5$, so $O(n \log n)$.</p>
+<p><strong>Name it</strong>: construction.</p>
+<p><strong>Brute force and its waste</strong>: do what it says. For each action, scan the whole array for the longest block of zeros. That is $n$ actions of $O(n)$ each: $O(n^2)$, or $4 \times 10^{10}$. The waste: re-scanning the entire array every time, when an action changes almost nothing. It takes one block and replaces it with two smaller ones. Everything else is as it was.</p>
+<p><strong>The idea</strong>: keep the blocks themselves, not the array. The operations needed are &ldquo;give me the biggest block&rdquo;, &ldquo;remove it&rdquo;, and &ldquo;add two new blocks&rdquo; - and a container built for exactly that is a <strong>heap</strong>, or priority queue: it always hands back its smallest item, and both adding and removing cost $O(\log n)$. The tie-break rule goes into the sorting key: store each block as (negative length, left end), so that the smallest key is the longest block, and among equals the leftmost.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> heapq
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">construct</span>(n):
+    a <span style="color:#f92672">=</span> [<span style="color:#ae81ff">0</span>] <span style="color:#f92672">*</span> n
+    heap <span style="color:#f92672">=</span> [(<span style="color:#f92672">-</span>n, <span style="color:#ae81ff">0</span>, n <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>)]             <span style="color:#75715e"># (negative length, left, right)</span>
+    <span style="color:#66d9ef">for</span> step <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1</span>, n <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>):
+        _, l, r <span style="color:#f92672">=</span> heapq<span style="color:#f92672">.</span>heappop(heap)
+        mid <span style="color:#f92672">=</span> (l <span style="color:#f92672">+</span> r) <span style="color:#f92672">//</span> <span style="color:#ae81ff">2</span>              <span style="color:#75715e"># rounds left on even lengths</span>
+        a[mid] <span style="color:#f92672">=</span> step
+        <span style="color:#66d9ef">if</span> l <span style="color:#f92672">&lt;</span> mid:
+            heapq<span style="color:#f92672">.</span>heappush(heap, (<span style="color:#f92672">-</span>(mid <span style="color:#f92672">-</span> l), l, mid <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>))
+        <span style="color:#66d9ef">if</span> mid <span style="color:#f92672">&lt;</span> r:
+            heapq<span style="color:#f92672">.</span>heappush(heap, (<span style="color:#f92672">-</span>(r <span style="color:#f92672">-</span> mid), mid <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>, r))
+    <span style="color:#66d9ef">return</span> a
+</code></pre></div><p><strong>Attack</strong>: $n = 1$ and $n = 2$, where one or both of the new blocks are empty and must not be pushed. For $n = 5$ the statement&rsquo;s sample answer is $[2, 4, 1, 3, 5]$, which this produces.</p>
+<hr>
+<h3 id="problem-8-sum-of-xor-over-all-pairs">Problem 8 - Sum of XOR Over All Pairs, a classic</h3>
+<p><strong>The problem</strong>: given $n$ integers, compute the sum of $a_i \oplus a_j$ over all pairs $i &lt; j$, where $\oplus$ is bitwise XOR. $n \leq 3 \times 10^5$, values up to $10^{18}$.</p>
+<p><strong>Understand</strong>: XOR compares two numbers bit by bit and puts a 1 wherever they differ. Add that up over every pair.</p>
+<p><strong>Budget</strong>: $n \leq 3 \times 10^5$, so the number of pairs is about $4.5 \times 10^{10}$. Looping over pairs is impossible. But the values have at most 60 bits, and $n \times 60$ is only $1.8 \times 10^7$.</p>
+<p><strong>Name it</strong>: a sum over all pairs. That phrase has a standard move: stop asking &ldquo;what does each pair contribute?&rdquo; and ask &ldquo;how much does each small piece contribute to the total, across all pairs at once?&rdquo;</p>
+<p><strong>Brute force and its waste</strong>: two loops, XOR each pair, add. The waste is that every pair is handled separately, when XOR treats each bit position independently of all the others.</p>
+<p><strong>The idea</strong>: take one bit position $b$ on its own. A pair contributes $2^b$ to the total if the two numbers differ at bit $b$, and nothing otherwise. If <code>ones</code> of the numbers have that bit set and the rest do not, the number of differing pairs is $\text{ones} \times (n - \text{ones})$ - one from each side. No pairs were looped over. Do that for all 60 bit positions and add.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">xor_pair_sum</span>(a):
+    n, total <span style="color:#f92672">=</span> len(a), <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">for</span> b <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">60</span>):
+        ones <span style="color:#f92672">=</span> sum((x <span style="color:#f92672">&gt;&gt;</span> b) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> a)
+        total <span style="color:#f92672">+=</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;&lt;</span> b) <span style="color:#f92672">*</span> ones <span style="color:#f92672">*</span> (n <span style="color:#f92672">-</span> ones)
+    <span style="color:#66d9ef">return</span> total
+</code></pre></div><p><strong>Attack</strong>: $n = 1$ (no pairs, answer 0). All values equal (answer 0). And the total can be astronomically large, so a real problem would ask for it modulo $10^9 + 7$.</p>
+<p>This &ldquo;count each piece&rsquo;s contribution&rdquo; move is the engine inside much harder problems, such as <a href="https://codeforces.com/problemset/problem/1466/E" target="_blank" rel="noopener noreferrer">Apollo versus Pan (CF 1466E)</a>
+, rated 1800.</p>
+<hr>
+<p><strong>The pattern of patterns</strong>: eight problems, rated from 800 to 1600, and the same six steps handled every one. The constraints set the budget. The kind of question pointed at a family of tools. The brute force showed where the waste was, and the waste named the tool. Then a deliberate attempt to break the idea caught the edge case.</p>
+<p>Harder problems do not use a different method. A problem rated 2400 is usually two or three of these observations chained together, where each has to be found before the next one is even visible, with a heavier implementation on top. The framework is the same at every level. The reps are what scale it.</p>
 <hr>
 <h2 id="reading-other-peoples-solutions">Reading Other People&rsquo;s Solutions</h2>
 <p>After you have solved a problem (or given up), reading the editorial and high-rated participants' solutions is where you actually improve. But read them differently:</p>
 <p>Read the editorial&rsquo;s claim about the algorithm before reading the proof. Then try to reconstruct the proof yourself. Then read the actual proof. The act of attempting the reconstruction is the learning - not the reading.</p>
+<p>Then ask the question that turns one solved problem into ten: <em>at which of the six steps did I get stuck, and what in the statement should have tipped me off?</em> Write the answer down in one line. &ldquo;Maximize the minimum: binary search on the answer.&rdquo; That line is a new row in your own recognition map.</p>
 <p>Read high-rated participants' code for style and implementation patterns. The code for a segment tree written by a red-rated programmer will be shorter, cleaner, and contain patterns you can reuse. Copy the structure, understand each line, and make it yours.</p>
-<p>Build a personal template library. Segment tree, Union-Find, Dijkstra, KMP, modular arithmetic utilities - these should be code you can write from memory or paste from a tested template. The goal is to never spend contest time debugging a segment tree implementation. Debug it once, put it in your template, and never debug it again.</p>
+<p>Build a personal template library. Segment tree, Union-Find, Dijkstra, KMP, modular arithmetic utilities - these should be code you can write from memory or paste from a tested template. The goal is to never spend contest time debugging a segment tree implementation. Debug it once, put it in your template, and never debug it again. <a href="/posts/cp-template/" target="_blank" rel="noopener noreferrer">Mine is here</a>
+.</p>
 <hr>
 <h2 id="on-building-the-intuition-over-time">On Building the Intuition Over Time</h2>
 <p>The patterns above are not things you memorize - they are things you absorb, problem by problem, until the recognition becomes automatic. Every competitive programmer who is good at pattern recognition got there the same way: by solving many problems, getting stuck, looking at the solution, understanding <em>why</em> that approach works, and then noticing it again next time.</p>
@@ -809,6 +1115,7 @@ return count
 <p>The ceiling is not fixed. The patterns are learnable. The recognition is trainable. The intuition accumulates.</p>
 <hr>
 <p><em>This is a living document. I will keep adding patterns as I encounter them.</em></p>
+<script src="/js/solving-framework.js?v=1" defer></script>
 
     </div>
     <div class="post-footer">
