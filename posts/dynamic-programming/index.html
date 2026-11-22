@@ -345,8 +345,51 @@ graph TB
 <p>Leaves 3 and 4 give (0, 5) and (0, 2). Node 2 gives (2, 3), node 1 gives $(\max(2,3) + \max(0,5), 4 + 2 + 0) = (8, 6)$. The best is <strong>8</strong>, taking nodes 2 and 3. Both algorithms are $O(n)$.</p>
 <details>
 <summary>Code: longest path in a DAG, and tree independent set</summary>
-<pre tabindex="0"><code>
-</code></pre></details>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> defaultdict
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">longest_path</span>(nodes, edges, weight):
+    <span style="color:#75715e"># nodes must be given in topological order</span>
+    children <span style="color:#f92672">=</span> defaultdict(list)
+    <span style="color:#66d9ef">for</span> u, v <span style="color:#f92672">in</span> edges:
+        children[u]<span style="color:#f92672">.</span>append(v)
+
+    dp <span style="color:#f92672">=</span> {v: weight[v] <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> nodes}
+
+    <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> nodes:
+        <span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> children[v]:
+            dp[c] <span style="color:#f92672">=</span> max(dp[c], dp[v] <span style="color:#f92672">+</span> weight[c])
+
+    <span style="color:#66d9ef">return</span> max(dp<span style="color:#f92672">.</span>values())
+
+nodes  <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;A&#39;</span>, <span style="color:#e6db74">&#39;B&#39;</span>, <span style="color:#e6db74">&#39;C&#39;</span>, <span style="color:#e6db74">&#39;D&#39;</span>, <span style="color:#e6db74">&#39;E&#39;</span>]
+edges  <span style="color:#f92672">=</span> [(<span style="color:#e6db74">&#39;A&#39;</span>,<span style="color:#e6db74">&#39;B&#39;</span>), (<span style="color:#e6db74">&#39;A&#39;</span>,<span style="color:#e6db74">&#39;C&#39;</span>), (<span style="color:#e6db74">&#39;B&#39;</span>,<span style="color:#e6db74">&#39;D&#39;</span>), (<span style="color:#e6db74">&#39;C&#39;</span>,<span style="color:#e6db74">&#39;D&#39;</span>), (<span style="color:#e6db74">&#39;D&#39;</span>,<span style="color:#e6db74">&#39;E&#39;</span>)]
+weight <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;A&#39;</span>:<span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;B&#39;</span>:<span style="color:#ae81ff">3</span>, <span style="color:#e6db74">&#39;C&#39;</span>:<span style="color:#ae81ff">2</span>, <span style="color:#e6db74">&#39;D&#39;</span>:<span style="color:#ae81ff">4</span>, <span style="color:#e6db74">&#39;E&#39;</span>:<span style="color:#ae81ff">1</span>}
+
+print(longest_path(nodes, edges, weight))  <span style="color:#75715e"># 9</span>
+</code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> defaultdict
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">max_independent_set</span>(adj, weights, root):
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs</span>(v, parent):
+        excl, incl <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, weights[v]
+        <span style="color:#66d9ef">for</span> child <span style="color:#f92672">in</span> adj[v]:
+            <span style="color:#66d9ef">if</span> child <span style="color:#f92672">==</span> parent:
+                <span style="color:#66d9ef">continue</span>
+            c_excl, c_incl <span style="color:#f92672">=</span> dfs(child, v)
+            excl <span style="color:#f92672">+=</span> max(c_excl, c_incl)  <span style="color:#75715e"># child can go either way</span>
+            incl <span style="color:#f92672">+=</span> c_excl               <span style="color:#75715e"># v included =&gt; child must be excluded</span>
+        <span style="color:#66d9ef">return</span> excl, incl
+
+    excl, incl <span style="color:#f92672">=</span> dfs(root, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)
+    <span style="color:#66d9ef">return</span> max(excl, incl)
+
+adj <span style="color:#f92672">=</span> defaultdict(list)
+<span style="color:#66d9ef">for</span> u, v <span style="color:#f92672">in</span> [(<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>), (<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">3</span>), (<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">4</span>)]:
+    adj[u]<span style="color:#f92672">.</span>append(v)
+    adj[v]<span style="color:#f92672">.</span>append(u)
+
+weights <span style="color:#f92672">=</span> {<span style="color:#ae81ff">1</span>:<span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">2</span>:<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>:<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">4</span>:<span style="color:#ae81ff">2</span>}
+print(max_independent_set(adj, weights, root<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>))  <span style="color:#75715e"># 8: nodes {2, 3}</span>
+</code></pre></div></details>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
