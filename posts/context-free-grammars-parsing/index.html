@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795369382" />
+    <script src="/js/algo-demos.js?v=1795368931" defer></script>
+    <script src="/js/player.js?v=1795369382" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Context-Free Grammars - Languages With Recursive Rules"/>
 <meta name="twitter:description" content="Helpful context:
- Automata Theory - What Machines Can and Cannot Compute    Every programming language you&rsquo;ve ever used is defined by a context-free grammar. When Python tells you SyntaxError: invalid syntax, a parser running a CFG found that your code doesn&rsquo;t match the grammar. When your browser renders HTML, it&rsquo;s parsing a context-free structure. When a compiler figures out that 2 &#43; 3 * 4 means 2 &#43; (3 * 4) and not (2 &#43; 3) * 4, it&rsquo;s using the precedence hierarchy baked into the grammar."/>
+ Automata Theory - What Machines Can and Cannot Compute    Every programming language you&rsquo;ve ever used is defined by a context-free grammar. When Python says SyntaxError: invalid syntax, a parser checked your code against a grammar and found no match. When a compiler decides that 2 &#43; 3 * 4 means 2 &#43; (3 * 4), it&rsquo;s following a precedence hierarchy written into the grammar."/>
 
     <meta property="og:title" content="Context-Free Grammars - Languages With Recursive Rules" />
 <meta property="og:description" content="Helpful context:
- Automata Theory - What Machines Can and Cannot Compute    Every programming language you&rsquo;ve ever used is defined by a context-free grammar. When Python tells you SyntaxError: invalid syntax, a parser running a CFG found that your code doesn&rsquo;t match the grammar. When your browser renders HTML, it&rsquo;s parsing a context-free structure. When a compiler figures out that 2 &#43; 3 * 4 means 2 &#43; (3 * 4) and not (2 &#43; 3) * 4, it&rsquo;s using the precedence hierarchy baked into the grammar." />
+ Automata Theory - What Machines Can and Cannot Compute    Every programming language you&rsquo;ve ever used is defined by a context-free grammar. When Python says SyntaxError: invalid syntax, a parser checked your code against a grammar and found no match. When a compiler decides that 2 &#43; 3 * 4 means 2 &#43; (3 * 4), it&rsquo;s following a precedence hierarchy written into the grammar." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/context-free-grammars-parsing/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          14 min read
+          8 min read
         </div>
       </div>
     </header>
@@ -164,149 +167,155 @@
 </li>
 </ul>
 <hr>
-<p>Every programming language you&rsquo;ve ever used is defined by a context-free grammar. When Python tells you <code>SyntaxError: invalid syntax</code>, a parser running a CFG found that your code doesn&rsquo;t match the grammar. When your browser renders HTML, it&rsquo;s parsing a context-free structure. When a compiler figures out that <code>2 + 3 * 4</code> means <code>2 + (3 * 4)</code> and not <code>(2 + 3) * 4</code>, it&rsquo;s using the precedence hierarchy baked into the grammar.</p>
-<p>Context-free grammars are the theory of <em>syntax</em>: what strings are &ldquo;valid&rdquo; programs, documents, or mathematical expressions. We already know finite automata can&rsquo;t handle counting - they can&rsquo;t recognize $\{0^n 1^n\}$. CFGs can, and that extra power is exactly what&rsquo;s needed to describe nested structures like balanced parentheses or properly matched function calls.</p>
+<p>Every programming language you&rsquo;ve ever used is defined by a context-free grammar. When Python says <code>SyntaxError: invalid syntax</code>, a parser checked your code against a grammar and found no match. When a compiler decides that <code>2 + 3 * 4</code> means <code>2 + (3 * 4)</code>, it&rsquo;s following a precedence hierarchy written into the grammar.</p>
+<p>Context-free grammars are the theory of <em>syntax</em>: which strings are valid programs, documents or expressions. Their superpower is <strong>nesting</strong>: brackets inside brackets, calls inside calls, blocks inside blocks, to any depth.</p>
 <hr>
 <h2 id="the-wall-that-finite-automata-hit">The Wall That Finite Automata Hit</h2>
-<p>Finite automata are surprisingly powerful for pattern matching. An email validator, a lexer that recognizes keywords, a regex engine - all are finite automata. The defining feature of a DFA is that it works on finite memory: at any point, only the current state matters. The entire history of input that led to this state is forgotten.</p>
-<p>That forgetting is the wall.</p>
-<p>Consider the language $\{0^n 1^n : n \geq 1\}$ - strings of zeros followed by the same number of ones. A DFA attempting to recognize this must count how many zeros it has seen, then verify an equal number of ones follows. But counting requires memory, and the DFA has only a fixed number of states. Feed it 100 zeros, and by the pigeonhole principle, some state must repeat - the machine has no way to distinguish &ldquo;I have seen 73 zeros&rdquo; from &ldquo;I have seen 74 zeros.&rdquo; Any DFA fails on inputs long enough to loop.</p>
-<p>This isn&rsquo;t a quirk of the particular language; it&rsquo;s a fundamental ceiling. The <strong>Myhill-Nerode theorem</strong> makes it precise: a language is regular exactly when its strings can be partitioned into finitely many equivalence classes based on what suffixes complete them. For $\{0^n 1^n\}$, the prefix $0^n$ requires the suffix $1^n$ and nothing else - each $n$ defines a distinct class, of which there are infinitely many. No finite automaton can represent infinitely many distinct classes.</p>
-<p>The same ceiling shows up everywhere in programming languages:</p>
-<ul>
-<li>Balanced parentheses: <code>((()))</code> requires matching the first <code>(</code> with the last <code>)</code> - but how deep is the nesting? The automaton can&rsquo;t track depth.</li>
-<li>Properly nested function calls: <code>f(g(h(x)))</code> must match each opening <code>(</code> to the right <code>)</code>.</li>
-<li>Block structure: every <code>if</code> has a matching <code>end</code>, every <code>{</code> a matching <code>}</code>, recursively.</li>
-<li>Arithmetic precedence: <code>2 + 3 * 4</code> is <code>2 + (3 * 4)</code>, which requires a tree structure.</li>
-</ul>
-<p>All of these share the same underlying shape: an opening token at depth $d$, arbitrary content inside, then a closing token at the same depth $d$. To check this, you need to remember depth - which can be arbitrarily large - which requires unbounded memory.</p>
-<p>The solution is a stack. A stack tracks depth perfectly: push on open, pop on close, accept when both input and stack are empty. And the formalism that describes exactly what a stack lets you compute is the context-free grammar.</p>
+<p>A finite automaton - the machine behind regular expressions, lexers and email validators - remembers nothing except which of its fixed set of states it&rsquo;s in. That is exactly why it can&rsquo;t check nesting.</p>
+<p>Take $\{0^n 1^n : n \geq 1\}$: some zeros, then the <em>same number</em> of ones. To check it you have to count the zeros, but a machine with, say, 50 states can&rsquo;t tell 73 zeros from 74. Once the input is longer than the number of states, some state must repeat, and the machine loses count.</p>
+<p>Programming languages are full of this shape: <code>((()))</code>, <code>f(g(h(x)))</code>, every <code>{</code> with its <code>}</code>, every <code>if</code> with its <code>end</code>. Each one opens at some depth, and has to close at that same depth, which can be arbitrarily deep.</p>
+<p>The fix is a <strong>stack</strong>: push on open, pop on close, accept when the input and the stack run out together.</p>
+<div class="sf" data-sf="player" data-src="/data/context-free-grammars-parsing/stack.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>The formalism that describes exactly what a stack can check is the context-free grammar.</p>
+<details>
+<summary>The precise version: the Myhill-Nerode theorem</summary>
+<p>A language is regular exactly when its strings fall into finitely many equivalence classes, where two prefixes are equivalent if the same suffixes complete both of them. For $\{0^n 1^n\}$, the prefix $0^n$ can only be completed by $1^n$, so every $n$ is its own class. There are infinitely many classes, so no finite automaton can recognize the language.</p>
+</details>
 <hr>
 <h2 id="production-rules-and-derivations">Production Rules and Derivations</h2>
-<p>A context-free grammar is a set of <strong>production rules</strong> that describe how to generate strings. Each rule takes one <strong>non-terminal</strong> symbol (a placeholder) and expands it into a sequence of terminals and non-terminals.</p>
-<p>The classic example: the grammar for $\{0^n 1^n : n \geq 0\}$.</p>
+<p>A grammar is a set of <strong>rules</strong>. Each rule rewrites one <strong>non-terminal</strong> (a placeholder, written in capitals) into a sequence of terminals (actual characters) and non-terminals. The grammar for $\{0^n 1^n : n \geq 0\}$ is one line:</p>
 <p>$$S \to 0S1 \mid \varepsilon$$</p>
-<p>This says: $S$ can either expand to $0S1$ (put a zero before and a one after whatever $S$ generates), or to the empty string. Let&rsquo;s derive <code>000111</code>:</p>
-<p>$$S \Rightarrow 0S1 \Rightarrow 00S11 \Rightarrow 000S111 \Rightarrow 000\varepsilon111 = 000111$$</p>
-<p>This grammar generates exactly the strings with equal numbers of zeros and ones - which we proved no DFA can recognize. CFGs are strictly more powerful than finite automata.</p>
-<p>Formally, a CFG is a 4-tuple $G = (V, \Sigma, R, S)$ where $V$ is the set of non-terminal variables, $\Sigma$ is the terminal alphabet (the actual characters), $R$ is the set of production rules (each a variable on the left, a string of variables and terminals on the right), and $S \in V$ is the start variable. The language $L(G)$ is the set of all terminal strings derivable from $S$.</p>
+<p>$S$ either wraps itself in a 0 and a 1, or becomes the empty string $\varepsilon$. Deriving <code>000111</code>:</p>
+<p>$$S \Rightarrow 0S1 \Rightarrow 00S11 \Rightarrow 000S111 \Rightarrow 000111$$</p>
+<p>That one rule generates exactly the language no finite automaton can recognize. So context-free grammars are strictly more powerful than regular expressions.</p>
+<p>Formally, a CFG is a 4-tuple $G = (V, \Sigma, R, S)$: the non-terminals $V$, the terminal alphabet $\Sigma$, the rules $R$, and a start symbol $S$. Its language $L(G)$ is every terminal string you can derive from $S$.</p>
 <hr>
 <h2 id="parse-trees-and-ambiguity">Parse Trees and Ambiguity</h2>
-<p>When you derive a string from a grammar, you can draw the derivation as a tree: the root is $S$, each internal node is a non-terminal, its children are the right-hand side of the rule that expanded it, and the leaves (read left to right) spell out the string.</p>
-<p>Here&rsquo;s where things get interesting: some grammars allow the same string to be derived in two different ways - two different parse trees with the same yield.</p>
-<p>Consider the grammar $E \to E + E \mid E \times E \mid a$. The string $a + a \times a$ has two parse trees:</p>
+<p>Draw a derivation as a tree and you get a <strong>parse tree</strong>: the root is the start symbol, each node&rsquo;s children are the rule it used, and the leaves, read left to right, spell the string. The tree <em>is</em> the meaning, because it decides what gets computed first.</p>
+<p>Some grammars let one string grow two different trees. Take $E \to E + E \mid E \times E \mid \text{number}$ and the string <code>2 + 3 × 4</code>:</p>
+<div class="sf" data-sf="player" data-src="/data/context-free-grammars-parsing/ambiguity.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>A grammar like that is <strong>ambiguous</strong>, and for a compiler that&rsquo;s a disaster: it can&rsquo;t know which program you meant. The fix, shown in the third tree, splits the grammar into levels of binding strength:</p>
+<p>$$E \to E + T \mid T \qquad T \to T \times F \mid F \qquad F \to (E) \mid \text{number}$$</p>
 <ul>
-<li>One where $+$ is at the root: $(a + a) \times a$</li>
-<li>One where $\times$ is at the root: $a + (a \times a)$</li>
+<li><strong>F (factor)</strong> is an atom: a number, or a whole expression in brackets.</li>
+<li><strong>T (term)</strong> is a product of factors. It can make <code>×</code> but never a bare <code>+</code>.</li>
+<li><strong>E (expression)</strong> is a sum of terms. It&rsquo;s the only level that can make <code>+</code>.</li>
 </ul>
-<p>This grammar is <strong>ambiguous</strong>. For a programming language parser, this is a disaster - the parser doesn&rsquo;t know which interpretation the programmer intended, so it can&rsquo;t generate the right code.</p>
-<p>In practice, language designers eliminate ambiguity by restructuring the grammar to encode precedence and associativity. The unambiguous grammar for arithmetic expressions separates addition from multiplication:</p>
-<p>$$E \to E + T \mid T \qquad T \to T \times F \mid F \qquad F \to (E) \mid a$$</p>
-<p><strong>What E, T, F actually mean.</strong> The three non-terminals form a hierarchy of binding strength:</p>
-<ul>
-<li><strong>F (Factor)</strong> is the atomic unit - either a literal <code>a</code>, or an entire expression wrapped in parentheses. Nothing can break it apart at this level.</li>
-<li><strong>T (Term)</strong> is a product of factors. Its only operator is <code>×</code>. It has no rule that produces <code>+</code> at its top level.</li>
-<li><strong>E (Expression)</strong> is a sum of terms. Its only operator is <code>+</code>.</li>
-</ul>
-<p>The trick is that each level can only produce operators at its own level - it &ldquo;borrows&rdquo; tighter structure from the level below. To derive something with a top-level <code>+</code>, you must use <code>E → E + T</code>. To derive something with a top-level <code>×</code>, you must use <code>T → T × F</code>. There is no rule that allows <code>×</code> to appear at the level of <code>E</code>, so multiplication can never sit above addition in any parse tree.</p>
-<p><strong>Tracing <code>a + a × a</code>.</strong> The only rule with <code>+</code> is <code>E → E + T</code>, so the root must split there:</p>
-<pre tabindex="0"><code>E
-├── E → T → F → a           (left of +)
-└── T → T × F               (right of +)
-    ├── T → F → a
-    └── F → a
-</code></pre><p>The <code>×</code> is nested inside the right-hand <code>T</code>, one level below the <code>+</code>. The tree encodes <code>a + (a × a)</code>. There is no other derivation.</p>
-<p><strong>Why <code>(a + a) × a</code> requires parentheses.</strong> To get <code>×</code> at the root, you need <code>T → T × F</code>. The left operand must be a <code>T</code>. Can a <code>T</code> derive <code>a + a</code>? Trace the rules: <code>T → T × F | F</code> and <code>F → (E) | a</code> - neither <code>T</code> nor <code>F</code> can produce a bare <code>+</code>. The only way to get addition inside a multiplication is through <code>F → (E)</code>, which requires writing the parentheses explicitly. The grammar structurally prevents the ambiguity: the &ldquo;wrong&rdquo; interpretation is simply not derivable.</p>
-<p><strong>Left recursion and associativity.</strong> Both <code>E → E + T</code> and <code>T → T × F</code> are left-recursive - the non-terminal appears at the left of the right-hand side. This enforces left-associativity: <code>a + a + a</code> must parse as <code>(a + a) + a</code>, not <code>a + (a + a)</code>, because the only way to apply <code>E → E + T</code> twice is to have the first application be the left child of the second.</p>
-<p>This grammar is unambiguous: every expression has exactly one parse tree, and the tree structure directly encodes both precedence (depth in the hierarchy) and associativity (left recursion).</p>
-<p>Some languages are <strong>inherently ambiguous</strong> - no matter what grammar you write for them, ambiguity is unavoidable. These are a small but theoretically important class.</p>
+<p>Since a <code>T</code> can never produce <code>+</code>, multiplication always ends up <em>below</em> addition in the tree, so it&rsquo;s always computed first. The only way to put an addition inside a multiplication is through <code>F → (E)</code>, which means writing the brackets yourself. The wrong reading isn&rsquo;t forbidden by a rule - it simply can&rsquo;t be derived.</p>
+<p>The left recursion in <code>E → E + T</code> also fixes <strong>associativity</strong>: <code>a + a + a</code> can only parse as <code>(a + a) + a</code>. Add a rule <code>E → E - T</code> the same way and <code>2 - 3 - 4</code> correctly means <code>(2 - 3) - 4</code>.</p>
+<p>Some languages are <strong>inherently ambiguous</strong>: every grammar for them is ambiguous. They&rsquo;re rare, but they exist.</p>
 <hr>
-<h2 id="chomsky-normal-form">Chomsky Normal Form</h2>
-<p>For algorithm design, it&rsquo;s convenient to have all production rules in a uniform shape. <strong>Chomsky Normal Form (CNF)</strong> restricts every rule to one of two forms:</p>
+<h2 id="chomsky-normal-form-and-cyk-parsing">Chomsky Normal Form and CYK Parsing</h2>
+<p>For algorithms, it helps to have every rule in one of two shapes, <strong>Chomsky Normal Form</strong>:</p>
 <p>$$A \to BC \qquad \text{or} \qquad A \to a$$</p>
-<p>Every rule either produces exactly two non-terminals, or exactly one terminal. Every CFG can be converted to CNF through a sequence of transformations (eliminating $\varepsilon$-productions, eliminating unit rules, splitting long rules). CNF grammars have a useful geometric property: any parse tree for a string of length $n$ has exactly $2n - 1$ internal nodes. This makes algorithmic analysis clean.</p>
-<hr>
-<h2 id="the-cyk-algorithm-parsing-in-on3">The CYK Algorithm: Parsing in $O(n^3)$</h2>
-<p>Given a grammar in CNF and an input string of length $n$, we want to know: is this string in the language? The <strong>Cocke-Younger-Kasami (CYK)</strong> algorithm answers in $O(n^3 |G|)$ time using dynamic programming.</p>
-<p>The key observation: to check whether the start symbol $S$ generates the entire string $w_1 \cdots w_n$, we need to find a split point $k$ and non-terminals $B$, $C$ such that $S \to BC$ is a rule, $B$ generates $w_1 \cdots w_k$, and $C$ generates $w_{k+1} \cdots w_n$. Those subproblems can be solved recursively.</p>
-<p>Build a triangular table $T[i][j]$ = the set of non-terminals that can generate the substring $w_i \cdots w_j$:</p>
+<p>Every grammar can be converted to it. In CNF, a parse tree for a string of length $n$ always has exactly $2n - 1$ internal nodes.</p>
+<p>With a CNF grammar, the <strong>CYK algorithm</strong> decides whether any string belongs to the language, using <a href="/posts/dynamic-programming/" target="_blank" rel="noopener noreferrer">dynamic programming</a>
+. The table entry $T[i][j]$ holds every non-terminal that can produce the substring from position $i$ to $j$:</p>
 <ul>
-<li><strong>Base case:</strong> $A \in T[i][i]$ if the rule $A \to w_i$ exists.</li>
-<li><strong>Recursive case:</strong> $A \in T[i][j]$ if there exists some split $k$ and a rule $A \to BC$ where $B \in T[i][k]$ and $C \in T[k+1][j]$.</li>
+<li><strong>Length 1:</strong> $A \in T[i][i]$ if there&rsquo;s a rule $A \to w_i$.</li>
+<li><strong>Longer:</strong> $A \in T[i][j]$ if some rule $A \to BC$ and some split point $k$ have $B \in T[i][k]$ and $C \in T[k+1][j]$.</li>
 </ul>
-<p>Fill the table in order of increasing substring length. The string is in $L(G)$ iff $S \in T[1][n]$.</p>
-<p>The table has $O(n^2)$ cells. Each cell requires trying $O(n)$ split points. Each split point requires checking $O(|G|)$ rules. Total: $O(n^3 |G|)$.</p>
-<p>This is far slower than the linear-time parsers compilers actually use - but it works for any CFG, including ambiguous ones.</p>
+<p>Fill the table from short substrings to long ones. The string is valid exactly when the start symbol ends up in $T[1][n]$. That&rsquo;s $O(n^2)$ cells, $O(n)$ split points each, and every rule checked at each: $O(n^3 |G|)$.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> Programming languages are context-free, but real parsers are LL(1) or LR(1) - restricted subclasses of CFGs. Why restrict? Because LL(1) and LR(1) parsers run in $O(n)$ time instead of $O(n^3)$, and almost all practical programming languages can be designed to fit these restricted forms. The restriction isn&rsquo;t a loss of expressiveness for real languages - it&rsquo;s a deliberate design choice to get linear-time parsing. General CYK matters for natural language processing and for research, where the grammars are messier.</p>
+<p><strong>Why compilers don&rsquo;t use CYK.</strong> Real parsers are LL(1) or LR(1), restricted kinds of grammar that parse in $O(n)$ instead of $O(n^3)$. Programming languages are deliberately designed to fit these forms, so nothing useful is lost. CYK matters where grammars are messier, as in natural language processing.</p>
 </blockquote>
 <hr>
 <h2 id="pushdown-automata-the-machine-behind-cfgs">Pushdown Automata: The Machine Behind CFGs</h2>
-<p>Just as regular languages correspond to finite automata, context-free languages correspond to a more powerful machine: the <strong>pushdown automaton (PDA)</strong>.</p>
-<p>A PDA is an NFA with a stack. At each step it can read an input symbol (or not), look at the top of the stack, pop from the stack, push onto the stack, and change state. The stack is the memory that finite automata lack - it&rsquo;s what lets a PDA match opening symbols with closing symbols.</p>
-<p>The equivalence is exact: a language is context-free if and only if some PDA recognizes it. The PDA for $\{0^n 1^n\}$ is obvious: push each <code>0</code> onto the stack, and pop one stack symbol for each <code>1</code>, accepting when input and stack are both empty.</p>
+<p>Regular languages correspond to finite automata. Context-free languages correspond to <strong>pushdown automata</strong>: a finite automaton plus a stack, exactly the machine in the first animation. At each step it can read a symbol, look at the top of the stack, push or pop, and change state.</p>
+<p>The match is exact: a language is context-free if and only if some pushdown automaton recognizes it.</p>
 <hr>
 <h2 id="why-context-free">Why &ldquo;Context-Free&rdquo;?</h2>
-<p>The name comes from the <strong>Chomsky hierarchy</strong> - a classification of all possible grammars published by Noam Chomsky in 1956. He was working on formal linguistics, trying to characterize the structure of natural languages, and found that different levels of grammatical complexity correspond to different levels of computational power.</p>
-<p>The hierarchy has four levels. Written from least to most restrictive:</p>
-<p><strong>Type 0 - Unrestricted (Turing machines).</strong> Rules can have any form: $\alpha \to \beta$, where $\alpha$ and $\beta$ are any strings of terminals and non-terminals. No constraint on what $\alpha$ looks like.</p>
-<p><strong>Type 1 - Context-sensitive (linear-bounded automata).</strong> Rules have the form $\alpha A \beta \to \alpha \gamma \beta$. The non-terminal $A$ can only be replaced by $\gamma$ when it appears in the specific <em>context</em> of $\alpha$ on its left and $\beta$ on its right. The context - what surrounds $A$ - determines whether the rule applies.</p>
-<p><strong>Type 2 - Context-free (pushdown automata).</strong> Rules have the form $A \to \gamma$. The non-terminal $A$ can be replaced by $\gamma$ regardless of what surrounds it. No context required - the rule applies anywhere $A$ appears.</p>
-<p><strong>Type 3 - Regular (finite automata).</strong> Rules are restricted further to $A \to aB$ or $A \to a$ (right-linear).</p>
-<p>The name &ldquo;context-free&rdquo; is directly contrasting with &ldquo;context-sensitive.&rdquo; In a context-sensitive grammar, the string to the left and right of a non-terminal can gate whether a rule fires - the context controls the expansion. Strip that constraint away - allow any non-terminal to expand anywhere, unconditionally - and you get a context-free grammar.</p>
-<p>This has a practical consequence. Because a non-terminal expands the same way everywhere, you can reason about substructures independently: a function body has the same valid structure whether it appears at the top level or nested inside a loop. This composability is why CFGs work so well for describing programming languages.</p>
-<p><strong>Why $\{a^n b^n c^n\}$ is not context-free.</strong> Matching three counts at once requires knowing, when you are in the middle of the $b$-block, how many $a$&rsquo;s came before - the context of what&rsquo;s to the left constrains the rule. A context-free grammar cannot impose this cross-block dependency because its rules fire unconditionally. The pumping lemma for CFLs formalizes this: any long string in a CFL can have pieces pumped independently, and pumping two pieces in a three-block string necessarily breaks one of the three balances.</p>
+<p>The name comes from the <strong>Chomsky hierarchy</strong> of 1956, which ranks grammars by what their rules may look like.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Grammar</th>
+<th>Rules look like</th>
+<th>Machine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Unrestricted</td>
+<td>$\alpha \to \beta$, anything</td>
+<td>Turing machine</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Context-sensitive</td>
+<td>$\alpha A \beta \to \alpha \gamma \beta$</td>
+<td>Linear-bounded automaton</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Context-free</strong></td>
+<td>$A \to \gamma$</td>
+<td>Pushdown automaton</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Regular</td>
+<td>$A \to aB$ or $A \to a$</td>
+<td>Finite automaton</td>
+</tr>
+</tbody>
+</table>
+<p>In a context-sensitive grammar, $A$ may only be rewritten when the right things ($\alpha$ and $\beta$) surround it: the <em>context</em> decides. A context-free rule fires wherever $A$ appears, regardless of its surroundings.</p>
+<p>That&rsquo;s also why CFGs suit programming languages: a function body has the same valid shape whether it sits at the top level or deep inside a loop, so every piece can be checked on its own.</p>
+<details>
+<summary>How we got here: linguists and compiler writers found the same idea</summary>
+<p>In 1943 McCulloch and Pitts modelled neurons in a way that led to finite automata, and by the early 1950s Kleene had characterized exactly which languages those machines describe: the regular languages.</p>
+<p>The gap was obvious almost immediately. Natural language and mathematical notation nest: a noun phrase can contain another noun phrase (&ldquo;the cat [that the dog [that the mouse bit] chased] fled&rdquo;). In 1956 Noam Chomsky, working on the structure of human languages, introduced phrase-structure grammars - what we now call CFGs - to capture that recursive embedding.</p>
+<p>In 1959 John Backus, solving a completely different problem, invented what became <strong>Backus-Naur Form</strong> to specify the syntax of ALGOL 60, so that compilers on different machines would agree on what a program meant. BNF is essentially CFG notation. A linguist and a computer scientist had arrived at the same mathematics from opposite directions, because both needed to describe nested structure with recursive rules.</p>
+<p>Donald Knuth&rsquo;s 1965 paper &ldquo;On the translation of languages from left to right&rdquo; introduced LR parsing, the basis of most production compilers. Parser generators like yacc and later ANTLR made it practical, and every compiler you&rsquo;ve used descends from this work.</p>
+</details>
 <hr>
-<h2 id="how-we-got-here-the-historical-path">How We Got Here: The Historical Path</h2>
-<p>In 1943, Warren McCulloch and Walter Pitts formalized the first neural model that gave rise to finite automata. By the early 1950s, Kleene had characterized exactly which languages finite automata could describe - the regular languages.</p>
-<p>The gap was noticed almost immediately. Regular expressions can describe fixed patterns, but natural language and mathematical notation have structure that goes beyond patterns - nesting, recursion, hierarchy. In 1956, Noam Chomsky introduced the hierarchy that bears his name. He was trying to describe the syntactic structure of human languages, not computers. His insight was that phrase-structure grammars - what we now call CFGs - were the right formalism for capturing recursive embedding: the fact that a noun phrase can contain another noun phrase (the cat [that the dog [that the mouse bit] chased] fled).</p>
-<p>In 1959, John Backus independently invented what became <strong>Backus-Naur Form (BNF)</strong> to specify the syntax of ALGOL 60. BNF is essentially CFG notation. Backus was a computer scientist solving a practical problem: how do you formally specify a programming language so that compilers across different machines produce the same behavior? The answer turned out to be the same formalism a linguist had invented three years earlier for completely different reasons.</p>
-<p>This convergence - linguistics and computer science arriving at identical mathematics from opposite directions - was not a coincidence. Both fields needed to describe hierarchically nested structure with recursive rules. Chomsky&rsquo;s formal grammar and Backus&rsquo;s language specification notation are two independent rediscoveries of the same mathematical object.</p>
-<p>Donald Knuth&rsquo;s 1965 paper &ldquo;On the translation of languages from left to right&rdquo; introduced LR parsing - the basis for most production compilers. By the late 1960s, the theory of CFGs was largely complete, and the tools (yacc, later ANTLR) made it practical. Every compiler you have ever used traces a direct line to this work.</p>
-<hr>
-<h2 id="what-cfls-cannot-do">What CFLs Cannot Do</h2>
-<p>The language $\{a^n b^n c^n : n \geq 0\}$ - equal numbers of $a$&rsquo;s, $b$&rsquo;s, and $c$&rsquo;s - is not context-free.</p>
-<p>The <strong>Pumping Lemma for CFLs</strong> explains why. For any CFL, long strings can be written as $w = uvxyz$ where the $v$ and $y$ parts can be pumped (repeated any number of times) and the string stays in the language. Crucially, $v$ and $y$ together span at most two of the three symbol blocks - so pumping always creates an imbalance among the three counts.</p>
-<p>This is the theoretical limit that separates CFLs from the next level up: the decidable languages recognized by Turing machines.</p>
+<h2 id="what-context-free-grammars-cannot-do">What Context-Free Grammars Cannot Do</h2>
+<p>$\{a^n b^n c^n : n \geq 0\}$, with equal numbers of $a$, $b$ and $c$, is <em>not</em> context-free. One stack can match two counts, but not three: checking the $c$&rsquo;s needs the count of $a$&rsquo;s, which was used up matching the $b$&rsquo;s.</p>
+<p>The <strong>pumping lemma for context-free languages</strong> makes this precise. Any long enough string in a CFL splits as $uvxyz$, where $v$ and $y$ can be repeated any number of times and the result stays in the language. But $v$ and $y$ together can touch at most two of the three blocks, so pumping always breaks one of the balances.</p>
 <hr>
 <h2 id="where-cfgs-appear">Where CFGs Appear</h2>
-<p><strong>Programming language compilers.</strong> Every compiler front-end is built on a CFG. The grammar defines the language; a parser generator (like yacc or ANTLR) produces the parser automatically.</p>
-<p><strong>Natural language processing.</strong> Phrase-structure grammars for English are CFGs. The noun phrase, verb phrase, prepositional phrase hierarchy is a context-free structure (with many complications added for real language).</p>
-<p><strong>Biological sequences.</strong> RNA secondary structure prediction uses CFGs to find the most likely nested base-pairing structure in an RNA sequence - the CYK algorithm adapted to molecular biology.</p>
-<p><strong>Data formats.</strong> JSON, XML, and most structured data formats have context-free grammars. Parsers for these formats are CFG parsers.</p>
+<ul>
+<li><strong>Compilers.</strong> Every front end is built on a grammar, and parser generators like yacc and ANTLR build the parser straight from it.</li>
+<li><strong>Data formats.</strong> JSON, XML and most structured formats have context-free grammars.</li>
+<li><strong>Natural language.</strong> Noun phrases inside verb phrases inside sentences: phrase-structure grammars for English are CFGs, with many complications added.</li>
+<li><strong>Biology.</strong> RNA folds into nested base pairs, and CYK-style parsing predicts the most likely folding.</li>
+</ul>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
-<th>Model</th>
-<th>Grammar class</th>
+<th>Machine</th>
+<th>Grammar</th>
 <th>Memory</th>
-<th>Example language</th>
+<th>Can recognize</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Finite automaton</td>
-<td>Regular grammar</td>
-<td>None</td>
+<td>Regular</td>
+<td>None beyond its state</td>
 <td>$\{w : w \text{ ends in } 01\}$</td>
 </tr>
 <tr>
 <td>Pushdown automaton</td>
-<td>Context-free grammar</td>
-<td>Stack</td>
+<td>Context-free</td>
+<td>One stack</td>
 <td>$\{0^n 1^n : n \geq 0\}$</td>
 </tr>
 <tr>
 <td>Turing machine</td>
-<td>Unrestricted grammar</td>
-<td>Infinite tape</td>
+<td>Unrestricted</td>
+<td>Unbounded tape</td>
 <td>$\{a^n b^n c^n : n \geq 0\}$</td>
 </tr>
 </tbody>
 </table>
-<p>CFGs are strictly more expressive than regular languages: they can count and match nested structures. They are strictly less expressive than Turing machines: they cannot enforce three-way balance or other context-sensitive constraints. The CYK algorithm parses any CFL in $O(n^3)$ time; LL and LR parsers handle common restricted classes in $O(n)$.</p>
+<p>Context-free grammars can count and match nesting, which regular languages can&rsquo;t. They can&rsquo;t enforce three-way balance, which needs more than one stack. CYK parses any of them in $O(n^3)$; the LL and LR parsers inside real compilers handle the practical subset in $O(n)$.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
