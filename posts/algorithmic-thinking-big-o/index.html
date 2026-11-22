@@ -11,8 +11,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
-    <link rel="stylesheet" href="/css/main.min.50c6a374f84378d37dd5a1ea78cb5b1ddd45f1a6ef4980398d8eb058b23378ad.css" />
+    <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795365942" />
+    <script src="/js/algo-demos.js?v=1795366177" defer></script>
+    <script src="/js/big-o.js?v=1795365942" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,13 @@
 
 <meta name="twitter:title" content="Big-O - Why the Right Algorithm Beats Faster Hardware"/>
 <meta name="twitter:description" content="Helpful context:
- How to Think Like a Programmer - Breaking Problems Into Pieces That Yield    In 2002, Google engineers faced a problem: they had crawled roughly 2 billion web pages and needed to sort links between them. The naive approach - compare every pair of pages - would require around $4 \times 10^{18}$ comparisons. On the hardware of the day, that would take thousands of years."/>
+ How to Think Like a Programmer - Breaking Problems Into Pieces That Yield    Here is the whole idea of this post in one picture. Give a slow method a supercomputer, give a smart method a laptop, and grow the input.
+This is an interactive demo. It needs JavaScript to run. Try making the supercomputer 100,000 times faster. It buys a lead at small sizes, then loses anyway."/>
 
     <meta property="og:title" content="Big-O - Why the Right Algorithm Beats Faster Hardware" />
 <meta property="og:description" content="Helpful context:
- How to Think Like a Programmer - Breaking Problems Into Pieces That Yield    In 2002, Google engineers faced a problem: they had crawled roughly 2 billion web pages and needed to sort links between them. The naive approach - compare every pair of pages - would require around $4 \times 10^{18}$ comparisons. On the hardware of the day, that would take thousands of years." />
+ How to Think Like a Programmer - Breaking Problems Into Pieces That Yield    Here is the whole idea of this post in one picture. Give a slow method a supercomputer, give a smart method a laptop, and grow the input.
+This is an interactive demo. It needs JavaScript to run. Try making the supercomputer 100,000 times faster. It buys a lead at small sizes, then loses anyway." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/algorithmic-thinking-big-o/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -153,7 +158,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          9 min read
         </div>
       </div>
     </header>
@@ -164,106 +169,202 @@
 </li>
 </ul>
 <hr>
-<p>In 2002, Google engineers faced a problem: they had crawled roughly 2 billion web pages and needed to sort links between them. The naive approach - compare every pair of pages - would require around $4 \times 10^{18}$ comparisons. On the hardware of the day, that would take thousands of years.</p>
-<p>They didn&rsquo;t buy faster computers. They changed the algorithm.</p>
-<p>This is what Big-O is about. Not microseconds. Not clock cycles. The fundamental question: as your input grows, how does the running time grow with it?</p>
+<p>Here is the whole idea of this post in one picture. Give a slow method a supercomputer, give a smart method a laptop, and grow the input.</p>
+<div class="sf" data-sf="hwrace">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Try making the supercomputer 100,000 times faster. It buys a lead at small sizes, then loses anyway. Faster hardware multiplies your speed by a constant. A better algorithm changes the <em>shape</em> of how the work grows, and shape always wins in the end.</p>
+<p>Big-O is the language for that shape. It doesn&rsquo;t care about microseconds or clock cycles. It asks one question: <strong>as the input grows, how does the work grow with it?</strong></p>
 <hr>
 <h2 id="what-does-fast-mean">What Does &ldquo;Fast&rdquo; Mean?</h2>
-<p>Suppose you&rsquo;re looking up a name in a phone book with 1 million entries. The names are sorted alphabetically.</p>
-<p><strong>Approach 1:</strong> Start on page one, read every name until you find it. In the worst case, you read all 1 million entries. If the book doubled in size, you&rsquo;d read 2 million entries. The work grows linearly with the size.</p>
-<p><strong>Approach 2:</strong> Open to the middle. If the name you want comes before the middle alphabetically, throw away the second half. Repeat on the remaining half. Every step cuts the remaining work in half. With 1 million entries you need at most 20 steps. With 2 million entries, 21 steps. The work barely grows at all.</p>
-<p>Both approaches are &ldquo;correct.&rdquo; One is dramatically better. The difference isn&rsquo;t a matter of implementation detail - it&rsquo;s the shape of the relationship between input size and work. That shape is what Big-O captures.</p>
-<p>We call the input size $n$. The first approach does roughly $n$ operations: we say it runs in $O(n)$ time. The second does roughly $\log_2 n$ operations: we say it runs in $O(\log n)$ time. For $n = 10^6$, that&rsquo;s the difference between 1,000,000 steps and 20 steps.</p>
-<hr>
-<h2 id="big-o-intuition-drop-the-clutter">Big-O Intuition: Drop the Clutter</h2>
-<p>Imagine your algorithm does exactly $3n^2 + 7n + 12$ operations on an input of size $n$. What matters?</p>
-<p>At $n = 1000$:</p>
+<p>Look up a name in a sorted phone book. You can read from the first page, or open the middle and throw away the half that can&rsquo;t contain it.</p>
+<div class="sf" data-sf="phonebook">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Both methods are correct. The difference is the shape:</p>
 <ul>
-<li>The $3n^2$ term contributes $3{,}000{,}000$</li>
-<li>The $7n$ term contributes $7{,}000$</li>
-<li>The constant $12$ contributes $12$</li>
+<li><strong>Reading in order</strong> does about $n$ steps for $n$ entries. Double the book and the work doubles. That&rsquo;s $O(n)$.</li>
+<li><strong>Halving</strong> does about $\log_2 n$ steps. Double the book and it needs <em>one</em> more step. That&rsquo;s $O(\log n)$.</li>
 </ul>
-<p>The $n^2$ term crushes everything else. At $n = 10^6$, the gap is even more extreme. So we say the algorithm is $O(n^2)$ - we drop the constant multiplier 3, and we drop the lower-order terms $7n + 12$.</p>
-<p>Why drop the constant? Because it&rsquo;s hardware-dependent. The same algorithm running on a machine twice as fast would have constant $1.5n^2$. Whether it&rsquo;s $3n^2$ or $1.5n^2$ doesn&rsquo;t change the shape of the curve - it&rsquo;s still quadratic growth. The constant tells you about the machine, not the algorithm.</p>
-<p>Why drop lower-order terms? Because they become irrelevant as $n$ grows. You should care about what happens for large inputs, and for large $n$ the dominant term tells the whole story.</p>
+<p>At a million entries that&rsquo;s a million steps against twenty. We always call the input size $n$.</p>
 <hr>
-<h2 id="formal-definitions">Formal Definitions</h2>
-<p>Now that you have the intuition, here are the precise definitions.</p>
-<p><strong>Big-O  -  $O(g(n))$ (loose upper bound):</strong> $f(n) = O(g(n))$ if $\exists$ positive constants $c$ and $n_0$ such that $f(n) \leq c \cdot g(n)$ for all $n \geq n_0$.</p>
-<p>Informally: $f$ grows no faster than $g$, up to a constant factor, for all large enough $n$.</p>
-<p><strong>Little-o  -  $o(g(n))$ (strict upper bound):</strong> $f(n) = o(g(n))$ if for all positive constants $c$, $\exists\ n_0$ such that $f(n) &lt; c \cdot g(n)$ for all $n \geq n_0$. The growth rate of $f$ is strictly less than that of $g$. Note that $o(n)$ implies $O(n)$, but not vice-versa  -  $\log n$ is both $o(n)$ and $O(n)$, but $n$ is only $O(n)$.</p>
-<p><strong>Big-Omega  -  $\Omega(g(n))$ (loose lower bound):</strong> $f(n) = \Omega(g(n))$ if $\exists$ positive constants $c$ and $n_0$ such that $c \cdot g(n) \leq f(n)$ for all $n \geq n_0$. Informally: $f$ grows at least as fast as $g$.</p>
-<p><strong>Little-omega  -  $\omega(g(n))$ (strict lower bound):</strong> $f(n) = \omega(g(n))$ if for all positive constants $c$, $\exists\ n_0$ such that $c \cdot g(n) &lt; f(n)$ for all $n \geq n_0$. The growth rate of $f$ is strictly greater than that of $g$. Similarly, $\omega(n)$ implies $\Omega(n)$, but not vice-versa  -  $n^2$ is both $\omega(n)$ and $\Omega(n)$, but $n$ is only $\Omega(n)$.</p>
-<p><strong>Big-Theta  -  $\Theta(g(n))$ (tight bound):</strong> $f(n) = \Theta(g(n))$ if $f(n) = O(g(n))$ and $f(n) = \Omega(g(n))$. This pins down the exact growth rate. There is no &ldquo;small theta&rdquo;  -  no function can simultaneously be $o(g(n))$ and $\omega(g(n))$, i.e., strictly above and strictly below $g(n)$ at the same time.</p>
-<p>When we want to be precise - not just &ldquo;no faster than&rdquo; but &ldquo;exactly as fast as&rdquo; - we use $\Theta$. In casual usage, people often say $O$ when they mean $\Theta$; this is imprecise but common.</p>
-<p><strong>Reading the notations intuitively.</strong> If your algorithm runs in:</p>
+<h2 id="drop-the-clutter">Drop the Clutter</h2>
+<p>Suppose an algorithm does exactly $3n^2 + 7n + 12$ steps. Big-O calls that $O(n^2)$: it keeps the biggest term and throws away its constant. Slide $n$ and you can see why.</p>
+<div class="sf" data-sf="clutter">This is an interactive demo. It needs JavaScript to run.</div>
 <ul>
-<li>$O(n)$  -  upper-bounded by linear growth, but may be faster. A loose ceiling.</li>
-<li>$o(n)$  -  strictly faster than any linear algorithm; e.g. $O(\log n)$.</li>
-<li>$\Omega(n)$  -  takes at least linear time; a loose floor.</li>
-<li>$\omega(n)$  -  strictly slower than linear; e.g. $\Omega(n^2)$.</li>
-<li>$\Theta(n)$  -  grows exactly linearly; the tight characterization.</li>
+<li><strong>Lower-order terms vanish.</strong> Past a few hundred, $7n + 12$ is a rounding error next to $3n^2$.</li>
+<li><strong>Constants describe the machine, not the method.</strong> A computer twice as fast turns $3n^2$ into $1.5n^2$. It&rsquo;s still a parabola, and it still grows by four times when $n$ doubles.</li>
 </ul>
 <hr>
 <h2 id="the-common-complexity-classes">The Common Complexity Classes</h2>
-<p>Here are the classes you&rsquo;ll encounter most, ordered from best to worst, with concrete examples.</p>
-<p><strong>$O(1)$ - constant time.</strong> The running time doesn&rsquo;t depend on $n$ at all. Example: looking up element at index $i$ in an array - the address is computed directly as <code>base + i × size</code>. No matter how large the array, this takes the same time.</p>
-<p><strong>$O(\log n)$ - logarithmic.</strong> Time grows by one step every time $n$ doubles. Example: the phone book approach from earlier - halving the remaining entries each step. This technique is called binary search. At $n = 10^9$, you need only about 30 steps.</p>
-<p><strong>$O(n)$ - linear.</strong> Time grows proportionally with input. Example: finding the maximum element in an unsorted array - you must look at every element at least once.</p>
-<p><strong>$O(n \log n)$ - linearithmic.</strong> Time is a little worse than linear but much better than quadratic. Example: merge sort, which sorts $n$ elements in $O(n \log n)$ comparisons. This is the best possible time for comparison-based sorting.</p>
-<p><strong>$O(n^2)$ - quadratic.</strong> Time grows with the square of the input. Example: the naive algorithm for finding all pairs of duplicate elements in an array - compare each element with every other element.</p>
-<p><strong>$O(2^n)$ - exponential.</strong> Time doubles with every new element. Example: generating all subsets of an $n$-element set. At $n = 30$, this is already over 1 billion operations.</p>
-<p><strong>$O(n!)$ - factorial.</strong> Time grows faster than any exponential. Example: the traveling salesman problem - given $n$ cities, find the shortest route that visits each exactly once and returns home. The brute-force approach tries all possible orderings. At $n = 20$, this is $2.4 \times 10^{18}$ operations.</p>
+<p>The fastest way to <em>feel</em> a complexity class is to double the input and see what happens to the work.</p>
+<div class="sf" data-sf="doubling">This is an interactive demo. It needs JavaScript to run.</div>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>When $n$ doubles, the work&hellip;</th>
+<th>Typical example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$O(1)$</td>
+<td>stays the same</td>
+<td>Reading <code>a[i]</code>: the address is just <code>base + i × size</code></td>
+</tr>
+<tr>
+<td>$O(\log n)$</td>
+<td>grows by one step</td>
+<td>Binary search: about 30 steps even at $n = 10^9$</td>
+</tr>
+<tr>
+<td>$O(n)$</td>
+<td>doubles</td>
+<td>Finding the maximum: you have to look at everything once</td>
+</tr>
+<tr>
+<td>$O(n \log n)$</td>
+<td>a bit more than doubles</td>
+<td>Merge sort, the best possible for sorting by comparisons</td>
+</tr>
+<tr>
+<td>$O(n^2)$</td>
+<td>quadruples</td>
+<td>Comparing every element with every other one</td>
+</tr>
+<tr>
+<td>$O(2^n)$</td>
+<td>squares</td>
+<td>Trying every subset: over a billion at $n = 30$</td>
+</tr>
+<tr>
+<td>$O(n!)$</td>
+<td>explodes even faster</td>
+<td>Trying every route through $n$ cities: $2.4 \times 10^{18}$ at $n = 20$</td>
+</tr>
+</tbody>
+</table>
 <blockquote>
-<p><strong>Discomfort check.</strong> &ldquo;But my $O(n^2)$ algorithm runs faster than their $O(n \log n)$ algorithm in practice!&rdquo; This is possible - and common - for small $n$. If the $O(n^2)$ algorithm has a small constant (say, 1 operation per comparison) and the $O(n \log n)$ algorithm has a large constant (say, 100 operations per merge), then for small $n$ the $O(n^2)$ algorithm wins. For large $n$, the $O(n \log n)$ algorithm will always win eventually, no matter how large the constant gap. This crossover point is why we write benchmarks - to find out whether our actual $n$ is in the &ldquo;small&rdquo; regime or the &ldquo;large&rdquo; regime.</p>
+<p><strong>&ldquo;But my $O(n^2)$ code beats their $O(n \log n)$ code!&quot;</strong> For small $n$ it can, and often does. If the $O(n \log n)$ version spends 100 steps where the $O(n^2)$ version spends one, the simple method wins until $n$ is in the hundreds. Past the crossover, the better shape wins at every size, however big the constant. The first demo on this page is that crossover, with the constant played by hardware. Benchmarks exist to tell you which side of the crossover your real $n$ is on.</p>
 </blockquote>
 <hr>
+<h2 id="the-formal-definition-made-visible">The Formal Definition, Made Visible</h2>
+<p>&ldquo;Grows no faster than&rdquo; has a precise meaning:</p>
+<p>$f(n) = O(g(n))$ when there are constants $c &gt; 0$ and $n_0$ such that</p>
+<p>$$f(n) \leq c \cdot g(n) \text{ for all } n \geq n_0$$</p>
+<p>In words: past some starting point $n_0$, a scaled-up copy of $g$ stays on top of $f$ forever. Proving $f(n) = O(g(n))$ just means finding one $c$ and one $n_0$ that work. Find them yourself:</p>
+<div class="sf" data-sf="bigodef">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Notice the two escape hatches. $n_0$ lets you ignore small inputs, where the clutter still matters. $c$ lets you ignore constant factors. But no choice of $c \leq 3$ ever works, because $3n^2 + 7n + 12$ is always more than $3n^2$. That&rsquo;s the definition doing its job: it tolerates constants, not a bigger <em>shape</em>.</p>
+<details>
+<summary>The full family: O, o, Ω, ω and Θ</summary>
+<p><strong>Big-O, $O(g(n))$, a loose upper bound.</strong> $f(n) \leq c \cdot g(n)$ for some $c$ and all $n \geq n_0$. $f$ grows no faster than $g$.</p>
+<p><strong>Little-o, $o(g(n))$, a strict upper bound.</strong> For <em>every</em> $c &gt; 0$ there is an $n_0$ with $f(n) &lt; c \cdot g(n)$ for all $n \geq n_0$. $f$ grows strictly slower than $g$. So $\log n = o(n)$, but $n \neq o(n)$. Every $o$ is also an $O$, but not the other way round.</p>
+<p><strong>Big-Omega, $\Omega(g(n))$, a loose lower bound.</strong> $c \cdot g(n) \leq f(n)$ for some $c$ and all $n \geq n_0$. $f$ grows at least as fast as $g$.</p>
+<p><strong>Little-omega, $\omega(g(n))$, a strict lower bound.</strong> For every $c &gt; 0$, eventually $c \cdot g(n) &lt; f(n)$. $f$ grows strictly faster than $g$. So $n^2 = \omega(n)$, but $n \neq \omega(n)$.</p>
+<p><strong>Big-Theta, $\Theta(g(n))$, a tight bound.</strong> Both $O(g(n))$ and $\Omega(g(n))$: $f$ grows exactly as fast as $g$. There is no &ldquo;little theta&rdquo;, since nothing can be strictly above and strictly below $g$ at once.</p>
+<p>In casual use people say $O$ when they mean $\Theta$. &ldquo;Merge sort is $O(n \log n)$&rdquo; is true, but so is &ldquo;merge sort is $O(n^5)$&rdquo;. $\Theta(n \log n)$ is the precise statement.</p>
+<table>
+<thead>
+<tr>
+<th>If an algorithm is&hellip;</th>
+<th>it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$O(n)$</td>
+<td>at most linear, possibly faster: a ceiling</td>
+</tr>
+<tr>
+<td>$o(n)$</td>
+<td>strictly faster than linear, like $\log n$</td>
+</tr>
+<tr>
+<td>$\Omega(n)$</td>
+<td>at least linear: a floor</td>
+</tr>
+<tr>
+<td>$\omega(n)$</td>
+<td>strictly slower than linear, like $n^2$</td>
+</tr>
+<tr>
+<td>$\Theta(n)$</td>
+<td>exactly linear</td>
+</tr>
+</tbody>
+</table>
+</details>
+<hr>
 <h2 id="worst-average-and-best-case">Worst, Average, and Best Case</h2>
-<p>Big-O describes how time scales with input size - but for a fixed $n$, different inputs can cause very different behavior.</p>
-<p><strong>Best case:</strong> the input that lets the algorithm finish as quickly as possible. Example: linear search where the target happens to be the first element - $O(1)$.</p>
-<p><strong>Worst case:</strong> the input that forces the most work. This is the most commonly analyzed case, because it gives a guarantee: &ldquo;no matter what you throw at this algorithm, it will finish within this time.&rdquo; Example: linear search where the target is the last element or missing - $O(n)$.</p>
-<p><strong>Average case:</strong> the expected time over a random input. This is harder to compute because it requires a model of what &ldquo;random input&rdquo; means. Example: linear search on average finds the target after scanning half the array - $O(n/2) = O(n)$.</p>
-<p>For most algorithm analysis, we focus on worst case. It gives guarantees. But knowing average case matters when you&rsquo;re choosing between algorithms: quicksort has $O(n^2)$ worst case but $O(n \log n)$ average case, and in practice (with random pivot selection) the worst case almost never occurs.</p>
+<p>Big-O describes how work grows with $n$. But for one fixed $n$, different inputs can cost very different amounts. In the phone book race, picking a few targets shows it: reading in order sometimes wins in one step and sometimes needs all 64.</p>
+<ul>
+<li><strong>Best case</strong>: the luckiest input. The target is first: $O(1)$.</li>
+<li><strong>Worst case</strong>: the input that forces the most work. The target is last, or missing: $O(n)$. This is the usual one to quote, because it&rsquo;s a <em>guarantee</em>.</li>
+<li><strong>Average case</strong>: the expected cost over random inputs. On average you read half the list: $O(n/2) = O(n)$.</li>
+</ul>
+<p>Averages matter when choosing between algorithms. Quicksort&rsquo;s worst case is $O(n^2)$, but its average is $O(n \log n)$, and with random pivots the worst case practically never happens. That&rsquo;s why it&rsquo;s the default sort in so many libraries.</p>
 <hr>
-<h2 id="amortized-thinking">Amortized Thinking</h2>
-<p>Sometimes an individual operation is expensive, but expensive operations are rare enough that the average cost per operation is low.</p>
-<p>A dynamic array doubles its capacity when full. Most insertions cost $O(1)$. The occasional doubling costs $O(n)$. Yet if you do $n$ insertions total, the sum of all copying costs is $O(n)$, so the average per insertion is $O(1)$. We say the operation is $O(1)$ amortized.</p>
-<p>Amortized analysis is the subject of a full post later. For now, recognize that &ldquo;amortized $O(1)$&rdquo; is different from &ldquo;always $O(1)$&rdquo; - it&rsquo;s a statement about the cost spread across a sequence of operations.</p>
+<h2 id="amortized-thinking-expensive-steps-that-are-rare">Amortized Thinking: Expensive Steps That Are Rare</h2>
+<p>Some operations are usually cheap and occasionally very expensive. If the expensive ones are rare enough, the <em>average over the whole sequence</em> is still cheap. The classic example is a dynamic array, like a Python list or a C++ <code>vector</code>.</p>
+<div class="sf" data-sf="amortized">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Each copy costs as much as everything pushed so far. But copies happen only at sizes 1, 2, 4, 8, and so on, so all the copying put together adds up to less than $2n$. Spread over $n$ pushes, that&rsquo;s under 3 steps each. We say a push is <strong>$O(1)$ amortized</strong>. That&rsquo;s a promise about the sequence, not about any single push: one unlucky push really can take $O(n)$. <a href="/posts/amortized-analysis/" target="_blank" rel="noopener noreferrer">Amortized Analysis</a>
+ covers the general technique.</p>
 <hr>
-<h2 id="recurrence-relations">Recurrence Relations</h2>
-<p>Divide-and-conquer algorithms split a problem into smaller subproblems. The running time satisfies a recurrence relation. Solving it tells you the complexity.</p>
-<p>The classic example is merge sort. To sort $n$ elements, you sort two halves (each of size $n/2$) and merge them in $O(n)$ time. This gives:</p>
+<h2 id="recurrences-where-divide-and-conquer-spends-its-time">Recurrences: Where Divide-and-Conquer Spends Its Time</h2>
+<p>Divide-and-conquer algorithms split a problem into smaller copies of itself. Merge sort sorts two halves, then merges them in $O(n)$:</p>
 <p>$$T(n) = 2T(n/2) + O(n)$$</p>
-<p>How do we solve this? Draw the recursion tree. At the top level, you do $O(n)$ work. At the next level, two subproblems of size $n/2$ - together they do $2 \cdot O(n/2) = O(n)$ work. And so on, for $\log_2 n$ levels total. Each level does $O(n)$ work, and there are $O(\log n)$ levels, so the total is $O(n \log n)$.</p>
+<p>The way to solve this is to draw the <strong>recursion tree</strong>, where each level is one round of splitting, and add up the work level by level. Choose an algorithm, or set your own $a$, $b$ and $c$:</p>
+<div class="sf" data-sf="mastertree">This is an interactive demo. It needs JavaScript to run.</div>
+<p>For merge sort every level does the same $O(n)$ work, and halving $n$ until it reaches 1 takes $\log_2 n$ levels. So the total is $O(n \log n)$.</p>
 <hr>
 <h2 id="the-master-theorem">The Master Theorem</h2>
-<p>The recurrence $T(n) = aT(n/b) + O(n^c)$ captures a wide class of divide-and-conquer algorithms. The Master Theorem gives the solution based on the relationship between the leaf work ($a$ subproblems, each at the bottom contributes $1$ unit) and the root work ($O(n^c)$ per level call).</p>
-<p>Define the critical exponent as $\log_b a$.</p>
-<p><strong>Case 1 - Leaves dominate:</strong> if $c &lt; \log_b a$, then the work is dominated by the leaf level:</p>
-<p>$$T(n) = \Theta(n^{\log_b a})$$</p>
-<p>Example: Strassen&rsquo;s matrix multiplication - a clever algorithm for multiplying two $n \times n$ matrices that splits each matrix into four $n/2 \times n/2$ blocks and combines them with only 7 recursive multiplications instead of the naive 8 - has $a = 7$, $b = 2$, $c = 2$. Since $\log_2 7 \approx 2.807 &gt; 2$, we&rsquo;re in Case 1: $T(n) = \Theta(n^{2.807})$.</p>
-<p><strong>Case 2 - All levels equal:</strong> if $c = \log_b a$, the work is the same at every level, and there are $\log n$ levels:</p>
-<p>$$T(n) = \Theta(n^c \log n)$$</p>
-<p>Example: merge sort has $a = 2$, $b = 2$, $c = 1$. Since $\log_2 2 = 1 = c$, we&rsquo;re in Case 2: $T(n) = \Theta(n \log n)$.</p>
-<p><strong>Case 3 - Root dominates:</strong> if $c &gt; \log_b a$ (and a technical regularity condition holds), the root level does the most work:</p>
-<p>$$T(n) = \Theta(n^c)$$</p>
-<p>Example: a hypothetical algorithm with $a = 2$, $b = 4$, $c = 1$. Since $\log_4 2 = 0.5 &lt; 1$, we&rsquo;re in Case 3: $T(n) = \Theta(n)$.</p>
-<p><strong>Why the Master Theorem is true.</strong> Think about the recursion tree for $T(n) = aT(n/b) + O(n^c)$.</p>
-<p>At the root you do $n^c$ work. You then branch into $a$ subproblems each of size $n/b$. At depth $k$, there are $a^k$ subproblems each of size $n/b^k$, so the work at that level is:</p>
-<p>$$a^k \cdot \left(\frac{n}{b^k}\right)^c = n^c \cdot \left(\frac{a}{b^c}\right)^k$$</p>
-<p>Let $r = a / b^c$. As you go deeper, the work per level scales by $r$ at each step.</p>
+<p>The tree above has only three possible shapes, and the <strong>Master Theorem</strong> names them. For</p>
+<p>$$T(n) = a \cdot T(n/b) + O(n^c)$$</p>
+<p>each level does $r = a / b^c$ times the work of the level above it. Everything depends on whether $r$ is below, equal to, or above 1. That&rsquo;s the same as comparing $c$ with the <strong>critical exponent</strong> $\log_b a$.</p>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Condition</th>
+<th>Where the work is</th>
+<th>Result</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>$c &lt; \log_b a$ ($r &gt; 1$)</td>
+<td>the leaves</td>
+<td>$\Theta(n^{\log_b a})$</td>
+<td>Strassen, $a=7, b=2, c=2$: $\Theta(n^{2.807})$</td>
+</tr>
+<tr>
+<td>2</td>
+<td>$c = \log_b a$ ($r = 1$)</td>
+<td>every level equally</td>
+<td>$\Theta(n^c \log n)$</td>
+<td>Merge sort, $a=2, b=2, c=1$: $\Theta(n \log n)$</td>
+</tr>
+<tr>
+<td>3</td>
+<td>$c &gt; \log_b a$ ($r &lt; 1$)</td>
+<td>the root</td>
+<td>$\Theta(n^c)$</td>
+<td>$a=2, b=4, c=1$: $\Theta(n)$</td>
+</tr>
+</tbody>
+</table>
+<p>Every preset in the demo lands in one of these rows. Karatsuba&rsquo;s multiplication is case 1, giving $\Theta(n^{1.585})$. Binary search is case 2 with $c = 0$, giving $\Theta(\log n)$.</p>
+<details>
+<summary>Why the Master Theorem is true</summary>
+<p>At depth $k$ of the recursion tree there are $a^k$ subproblems, each of size $n / b^k$, each doing $(n/b^k)^c$ work. So level $k$ does</p>
+<p>$$a^k \cdot \left(\frac{n}{b^k}\right)^c = n^c \cdot \left(\frac{a}{b^c}\right)^k = n^c \cdot r^k$$</p>
+<p>The levels form a geometric series with ratio $r$:</p>
 <ul>
-<li>
-<p>If $r &lt; 1$ (equivalently, $c &gt; \log_b a$): the per-level work shrinks geometrically as you go deeper. The root level dominates. The total is a converging geometric series, giving $\Theta(n^c)$.</p>
-</li>
-<li>
-<p>If $r = 1$ (equivalently, $c = \log_b a$): every level does the same amount of work. There are $\log_b n$ levels, so the total is $\Theta(n^c \log n)$.</p>
-</li>
-<li>
-<p>If $r &gt; 1$ (equivalently, $c &lt; \log_b a$): the per-level work grows as you go deeper. The leaf level dominates. The number of leaves is $a^{\log_b n} = n^{\log_b a}$, so the total is $\Theta(n^{\log_b a})$.</p>
-</li>
+<li><strong>$r &lt; 1$</strong> (so $c &gt; \log_b a$): each level is smaller than the last. The series converges and the root&rsquo;s $n^c$ dominates: $\Theta(n^c)$. Strictly, this case also needs a mild regularity condition on the work function, which polynomials satisfy.</li>
+<li><strong>$r = 1$</strong> (so $c = \log_b a$): every one of the $\log_b n$ levels does $n^c$: $\Theta(n^c \log n)$.</li>
+<li><strong>$r &gt; 1$</strong> (so $c &lt; \log_b a$): each level is bigger than the last, and the leaves dominate. There are $a^{\log_b n} = n^{\log_b a}$ leaves: $\Theta(n^{\log_b a})$.</li>
 </ul>
-<p>The critical exponent $\log_b a$ is just asking: how fast does the number of subproblems grow (captured by $a$) versus how fast does each subproblem shrink in cost (captured by $b^c$)? Whichever side wins determines where the work concentrates.</p>
+<p>The critical exponent $\log_b a$ compares how fast the <em>number</em> of subproblems grows (that&rsquo;s $a$) with how fast each one&rsquo;s <em>cost</em> shrinks (that&rsquo;s $b^c$). Whichever side wins decides where the work concentrates.</p>
+</details>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -271,8 +372,8 @@
 <tr>
 <th>Complexity</th>
 <th>Name</th>
-<th>Example algorithm</th>
-<th>Operations at $n = 10^6$</th>
+<th>Example</th>
+<th>Steps at $n = 10^6$</th>
 </tr>
 </thead>
 <tbody>
@@ -320,7 +421,7 @@
 </tr>
 </tbody>
 </table>
-<p>Big-O tells you the shape of the curve, not the exact number of operations. It tells you how an algorithm scales. And scaling is everything - it&rsquo;s the difference between an algorithm that works on a laptop and one that would take longer than the age of the universe.</p>
+<p>Big-O gives the shape of the curve, not an exact step count. Shape is what decides whether a program finishes on a laptop or outlives the universe, and no amount of hardware changes the shape.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
