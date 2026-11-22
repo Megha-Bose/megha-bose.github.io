@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795372985" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795372985" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -172,7 +175,8 @@
 <hr>
 <p>We&rsquo;ve covered a lot of graph algorithms at this point. BFS, DFS, topological sort, Kosaraju&rsquo;s, Kruskal&rsquo;s, Prim&rsquo;s, Dijkstra&rsquo;s, Bellman-Ford, Floyd-Warshall, max flow - the list is long. But knowing an algorithm exists is only half the battle. The harder question is: given a problem and a graph in front of us, which one do we reach for?</p>
 <p>The answer isn&rsquo;t arbitrary. Each algorithm was designed with assumptions about the graph&rsquo;s structure baked in. Use an algorithm on the wrong kind of graph and it either gives wrong answers or runs forever. The good news: the decision tree is fairly short once we know what to look for.</p>
-<p>This post is a reference - come back to it whenever a graph problem needs untangling.</p>
+<p>This post is a reference - come back to it whenever a graph problem needs untangling. The quickest route is the guide:</p>
+<div class="sf" data-sf="chooser" data-src="/data/graph-algorithm-applicability/chooser.json">This is an interactive guide. It needs JavaScript to run. The table below has the same information.</div>
 <hr>
 <h2 id="the-graph-properties-that-matter">The Graph Properties That Matter</h2>
 <p>Before picking an algorithm, we need to pin down four properties of the graph:</p>
@@ -299,14 +303,14 @@
   <circle cx="305" cy="65" r="24" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
   <text x="305" y="71" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">C</text>
   <line x1="78" y1="53" x2="157" y2="36" stroke="#3b82f6" stroke-width="2" marker-end="url(#ga-ab)"/>
-  <text x="110" y="36" text-anchor="middle" font-size="12" fill="#3b82f6">+1</text>
+  <text x="110" y="36" text-anchor="middle" font-size="12" fill="#3b82f6">+2</text>
   <line x1="203" y1="37" x2="282" y2="54" stroke="#ef4444" stroke-width="2" marker-end="url(#ga-ar)"/>
   <text x="250" y="37" text-anchor="middle" font-size="12" fill="#ef4444">&#x2212;3</text>
   <line x1="79" y1="68" x2="281" y2="68" stroke="#6b7280" stroke-width="2" marker-end="url(#ga-ag)"/>
-  <text x="180" y="84" text-anchor="middle" font-size="12" fill="#6b7280">+2</text>
-  <text x="180" y="112" text-anchor="middle" font-size="11" fill="#374151">A&#x2192;B&#x2192;C = 1+(&#x2212;3) = &#x2212;2 &nbsp;&#x2014;&nbsp; cheaper than A&#x2192;C = +2</text>
+  <text x="180" y="84" text-anchor="middle" font-size="12" fill="#6b7280">+1</text>
+  <text x="180" y="112" text-anchor="middle" font-size="11" fill="currentColor">A&#x2192;B&#x2192;C = 2 + (&#x2212;3) = &#x2212;1, cheaper than A&#x2192;C = +1</text>
 </svg>
-<p>Dijkstra finalises C via A→C (cost 2) before it even processes B. But A→B→C costs 1 + (-3) = -2, which is cheaper. The answer is wrong, and there&rsquo;s no way to detect it from inside the algorithm. Bellman-Ford avoids this by relaxing every edge $V-1$ times with no greedy finalisation, so earlier mistakes get corrected in later rounds.</p>
+<p>Dijkstra finalises C first, via A→C at cost 1, because B is further away (cost 2). But A→B→C costs 2 + (−3) = −1, which is cheaper. The answer is wrong, and there&rsquo;s no way to detect it from inside the algorithm. Bellman-Ford avoids this by relaxing every edge $V-1$ times with no greedy finalisation, so earlier mistakes get corrected in later rounds.</p>
 <p><strong>Why do MST algorithms require undirected graphs?</strong></p>
 <p>A spanning tree connects all vertices using edges that can be traversed in either direction - that&rsquo;s inherently an undirected concept. In a directed graph, the equivalent problem is a <strong>minimum spanning arborescence</strong> (a directed tree rooted at one vertex, edges pointing away from the root). That requires Edmonds' algorithm (Chu-Liu/Edmonds'), which is significantly more complex. Kruskal&rsquo;s and Prim&rsquo;s simply assume we can use each edge both ways.</p>
 <p><strong>Why does Bellman-Ford require no negative cycles?</strong></p>
@@ -314,33 +318,6 @@
 <p><strong>Why does max flow require a directed graph?</strong></p>
 <p>Flow has a direction - it moves from source to sink. An undirected edge between $u$ and $v$ would mean flow could go either way simultaneously, which doesn&rsquo;t map cleanly to the flow model. Undirected flow problems are converted to directed ones by replacing each undirected edge with two directed edges sharing capacity.</p>
 <hr>
-<h2 id="decision-guide">Decision Guide</h2>
-<p>When a graph problem comes up, working through these questions in order usually narrows it down quickly:</p>
-<div class="mermaid">
-graph TD
-    Q1{"Directed or undirected?"}
-    Q1 -->|Undirected| Q2{"Need spanning tree?"}
-    Q1 -->|Directed| Q3{"Has cycles?"}
-    Q2 -->|Yes| A1["Kruskal's or Prim's"]
-    Q2 -->|No| Q4{"Shortest paths?"}
-    Q4 -->|Yes| A2["BFS (unweighted)\nor Dijkstra's"]
-    Q4 -->|No| A3["BFS / DFS\nfor structure"]
-    Q3 -->|No - it's a DAG| Q5{"Ordering or path?"}
-    Q3 -->|Yes| Q6{"Shortest paths?"}
-    Q5 -->|Ordering| A4["Topological sort"]
-    Q5 -->|Longest path| A5["DP on DAG"]
-    Q6 -->|Yes, no neg weights| A6["Dijkstra's"]
-    Q6 -->|Yes, neg weights ok| A7["Bellman-Ford"]
-    Q6 -->|All pairs| A8["Floyd-Warshall"]
-    Q6 -->|No - flow| A9["Ford-Fulkerson\n/ max flow"]
-    Q3 -->|Yes, need SCCs| A10["Kosaraju's"]
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
 <hr>
 <h2 id="summary">Summary</h2>
 <p>The constraints in graph algorithms aren&rsquo;t arbitrary restrictions - each one reflects a genuine mathematical assumption the algorithm relies on. Once we understand <em>why</em> a constraint exists, we know both when to apply the algorithm and what will silently go wrong when we don&rsquo;t.</p>

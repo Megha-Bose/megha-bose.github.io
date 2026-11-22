@@ -286,6 +286,52 @@
     };
   };
 
+  // A clickable decision guide: {title, sub, start, nodes: {id: {q, options: [{label, next}]} | {answer, why, link}}}
+  function chooser(root, spec) {
+    var ui = frame(root, spec.title, spec.sub);
+    var trail = [];
+    var box = h('div', { class: 'sf-chooser' });
+    var crumbs = h('div', { class: 'sf-crumbs' });
+    ui.body.appendChild(crumbs);
+    ui.body.appendChild(box);
+    var back = h('button', { class: 'sf-btn', type: 'button', text: 'Back', onclick: function () { trail.pop(); show(); } });
+    var restart = h('button', { class: 'sf-btn', type: 'button', text: 'Start over', onclick: function () { trail = []; show(); } });
+    ui.controls.appendChild(back);
+    ui.controls.appendChild(restart);
+
+    function show() {
+      var id = trail.length ? trail[trail.length - 1].next : spec.start;
+      var node = spec.nodes[id];
+      box.textContent = '';
+      crumbs.textContent = '';
+      trail.forEach(function (t) { crumbs.appendChild(h('span', { class: 'sf-chip', text: t.label })); });
+      back.disabled = !trail.length;
+      restart.disabled = !trail.length;
+      if (node.q) {
+        box.appendChild(h('p', { class: 'sf-question', text: node.q }));
+        var opts = h('div', { class: 'sf-options' });
+        node.options.forEach(function (o) {
+          opts.appendChild(h('button', { class: 'sf-btn sf-option', type: 'button', text: o.label, onclick: function () { trail.push(o); show(); } }));
+        });
+        box.appendChild(opts);
+        ui.status.textContent = '';
+      } else {
+        box.appendChild(h('p', { class: 'sf-answer', html: node.answer }));
+        ui.status.innerHTML = node.why + (node.link ? ' <a href="' + node.link + '">Read more</a>.' : '');
+      }
+    }
+    show();
+  }
+
+  D.register('chooser', function (root) {
+    var src = root.getAttribute('data-src');
+    root.textContent = 'Loading…';
+    fetch(src).then(function (r) { return r.json(); }).then(function (spec) { chooser(root, spec); }).catch(function (err) {
+      root.textContent = 'This guide could not load.';
+      if (window.console) console.error('chooser', src, err);
+    });
+  });
+
   D.register('player', function (root) {
     var src = root.getAttribute('data-src');
     root.textContent = 'Loading…';
