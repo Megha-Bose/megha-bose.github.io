@@ -97,7 +97,7 @@
         render();
         return st.f < frames.length - 1;
       }
-    }, spec.interval || 700);
+    }, function () { return scenarios[st.s].interval || spec.interval || 700; });
     render();
   }
 

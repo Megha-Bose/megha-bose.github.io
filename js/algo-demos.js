@@ -78,7 +78,7 @@
     function play() {
       if (finished) reset();
       advance();
-      if (!finished) timer = setInterval(advance, interval);
+      if (!finished) timer = setInterval(advance, typeof interval === 'function' ? interval() : interval);
       sync();
     }
 
