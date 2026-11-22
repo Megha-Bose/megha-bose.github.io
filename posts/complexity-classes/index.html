@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795371151" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795371112" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Complexity Classes - Sorting Problems by How Hard They Are"/>
 <meta name="twitter:description" content="Helpful context:
- Space Complexity - When Memory, Not Time, Is the Bottleneck  P, NP, and the Hardest Problems - The Question That Keeps Theorists Up at Night    Computer scientists have catalogued hundreds of complexity classes. P, NP, coNP, BPP, ZPP, RP, #P, PP, PSPACE, EXPTIME, PH, IP, PPAD - the list keeps growing. This isn&rsquo;t taxonomy for its own sake. Each class captures a different kind of resource or computational capability."/>
+ Space Complexity - When Memory, Not Time, Is the Bottleneck  P, NP, and the Hardest Problems - The Question That Keeps Theorists Up at Night    P, NP, co-NP, BPP, ZPP, RP, #P, PSPACE, EXPTIME, PH, IP, PPAD: computer scientists have catalogued hundreds of complexity classes. It isn&rsquo;t collecting for its own sake. Each one captures a different kind of hardness: what happens when you add randomness, alternation, counting, or a conversation."/>
 
     <meta property="og:title" content="Complexity Classes - Sorting Problems by How Hard They Are" />
 <meta property="og:description" content="Helpful context:
- Space Complexity - When Memory, Not Time, Is the Bottleneck  P, NP, and the Hardest Problems - The Question That Keeps Theorists Up at Night    Computer scientists have catalogued hundreds of complexity classes. P, NP, coNP, BPP, ZPP, RP, #P, PP, PSPACE, EXPTIME, PH, IP, PPAD - the list keeps growing. This isn&rsquo;t taxonomy for its own sake. Each class captures a different kind of resource or computational capability." />
+ Space Complexity - When Memory, Not Time, Is the Bottleneck  P, NP, and the Hardest Problems - The Question That Keeps Theorists Up at Night    P, NP, co-NP, BPP, ZPP, RP, #P, PSPACE, EXPTIME, PH, IP, PPAD: computer scientists have catalogued hundreds of complexity classes. It isn&rsquo;t collecting for its own sake. Each one captures a different kind of hardness: what happens when you add randomness, alternation, counting, or a conversation." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/complexity-classes/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          8 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -166,81 +169,54 @@
 </li>
 </ul>
 <hr>
-<p>Computer scientists have catalogued hundreds of complexity classes. P, NP, coNP, BPP, ZPP, RP, #P, PP, PSPACE, EXPTIME, PH, IP, PPAD - the list keeps growing. This isn&rsquo;t taxonomy for its own sake. Each class captures a different kind of resource or computational capability. Understanding where your problem sits in this landscape tells you what tools are appropriate and, crucially, what limitations are fundamental.</p>
-<p>The classes we&rsquo;ll cover here go beyond P and NP. They involve randomness, alternating quantifiers, counting, and interaction - each axis revealing a different dimension of hardness.</p>
+<p>P, NP, co-NP, BPP, ZPP, RP, #P, PSPACE, EXPTIME, PH, IP, PPAD: computer scientists have catalogued hundreds of complexity classes. It isn&rsquo;t collecting for its own sake. Each one captures a different <em>kind</em> of hardness: what happens when you add randomness, alternation, counting, or a conversation. Knowing where a problem sits tells you which tools fit, and which limits are fundamental.</p>
 <hr>
 <h2 id="a-map-of-the-territory">A Map of the Territory</h2>
-<p>Complexity classes are defined by two choices: a <strong>resource bound</strong> (time, space, randomness, number of solutions) and a <strong>machine type</strong> (deterministic, nondeterministic, probabilistic, alternating). The most important containments we know:</p>
-<p>$$L \subseteq NL \subseteq P \subseteq NP \subseteq \text{PSPACE} \subseteq \text{EXPTIME}$$</p>
-<p>Every one of these is believed strict. We can prove $L \neq \text{PSPACE}$ and $P \neq \text{EXPTIME}$. Everything in the middle is open.</p>
+<p>A class is defined by a <strong>resource bound</strong> (time, space, randomness, number of solutions) and a <strong>kind of machine</strong> (deterministic, nondeterministic, probabilistic, alternating). The backbone:</p>
+<p>$$\mathbf{L} \subseteq \mathbf{NL} \subseteq \mathbf{P} \subseteq \mathbf{NP} \subseteq \mathbf{PSPACE} \subseteq \mathbf{EXPTIME}$$</p>
+<p>Every inclusion is believed to be strict. Only the far ends are proven apart: $\mathbf{NL} \neq \mathbf{PSPACE}$ by the space hierarchy theorem, and $\mathbf{P} \neq \mathbf{EXPTIME}$ by the time hierarchy theorem. Everything in between is open.</p>
 <hr>
 <h2 id="the-polynomial-hierarchy">The Polynomial Hierarchy</h2>
-<p>NP lets you guess one witness and verify it. What if the verification itself requires guessing? What if you need to check: does there exist an $x$ such that for all $y$, there exists a $z$ satisfying some condition?</p>
-<p>That nested quantifier structure is captured by the <strong>polynomial hierarchy (PH)</strong>. Define $\Sigma_0^P = P$ and for $k \geq 1$:</p>
-<p>$$\Sigma_k^P = NP^{\Sigma_{k-1}^P}, \qquad \Pi_k^P = \text{co-}\Sigma_k^P$$</p>
-<p>Read $NP^{\Sigma_{k-1}^P}$ as: nondeterministic polynomial time with free access to a $\Sigma_{k-1}^P$ oracle. The first few levels:</p>
-<ul>
-<li>$\Sigma_1^P = NP$, $\Pi_1^P = \text{co-}NP$</li>
-<li>$\Sigma_2^P = NP^{NP}$: guess a witness, then call an NP oracle to verify a property of it</li>
-<li>$\Pi_2^P = \text{co-}NP^{NP}$: universal quantifier at the top, NP oracle inside</li>
-</ul>
-<p>The full hierarchy:</p>
-<p>$$PH = \bigcup_{k \geq 0} \Sigma_k^P$$</p>
-<p>PH lives inside PSPACE. The key structural fact: if the hierarchy <strong>collapses</strong> at any level - meaning $\Sigma_k^P = \Sigma_{k+1}^P$ for some $k$ - then $PH = \Sigma_k^P$. In particular, $P = NP$ would collapse PH all the way to $P$.</p>
-<p>Most complexity theorists believe PH doesn&rsquo;t collapse. If PH is infinite, that alone implies $P \neq NP$. The contrapositive is a useful intuition pump: if you ever prove $P = NP$, you&rsquo;ve also collapsed the entire polynomial hierarchy.</p>
+<p>NP guesses one witness and checks it. What if checking the witness <em>itself</em> needs a guess? &ldquo;Is there an $x$ such that for <em>every</em> $y$, there&rsquo;s a $z$ with&hellip;&quot;: nested, alternating quantifiers. That&rsquo;s the <strong>polynomial hierarchy</strong>. With $\Sigma_0^P = \mathbf{P}$:</p>
+<p>$$\Sigma_k^P = \mathbf{NP}^{\Sigma_{k-1}^P}, \qquad \Pi_k^P = \text{co-}\Sigma_k^P, \qquad \mathbf{PH} = \bigcup_k \Sigma_k^P$$</p>
+<p>Here $\mathbf{NP}^{\mathcal{C}}$ means NP with a free oracle for anything in class $\mathcal{C}$. So $\Sigma_1^P = \mathbf{NP}$, and $\Sigma_2^P = \mathbf{NP}^{\mathbf{NP}}$: guess something, then ask an NP oracle about it.</p>
+<p>PH sits inside PSPACE. If any two levels coincide, the whole hierarchy <strong>collapses</strong> to that level, and P = NP would collapse it all the way down to P. Most theorists believe PH is infinite, which would imply P ≠ NP.</p>
 <hr>
-<h2 id="randomized-classes">Randomized Classes</h2>
-<p>What if the machine can flip fair coins?</p>
-<p><strong>BPP</strong> (Bounded-error Probabilistic Polynomial time): a language is in BPP if there is a randomized polynomial-time algorithm that is correct with probability at least $2/3$ on every input. The $2/3$ threshold isn&rsquo;t special - run $k$ independent trials and take majority vote; the error drops to $2^{-\Omega(k)}$. BPP is robust.</p>
-<p><strong>RP</strong> (Randomized Polynomial time): one-sided error. Always correct on NO instances; correct on YES instances with probability at least $1/2$. Useful when false positives are catastrophic.</p>
-<p><strong>co-RP</strong>: the mirror. Always correct on YES; error $\leq 1/2$ on NO.</p>
-<p><strong>ZPP</strong> $= RP \cap \text{co-}RP$: zero error, expected polynomial time. Las Vegas algorithms.</p>
-<p>The containment chain: $P \subseteq ZPP \subseteq RP \subseteq BPP$, and $RP \subseteq NP$. Also $BPP \subseteq \Sigma_2^P \cap \Pi_2^P$ - BPP sits in the second level of the polynomial hierarchy.</p>
-<p><strong>The derandomization conjecture: $BPP = P$.</strong> Randomness is widely believed not to add power for decision problems. Under plausible circuit lower bounds (the Nisan-Wigderson generator framework), $BPP = P$ follows. Most known BPP algorithms have eventually been derandomized. Primality testing lived in RP for decades before the AKS algorithm (2002) put it in P.</p>
+<h2 id="randomness-bpp-rp-zpp">Randomness: BPP, RP, ZPP</h2>
+<p>Give the machine fair coins.</p>
+<ul>
+<li><strong>BPP</strong>: a randomized polynomial-time algorithm that&rsquo;s right with probability at least 2/3 on <em>every</em> input. The 2/3 isn&rsquo;t special: repeat $k$ times and take the majority vote, and the error drops exponentially in $k$.</li>
+<li><strong>RP</strong>: one-sided error. Never wrong when the answer is no; right at least half the time when it&rsquo;s yes. <strong>co-RP</strong> is the mirror image.</li>
+<li><strong>ZPP</strong> = RP ∩ co-RP: never wrong, with polynomial <em>expected</em> running time. These are Las Vegas algorithms; <a href="/posts/randomized-algorithms/" target="_blank" rel="noopener noreferrer">Randomized Algorithms</a>
+ has examples.</li>
+</ul>
+<p>$\mathbf{P} \subseteq \mathbf{ZPP} \subseteq \mathbf{RP} \subseteq \mathbf{BPP}$, and $\mathbf{RP} \subseteq \mathbf{NP}$. BPP even fits inside the second level of the hierarchy.</p>
+<p><strong>The big conjecture is BPP = P</strong>: randomness doesn&rsquo;t really add power for yes/no questions. It follows from plausible circuit lower bounds, via Nisan and Wigderson&rsquo;s pseudorandom generators, and many famous randomized algorithms have since been derandomized. Primality testing had fast randomized algorithms for decades before the AKS algorithm put it in P in 2002.</p>
 <hr>
 <h2 id="counting-p">Counting: #P</h2>
-<p>NP asks whether a solution exists. What if you want to count all solutions?</p>
-<p><strong>#P</strong> is a class of functions, not languages. A function $f$ is in #P if there is a polynomial-time nondeterministic machine such that $f(x)$ equals the number of its accepting computation paths on input $x$.</p>
-<p>Examples:</p>
-<ul>
-<li>$#\text{SAT}$: count the satisfying assignments of a CNF formula</li>
-<li>$#\text{MATCH}$: count perfect matchings in a bipartite graph (this is the permanent of a 0-1 matrix)</li>
-<li>$#\text{3-COL}$: count proper 3-colorings of a graph</li>
-</ul>
-<p><strong>Valiant&rsquo;s theorem (1979).</strong> $#\text{SAT}$ is $#P$-complete. More strikingly, $#\text{MATCH}$ is also $#P$-complete - even though deciding whether a perfect matching <em>exists</em> is in $P$.</p>
-<p>This is one of the sharpest separations in complexity theory: a decision problem can be easy while its counting version is as hard as counting satisfying assignments of arbitrary Boolean formulas. Knowing a solution exists tells you almost nothing about how many exist.</p>
-<p><strong>Toda&rsquo;s theorem.</strong> The entire polynomial hierarchy is contained in polynomial time with a #P oracle:</p>
-<p>$$PH \subseteq P^{#P}.$$</p>
-<p>Counting is more powerful than alternating quantifiers. If you could count solutions exactly and efficiently, you could solve everything in NP and co-NP and $\Sigma_2^P$ and higher - all at once.</p>
+<p>NP asks whether a solution <em>exists</em>. <strong>#P</strong> asks how many there are: count the accepting paths of a nondeterministic polynomial-time machine. #SAT counts satisfying assignments; #MATCH counts perfect matchings in a bipartite graph.</p>
+<p><strong>Valiant&rsquo;s theorem (1979):</strong> #SAT is #P-complete, and so is #MATCH, even though <em>deciding</em> whether a perfect matching exists is easy. Knowing that a solution exists can tell you almost nothing about how many there are.</p>
+<p><strong>Toda&rsquo;s theorem:</strong> $\mathbf{PH} \subseteq \mathbf{P}^{\#\mathbf{P}}$. Exact counting is at least as powerful as the entire polynomial hierarchy put together.</p>
 <hr>
-<h2 id="interactive-proofs-and-ip--pspace">Interactive Proofs and IP = PSPACE</h2>
-<p>Classical proof systems have a prover submit a proof, and a verifier check it. Interactive proofs let them have a conversation.</p>
-<p><strong>Definition.</strong> $IP$ is the class of languages with an interactive proof system: an all-powerful prover and a polynomial-time probabilistic verifier exchange polynomially many messages. Requirements:</p>
-<ul>
-<li><em>Completeness</em>: for yes-instances, the honest prover makes the verifier accept with probability $\geq 2/3$.</li>
-<li><em>Soundness</em>: for no-instances, no prover strategy makes the verifier accept with probability $&gt; 1/3$.</li>
-</ul>
-<p><strong>Theorem (Shamir, 1992).</strong> $IP = PSPACE$.</p>
-<p>This is astonishing. Interactive proofs are exactly as powerful as polynomial space. The prover can convince the verifier of any fact in PSPACE - including things like &ldquo;this quantified Boolean formula is false&rdquo; - using a polynomial-length conversation.</p>
-<p>The proof technique is <strong>arithmetization</strong>: turn Boolean formulas into polynomials over a field. The verifier asks the prover to evaluate these polynomials at random points; the Schwartz-Zippel lemma ensures that a lying prover is caught with high probability.</p>
-<p>One consequence: graph non-isomorphism is in IP. The verifier randomly permutes one of two graphs and asks the prover to identify which one it came from. An honest prover (who can distinguish the graphs) always answers correctly; a prover trying to fake isomorphism answers correctly only half the time. Ten rounds reduce the soundness error below $2^{-10}$.</p>
+<h2 id="interactive-proofs-ip--pspace">Interactive Proofs: IP = PSPACE</h2>
+<p>A classical proof is written down once and checked. An <strong>interactive proof</strong> is a conversation: an all-powerful prover and a randomized polynomial-time verifier exchange messages. The honest prover must win on yes-instances with probability at least 2/3 (<em>completeness</em>), and no prover can win on no-instances with probability above 1/3 (<em>soundness</em>).</p>
+<p><strong>Shamir (1992): IP = PSPACE.</strong> A short conversation can establish anything in PSPACE, including that a quantified Boolean formula is <em>false</em>. The technique, <strong>arithmetization</strong>, turns formulas into polynomials and has the verifier check them at random points: by the Schwartz–Zippel lemma, a lying prover gets caught with high probability. <a href="/posts/polynomial-identity-testing/" target="_blank" rel="noopener noreferrer">Polynomial Identity Testing</a>
+ explains the lemma.</p>
+<p>A gentle example is <strong>graph non-isomorphism</strong>. The verifier secretly picks one of the two graphs, scrambles its vertex labels, and asks which one it was. If the graphs really differ, the prover can always tell. If they&rsquo;re secretly the same, the prover can only guess, and is caught half the time. Ten rounds push a cheat&rsquo;s chances below $2^{-10}$.</p>
 <hr>
 <h2 id="zero-knowledge-proofs">Zero-Knowledge Proofs</h2>
-<p>Interactive proofs let you prove something. Zero-knowledge proofs let you prove something <em>without revealing why it&rsquo;s true</em>.</p>
-<p>Consider 3-coloring: you claim to know a valid 3-coloring of a graph, and you want to prove it to a skeptic without revealing the coloring itself. Protocol: randomly permute your color names. Cover all vertices. The verifier picks a random edge. You reveal the two endpoints' colors. They&rsquo;re different. Repeat for many rounds.</p>
-<p>After $|E|$ rounds, the verifier is convinced with high probability that a valid coloring exists. But they learn nothing about the actual coloring - every round shows two distinct colors from a random permutation, which is information-theoretically uninformative about the original assignment.</p>
-<p>Zero-knowledge proofs are used in cryptography, blockchain systems, and privacy-preserving authentication. They rely on computational assumptions, but the proof-of-concept works for any NP problem.</p>
+<p>Zero-knowledge goes further: prove something is true <em>without revealing why</em>. Here&rsquo;s a proof that you know a 3-coloring of a graph, which never shows the coloring:</p>
+<div class="sf" data-sf="player" data-src="/data/complexity-classes/zero-knowledge.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>Every round the prover renames the three colors at random and locks every vertex away; the verifier opens just one edge. A real coloring always shows two different colors. A fake has at least one bad edge, and each round has at least a $1/|E|$ chance of hitting it. One round isn&rsquo;t much, but after $k \cdot |E|$ rounds a cheat survives with probability only about $e^{-k}$. Meanwhile each opened edge shows two different, freshly renamed colors, which says nothing about the real coloring.</p>
+<p>With cryptographic commitments to lock the colors away, this works for every NP problem. Zero-knowledge proofs now underpin privacy-preserving authentication and many blockchain systems.</p>
 <hr>
 <h2 id="ppad-and-nash-equilibria">PPAD and Nash Equilibria</h2>
-<p>Some problems are guaranteed to have solutions - not by algorithm, but by mathematics. Fixed-point theorems (Brouwer, Kakutani) guarantee Nash equilibria exist for every finite game. But finding them is hard.</p>
-<p><strong>PPAD</strong> captures this kind of problem: a total search problem where a solution provably exists but finding it is computationally difficult. PPAD stands for &ldquo;Polynomial Parity Argument on a Directed graph&rdquo; - it exploits the fact that in certain graphs, every source has a corresponding sink.</p>
-<p><strong>Theorem.</strong> Computing a Nash equilibrium of a 2-player game is PPAD-complete.</p>
-<p>PPAD sits between P and NP but is not known to be NP-complete. This is significant: the problem always has a solution (so it&rsquo;s not an NP-complete decision problem in the usual sense), yet finding it appears to require exponential time in the worst case.</p>
-<p>The practical implication: economists can&rsquo;t efficiently compute market equilibria. This isn&rsquo;t just a limitation of current algorithms - PPAD-completeness suggests the hardness is fundamental.</p>
+<p>Some problems <em>always</em> have a solution, guaranteed by a mathematical theorem rather than an algorithm. Every finite game has a Nash equilibrium, by fixed-point theorems; finding one is another matter.</p>
+<p><strong>PPAD</strong>, &ldquo;polynomial parity argument on directed graphs&rdquo;, captures exactly these: total search problems whose solutions are guaranteed by a parity argument, in a graph where every unbalanced vertex has a partner at the other end of a path.</p>
+<p><strong>Computing a Nash equilibrium, even of a two-player game, is PPAD-complete</strong> (Chen and Deng, 2006, building on Daskalakis, Goldberg and Papadimitriou). PPAD is a class of search problems sitting between FP and FNP, the function versions of P and NP. It&rsquo;s unlikely to be NP-hard, since a solution always exists, yet no efficient algorithm is expected. That&rsquo;s worst-case hardness: it suggests no fast method finds equilibria for <em>every</em> game, which is why algorithms for markets and games lean on special structure.</p>
 <hr>
 <blockquote>
-<p><strong>Discomfort check.</strong> With hundreds of complexity classes, most apparently distinct from P and NP, does any of this matter practically?</p>
-<p>Yes, significantly. PPAD-completeness of Nash equilibria explains why large-scale market simulations can&rsquo;t find exact equilibria. #P-hardness of counting explains why computing the partition function in statistical mechanics is hard, and why estimating network reliability is hard. IP = PSPACE means interactive protocols in cryptography have deep theoretical roots. The landscape matters when you want to know: is there a polynomial-time algorithm, or is the hardness provably fundamental? The answer often depends on which class your problem belongs to, not just whether it&rsquo;s in NP.</p>
+<p><strong>&ldquo;Does this zoo matter in practice?&quot;</strong> Yes. #P-hardness explains why computing partition functions in statistical physics, or network reliability, is hard. PPAD-completeness explains why exact equilibria are elusive in big strategic settings. IP = PSPACE and zero-knowledge underpin real cryptographic protocols. Often the useful question isn&rsquo;t &ldquo;is it in NP?&rdquo; but &ldquo;which kind of hard is it?&rdquo;</p>
 </blockquote>
 <hr>
 <h2 id="summary">Summary</h2>
@@ -255,68 +231,68 @@
 </thead>
 <tbody>
 <tr>
-<td>$P$</td>
-<td>Poly-time, deterministic</td>
-<td>Circuit value problem</td>
+<td>$\mathbf{P}$</td>
+<td>Deterministic polynomial time</td>
+<td>Circuit value</td>
 <td>Closed under complement</td>
 </tr>
 <tr>
-<td>$NP$</td>
-<td>Poly-time verifiable certificate</td>
+<td>$\mathbf{NP}$</td>
+<td>Certificates checkable in polynomial time</td>
 <td>SAT</td>
-<td>$NP \subseteq \text{PSPACE}$</td>
+<td>$\mathbf{NP} \subseteq \mathbf{PSPACE}$</td>
 </tr>
 <tr>
-<td>$\text{co-}NP$</td>
-<td>Complement of NP</td>
+<td>co-$\mathbf{NP}$</td>
+<td>Complements of NP problems</td>
 <td>Tautology</td>
-<td>$P = NP \Leftrightarrow NP = \text{co-}NP$? Open</td>
+<td>P = NP would imply NP = co-NP</td>
 </tr>
 <tr>
 <td>$\Sigma_2^P$</td>
-<td>$NP^{NP}$</td>
-<td>$\exists \forall$ SAT</td>
-<td>Collapses if $P = NP$</td>
+<td>$\mathbf{NP}^{\mathbf{NP}}$</td>
+<td>$\exists\forall$-SAT</td>
+<td>Collapses if P = NP</td>
 </tr>
 <tr>
-<td>$PH$</td>
-<td>$\bigcup_k \Sigma_k^P$</td>
-<td>-</td>
-<td>Lives inside PSPACE</td>
+<td>$\mathbf{PH}$</td>
+<td>All levels $\Sigma_k^P$</td>
+<td>None known</td>
+<td>Inside PSPACE</td>
 </tr>
 <tr>
-<td>$BPP$</td>
+<td>$\mathbf{BPP}$</td>
 <td>Randomized, bounded error</td>
-<td>-</td>
-<td>Conjectured $= P$</td>
+<td>None known</td>
+<td>Conjectured to equal P</td>
 </tr>
 <tr>
-<td>$#P$</td>
+<td>$\#\mathbf{P}$</td>
 <td>Counting NP witnesses</td>
-<td>$#\text{SAT}$, permanent</td>
-<td>$PH \subseteq P^{#P}$</td>
+<td>#SAT, the permanent</td>
+<td>$\mathbf{PH} \subseteq \mathbf{P}^{\#\mathbf{P}}$</td>
 </tr>
 <tr>
-<td>$IP$</td>
+<td>$\mathbf{IP}$</td>
 <td>Interactive proofs</td>
 <td>-</td>
-<td>$= \text{PSPACE}$ (Shamir)</td>
+<td>Equals PSPACE (Shamir)</td>
 </tr>
 <tr>
-<td>$PPAD$</td>
-<td>Total search, fixed-point type</td>
+<td>$\mathbf{PPAD}$</td>
+<td>Search problems with guaranteed solutions</td>
 <td>Nash equilibrium</td>
-<td>Between P and NP</td>
+<td>Between FP and FNP</td>
 </tr>
 <tr>
-<td>$\text{PSPACE}$</td>
-<td>Poly-space</td>
+<td>$\mathbf{PSPACE}$</td>
+<td>Polynomial space</td>
 <td>TQBF</td>
-<td>$= IP$, contains all of PH</td>
+<td>Equals IP; contains PH</td>
 </tr>
 </tbody>
 </table>
-<p>The deeper lesson: complexity is not a binary hard/easy distinction. It&rsquo;s a landscape, with different kinds of hardness corresponding to different computational resources and proof strategies. P vs NP is the most famous open question, but the landscape around it is already rich with answers.</p>
+<p>Complexity isn&rsquo;t a single line from easy to hard. It&rsquo;s a landscape, where different kinds of hardness come from different resources and kinds of proof. P vs NP is the most famous open question in it, but the landscape around it is already rich with answers.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
