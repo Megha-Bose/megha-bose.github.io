@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795371947" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795372102" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="SAT - The Problem at the Heart of NP"/>
 <meta name="twitter:description" content="Helpful context:
- NP-Completeness - Why Some Problems Are All the Same Problem  Constraint Satisfaction - Searching Smart, Not Exhaustively    In 2016, mathematicians Marijn Heule, Oliver Kullmann, and Victor Marek solved the Boolean Pythagorean triples problem using a SAT solver. The problem: can you color every positive integer either red or blue such that no Pythagorean triple $(a, b, c)$ with $a^2 &#43; b^2 = c^2$ is monochromatic (all the same color)?"/>
+ NP-Completeness - Why Some Problems Are All the Same Problem  Constraint Satisfaction - Searching Smart, Not Exhaustively    In 2016 Marijn Heule, Oliver Kullmann and Victor Marek settled the Boolean Pythagorean triples problem with a SAT solver. Can the positive integers be colored red and blue so that no Pythagorean triple $a^2 &#43; b^2 = c^2$ is all one color? The numbers 1 to 7,824 can be."/>
 
     <meta property="og:title" content="SAT - The Problem at the Heart of NP" />
 <meta property="og:description" content="Helpful context:
- NP-Completeness - Why Some Problems Are All the Same Problem  Constraint Satisfaction - Searching Smart, Not Exhaustively    In 2016, mathematicians Marijn Heule, Oliver Kullmann, and Victor Marek solved the Boolean Pythagorean triples problem using a SAT solver. The problem: can you color every positive integer either red or blue such that no Pythagorean triple $(a, b, c)$ with $a^2 &#43; b^2 = c^2$ is monochromatic (all the same color)?" />
+ NP-Completeness - Why Some Problems Are All the Same Problem  Constraint Satisfaction - Searching Smart, Not Exhaustively    In 2016 Marijn Heule, Oliver Kullmann and Victor Marek settled the Boolean Pythagorean triples problem with a SAT solver. Can the positive integers be colored red and blue so that no Pythagorean triple $a^2 &#43; b^2 = c^2$ is all one color? The numbers 1 to 7,824 can be." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/sat-constraint-satisfaction/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          8 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -166,67 +169,67 @@
 </li>
 </ul>
 <hr>
-<p>In 2016, mathematicians Marijn Heule, Oliver Kullmann, and Victor Marek solved the Boolean Pythagorean triples problem using a SAT solver. The problem: can you color every positive integer either red or blue such that no Pythagorean triple $(a, b, c)$ with $a^2 + b^2 = c^2$ is monochromatic (all the same color)? They answered no, and their proof required checking a Boolean formula encoded across 200 terabytes of clauses. The proof file is longer than any human could read in a lifetime.</p>
-<p>SAT solvers - programs for deciding Boolean satisfiability - are NP-complete in theory. Yet they routinely solve instances with millions of variables in seconds. The gap between &ldquo;NP-complete in the worst case&rdquo; and &ldquo;fast in practice&rdquo; is enormous for SAT, and understanding that gap is one of the most important stories in modern computer science.</p>
+<p>In 2016 Marijn Heule, Oliver Kullmann and Victor Marek settled the <strong>Boolean Pythagorean triples problem</strong> with a SAT solver. Can the positive integers be colored red and blue so that no Pythagorean triple $a^2 + b^2 = c^2$ is all one color? The numbers 1 to 7,824 can be. The numbers 1 to 7,825 can&rsquo;t. The computer-checked proof took 200 terabytes, far more than any human could read in a lifetime.</p>
+<p>SAT is NP-complete, so in theory it&rsquo;s as hard as anything in NP. Yet SAT solvers routinely handle millions of variables. The gap between &ldquo;NP-complete in the worst case&rdquo; and &ldquo;fast in practice&rdquo; is enormous for SAT, and understanding it is one of the great stories in modern computing.</p>
 <hr>
 <h2 id="boolean-satisfiability">Boolean Satisfiability</h2>
-<p>A Boolean formula in <strong>Conjunctive Normal Form (CNF)</strong> is an AND of clauses, where each clause is an OR of literals. A literal is a variable $x_i$ or its negation $\neg x_i$.</p>
+<p>A formula in <strong>conjunctive normal form (CNF)</strong> is an AND of <strong>clauses</strong>, each an OR of <strong>literals</strong>: a variable $x_i$ or its negation $\neg x_i$.</p>
 <p>$$\varphi = (x_1 \vee \neg x_2 \vee x_3) \wedge (\neg x_1 \vee x_2) \wedge (x_2 \vee \neg x_3)$$</p>
-<p>SAT asks: is there an assignment of true/false to the variables making $\varphi$ true? For this formula, try $x_1 = 1, x_2 = 1, x_3 = 0$: first clause - $1 \vee 0 \vee 0 = 1$, second clause - $0 \vee 1 = 1$, third clause - $1 \vee 1 = 1$. Yes, it&rsquo;s satisfiable.</p>
-<p>Each clause rules out exactly one assignment (the one that falsifies all its literals). Satisfying the formula means finding an assignment that survives every constraint simultaneously.</p>
-<p>SAT is NP-complete (Cook-Levin theorem). The general question - given a CNF formula, does a satisfying assignment exist? - is at least as hard as every problem in NP. But the theory gets richer when you restrict the clause size.</p>
+<p>SAT asks whether some true/false assignment makes every clause true. Here $x_1 = x_2 = $ true, $x_3 = $ false works. Each clause forbids exactly one combination of <em>its own</em> variables, the one making all its literals false; a solution has to avoid every forbidden combination at once.</p>
+<p>SAT is NP-complete: that&rsquo;s the <a href="/posts/np-completeness-reductions/#cooks-theorem-sat-is-np-complete" target="_blank" rel="noopener noreferrer">Cook-Levin theorem</a>
+. Restricting clause size changes the story sharply, though.</p>
 <hr>
-<h2 id="2-sat-is-in-p">2-SAT Is in P</h2>
-<p>If every clause has exactly 2 literals, something remarkable happens: the problem becomes solvable in linear time.</p>
-<p>The key insight: every 2-clause $(a \vee b)$ is equivalent to two implications: $\neg a \Rightarrow b$ and $\neg b \Rightarrow a$. Build an <strong>implication graph</strong> with a node for every literal (each variable $x_i$ contributes both $x_i$ and $\neg x_i$) and a directed edge for each implication.</p>
-<p>Now run <strong>Strongly Connected Components (SCC)</strong> on the implication graph. Two nodes in the same SCC can each be derived from the other - so if $x_i$ and $\neg x_i$ are in the same SCC, we&rsquo;d need $x_i$ to imply $\neg x_i$ and $\neg x_i$ to imply $x_i$ simultaneously. That&rsquo;s a contradiction: the formula is unsatisfiable.</p>
-<p>If no variable and its negation share an SCC, the formula is satisfiable. The assignment is: for each variable, assign the value corresponding to whichever of $x_i$ or $\neg x_i$ appears in the SCC with the higher topological order (appears later in the topological sort of the SCC DAG).</p>
-<p>This whole procedure runs in $O(n + m)$ time, where $n$ is the number of variables and $m$ is the number of clauses.</p>
-<p>The jump from 2 to 3 literals per clause is one of the sharpest dichotomies in all of complexity theory: 2-SAT is in P, 3-SAT is NP-complete.</p>
+<h2 id="2-sat-is-easy">2-SAT Is Easy</h2>
+<p>With at most two literals per clause, SAT is solvable in linear time. Every clause $(a \vee b)$ says the same as two implications: $\neg a \Rightarrow b$ and $\neg b \Rightarrow a$. Build the <strong>implication graph</strong>, with a vertex for every literal and an edge for every implication, and find its <a href="/posts/graph-algorithms-traversal/#strongly-connected-components" target="_blank" rel="noopener noreferrer">strongly connected components</a>
+.</p>
+<p>If some $x_i$ and $\neg x_i$ land in the same component, each forces the other, which is a contradiction: unsatisfiable. Otherwise, set each variable to whichever of $x_i$ and $\neg x_i$ comes <em>later</em> in the topological order of the components. The whole thing is $O(n + m)$ for $n$ variables and $m$ clauses.</p>
+<p>Going from 2 literals per clause to 3 is one of the sharpest cliffs in complexity theory: 2-SAT is in P, 3-SAT is NP-complete.</p>
 <hr>
-<h2 id="the-dpll-algorithm">The DPLL Algorithm</h2>
-<p>For 3-SAT and beyond, we can&rsquo;t guarantee polynomial time. The first systematic algorithm was <strong>DPLL</strong> (Davis, Putnam, Logemann, Loveland, 1962), which remains the conceptual backbone of modern SAT solving.</p>
-<p>DPLL is backtracking search, enhanced with two propagation rules:</p>
-<p><strong>Unit propagation.</strong> If a clause has exactly one unset literal, that literal <em>must</em> be set to true. (Setting it false would falsify the clause.) This forced assignment can trigger more forced assignments - a cascade of implications that rapidly restricts the search space.</p>
-<p><strong>Pure literal elimination.</strong> If a literal $x_i$ appears only positively in all remaining clauses (never as $\neg x_i$), set $x_i = 1$. Setting it true satisfies all clauses containing it and harms nothing. Similarly for literals appearing only negatively.</p>
-<p>The algorithm: pick an unset variable, branch on its value (try true, then false), propagate forced assignments using the two rules above, detect conflicts (a clause becomes empty - all its literals are falsified), and backtrack.</p>
-<p>This is still exponential in the worst case - random 3-SAT near the phase transition (a specific clause-to-variable ratio around 4.27) can require exponential search even for the best solvers. But for structured instances, it&rsquo;s often fast.</p>
+<h2 id="dpll-decide-propagate-backtrack">DPLL: Decide, Propagate, Backtrack</h2>
+<p>The <strong>DPLL</strong> algorithm (Davis, Putnam, Logemann and Loveland, 1962) is still the backbone of SAT solving: backtracking search, plus propagation.</p>
+<ul>
+<li><strong>Unit propagation</strong>: if every literal in a clause is false except one unset literal, that literal <em>must</em> be true. Each forced assignment can make more clauses unit, setting off a cascade.</li>
+<li><strong>Pure literals</strong>: a variable that appears only positively (or only negatively) can simply be set to satisfy all its clauses.</li>
+</ul>
+<p>Decide a variable, propagate everything that&rsquo;s forced, and on a <strong>conflict</strong>, a clause with every literal false, backtrack:</p>
+<div class="sf" data-sf="player" data-src="/data/sat-constraint-satisfaction/dpll.json">This is an interactive animation. It needs JavaScript to run.</div>
 <hr>
-<h2 id="cdcl-the-modern-revolution">CDCL: The Modern Revolution</h2>
-<p><strong>Conflict-Driven Clause Learning (CDCL)</strong> is the innovation that turned SAT from a research curiosity into an industrial tool.</p>
-<p>When DPLL hits a conflict, it backtracks to the most recent branch point and tries the other value. CDCL does something smarter: it <em>analyzes</em> the conflict to learn why it happened, then adds a new clause to the formula that prevents the same conflict from arising again.</p>
-<p>Here&rsquo;s the process:</p>
-<p><strong>Step 1: Build the implication graph.</strong> As forced assignments cascade from variable decisions, track what caused each assignment: &ldquo;variable $x_3$ was forced to true because clause $(x_3 \vee \neg x_1 \vee \neg x_7)$ became unit after $x_1 = 1$ and $x_7 = 1$ were set.&rdquo; This creates a directed graph of implication relationships.</p>
-<p><strong>Step 2: Identify the Unique Implication Point (UIP).</strong> When a conflict is reached (a clause is entirely falsified), analyze the implication graph. Find the &ldquo;last&rdquo; decision variable that dominates all paths to the conflict - this is the UIP.</p>
-<p><strong>Step 3: Learn a clause.</strong> Cut the implication graph at the UIP to extract a new clause. This clause is logically implied by the original formula (it&rsquo;s not adding new information), but it <em>directly encodes</em> the reason for the conflict in a compact form. The solver learns it and adds it to its clause database.</p>
-<p><strong>Step 4: Non-chronological backjumping.</strong> Instead of backtracking just one level, jump back to the second-highest decision level among the learned clause&rsquo;s literals. This is often many levels back - you might skip over thousands of useless search branches in one jump.</p>
+<h2 id="cdcl-learning-from-mistakes">CDCL: Learning From Mistakes</h2>
+<p><strong>Conflict-driven clause learning (CDCL)</strong> turned SAT from a research curiosity into an industrial tool. When plain DPLL hits a conflict, it backtracks one step and tries the other value. CDCL first works out <em>why</em> the conflict happened, and remembers it.</p>
+<ol>
+<li><strong>Record the reasons.</strong> For every forced assignment, note which clause forced it. Together these form an implication graph from the decisions to the conflict.</li>
+<li><strong>Find a cut.</strong> A <strong>unique implication point (UIP)</strong> is an assignment at the current decision level that every path from that level&rsquo;s decision to the conflict passes through. Solvers usually take the one closest to the conflict.</li>
+<li><strong>Learn a clause.</strong> Cutting the graph there gives a new clause that says, compactly, &ldquo;this combination always fails&rdquo;. It&rsquo;s logically implied by the original formula, so it can&rsquo;t remove any real solution.</li>
+<li><strong>Backjump.</strong> Jump straight back to the second-highest decision level in the learned clause, often skipping many levels and thousands of hopeless branches at once.</li>
+</ol>
 <blockquote>
-<p><strong>Discomfort check.</strong> CDCL keeps adding new clauses as it searches. Doesn&rsquo;t the formula grow and become harder to solve? The learned clauses are redundant - they are logically implied by the original formula, so they don&rsquo;t change what assignments are satisfying. But they actively prune the search space: every future search branch that would have led to the same conflict is immediately cut off by unit propagation on the learned clause. The formula grows, but the search tree <em>shrinks</em>, often dramatically. In practice, solvers prune their clause databases periodically (keeping only the most &ldquo;useful&rdquo; learned clauses), managing memory while preserving the most powerful constraints.</p>
+<p><strong>&ldquo;Doesn&rsquo;t the formula keep growing?&quot;</strong> It does, but the learned clauses are implied by the original, so the set of solutions never changes, while the <em>search</em> shrinks dramatically: any future branch heading for the same conflict is cut off immediately by unit propagation on the learned clause. Solvers periodically delete the least useful learned clauses to keep memory in check.</p>
 </blockquote>
-<p>Learned clauses accumulate into a rich set of constraints that encode the solver&rsquo;s knowledge about which partial assignments lead to dead ends. This is essentially the solver building a compressed record of everything it has already tried.</p>
+<p>In effect, the solver builds a compressed record of every dead end it has already explored.</p>
 <hr>
 <h2 id="why-sat-solvers-are-fast-in-practice">Why SAT Solvers Are Fast in Practice</h2>
-<p>The theory says 3-SAT is NP-complete - no polynomial-time algorithm exists (assuming P $\neq$ NP). How are SAT solvers solving industrial instances with millions of variables in minutes?</p>
-<p>The key is that worst-case hardness is rare in practice. Industrial SAT instances - from hardware verification, software analysis, planning - have <em>structure</em>. They tend to have:</p>
+<p>Worst-case hardness is rare in real instances. Formulas from hardware verification, software analysis and planning have <em>structure</em>: variables that interact form loose, hierarchical clusters rather than one tangled web, and related variables appear together. Clause learning feeds on exactly that.</p>
+<p>Modern solvers add three more tricks:</p>
 <ul>
-<li><strong>Small effective treewidth</strong>: the clauses form a graph with a hierarchical structure that limits how much of the formula interacts with itself</li>
-<li><strong>Relatively few clauses per variable</strong>: the &ldquo;underdetermined&rdquo; regime where many satisfying assignments exist</li>
-<li><strong>Local structure</strong>: variables relevant to each other tend to appear in nearby clauses</li>
+<li><strong>VSIDS</strong>: prefer to branch on variables that appeared in recent conflicts.</li>
+<li><strong>Restarts</strong>: periodically throw away the current search state while keeping the learned clauses, to escape unproductive regions.</li>
+<li><strong>Phase saving</strong>: when revisiting a variable, retry its last value.</li>
 </ul>
-<p>The absolute hardest instances are random 3-SAT formulas at the <strong>phase transition</strong> - a specific ratio of clauses to variables (around 4.27 for 3-SAT) where the probability of satisfiability drops sharply from nearly 1 to nearly 0. These formulae have no structure to exploit, and CDCL provides little advantage over exhaustive search.</p>
-<p>Industrial instances sit far from the phase transition. Solvers exploit their structure through clause learning, smart variable selection heuristics (VSIDS: prioritize variables that appeared in recent conflicts), and periodic restarts (clearing the search state but keeping learned clauses, escaping unproductive search regions).</p>
+<p>The truly hard instances are <strong>random 3-SAT at the phase transition</strong>. As the ratio of clauses to variables crosses about 4.27, random formulas switch abruptly from almost always satisfiable to almost never. Right at that threshold there&rsquo;s no structure to exploit, and even the best solvers struggle. Industrial instances sit far from it.</p>
 <hr>
 <h2 id="applications">Applications</h2>
-<p><strong>Hardware verification.</strong> Intel, AMD, and every major chip manufacturer use SAT solvers to verify that a circuit satisfies its specification. The circuit&rsquo;s logic is encoded as a CNF formula: gates become clauses, and checking whether any input produces an incorrect output is a satisfiability query. A satisfying assignment is a counterexample (a bug); unsatisfiability means the circuit is correct. The 2016 Pythagorean triples proof was a mathematical curiosity; hardware verification is how SAT saves billions of dollars in chip respins.</p>
-<p><strong>Software verification.</strong> Tools like Microsoft&rsquo;s Z3 (an SMT solver - SAT extended with arithmetic and data structures) check software for buffer overflows, assertion violations, and security vulnerabilities. Developers write assertions; the tool checks whether any input can violate them.</p>
-<p><strong>AI planning.</strong> Finding a sequence of actions that achieves a goal - robot planning, logistics optimization - encodes naturally as SAT: variables represent which actions happen at which times, clauses encode preconditions and effects.</p>
-<p><strong>Cryptanalysis.</strong> Certain attacks on hash functions and symmetric ciphers reduce to SAT instances. The SAT formulation captures the cipher&rsquo;s structure compactly, and CDCL can sometimes find collisions faster than brute force for weakened versions of real ciphers.</p>
+<ul>
+<li><strong>Hardware verification.</strong> Every major chip company encodes circuits as CNF and asks whether any input can produce a wrong output. A satisfying assignment is a counterexample, a bug; &ldquo;unsatisfiable&rdquo; proves the property holds. This is where SAT saves billions in chip respins.</li>
+<li><strong>Software verification.</strong> SMT solvers like Microsoft&rsquo;s Z3, which extend SAT with arithmetic, arrays and more, check programs for assertion failures, overflows and security holes.</li>
+<li><strong>Planning and scheduling.</strong> Variables say which action happens at which time step; clauses encode preconditions and effects.</li>
+<li><strong>Cryptanalysis.</strong> Some attacks on weakened hash functions and ciphers become SAT instances, which solvers sometimes crack faster than brute force.</li>
+</ul>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
-<th>Variant</th>
+<th>Problem or method</th>
 <th>Complexity</th>
 <th>Algorithm</th>
 <th>Key idea</th>
@@ -235,40 +238,40 @@
 <tbody>
 <tr>
 <td>2-SAT</td>
-<td>P ($O(n + m)$)</td>
-<td>SCC on implication graph</td>
+<td>$O(n + m)$</td>
+<td>SCCs of the implication graph</td>
 <td>$(a \vee b) \Leftrightarrow (\neg a \Rightarrow b)$</td>
 </tr>
 <tr>
 <td>3-SAT</td>
 <td>NP-complete</td>
-<td>DPLL / CDCL</td>
-<td>Backtracking with clause learning</td>
+<td>DPLL, CDCL</td>
+<td>Search, propagation, learning</td>
 </tr>
 <tr>
-<td>MAX-SAT</td>
+<td>MAX-3-SAT</td>
 <td>NP-hard to optimize</td>
-<td>Approximation (7/8 for random)</td>
-<td>Randomized rounding</td>
+<td>A random assignment gets 7/8 of the clauses</td>
+<td>7/8 is the best possible unless P = NP (Håstad)</td>
 </tr>
 <tr>
 <td>DPLL</td>
 <td>Exponential worst case</td>
-<td>Unit propagation + backtracking</td>
-<td>Forced assignments prune search</td>
+<td>Unit propagation plus backtracking</td>
+<td>Forced assignments prune the search</td>
 </tr>
 <tr>
 <td>CDCL</td>
 <td>Exponential worst case</td>
-<td>Conflict analysis + learned clauses</td>
-<td>Non-chronological backjumping</td>
+<td>Conflict analysis, learned clauses</td>
+<td>Learn why it failed; jump back far</td>
 </tr>
 </tbody>
 </table>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
-<li><a href="/posts/space-complexity/" target="_blank" rel="noopener noreferrer">Space Complexity - When Memory, Not Time, Is the Bottleneck</a>
+<li><a href="/posts/randomized-algorithms/" target="_blank" rel="noopener noreferrer">Randomized Algorithms - When a Coin Flip Beats Careful Thinking</a>
 </li>
 </ul>
 
