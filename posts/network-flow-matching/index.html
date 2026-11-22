@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795372798" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795372848" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Network Flow &amp; Matching - The Max, the Min, and Why They&#39;re Equal"/>
 <meta name="twitter:description" content="Helpful context:
- Shortest Paths - When Greed Works and When It Doesn&rsquo;t  Greedy Algorithms - The Art of Never Looking Back    During World War II, the Soviet Union moved supplies - ammunition, food, fuel - along railroad lines from central cities to the front. US military planners, thinking about how to disrupt the supply chain, wanted to answer a precise question: what is the maximum tonnage of material that can move from the interior to the front per day?"/>
+ Shortest Paths - When Greed Works and When It Doesn&rsquo;t  Greedy Algorithms - The Art of Never Looking Back    In 1955 T. E. Harris and F. S. Ross, working on a classified study for the US Air Force, analysed the railway network linking the Soviet Union to Eastern Europe. They asked two questions. How much could the network carry per day? And what was the cheapest set of lines to cut so that nothing could get through at all?"/>
 
     <meta property="og:title" content="Network Flow &amp; Matching - The Max, the Min, and Why They&#39;re Equal" />
 <meta property="og:description" content="Helpful context:
- Shortest Paths - When Greed Works and When It Doesn&rsquo;t  Greedy Algorithms - The Art of Never Looking Back    During World War II, the Soviet Union moved supplies - ammunition, food, fuel - along railroad lines from central cities to the front. US military planners, thinking about how to disrupt the supply chain, wanted to answer a precise question: what is the maximum tonnage of material that can move from the interior to the front per day?" />
+ Shortest Paths - When Greed Works and When It Doesn&rsquo;t  Greedy Algorithms - The Art of Never Looking Back    In 1955 T. E. Harris and F. S. Ross, working on a classified study for the US Air Force, analysed the railway network linking the Soviet Union to Eastern Europe. They asked two questions. How much could the network carry per day? And what was the cheapest set of lines to cut so that nothing could get through at all?" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/network-flow-matching/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          15 min read
+          16 min read
         </div>
       </div>
     </header>
@@ -166,9 +169,8 @@
 </li>
 </ul>
 <hr>
-<p>During World War II, the Soviet Union moved supplies - ammunition, food, fuel - along railroad lines from central cities to the front. US military planners, thinking about how to disrupt the supply chain, wanted to answer a precise question: what is the maximum tonnage of material that can move from the interior to the front per day?</p>
-<p>And they noticed something: that number is exactly equal to a completely different quantity - the minimum number of rail lines you&rsquo;d need to cut to halt all supply movement entirely.</p>
-<p>These two problems, which seem unrelated at first, have the same answer. In 1956, L. R. Ford Jr. and D. R. Fulkerson proved this rigorously. Their <strong>max-flow min-cut theorem</strong> is one of the most elegant results in combinatorial optimization - and it has applications far beyond military logistics. It also turns out to be a special case of something much deeper: <strong>LP duality</strong>.</p>
+<p>In 1955 T. E. Harris and F. S. Ross, working on a classified study for the US Air Force, analysed the railway network linking the Soviet Union to Eastern Europe. They asked two questions. How much could the network carry per day? And what was the cheapest set of lines to cut so that nothing could get through at all?</p>
+<p>Those sound like different questions, and the answer is the same number. In 1956 L. R. Ford Jr. and D. R. Fulkerson proved that this always happens. Their <strong>max-flow min-cut theorem</strong> is one of the most elegant results in combinatorial optimization - and it has applications far beyond military logistics. It also turns out to be a special case of something much deeper: <strong>LP duality</strong>.</p>
 <hr>
 <h2 id="flow-networks">Flow Networks</h2>
 <p>A <strong>flow network</strong> is a directed graph $G = (V, E)$ with:</p>
@@ -228,7 +230,9 @@ flowchart LR
 <p>The backward edges (like $A \to s$ with capacity 3) encode how much previously routed flow could be &ldquo;undone&rdquo; if a future path needed to reroute it.</p>
 <hr>
 <h2 id="ford-fulkerson-augmenting-paths">Ford-Fulkerson: Augmenting Paths</h2>
-<p>The Ford-Fulkerson method repeatedly finds augmenting paths and pushes flow along them until no augmenting path remains. Using BFS to find each path (the Edmonds-Karp choice) gives the polynomial $O(VE^2)$ bound:</p>
+<p>The Ford-Fulkerson method repeatedly finds augmenting paths and pushes flow along them until no augmenting path remains. Here it is on the classic textbook network, and on a tiny example showing why backward edges are essential:</p>
+<div class="sf" data-sf="player" data-src="/data/network-flow-matching/edmonds-karp.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>Using BFS to find each path, the Edmonds-Karp choice, gives a polynomial $O(VE^2)$ bound:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque, defaultdict
 
 <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">ford_fulkerson</span>(capacity, source, sink):
@@ -311,6 +315,9 @@ flowchart LR
 <p><strong>Complexity.</strong> With integer capacities and maximum flow $F$: each augmentation increases the flow by at least 1, so at most $F$ augmentations, each taking $O(E)$ to find a path. Total: $O(EF)$. This is pseudopolynomial - if $F$ is large, this is slow.</p>
 <hr>
 <h2 id="the-lp-view-why-max-equals-min">The LP View: Why Max Equals Min</h2>
+<p>The max-flow min-cut theorem isn&rsquo;t a lucky combinatorial coincidence. Write max flow as a <strong>linear program</strong> and its <strong>dual</strong> turns out to be a (fractional) min cut; LP strong duality makes their optimal values equal. The constraint matrix is <strong>totally unimodular</strong>, so both optima are reached at whole numbers, giving integer flows and integer cuts. And Ford-Fulkerson stops exactly when the LP&rsquo;s <em>complementary slackness</em> conditions hold: every edge crossing the final cut is saturated, and every edge crossing back carries nothing.</p>
+<details>
+<summary>The full derivation: primal, dual, total unimodularity and complementary slackness</summary>
 <p>The max-flow min-cut theorem is often presented as a clever combinatorial argument. But it is actually a consequence of <strong>LP duality</strong> - a general theorem about linear programs. Seeing the connection reveals why the equality is structurally inevitable rather than a happy coincidence.</p>
 <h3 id="max-flow-as-a-linear-program">Max-Flow as a Linear Program</h3>
 <p>The max-flow problem has a natural LP formulation. Variables are the edge flows $f(u, v)$; the objective is to maximize the net flow out of $s$:</p>
@@ -361,6 +368,7 @@ If an edge carries flow, the dual constraint must be tight.</p>
 <p>The <strong>primal-dual method</strong> is a general LP algorithm framework: maintain dual feasibility; find augmenting directions in the &ldquo;tight subgraph&rdquo; (edges where the dual constraint holds with equality); augment the primal; repeat.</p>
 <p>Ford-Fulkerson is exactly this framework applied to flow. The dual solution is the cut potential $d(v)$. Tight edges are those with remaining residual capacity. Augmenting paths are the primal improving directions. When no augmenting path exists, the dual solution certifies optimality through complementary slackness.</p>
 <p>The same primal-dual structure underlies Dijkstra&rsquo;s algorithm (dual variables are shortest-path distances), bipartite matching (dual variables are vertex covers), and many other combinatorial algorithms. What looks like a clever graph trick is, in each case, an instance of one mathematical principle.</p>
+</details>
 <hr>
 <h2 id="edmonds-karp-polynomial-guarantee">Edmonds-Karp: Polynomial Guarantee</h2>
 <p>Edmonds and Karp fixed the inefficiency of Ford-Fulkerson by always finding augmenting paths using <strong>BFS</strong> (shortest path in terms of number of edges):</p>
@@ -381,10 +389,9 @@ $$\text{maximum matching size} = \text{minimum vertex cover size}$$</p>
 <hr>
 <h2 id="applications">Applications</h2>
 <p><strong>Airline scheduling.</strong> Assign aircraft to routes to maximize flights flown subject to maintenance windows, crew hours, and aircraft availability. This reduces to a flow problem on a time-expanded graph.</p>
-<p><strong>Image segmentation.</strong> Model each pixel as a vertex; add edges to source $s$ (foreground) and sink $t$ (background) with capacities encoding how likely each pixel belongs to each class. Add edges between adjacent pixels with capacities encoding color similarity. A minimum $s$-$t$ cut partitions pixels into foreground and background - minimizing the &ldquo;cost&rdquo; of separation while respecting how similar neighboring pixels are. This is the GrabCut algorithm.</p>
-<p><strong>Kidney exchange.</strong> Patients need kidney transplants but their willing donors are incompatible with them. Model donors and patients as vertices; add an edge if donor $D_i$&rsquo;s kidney is compatible with patient $P_j$. Maximum bipartite matching finds the maximum number of transplants that can happen via compatible donor swaps.</p>
+<p><strong>Image segmentation.</strong> Model each pixel as a vertex; add edges to source $s$ (foreground) and sink $t$ (background) with capacities encoding how likely each pixel belongs to each class. Add edges between adjacent pixels with capacities encoding color similarity. A minimum $s$-$t$ cut partitions pixels into foreground and background, separating them where the boundary is cheapest. This graph-cut idea is at the heart of tools like GrabCut.</p>
+<p><strong>Kidney exchange.</strong> Patients need kidney transplants but their willing donors are incompatible with them. In its simplest form, model donors and patients as vertices, with an edge where donor $D_i$&rsquo;s kidney suits patient $P_j$; a maximum bipartite matching gives the most transplants possible through swaps. Real exchanges also allow longer cycles and chains, which makes the problem harder.</p>
 <p><strong>Sports elimination.</strong> Team $i$ is mathematically eliminated if no combination of remaining game outcomes can get them to first place. This reduces to a max-flow problem: if the max flow is less than the total remaining games among a relevant subset of teams, elimination is confirmed.</p>
-<p><strong>Currency arbitrage.</strong> Model currencies as vertices and exchange rates as edge weights $-\log(\text{rate})$. A negative cycle in this graph means a profit-generating sequence of conversions. The same LP duality that underlies max-flow min-cut appears here too: Bellman-Ford&rsquo;s dual variables are exactly the negative-cycle certificates.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -448,7 +455,7 @@ $$\text{maximum matching size} = \text{minimum vertex cover size}$$</p>
 </tr>
 </tbody>
 </table>
-<p>Ford and Fulkerson proved their theorem thinking about Soviet supply chains. The same framework now runs in image segmentation software, organ transplant systems, and airline scheduling tools. The reason it appears everywhere is the same: they all involve routing something through a constrained network. What makes it remarkable is that the theorem is not just a combinatorial insight - it is a consequence of LP duality, and LP duality applies wherever there is a linear objective and linear constraints. The supply chain problem in 1956 was really a question about the geometry of linear programs, and the answer - max equals min - is one of the deepest structural facts in optimization.</p>
+<p>Ford and Fulkerson&rsquo;s theorem grew out of a question about Soviet railways. The same framework now runs in image segmentation software, organ transplant systems, and airline scheduling tools. The reason it appears everywhere is the same: they all involve routing something through a constrained network. What makes it remarkable is that the theorem is not just a combinatorial insight - it is a consequence of LP duality, and LP duality applies wherever there is a linear objective and linear constraints. The supply chain problem in 1956 was really a question about the geometry of linear programs, and the answer - max equals min - is one of the deepest structural facts in optimization.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>

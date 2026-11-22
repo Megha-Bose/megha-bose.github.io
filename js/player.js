@@ -196,13 +196,17 @@
       var line = svg('line', { x1: a.x + ux * R, y1: a.y + uy * R, x2: b.x - ux * (R + (e.dir ? 3 : 0)), y2: b.y - uy * (R + (e.dir ? 3 : 0)), class: 'sf-edge', style: 'stroke-width:' + (2.5 * k) });
       if (e.dir) line.setAttribute('marker-end', 'url(#' + arrow.id + ')');
       var grp = svg('g', { class: 'sf-edge-g' }, [line]);
+      var wText = null;
       if (e.w !== undefined && e.w !== null) {
         var mx = (a.x + b.x) / 2 - uy * 11 * k, my = (a.y + b.y) / 2 + ux * 11 * k;
-        grp.appendChild(svg('text', { x: mx, y: my + 4 * k, class: 'sf-edge-w', 'text-anchor': 'middle', style: 'font-size:' + (12 * k) + 'px', text: String(e.w) }));
+        wText = svg('text', { x: mx, y: my + 4 * k, class: 'sf-edge-w', 'text-anchor': 'middle', style: 'font-size:' + (12 * k) + 'px', text: String(e.w) });
+        grp.appendChild(wText);
       }
       edgeLayer.appendChild(grp);
       edgeEls[e.u + '-' + e.v] = line;
       if (!e.dir) edgeEls[e.v + '-' + e.u] = line;
+      line._w = wText;
+      line._base = e.w;
     });
     g.nodes.forEach(function (nd) {
       var circle = svg('circle', { cx: nd.x, cy: nd.y, r: R, class: 'sf-node' });
@@ -240,6 +244,10 @@
         line.style.strokeWidth = (line.classList.contains('is-on') ? 4.5 : 2.5) * k;
         line.classList.toggle('is-gone', t === 'gone');
         line.parentNode.style.opacity = t === 'hide' ? 0 : '';
+        if (line._w) {
+          var lbl = fr.edgeLabels && (fr.edgeLabels[k] !== undefined ? fr.edgeLabels[k] : fr.edgeLabels[k.split('-').reverse().join('-')]);
+          line._w.textContent = String(lbl !== undefined ? lbl : line._base);
+        }
       });
     };
   };
