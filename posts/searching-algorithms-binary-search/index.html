@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795370196" />
+    <script src="/js/algo-demos.js?v=1795368931" defer></script>
+    <script src="/js/player.js?v=1795370240" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,15 +23,13 @@
 
 <meta name="twitter:title" content="Searching Algorithms - Twenty Steps Through a Million Entries"/>
 <meta name="twitter:description" content="Helpful context:
- Sorting Algorithms - How Order Turns Hard Problems Easy  Trees &amp; Heaps - When Flat Structures Hit Their Limit    A phone book has 1 million entries. You want to find a name.
-Linear search: start at page one, read every name until you find it. In the worst case, 1 million comparisons.
-Binary search: open to the middle. If the name you want comes before the middle, discard the second half."/>
+ Sorting Algorithms - How Order Turns Hard Problems Easy  Trees &amp; Heaps - When Flat Structures Hit Their Limit    A phone book has a million entries. Read it from the first page and you may need a million comparisons. Open it in the middle, keep the half that can hold the name, and repeat, and you never need more than 20.
+That&rsquo;s a 50,000-fold speedup from changing the approach, not the hardware."/>
 
     <meta property="og:title" content="Searching Algorithms - Twenty Steps Through a Million Entries" />
 <meta property="og:description" content="Helpful context:
- Sorting Algorithms - How Order Turns Hard Problems Easy  Trees &amp; Heaps - When Flat Structures Hit Their Limit    A phone book has 1 million entries. You want to find a name.
-Linear search: start at page one, read every name until you find it. In the worst case, 1 million comparisons.
-Binary search: open to the middle. If the name you want comes before the middle, discard the second half." />
+ Sorting Algorithms - How Order Turns Hard Problems Easy  Trees &amp; Heaps - When Flat Structures Hit Their Limit    A phone book has a million entries. Read it from the first page and you may need a million comparisons. Open it in the middle, keep the half that can hold the name, and repeat, and you never need more than 20.
+That&rsquo;s a 50,000-fold speedup from changing the approach, not the hardware." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/searching-algorithms-binary-search/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -157,7 +158,7 @@ Binary search: open to the middle. If the name you want comes before the middle,
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          12 min read
+          8 min read
         </div>
       </div>
     </header>
@@ -170,115 +171,80 @@ Binary search: open to the middle. If the name you want comes before the middle,
 </li>
 </ul>
 <hr>
-<p>A phone book has 1 million entries. You want to find a name.</p>
-<p><strong>Linear search:</strong> start at page one, read every name until you find it. In the worst case, 1 million comparisons.</p>
-<p><strong>Binary search:</strong> open to the middle. If the name you want comes before the middle, discard the second half. Repeat. With 1 million entries you need at most 20 comparisons.</p>
-<p>That&rsquo;s a 50,000-fold speedup for exactly the same task. Not from better hardware. Not from a faster language. From a different approach to the question.</p>
-<p>This gap - $O(n)$ versus $O(\log n)$ - is one of the most consequential in all of computing. But binary search is more than a lookup tool. It&rsquo;s a general reasoning strategy, and that&rsquo;s what this post is really about.</p>
+<p>A phone book has a million entries. Read it from the first page and you may need a million comparisons. Open it in the middle, keep the half that can hold the name, and repeat, and you never need more than 20.</p>
+<p>That&rsquo;s a 50,000-fold speedup from changing the approach, not the hardware. The gap between $O(n)$ and $O(\log n)$ is one of the most consequential in computing. But binary search is more than a lookup trick. It&rsquo;s a way of reasoning that works far beyond sorted arrays, and that&rsquo;s the real subject of this post.</p>
 <hr>
 <h2 id="linear-search-when-you-have-no-choice">Linear Search: When You Have No Choice</h2>
-<p>If the array is unsorted and you need to find a specific element, you have no choice but to check each element in turn. Linear search is optimal for this case - you can&rsquo;t do better than $O(n)$ without preprocessing.</p>
-<p>Expected cost: $n/2$ comparisons on average if the element is present (you find it halfway through, on average). Worst case: $n$ comparisons (element is last or absent).</p>
-<p>Linear search has practical advantages for small arrays. For $n \leq 16$ or so, the constant factor overhead of binary search (computing midpoints, branch prediction misses) can make linear search faster in wall-clock time. This is why real sorting libraries use insertion sort for small subarrays.</p>
+<p>In an unsorted array there&rsquo;s nothing to exploit, so you check every element: $n/2$ comparisons on average when the target is there, $n$ when it&rsquo;s last or missing. Without preprocessing, nothing does better.</p>
+<p>For tiny arrays, roughly 16 elements or fewer, a plain scan often beats binary search in practice anyway: it&rsquo;s branch-predictable and cache-friendly, with no midpoint arithmetic. That&rsquo;s the same reason real sort routines finish small pieces with insertion sort.</p>
 <hr>
-<h2 id="binary-search-the-invariant-that-makes-it-work">Binary Search: The Invariant That Makes It Work</h2>
-<p>Binary search works on a sorted array. The core idea is maintaining an invariant: the answer, if it exists, is always somewhere in the current search range $[\text{lo}, \text{hi}]$.</p>
-<p>At each step, you look at the midpoint. Based on what you see, you can eliminate half the remaining range while preserving the invariant. Repeat until the range collapses to a single element (or until you confirm the element is absent).</p>
-<p>Here is a careful implementation:</p>
+<h2 id="binary-search-an-invariant-kept-mechanically">Binary Search: An Invariant, Kept Mechanically</h2>
+<p>On a sorted array, keep one promise: <strong>if the target is anywhere, it&rsquo;s between <code>lo</code> and <code>hi</code>.</strong> Look at the middle. Whatever you see there lets you discard half the range without breaking the promise.</p>
+<div class="sf" data-sf="player" data-src="/data/searching-algorithms-binary-search/binary-search.json">This is an interactive animation. It needs JavaScript to run.</div>
 <pre tabindex="0"><code>BinarySearch(A, target):
-    lo = 0
-    hi = n - 1
+    lo, hi = 0, n - 1
     while lo &lt;= hi:
         mid = lo + (hi - lo) / 2
-        if A[mid] == target:
-            return mid
-        elif A[mid] &lt; target:
-            lo = mid + 1
-        else:
-            hi = mid - 1
-    return -1
-</code></pre><p>Two things in this code deserve attention.</p>
-<p><strong>The midpoint formula.</strong> We write <code>lo + (hi - lo) / 2</code>, not <code>(lo + hi) / 2</code>. These are mathematically equivalent, but <code>(lo + hi)</code> can overflow when both <code>lo</code> and <code>hi</code> are large integers. In 32-bit arithmetic with <code>lo = hi = 2^30</code>, their sum overflows. The safe form keeps intermediate values bounded by <code>hi</code>. This bug appeared in Java&rsquo;s standard library for nearly a decade before being fixed.</p>
-<p><strong>Off-by-one.</strong> The condition is <code>lo &lt;= hi</code>, not <code>lo &lt; hi</code>. The update to <code>lo</code> is <code>mid + 1</code>, not <code>mid</code>. If you use <code>lo = mid</code> when <code>A[mid] &lt; target</code>, the loop can run forever when <code>lo + 1 == hi</code> and <code>A[lo] &lt; target &lt; A[hi]</code>. Getting binary search exactly right is famously difficult - a 2006 study found that most published implementations contained bugs.</p>
-<blockquote>
-<p><strong>Discomfort check.</strong> Binary search is one of the simplest algorithms to describe and one of the hardest to implement correctly. The off-by-one errors are subtle because there are two interacting choices (how to update <code>lo</code> vs <code>hi</code>, and when the loop terminates) that must be mutually consistent. The safest approach: pick a specific invariant and maintain it mechanically. The invariant &ldquo;the target is always in $A[\text{lo} \ldots \text{hi}]$&rdquo; tells you exactly what the updates must be: if <code>A[mid] &lt; target</code>, the target can&rsquo;t be at or left of <code>mid</code>, so set <code>lo = mid + 1</code>. If <code>A[mid] &gt; target</code>, the target can&rsquo;t be at or right of <code>mid</code>, so set <code>hi = mid - 1</code>. The loop terminates when <code>lo &gt; hi</code>, meaning the range is empty and the target is absent.</p>
-</blockquote>
-<p>Each iteration halves the remaining range. After $k$ iterations, the range has size $n / 2^k$. The loop terminates when this is less than 1, i.e., $k = O(\log n)$ iterations. Total comparisons: $O(\log n)$.</p>
-<p>Here is binary search on <code>[2, 5, 8, 12, 16, 23, 38, 56, 72, 91]</code> looking for 23:</p>
-<div class="mermaid">
-flowchart TD
-    A["lo=0, hi=9, mid=4\nA[4]=16 &lt; 23 → move lo right\nlo = 5"]
-    B["lo=5, hi=9, mid=7\nA[7]=56 &gt; 23 → move hi left\nhi = 6"]
-    C["lo=5, hi=6, mid=5\nA[5]=23 = 23 → found at index 5"]
-    A --> B --> C
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
+        if A[mid] == target:  return mid
+        if A[mid] &lt; target:   lo = mid + 1     // target can't be at mid or left of it
+        else:                 hi = mid - 1     // target can't be at mid or right of it
+    return -1                                  // range empty: not present
+</code></pre><p>Each step halves the range, so after $k$ steps $n / 2^k$ candidates remain: $O(\log n)$ in total.</p>
+<p>Binary search is famously easy to describe and hard to get exactly right. Jon Bentley found that around 90% of professional programmers he tested couldn&rsquo;t write a correct one, and Knuth notes that the first binary search was published in 1946 but the first <em>bug-free</em> version not until 1962. Two traps:</p>
+<ul>
+<li><strong>The midpoint.</strong> <code>(lo + hi) / 2</code> overflows when both are large; <code>lo + (hi - lo) / 2</code> can&rsquo;t. This exact bug sat in Java&rsquo;s standard library for about nine years before it was found in 2006.</li>
+<li><strong>Off-by-one.</strong> The loop test, the <code>+ 1</code> and the <code>- 1</code> must agree with each other. Write <code>lo = mid</code> instead of <code>lo = mid + 1</code> and the loop can spin forever once two elements remain. The cure is to derive every update from the invariant instead of guessing.</li>
+</ul>
 <hr>
-<h2 id="variants-lower_bound-and-upper_bound">Variants: lower_bound and upper_bound</h2>
-<p>Sometimes you don&rsquo;t want to find one occurrence of a value - you want all of them, or you want to know where to insert a value to maintain sorted order.</p>
-<p><strong>lower_bound:</strong> the first index where <code>A[i] &gt;= target</code>. (The leftmost position where <code>target</code> could be inserted.)</p>
-<p><strong>upper_bound:</strong> the first index where <code>A[i] &gt; target</code>. (The rightmost position where <code>target</code> could be inserted.)</p>
-<p>The range <code>[lower_bound(target), upper_bound(target))</code> gives all occurrences of <code>target</code> in the sorted array. For example, searching for 3 in <code>[1, 3, 3, 3, 5, 7]</code>:</p>
-<div class="mermaid">
-flowchart LR
-    A["[0] 1"] --- B["[1] 3\n↑ lower_bound"] --- C["[2] 3"] --- D["[3] 3"] --- E["[4] 5\n↑ upper_bound"] --- F["[5] 7"]
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
+<h2 id="lower_bound-and-upper_bound">lower_bound and upper_bound</h2>
+<p>Often you don&rsquo;t want <em>an</em> occurrence. You want <em>where</em> things go:</p>
+<ul>
+<li><strong>lower_bound</strong>: the first index whose value is $\geq$ target. It&rsquo;s also where to insert the target to keep the array sorted.</li>
+<li><strong>upper_bound</strong>: the first index whose value is $&gt;$ target.</li>
+</ul>
+<p>Every copy of the target lies in <code>[lower_bound, upper_bound)</code>. Pick the last two cases in the animation above to watch both find the run of 3s.</p>
 <pre tabindex="0"><code>LowerBound(A, target):
-    lo = 0
-    hi = n          // note: n, not n-1
+    lo, hi = 0, n            // hi = n: the answer might be &quot;at the end&quot;
     while lo &lt; hi:
         mid = lo + (hi - lo) / 2
-        if A[mid] &lt; target:
-            lo = mid + 1
-        else:
-            hi = mid
-    return lo       // lo == hi, the answer
-</code></pre><p>Here <code>hi</code> is initialized to <code>n</code> (one past the end) because the answer could be &ldquo;insert at the end.&rdquo; The invariant is: all elements before <code>lo</code> are strictly less than <code>target</code>, all elements from <code>hi</code> onward are $\geq$ target. When <code>lo == hi</code>, that&rsquo;s the answer.</p>
-<hr>
-<h2 id="binary-search-on-the-answer-the-real-power">Binary Search on the Answer: The Real Power</h2>
-<p>Here is where binary search becomes a design technique rather than just a lookup tool.</p>
-<p>Many optimization problems have this structure: you want to find the minimum value $x$ such that some condition $f(x)$ is satisfied, where $f$ is monotone - once it becomes true, it stays true for all larger values. Instead of searching in an array, you search over the space of possible answers.</p>
-<p>The template:</p>
-<pre tabindex="0"><code>BinarySearchAnswer(lo, hi, predicate):
-    while lo &lt; hi:
-        mid = lo + (hi - lo) / 2
-        if predicate(mid):
-            hi = mid
-        else:
-            lo = mid + 1
+        if A[mid] &lt; target:  lo = mid + 1
+        else:                hi = mid        // mid might be the answer: keep it
     return lo
-</code></pre><p>This finds the smallest value in $[\text{lo}, \text{hi}]$ for which <code>predicate</code> returns true.</p>
-<p><strong>Example: integer square root.</strong> Find the largest integer $m$ such that $m^2 \leq n$, without floating-point arithmetic. Define <code>predicate(x) = (x*x &gt; n)</code>. Binary search over $[0, n]$. The answer is <code>lo - 1</code> when the loop finishes. Time: $O(\log n)$.</p>
-<p><strong>Example: shipping packages.</strong> You have a list of package weights and must ship all of them in $D$ days, with a daily weight limit of $c$. What&rsquo;s the minimum $c$ that works? Define <code>predicate(c) = &quot;can we ship everything in D days with capacity c?&quot;</code>. This predicate is monotone: if capacity $c$ works, then $c+1$ also works. Binary search over capacities in $[\max(\text{weights}), \sum \text{weights}]$. Time: $O(n \log S)$ where $S = \sum \text{weights}$.</p>
-<p><strong>Example: finding a zero.</strong> Given a monotone function $f$ (strictly increasing), find the value $x$ where $f(x) = 0$. Binary search between a known negative value and a known positive value. Each step halves the interval. This is bisection, which engineers use to solve equations that have no closed-form solution.</p>
-<p>Why does bisection take $O(\log(1/\varepsilon))$ steps? Say the initial interval has width $L$ (the distance between your known negative and positive points). After one step, the width is $L/2$. After two steps, $L/4$. After $k$ steps, $L/2^k$. You stop when this width is at most $\varepsilon$ - at that point, you know the root to within $\varepsilon$. So you need:</p>
-<p>$$\frac{L}{2^k} \leq \varepsilon \implies 2^k \geq \frac{L}{\varepsilon} \implies k \geq \log_2\left(\frac{L}{\varepsilon}\right)$$</p>
-<p>$L$ is just a constant (the initial bracket size), so this is $O(\log(1/\varepsilon))$. To gain one extra decimal digit of precision - to make $\varepsilon$ ten times smaller - you need $\log_2(10) \approx 3.32$ more steps. Precision comes at a fixed cost per digit.</p>
-<p>The insight is that binary search works on any monotone predicate over any ordered domain - not just sorted arrays. This generalization makes it a fundamental problem-solving tool.</p>
-<h3 id="newtons-method-faster-root-finding">Newton&rsquo;s Method: Faster Root-Finding</h3>
-<p>Bisection is reliable but slow - it always halves the interval, giving $O(\log(1/\varepsilon))$ iterations to reach precision $\varepsilon$. Newton&rsquo;s method converges much faster by using the slope of the function to make a smarter guess.</p>
-<p>The intuition: you are standing at point $x_n$ on the curve, above the x-axis. You want to know where the curve hits zero. You don&rsquo;t know the full shape of the curve, but you do know two things right where you&rsquo;re standing: the height $f(x_n)$ and the slope $f'(x_n)$. If the curve were a straight line - just a ramp - it would hit zero at exactly $x_n - f(x_n)/f'(x_n)$: you walk horizontally by the amount &ldquo;height divided by slope.&rdquo; The curve is not actually a straight line, but near any smooth point it is approximately straight, so this estimate lands you much closer to the root. You repeat from there.</p>
-<p>Why does this converge so fast? The approximation error - how much the curve deviates from the straight line - is proportional to the square of your distance from the root. So when you are 0.1 away, the error in your tangent-line guess is around 0.01. When you are 0.01 away, the error drops to 0.0001. Each step squares the error - the number of correct decimal digits doubles every iteration. This is called <strong>quadratic convergence</strong>.</p>
-<p>Given a function $f$ and current estimate $x_n$, the tangent line at $(x_n, f(x_n))$ has slope $f'(x_n)$ and crosses zero at:</p>
+</code></pre><p>The invariant now is that everything before <code>lo</code> is less than the target, and everything from <code>hi</code> onward isn&rsquo;t. When the two meet, that meeting point is the answer. Python&rsquo;s <code>bisect_left</code> and <code>bisect_right</code> are exactly these two functions.</p>
+<hr>
+<h2 id="binary-search-on-the-answer">Binary Search on the Answer</h2>
+<p>Here&rsquo;s where binary search turns into a design technique. Many problems ask for <strong>the smallest value that works</strong>, where &ldquo;works&rdquo; is <em>monotone</em>: once it&rsquo;s true, it stays true for every larger value. Then you don&rsquo;t need an array at all. Search over the possible answers, and test each guess:</p>
+<pre tabindex="0"><code>SmallestThatWorks(lo, hi, works):
+    while lo &lt; hi:
+        mid = lo + (hi - lo) / 2
+        if works(mid):  hi = mid        // mid works: answer is mid or smaller
+        else:           lo = mid + 1    // mid fails: answer is bigger
+    return lo
+</code></pre><ul>
+<li><strong>Shipping packages.</strong> Ship all packages, in order, within $D$ days. What&rsquo;s the smallest daily capacity that works? Checking one capacity is a single greedy pass, and if capacity $c$ works, so does $c + 1$. Binary search the capacities between the heaviest package and the total weight: $O(n \log S)$, where $S$ is the total.</li>
+<li><strong>Integer square root.</strong> The largest $m$ with $m^2 \leq n$, with no floating point: binary search $m$ over $[0, n]$.</li>
+</ul>
+<p>There&rsquo;s an animated version, cutting ropes to a target count, in the <a href="/posts/competitive-programming-master-guide/#binary-search" target="_blank" rel="noopener noreferrer">problem-solving guide</a>
+.</p>
+<hr>
+<h2 id="bisection-and-newtons-method-searching-for-a-root">Bisection and Newton&rsquo;s Method: Searching for a Root</h2>
+<p>The same halving finds where a continuous function crosses zero. Bracket the root between a point where $f$ is negative and one where it&rsquo;s positive, test the midpoint, and keep the half where the sign changes. This is <strong>bisection</strong>. Each step halves the bracket, so reaching precision $\varepsilon$ from a starting width $L$ takes $\log_2(L / \varepsilon)$ steps: about 3.3 more steps for every extra decimal digit. Slow, but it can&rsquo;t fail.</p>
+<p><strong>Newton&rsquo;s method</strong> uses more information. Standing at $x_n$, it knows the height $f(x_n)$ and the slope $f'(x_n)$. Pretend the curve is the straight line through that point with that slope, and jump to where the line hits zero:</p>
 <p>$$x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}$$</p>
-<p><strong>Example: compute $\sqrt{2}$.</strong> Let $f(x) = x^2 - 2$, $f'(x) = 2x$. Then $x_{n+1} = x_n - \frac{x_n^2 - 2}{2x_n} = \frac{x_n + 2/x_n}{2}$. Starting from $x_0 = 1$: $x_1 = 1.5$, $x_2 = 1.4167$, $x_3 = 1.41422$, $x_4 = 1.41421356\ldots$ - correct to 8 places in 4 steps. Notice how the error roughly squares each time: $0.414 \to 0.086 \to 0.002 \to 0.000001$.</p>
+<p>Close to a root, a smooth curve really is nearly straight, and the error of that straight-line guess shrinks with the <em>square</em> of the distance. So <strong>the number of correct digits roughly doubles every step.</strong> For $\sqrt{2}$, take $f(x) = x^2 - 2$; the update simplifies to $x_{n+1} = \tfrac{1}{2}(x_n + 2 / x_n)$:</p>
+<div class="sf" data-sf="player" data-src="/data/searching-algorithms-binary-search/newton.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>Newton can fail, though. It needs a starting guess near the root, a non-zero slope at the root, and a smooth function; otherwise it can overshoot, oscillate, or land on the wrong root. Robust root-finders like <strong>Brent&rsquo;s method</strong> combine both: Newton-style steps for speed, falling back to bisection whenever a step misbehaves.</p>
+<hr>
+<h2 id="interpolation-search-olog-log-n-on-uniform-data">Interpolation Search: $O(\log \log n)$ on Uniform Data</h2>
+<p>If the values are spread evenly, don&rsquo;t probe the middle: probe where the target <em>should</em> be. Looking for 900 in values running from 0 to 1,000? Look about 90% of the way in.</p>
+<p>$$\text{probe} = \text{lo} + \left\lfloor \frac{(\text{target} - A[\text{lo}])(\text{hi} - \text{lo})}{A[\text{hi}] - A[\text{lo}]} \right\rfloor$$</p>
+<p>On uniform data that takes $O(\log \log n)$ comparisons on average, barely more than constant. On skewed data the estimate can be wildly off, and the worst case is $O(n)$. Use it for big sorted tables of roughly uniform integers like timestamps or sequential IDs, and binary search everywhere else.</p>
+<hr>
+<h2 id="exponential-search-when-n-is-unknown">Exponential Search: When $n$ Is Unknown</h2>
+<p>When the array is huge or unbounded, or the target is probably near the front, check positions 1, 2, 4, 8, &hellip; until you overshoot, then binary search the last gap:</p>
 <div class="mermaid">
 flowchart LR
-    A["x₀ = 1.000000\nerror ≈ 0.414"] -->|"tangent at x₀\ncrosses zero at x₁"| B["x₁ = 1.500000\nerror ≈ 0.086"]
-    B -->|"tangent at x₁\ncrosses zero at x₂"| C["x₂ = 1.416667\nerror ≈ 0.002"]
-    C -->|"tangent at x₂\ncrosses zero at x₃"| D["x₃ = 1.414216\nerror ≈ 0.000001"]
-    D -->|"tangent at x₃\ncrosses zero at x₄"| E["x₄ = 1.41421356\n√2 correct to 8 places"]
+    A["i = 1: too small"] --> B["i = 2: too small"] --> C["i = 4: too small"] --> D["i = 8: overshot"] --> E["binary search 4..8"]
 
 </div>
 <script type="module">
@@ -286,54 +252,25 @@ flowchart LR
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p><strong>When Newton&rsquo;s method fails.</strong> Quadratic convergence requires the initial guess to be close to the root, $f'(x^*) \neq 0$ (no horizontal tangent at the root), and $f$ to be twice differentiable near the root. If these fail: the iteration may overshoot and oscillate, or converge to the wrong root. Safeguards: combine bisection (for guaranteed convergence) with Newton steps (for speed) - this is how robust root-finders like Brent&rsquo;s method work.</p>
+<p>If the target sits at index $k$, both phases take $O(\log k)$, so you pay for how far in the target is, not for how big the array is.</p>
 <hr>
-<h2 id="interpolation-search-olog-log-n-for-uniform-data">Interpolation Search: O(log log n) for Uniform Data</h2>
-<p>What if you know the data is uniformly distributed? Instead of always probing the midpoint, you could probe proportionally - estimate where the target is based on its value relative to the endpoints.</p>
-<p>$$\text{mid} = \text{lo} + \left\lfloor \frac{(\text{target} - A[\text{lo}]) \cdot (\text{hi} - \text{lo})}{A[\text{hi}] - A[\text{lo}]} \right\rfloor$$</p>
-<p>For truly uniform data, this estimate is close to the target&rsquo;s actual position, and the search converges in $O(\log \log n)$ expected comparisons - significantly fewer than binary search.</p>
-<p>The catch: on non-uniform data, this estimate can be wildly wrong. Worst case is $O(n)$ (imagine data clustered near one end). In practice, interpolation search is used for large sorted tables of integers where the distribution is approximately uniform (timestamps, sequential IDs). For general data, stick with binary search.</p>
-<hr>
-<h2 id="exponential-search-when-n-is-unknown">Exponential Search: When n Is Unknown</h2>
-<p>Sometimes you&rsquo;re searching an array so large that you don&rsquo;t know its size, or you want to find the right range before binary searching.</p>
-<p>Start at index 1, then 2, then 4, then 8, doubling until you overshoot the target or reach the end. Then binary search within the last range.</p>
-<pre tabindex="0"><code>ExponentialSearch(A, target):
-    if A[0] == target: return 0
-    i = 1
-    while i &lt; n and A[i] &lt; target:
-        i = i * 2
-    return BinarySearch(A, i/2, min(i, n-1), target)
-</code></pre><p>If the target is at index $k$, the doubling phase takes $O(\log k)$ steps to find the right range, and binary search within that range also takes $O(\log k)$. Total: $O(\log k)$, which is $O(\log n)$ in the worst case.</p>
-<div class="mermaid">
-flowchart LR
-    A["i=1\ncheck"] -->|"too small\ndouble"| B["i=2\ncheck"] -->|"too small\ndouble"| C["i=4\ncheck"] -->|"too small\ndouble"| D["i=8\ncheck"] -->|"overshot!\nbinary search [4..8]"| E["found"]
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
-<p>This is useful when the target is near the beginning of a large or unbounded sorted sequence - you pay $O(\log k)$ instead of $O(\log n)$.</p>
-<hr>
-<h2 id="search-and-the-lower-bound">Search and the Lower Bound</h2>
-<p>We showed earlier that comparison-based sorting requires $\Omega(n \log n)$. A similar argument applies to searching.</p>
-<p>Given a sorted array of $n$ elements, any comparison-based search must make at least $\Omega(\log n)$ comparisons in the worst case. The argument: there are $n + 1$ possible outcomes (the element is not there, or it&rsquo;s at one of $n$ positions). Each comparison has two outcomes. To distinguish $n + 1$ cases, you need at least $\log_2(n+1)$ comparisons.</p>
-<p>Binary search achieves this bound exactly: it&rsquo;s optimal for searching sorted arrays.</p>
+<h2 id="why-you-cant-beat-log-n">Why You Can&rsquo;t Beat $\log n$</h2>
+<p>Searching a sorted array by comparisons has $n + 1$ possible outcomes: one of $n$ positions, or &ldquo;not present&rdquo;. Each comparison has two outcomes, so telling $n + 1$ cases apart takes at least $\log_2(n + 1)$ comparisons. Binary search meets that bound exactly; it&rsquo;s optimal.</p>
 <hr>
 <h2 id="search-in-trees-and-hash-tables">Search in Trees and Hash Tables</h2>
-<p>Arrays aren&rsquo;t the only place you search.</p>
-<p><strong>Balanced BST search</strong> also runs in $O(\log n)$ - you follow the BST property at each node to determine which subtree to recurse into. The comparison count is the same as binary search, but each comparison involves a pointer dereference that may cause a cache miss. For static data, a sorted array with binary search is typically 2-5 times faster than a balanced BST because of cache behavior.</p>
-<p><strong>Hash table lookup</strong> is $O(1)$ expected - no searching at all, just compute the hash and go to the bucket. When you don&rsquo;t need ordered operations or range queries, hash tables dominate.</p>
-<p>The choice: if the data never changes, use a sorted array with binary search. If you need insert/delete, use a balanced BST for ordered operations or a hash table for unordered ones.</p>
+<ul>
+<li><strong>A balanced BST</strong> also searches in $O(\log n)$, but every step follows a pointer that may miss the cache. For data that doesn&rsquo;t change, a sorted array with binary search is usually several times faster.</li>
+<li><strong>A hash table</strong> doesn&rsquo;t search at all: compute the hash, go to the bucket, $O(1)$ expected. Unless you need ordering or range queries, it wins.</li>
+</ul>
+<p>The rule of thumb: static data, sort it once and binary search; changing data that needs ordering, a balanced BST; everything else, a hash table.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
-<th>Algorithm</th>
+<th>Method</th>
 <th>Time</th>
-<th>Preconditions</th>
+<th>Needs</th>
 <th>Notes</th>
 </tr>
 </thead>
@@ -341,20 +278,20 @@ flowchart LR
 <tr>
 <td>Linear search</td>
 <td>$O(n)$</td>
-<td>None</td>
+<td>Nothing</td>
 <td>Optimal without preprocessing</td>
 </tr>
 <tr>
 <td>Binary search</td>
 <td>$O(\log n)$</td>
 <td>Sorted array</td>
-<td>Famously tricky off-by-ones</td>
+<td>Mind the off-by-ones</td>
 </tr>
 <tr>
-<td>Binary search on answer</td>
-<td>$O(\log R \cdot T_f)$</td>
-<td>Monotone predicate</td>
-<td>Generalization for optimization</td>
+<td>Binary search on the answer</td>
+<td>$O(\log R \cdot T)$</td>
+<td>A monotone test costing $T$</td>
+<td>Optimization as repeated yes/no questions</td>
 </tr>
 <tr>
 <td>Interpolation search</td>
@@ -366,31 +303,31 @@ flowchart LR
 <td>Exponential search</td>
 <td>$O(\log k)$</td>
 <td>Sorted</td>
-<td>For unknown $n$, target at position $k$</td>
+<td>Target at index $k$; unknown $n$</td>
 </tr>
 <tr>
 <td>BST search</td>
 <td>$O(\log n)$</td>
 <td>Balanced BST</td>
-<td>Cache misses in practice</td>
+<td>Pointer chasing costs cache misses</td>
 </tr>
 <tr>
-<td>Hash table lookup</td>
+<td>Hash table</td>
 <td>$O(1)$ expected</td>
-<td>Hash table built</td>
-<td>Unordered only</td>
+<td>A hash table</td>
+<td>No ordering</td>
 </tr>
 <tr>
 <td>Bisection</td>
 <td>$O(\log(1/\varepsilon))$</td>
-<td>Continuous monotone $f$, sign change</td>
-<td>Linear convergence; always works</td>
+<td>A sign change</td>
+<td>Slow, can&rsquo;t fail</td>
 </tr>
 <tr>
 <td>Newton&rsquo;s method</td>
-<td>$O(\log \log(1/\varepsilon))$</td>
-<td>Smooth $f$, good initial guess</td>
-<td>Quadratic convergence; can fail</td>
+<td>$O(\log \log(1/\varepsilon))$ near the root</td>
+<td>Smooth $f$, good start</td>
+<td>Digits double each step; can fail</td>
 </tr>
 </tbody>
 </table>
