@@ -271,7 +271,8 @@
         var t = fr.cellCls && fr.cellCls[r + ',' + c];
         var td = cells[r][c];
         td.textContent = v === null || v === undefined ? '' : String(v);
-        td.style.background = t && TOKENS[t] ? TOKENS[t] : '';
+        // null is a spacer: no cell at all
+        td.style.background = v === null ? 'transparent' : (t && TOKENS[t] ? TOKENS[t] : '');
         td.style.color = ink(t);
       }
     };
