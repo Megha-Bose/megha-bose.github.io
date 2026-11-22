@@ -238,7 +238,7 @@
     var first = spec.frames[0];
     var R = first.cells.length, C = first.cells[0].length;
     var g = spec.grid || {};
-    var table = h('table', { class: 'sf-table' });
+    var table = h('table', { class: 'sf-table' + (g.mono ? ' sf-mono' : '') });
     if (g.colLabels) {
       var hr = h('tr', null, [g.rowLabels ? h('th') : null].concat(g.colLabels.map(function (l) { return h('th', { text: String(l) }); })));
       table.appendChild(h('thead', null, [hr]));
