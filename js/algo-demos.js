@@ -88,16 +88,20 @@
 
     // Play once when the demo scrolls into view, unless the reader got there first.
     if (!REDUCED && 'IntersectionObserver' in window) {
+      // Start when most of the demo is visible, or, for a demo taller than the
+      // screen, when it fills most of the screen.
       var watcher = new IntersectionObserver(function (entries) {
-        if (!entries[0].isIntersecting) return;
+        var e = entries[0];
+        if (!e.isIntersecting) return;
+        if (e.intersectionRatio < 0.75 && e.intersectionRect.height < window.innerHeight * 0.6) return;
         watcher.disconnect();
         if (!touched && !timer && !finished) play();
-      }, { threshold: 0.8 });
+      }, { threshold: [0, 0.2, 0.4, 0.6, 0.75, 1] });
       watcher.observe(root);
     }
 
     sync();
-    return { reset: reset, touch: function () { touched = true; } };
+    return { reset: reset, play: play, touch: function () { touched = true; } };
   }
 
   function commas(n) { return Math.round(n).toLocaleString('en-US'); }

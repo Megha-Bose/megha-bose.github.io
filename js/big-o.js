@@ -505,7 +505,7 @@
   // ---------------------------------------------------------------- recursion tree / master theorem
   demos.mastertree = function (root) {
     var ui = frame(root, 'Where does the work go? The recursion tree',
-      'T(n) = a·T(n/b) + nᶜ. Each row is one level of the recursion: how many subproblems there are, and how much work the level does in total.');
+      'T(n) = a·T(n/b) + nᶜ. Each row is one level of the recursion: how many calls it makes, and how much work the whole level does.');
     var presets = [
       { name: 'Merge sort', a: 2, b: 2, c: 1 },
       { name: 'Binary search', a: 1, b: 2, c: 0 },
@@ -513,72 +513,102 @@
       { name: 'Strassen', a: 7, b: 2, c: 2 },
       { name: 'Root-heavy', a: 2, b: 4, c: 1 }
     ];
-    var LEVELS = 6;
+    var LEVELS = 5;
+    var MAXDOTS = 32;
     var st = { a: 2, b: 2, c: 1, shown: LEVELS + 1, preset: 0 };
 
     var pre = choices('', presets.map(function (p) { return p.name; }), function (i) {
-      ctl.touch(); st.preset = i; st.a = presets[i].a; st.b = presets[i].b; st.c = presets[i].c; syncSliders(); showAll();
+      ctl.touch(); st.preset = i; st.a = presets[i].a; st.b = presets[i].b; st.c = presets[i].c; syncSliders(); replay();
     });
     ui.body.appendChild(pre.row);
-    var sa = slider('sf-mt-a', 'a, subproblems per call', 1, 8, st.a, function (v) { ctl.touch(); st.a = v; st.preset = -1; showAll(); });
+    var sa = slider('sf-mt-a', 'a, calls each call makes', 1, 8, st.a, function (v) { ctl.touch(); st.a = v; st.preset = -1; showAll(); });
     var sb = slider('sf-mt-b', 'b, how much smaller each is', 2, 4, st.b, function (v) { ctl.touch(); st.b = v; st.preset = -1; showAll(); });
-    var sc = slider('sf-mt-c', 'c, work per call is nᶜ', 0, 3, st.c, function (v) { ctl.touch(); st.c = v; st.preset = -1; showAll(); });
-    [sa, sb, sc].forEach(function (s) { ui.body.appendChild(s.row); });
-    function showAll() { ctl.reset(); st.shown = LEVELS + 1; render(); }
-    function syncSliders() { sa.input.value = st.a; sb.input.value = st.b; sc.input.value = st.c; }
+    var sc = slider('sf-mt-c', 'c, each call does nᶜ work', 0, 3, st.c, function (v) { ctl.touch(); st.c = v; st.preset = -1; showAll(); });
+    [sa, sb, sc].forEach(function (x) { ui.body.appendChild(x.row); });
 
     var formula = h('p', { class: 'sf-formula sf-num' });
     ui.body.appendChild(formula);
-    var rowsWrap = h('div', { class: 'sf-tree' });
-    ui.body.appendChild(rowsWrap);
+
+    // Rows are built once and only updated, so bars glide when anything changes.
+    var rows = [];
+    var tree = h('div', { class: 'sf-tree' });
+    for (var k = 0; k <= LEVELS; k++) {
+      var dots = [];
+      var dotBox = h('div', { class: 'sf-tree-dots' });
+      for (var d = 0; d < MAXDOTS; d++) { var dot = h('span', { class: 'sf-tree-dot' }); dots.push(dot); dotBox.appendChild(dot); }
+      var more = h('span', { class: 'sf-tree-more' });
+      dotBox.appendChild(more);
+      var name = h('b', { text: 'Level ' + k });
+      var info = h('small', { class: 'sf-num' });
+      var fill = h('div', { class: 'sf-fill' });
+      var amount = h('span', { class: 'sf-tree-amount sf-num' });
+      var row = h('div', { class: 'sf-tree-row' }, [
+        h('div', { class: 'sf-tree-label' }, [name, info]),
+        dotBox,
+        h('div', { class: 'sf-tree-work' }, [h('div', { class: 'sf-track' }, [fill]), amount])
+      ]);
+      rows.push({ row: row, dots: dots, more: more, info: info, fill: fill, amount: amount });
+      tree.appendChild(row);
+    }
+    ui.body.appendChild(tree);
     ui.body.appendChild(legend([
-      ['var(--sf-a)', 'work done by that level'],
+      ['var(--sf-muted)', 'one dot per call'],
+      ['var(--sf-a)', 'total work done by that level'],
       ['var(--sf-b)', 'the level that does the most']
     ]));
+
+    function syncSliders() { sa.input.value = st.a; sb.input.value = st.b; sc.input.value = st.c; }
+    function showAll() { ctl.reset(); st.shown = LEVELS + 1; render(); }
+    function replay() { ctl.reset(); ctl.play(); }
+
+    function times(x) {
+      if (x >= 1000) return commas(x) + '×';
+      if (x >= 10) return Math.round(x) + '×';
+      return (+x.toFixed(2)) + '×';
+    }
 
     function render() {
       pre.set(st.preset);
       sa.out.textContent = String(st.a); sb.out.textContent = String(st.b); sc.out.textContent = String(st.c);
       var a = st.a, b = st.b, c = st.c;
       var r = a / Math.pow(b, c);
-      formula.innerHTML = 'T(n) = ' + (a === 1 ? '' : a) + 'T(n/' + b + ') + ' + (c === 0 ? '1' : c === 1 ? 'n' : 'n<sup>' + c + '</sup>') +
-        ' &nbsp;·&nbsp; each level does <b>' + (+r.toFixed(3)) + '×</b> the work of the one above';
+      var work = c === 0 ? '1' : c === 1 ? 'n' : 'n<sup>' + c + '</sup>';
+      formula.innerHTML = 'T(n) = ' + (a === 1 ? '' : a) + 'T(n/' + b + ') + ' + work +
+        ' &nbsp;·&nbsp; each level does <b>' + times(r) + '</b> the work of the level above';
+
       var works = [];
       for (var k = 0; k <= LEVELS; k++) works.push(Math.pow(r, k));
       var maxw = Math.max.apply(null, works);
-      rowsWrap.textContent = '';
-      for (var k2 = 0; k2 <= LEVELS; k2++) {
-        var count = Math.pow(a, k2);
-        var dots = h('div', { class: 'sf-tree-dots' });
-        var shownDots = Math.min(count, 48);
-        for (var d = 0; d < shownDots; d++) dots.appendChild(h('span', { class: 'sf-tree-dot' }));
-        if (count > shownDots) dots.appendChild(h('span', { class: 'sf-tree-more', text: '+' + commas(count - shownDots) }));
-        var visible = k2 < st.shown;
-        var top = Math.abs(works[k2] - maxw) < 1e-9;
-        var bar = h('div', { class: 'sf-fill' + (top ? ' is-top' : ''), style: 'width:' + (visible ? Math.max(works[k2] / maxw * 100, 0.8) : 0) + '%' });
-        rowsWrap.appendChild(h('div', { class: 'sf-tree-row' + (visible ? '' : ' is-hidden') }, [
-          h('div', { class: 'sf-tree-label' }, [h('b', { text: 'Level ' + k2 }), h('small', { class: 'sf-num', text: commas(count) + (count === 1 ? ' call' : ' calls') + ', size n/' + commas(Math.pow(b, k2)) })]),
-          dots,
-          h('div', { class: 'sf-track' }, [bar])
-        ]));
-      }
-      var crit = Math.log(a) / Math.log(b);
-      var critText = (+crit.toFixed(3));
+      rows.forEach(function (row, k) {
+        var count = Math.pow(a, k);
+        var visible = k < st.shown;
+        row.row.classList.toggle('is-hidden', !visible);
+        row.dots.forEach(function (dot, i) { dot.style.display = i < Math.min(count, MAXDOTS) ? '' : 'none'; });
+        row.more.textContent = count > MAXDOTS ? '+' + commas(count - MAXDOTS) : '';
+        row.info.textContent = commas(count) + (count === 1 ? ' call' : ' calls') + ' of size n/' + commas(Math.pow(b, k));
+        var top = Math.abs(works[k] - maxw) < 1e-9 * maxw;
+        row.fill.className = 'sf-fill' + (top ? ' is-top' : '');
+        row.fill.style.width = (visible ? Math.max(works[k] / maxw * 100, 1) : 0) + '%';
+        row.amount.innerHTML = visible ? (k === 0 ? work : times(works[k]) + ' ' + work) : '';
+      });
+
+      var crit = +(Math.log(a) / Math.log(b)).toFixed(3);
       var verdict;
-      if (Math.abs(r - 1) < 1e-9) verdict = '<b>Every level does the same work</b>, and there are about log n levels: Θ(' + (c === 0 ? '' : c === 1 ? 'n ' : 'n<sup>' + c + '</sup> ') + 'log n). Master Theorem case 2.';
-      else if (r < 1) verdict = '<b>The root does the most</b>; each level below shrinks. Total: Θ(' + (c === 0 ? '1' : c === 1 ? 'n' : 'n<sup>' + c + '</sup>') + '). Case 3.';
-      else verdict = '<b>The leaves do the most</b>; each level grows. Total: Θ(n<sup>' + critText + '</sup>), where ' + critText + ' = log<sub>' + b + '</sub> ' + a + '. Case 1.';
-      if (st.shown <= LEVELS) verdict = 'Revealing level by level...';
+      if (st.shown === 0) verdict = 'Press Play to build the tree one level at a time, starting from the first call.';
+      else if (st.shown <= LEVELS) verdict = 'Level ' + (st.shown - 1) + ': ' + commas(Math.pow(a, st.shown - 1)) + (Math.pow(a, st.shown - 1) === 1 ? ' call doing ' : ' calls, together doing ') + times(works[st.shown - 1]) + ' the root\'s work.';
+      else if (Math.abs(r - 1) < 1e-9) verdict = '<b>Every level does the same work</b>, and there are about log n levels, so T(n) = Θ(' + (c === 0 ? '' : c === 1 ? 'n ' : 'n<sup>' + c + '</sup> ') + 'log n). Master Theorem case 2.';
+      else if (r < 1) verdict = '<b>The root does the most</b> and each level below does less, so the root\'s work decides it: T(n) = Θ(' + work + '). Case 3.';
+      else verdict = '<b>The leaves do the most</b> and each level does more than the last, so the leaves decide it: T(n) = Θ(n<sup>' + crit + '</sup>), where ' + crit + ' = log<sub>' + b + '</sub> ' + a + '. Case 1.';
       ui.status.innerHTML = verdict;
     }
 
     var ctl = stepper(root, ui.controls, {
-      reset: function () { st.shown = 1; render(); },
+      reset: function () { st.shown = 0; render(); },
       step: function () {
         if (st.shown > LEVELS) st.shown = 0;                 // replay from the root
         st.shown += 1; render(); return st.shown <= LEVELS;
       }
-    }, 650);
+    }, 700);
     st.shown = LEVELS + 1;
     render();
   };
