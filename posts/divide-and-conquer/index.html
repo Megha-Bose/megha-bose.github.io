@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795370196" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/big-o.js?v=1795368999" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,13 +23,11 @@
 
 <meta name="twitter:title" content="Divide &amp; Conquer - Small Savings That Compound"/>
 <meta name="twitter:description" content="Helpful context:
- Sorting Algorithms - How Order Turns Hard Problems Easy  Amortized Analysis - The True Cost of a Sequence    In 1969, a mathematician named Volker Strassen published a paper that surprised the entire field of numerical computing.
-For decades, everyone assumed the only way to multiply two $n \times n$ matrices was to compute $n^3$ scalar products - three nested loops. Strassen showed you could do it with $n^{2."/>
+ Sorting Algorithms - How Order Turns Hard Problems Easy  Amortized Analysis - The True Cost of a Sequence    In 1969 Volker Strassen surprised the whole field of numerical computing. Everyone assumed multiplying two $n \times n$ matrices needed about $n^3$ scalar multiplications, three nested loops. Split each matrix into $2 \times 2$ blocks and the obvious method needs 8 block multiplications. Strassen found a way to do it with 7."/>
 
     <meta property="og:title" content="Divide &amp; Conquer - Small Savings That Compound" />
 <meta property="og:description" content="Helpful context:
- Sorting Algorithms - How Order Turns Hard Problems Easy  Amortized Analysis - The True Cost of a Sequence    In 1969, a mathematician named Volker Strassen published a paper that surprised the entire field of numerical computing.
-For decades, everyone assumed the only way to multiply two $n \times n$ matrices was to compute $n^3$ scalar products - three nested loops. Strassen showed you could do it with $n^{2." />
+ Sorting Algorithms - How Order Turns Hard Problems Easy  Amortized Analysis - The True Cost of a Sequence    In 1969 Volker Strassen surprised the whole field of numerical computing. Everyone assumed multiplying two $n \times n$ matrices needed about $n^3$ scalar multiplications, three nested loops. Split each matrix into $2 \times 2$ blocks and the obvious method needs 8 block multiplications. Strassen found a way to do it with 7." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/divide-and-conquer/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -155,7 +156,7 @@ For decades, everyone assumed the only way to multiply two $n \times n$ matrices
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          12 min read
+          8 min read
         </div>
       </div>
     </header>
@@ -168,134 +169,92 @@ For decades, everyone assumed the only way to multiply two $n \times n$ matrices
 </li>
 </ul>
 <hr>
-<p>In 1969, a mathematician named Volker Strassen published a paper that surprised the entire field of numerical computing.</p>
-<p>For decades, everyone assumed the only way to multiply two $n \times n$ matrices was to compute $n^3$ scalar products - three nested loops. Strassen showed you could do it with $n^{2.807}$ operations. The trick? When multiplying two matrices split into 2x2 blocks, you need 8 sub-multiplications naively. Strassen found a way to do it with only 7.</p>
-<p>That difference - 8 versus 7, a reduction by one eighth - doesn&rsquo;t sound like much. But through recursion, that single saved multiplication at every level of decomposition compounds into a 4× speedup at $n = 10{,}000$.</p>
-<p>This is divide and conquer. Not just &ldquo;split the problem in half and recurse&rdquo; - that part is easy. The insight is that sometimes you can save work at the sub-problem level, and through recursion, small savings become large ones.</p>
+<p>In 1969 Volker Strassen surprised the whole field of numerical computing. Everyone assumed multiplying two $n \times n$ matrices needed about $n^3$ scalar multiplications, three nested loops. Split each matrix into $2 \times 2$ blocks and the obvious method needs 8 block multiplications. Strassen found a way to do it with <strong>7</strong>.</p>
+<p>One fewer multiplication doesn&rsquo;t sound like much. But the saving repeats at every level of the recursion, and compounds: the exponent drops from 3 to 2.807, and at $n = 10{,}000$ that&rsquo;s about 6 times less work.</p>
+<p>That&rsquo;s divide and conquer. Splitting a problem in half and recursing is the easy part. The insight is that <strong>a small saving at each level of the recursion becomes a large saving overall.</strong></p>
 <hr>
 <h2 id="the-template">The Template</h2>
-<p>Every divide-and-conquer algorithm has the same three-step structure.</p>
-<p><strong>Divide:</strong> split the problem into $a$ smaller subproblems, each of size roughly $n/b$.</p>
-<p><strong>Conquer:</strong> solve each subproblem recursively. (Base case: when the problem is small enough, solve directly.)</p>
-<p><strong>Combine:</strong> merge the subproblem solutions into a solution for the original problem. This step costs $O(n^c)$ for some $c$.</p>
-<p>The running time satisfies a <em>recurrence relation</em> - an equation that defines the cost $T(n)$ in terms of the cost of smaller subproblems:</p>
-<p>$$T(n) = a \cdot T(n/b) + O(n^c)$$</p>
-<p>The <a href="/posts/algorithmic-thinking-big-o/" target="_blank" rel="noopener noreferrer">Big-O - Why the Right Algorithm Beats Faster Hardware</a>
- solves this based on the critical exponent $\log_b a$:</p>
-<ul>
-<li><strong>Case 1</strong> ($c \lt \log_b a$): leaves dominate - $T(n) = \Theta(n^{\log_b a})$</li>
-<li><strong>Case 2</strong> ($c = \log_b a$): every level equal - $T(n) = \Theta(n^c \log n)$</li>
-<li><strong>Case 3</strong> ($c \gt \log_b a$): root dominates - $T(n) = \Theta(n^c)$</li>
-</ul>
-<hr>
-<h2 id="merge-sort-revisited">Merge Sort, Revisited</h2>
-<p>Merge sort has $a = 2$, $b = 2$, $c = 1$: split into 2 subproblems of half the size, combine in $O(n)$.</p>
-<p>$$\log_b a = \log_2 2 = 1 = c$$</p>
-<p>We&rsquo;re in Case 2. Every level of the recursion tree does $O(n)$ work. There are $O(\log n)$ levels. Total:</p>
-<p>$$T(n) = \Theta(n \log n)$$</p>
-<hr>
-<h2 id="binary-search-revisited">Binary Search, Revisited</h2>
-<p>Binary search has $a = 1$, $b = 2$, $c = 0$: one subproblem of half the size, constant work to determine which half.</p>
-<p>$$\log_b a = \log_2 1 = 0 = c$$</p>
-<p>Case 2 again:</p>
-<p>$$T(n) = \Theta(\log n)$$</p>
-<p>The &ldquo;combine&rdquo; step is empty - no merging needed. All you do is look at the midpoint and recurse into one half.</p>
-<hr>
-<h2 id="karatsuba-multiplication-saving-one-multiply">Karatsuba Multiplication: Saving One Multiply</h2>
-<p>To multiply two $n$-digit numbers, the schoolbook algorithm uses $O(n^2)$ single-digit multiplications. Can we do better?</p>
-<p>Write the two numbers as $x = x_1 \cdot B^{n/2} + x_0$ and $y = y_1 \cdot B^{n/2} + y_0$, where $B$ is the base. The product is:</p>
-<p>$$xy = x_1 y_1 \cdot B^n + (x_1 y_0 + x_0 y_1) \cdot B^{n/2} + x_0 y_0$$</p>
-<p>This seems to require four multiplications: $x_1 y_1$, $x_1 y_0$, $x_0 y_1$, and $x_0 y_0$.</p>
-<p>Karatsuba&rsquo;s observation: you can compute $x_1 y_0 + x_0 y_1$ using only one extra multiplication instead of two:</p>
-<p>$$x_1 y_0 + x_0 y_1 = (x_1 + x_0)(y_1 + y_0) - x_1 y_1 - x_0 y_0$$</p>
-<p>The quantities $x_1 y_1$ and $x_0 y_0$ were already computed. So you need only three multiplications total: $x_1 y_1$, $x_0 y_0$, and $(x_1 + x_0)(y_1 + y_0)$.</p>
-<p>The recurrence: $a = 3$, $b = 2$, $c = 1$ (the additions for combining take $O(n)$).</p>
-<p>$$\log_b a = \log_2 3 \approx 1.585 \gt 1 = c$$</p>
-<p>Case 1 applies:</p>
-<p>$$T(n) = \Theta(n^{\log_2 3}) \approx \Theta(n^{1.585})$$</p>
-<p>For $n = 10^6$ digits: schoolbook does $10^{12}$ operations; Karatsuba does roughly $10^{9.5}$ - about 30 times fewer.</p>
-<hr>
-<h2 id="closest-pair-of-points-on-log-n-via-divide-and-conquer">Closest Pair of Points: O(n log n) via Divide and Conquer</h2>
-<p>Given $n$ points in the plane, find the pair with minimum Euclidean distance. The naive approach checks all $\binom{n}{2}$ pairs: $O(n^2)$.</p>
-<p>Here&rsquo;s the divide-and-conquer approach that achieves $O(n \log n)$:</p>
 <ol>
-<li>Sort the points by $x$-coordinate (pay $O(n \log n)$ once at the start).</li>
-<li>Split at the median $x$-coordinate into left half $L$ and right half $R$.</li>
-<li>Recursively find $\delta_L$ = minimum distance within $L$, and $\delta_R$ = minimum distance within $R$. Let $\delta = \min(\delta_L, \delta_R)$.</li>
-<li>The closest pair might straddle the dividing line. Consider only points within distance $\delta$ of the dividing line (a &ldquo;strip&rdquo; of width $2\delta$). Sort these by $y$-coordinate and check each point against its next 7 neighbors in $y$-order.</li>
+<li><strong>Divide</strong> the problem into $a$ subproblems, each of size about $n/b$.</li>
+<li><strong>Conquer</strong> each one recursively, solving tiny ones directly.</li>
+<li><strong>Combine</strong> their answers, at a cost of $O(n^c)$.</li>
 </ol>
-<p>Why only 7 neighbors? Because within the strip, no two points on the same side can be within distance $\delta$. A geometric argument shows at most 8 points can fit in any $\delta \times 2\delta$ rectangle while maintaining pairwise distance $\geq \delta$.</p>
-<p>With the pre-sorting trick, the strip step is $O(n)$ per level (maintain two sorted arrays and merge). The recurrence is $T(n) = 2T(n/2) + O(n)$, giving $T(n) = O(n \log n)$.</p>
+<p>That gives the recurrence</p>
+<p>$$T(n) = a \cdot T(n/b) + O(n^c)$$</p>
+<p>and its solution depends only on where the work concentrates in the recursion tree. Pick an algorithm below, or set $a$, $b$ and $c$ yourself:</p>
+<div class="sf" data-sf="mastertree">This is an interactive demo. It needs JavaScript to run.</div>
+<p>Each level does $r = a / b^c$ times the work of the level above, which gives the three cases of the <a href="/posts/algorithmic-thinking-big-o/#the-master-theorem" target="_blank" rel="noopener noreferrer">Master Theorem</a>
+:</p>
+<ul>
+<li><strong>$c &lt; \log_b a$</strong>: the leaves dominate, $T(n) = \Theta(n^{\log_b a})$.</li>
+<li><strong>$c = \log_b a$</strong>: every level is equal, $T(n) = \Theta(n^c \log n)$.</li>
+<li><strong>$c &gt; \log_b a$</strong>: the root dominates, $T(n) = \Theta(n^c)$.</li>
+</ul>
+<p><strong>Merge sort</strong> splits into 2 halves and merges in $O(n)$: $a = b = 2$, $c = 1 = \log_2 2$. Every level does $O(n)$ work across $\log n$ levels: $\Theta(n \log n)$.</p>
+<p><strong>Binary search</strong> recurses into just 1 half with constant work: $a = 1$, $b = 2$, $c = 0 = \log_2 1$. Also the every-level-equal case: $\Theta(\log n)$. There&rsquo;s no combine step at all.</p>
 <hr>
-<h2 id="strassen-matrix-multiplication-the-7-multiply-trick">Strassen Matrix Multiplication: The 7-Multiply Trick</h2>
-<p>The naive way to multiply two $n \times n$ matrices does $n^3$ scalar multiplications - three nested loops. Strassen showed you can do it in $O(n^{2.807})$ using a non-obvious algebraic identity.</p>
-<p><strong>Why you can split a matrix into blocks at all.</strong></p>
-<p>Start from the definition: every entry of $C$ is a dot product. $C[i][j] = \sum_{k=0}^{n-1} A[i][k] \cdot B[k][j]$ - row $i$ of $A$ dotted with column $j$ of $B$.</p>
-<p>Now split both the row and the column at their midpoints. The sum breaks into two halves:</p>
-<p>$$C[i][j] = \sum_{k=0}^{n/2-1} A[i][k] \cdot B[k][j] + \sum_{k=n/2}^{n-1} A[i][k] \cdot B[k][j]$$</p>
-<p>The first sum runs over $k$ in the first half, the second over $k$ in the second half.</p>
-<p>This is not a trick - it is always valid to split a sum. The question is just: which block of $A$ and which block of $B$ do those two halves correspond to?</p>
-<div class="mermaid">
-flowchart TD
-    entry["Computing C[i][j] for i,j in top-left quadrant"]
-    entry --> h1["First half of k\n(k = 0 to n/2-1)\nA[i][k] is in A₁₁\nB[k][j] is in B₁₁"]
-    entry --> h2["Second half of k\n(k = n/2 to n-1)\nA[i][k] is in A₁₂\nB[k][j] is in B₂₁"]
-    h1 --> sum["C₁₁[i][j] = (A₁₁·B₁₁)[i][j] + (A₁₂·B₂₁)[i][j]"]
-    h2 --> sum
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
-<p>Since this holds for every $(i, j)$ in the top-left quadrant, it holds for the whole block: $C_{11} = A_{11}B_{11} + A_{12}B_{21}$. Not magic - just a sum split. The same argument gives the other three blocks, just with different choices of which half of $i$ and $j$ you&rsquo;re looking at:</p>
+<h2 id="karatsuba-multiplication-three-multiplies-instead-of-four">Karatsuba Multiplication: Three Multiplies Instead of Four</h2>
+<p>Schoolbook multiplication of two $n$-digit numbers takes $O(n^2)$ digit products. Split each number in half, $x = x_1 B^{n/2} + x_0$ and $y = y_1 B^{n/2} + y_0$, where $B$ is the base:</p>
+<p>$$xy = x_1 y_1 \cdot B^n + (x_1 y_0 + x_0 y_1) \cdot B^{n/2} + x_0 y_0$$</p>
+<p>That looks like four half-size products. Karatsuba noticed the middle term can reuse the other two:</p>
+<p>$$x_1 y_0 + x_0 y_1 = (x_1 + x_0)(y_1 + y_0) - x_1 y_1 - x_0 y_0$$</p>
+<p>So three products suffice: $x_1 y_1$, $x_0 y_0$ and $(x_1 + x_0)(y_1 + y_0)$. With $a = 3$, $b = 2$, $c = 1$, and $\log_2 3 \approx 1.585 &gt; 1$, the leaves dominate:</p>
+<p>$$T(n) = \Theta(n^{\log_2 3}) \approx \Theta(n^{1.585})$$</p>
+<p>For million-digit numbers, that&rsquo;s around $10^{9.5}$ operations instead of $10^{12}$: about 30 times fewer.</p>
+<p><strong>A worked example: $12 \times 34$</strong>, splitting at the tens. Here $x_1 = 1$, $x_0 = 2$, $y_1 = 3$, $y_0 = 4$:</p>
 <table>
 <thead>
 <tr>
-<th>Output block</th>
-<th>$i$ in&hellip;</th>
-<th>$j$ in&hellip;</th>
-<th>First half of $k$</th>
-<th>Second half of $k$</th>
+<th>Product</th>
+<th>Value</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>$C_{11}$</td>
-<td>top</td>
-<td>left</td>
-<td>$A_{11} \times B_{11}$</td>
-<td>$A_{12} \times B_{21}$</td>
+<td>$x_1 y_1 = 1 \times 3$</td>
+<td>3</td>
 </tr>
 <tr>
-<td>$C_{12}$</td>
-<td>top</td>
-<td>right</td>
-<td>$A_{11} \times B_{12}$</td>
-<td>$A_{12} \times B_{22}$</td>
+<td>$x_0 y_0 = 2 \times 4$</td>
+<td>8</td>
 </tr>
 <tr>
-<td>$C_{21}$</td>
-<td>bottom</td>
-<td>left</td>
-<td>$A_{21} \times B_{11}$</td>
-<td>$A_{22} \times B_{21}$</td>
+<td>$(x_1 + x_0)(y_1 + y_0) = 3 \times 7$</td>
+<td>21</td>
 </tr>
 <tr>
-<td>$C_{22}$</td>
-<td>bottom</td>
-<td>right</td>
-<td>$A_{21} \times B_{12}$</td>
-<td>$A_{22} \times B_{22}$</td>
+<td>Middle term: $21 - 3 - 8$</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Result: $3 \cdot 100 + 10 \cdot 10 + 8$</td>
+<td><strong>408</strong></td>
 </tr>
 </tbody>
 </table>
-<p>Notice the pattern: which block of $A$ you use depends only on which half of $i$ you are in (top rows use $A_{11}$/$A_{12}$, bottom rows use $A_{21}$/$A_{22}$). Which block of $B$ you use depends only on which half of $j$ you are in (left columns use $B_{11}$/$B_{21}$, right columns use $B_{12}$/$B_{22}$). The $k$ split always contributes one term from each side.</p>
-<p>You might notice something that looks odd: in the term $A_{12}B_{21}$, the column-block index of $A$ (the 2 in $A_{12}$) matches the row-block index of $B$ (the 2 in $B_{21}$). This is not a coincidence - it is exactly the same contraction that happens at the scalar level. Scalar multiplication is $C[i][j] = \sum_k A[i][k] \cdot B[k][j]$: column index of $A$ contracts with row index of $B$. Block multiplication is $C_{IJ} = \sum_K A_{IK} \cdot B_{KJ}$: the same formula with block indices. $C_{11} = A_{11}B_{11} + A_{12}B_{21}$ is just $K=1$ and $K=2$ in that sum. Blocks behave algebraically like scalars under matrix multiplication - the structure is preserved exactly.</p>
-<p>Since blocks behave like scalars, you could split into $k \times k$ blocks for any $k$, not just 2. The asymptotic complexity would be $O(n^{\log_k m})$ where $m$ is the number of block multiplications needed at that level. The question is whether larger blocks let you save proportionally more multiplications. The answer, so far, is no: for $3 \times 3$ blocks the naive count is 27 multiplications, and the best known algorithm (Laderman, 1976) reduces this to 23, giving $O(n^{\log_3 23}) \approx O(n^{2.854})$ - worse than Strassen&rsquo;s $O(n^{2.807})$. You saved 4 out of 27 multiplications but the block size grew faster than the savings. This is why Strassen&rsquo;s 2×2 decomposition remains a strong baseline despite decades of effort on larger block sizes.</p>
-<p>Computing these directly requires 8 block multiplications. Since each block is $n/2 \times n/2$, the recurrence is $T(n) = 8T(n/2) + O(n^2)$, giving $T(n) = O(n^3)$. No improvement yet.</p>
-<p><strong>Strassen&rsquo;s trick.</strong> Instead of computing each output block directly, compute 7 intermediate products using sums and differences of the blocks - then combine them:</p>
+<hr>
+<h2 id="closest-pair-of-points-in-on-log-n">Closest Pair of Points in $O(n \log n)$</h2>
+<p>Given $n$ points in the plane, find the two closest. Checking every pair is $O(n^2)$. Divide and conquer:</p>
+<ol>
+<li>Sort the points by $x$ once, in $O(n \log n)$.</li>
+<li>Split them at the median $x$ into a left half and a right half.</li>
+<li>Recursively find the closest pair in each half. Let $\delta$ be the smaller of the two distances.</li>
+<li>The overall closest pair might <strong>straddle the line</strong>. But such a pair must lie within $\delta$ of the line, so look only at the <em>strip</em> of width $2\delta$ around it. Sort the strip by $y$, and compare each point with just its next 7 neighbours.</li>
+</ol>
+<p>Why only 7? Points on the same side are at least $\delta$ apart, and only 8 points that far apart fit in a $\delta \times 2\delta$ box. Keeping the points pre-sorted by $y$ makes each strip step $O(n)$, so $T(n) = 2T(n/2) + O(n) = O(n \log n)$.</p>
+<hr>
+<h2 id="strassens-matrix-multiplication">Strassen&rsquo;s Matrix Multiplication</h2>
+<p>Write each matrix as four $n/2 \times n/2$ blocks. Then each block of the product follows the ordinary rule, with blocks playing the role of numbers:</p>
+<p>$$C_{11} = A_{11}B_{11} + A_{12}B_{21} \qquad C_{12} = A_{11}B_{12} + A_{12}B_{22}$$
+$$C_{21} = A_{21}B_{11} + A_{22}B_{21} \qquad C_{22} = A_{21}B_{12} + A_{22}B_{22}$$</p>
+<details>
+<summary>Why blocks can be multiplied like numbers</summary>
+<p>Each entry of $C = AB$ is a dot product, $C[i][j] = \sum_k A[i][k], B[k][j]$. Split that sum at the midpoint of $k$:</p>
+<p>$$C[i][j] = \sum_{k &lt; n/2} A[i][k], B[k][j] + \sum_{k \geq n/2} A[i][k], B[k][j]$$</p>
+<p>For $i$ and $j$ in the top-left quadrant, the first half only touches $A_{11}$ and $B_{11}$, and the second only $A_{12}$ and $B_{21}$. That holds for every entry in the quadrant, so $C_{11} = A_{11}B_{11} + A_{12}B_{21}$. The other blocks follow the same way. It&rsquo;s the scalar formula $C_{IJ} = \sum_K A_{IK} B_{KJ}$ with block indices.</p>
+<p>You could split into $3 \times 3$ blocks instead, but the best known scheme there (Laderman, 1976) needs 23 of the 27 block products, giving $O(n^{\log_3 23}) \approx O(n^{2.854})$: worse than Strassen.</p>
+</details>
+<p>Done directly, that&rsquo;s 8 block products: $T(n) = 8T(n/2) + O(n^2) = O(n^3)$, no gain. Strassen instead forms <strong>7 products of sums and differences</strong>, then recombines them using additions only:</p>
 <div class="mermaid">
 flowchart TD
     subgraph inputs["Input blocks"]
@@ -331,12 +290,10 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 </script>
 
-<p>You can verify $C_{11}$ by expanding: $M_1$ contributes $A_{11}B_{11} + A_{11}B_{22} + A_{22}B_{11} + A_{22}B_{22}$; $M_4$ adds $A_{22}B_{21} - A_{22}B_{11}$; $-M_5$ subtracts $A_{11}B_{22} + A_{12}B_{22}$; $M_7$ adds $A_{12}B_{21} + A_{12}B_{22} - A_{22}B_{21} - A_{22}B_{22}$. Most terms cancel, leaving $A_{11}B_{11} + A_{12}B_{21}$, which is exactly $C_{11}$. The same algebra works for the other three blocks.</p>
-<p>This uses 7 block multiplications and 18 additions. Since additions cost $O(n^2)$ and multiplications recurse, the recurrence is $T(n) = 7T(n/2) + O(n^2)$.</p>
-<p>$$\log_b a = \log_2 7 \approx 2.807 \gt 2 = c$$</p>
-<p>Case 1 applies:</p>
-<p>$$T(n) = \Theta(n^{2.807})$$</p>
-<p>At $n = 10{,}000$: naive takes $10^{12}$ operations; Strassen takes roughly $10^{11.2}$ - about 6 times fewer.</p>
+<p>Expand $C_{11} = M_1 + M_4 - M_5 + M_7$ and almost everything cancels, leaving $A_{11}B_{11} + A_{12}B_{21}$. The other three blocks check out the same way. Now $T(n) = 7T(n/2) + O(n^2)$, and $\log_2 7 \approx 2.807 &gt; 2$, so</p>
+<p>$$T(n) = \Theta(n^{\log_2 7}) \approx \Theta(n^{2.807})$$</p>
+<details>
+<summary>Code: Strassen in Python</summary>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">strassen</span>(A, B):
     n <span style="color:#f92672">=</span> len(A)
     <span style="color:#66d9ef">if</span> n <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>:
@@ -379,14 +336,13 @@ flowchart TD
     C22 <span style="color:#f92672">=</span> add(sub(add(M1, M3), M2), M6)
 
     <span style="color:#66d9ef">return</span> combine(C11, C12, C21, C22)
-</code></pre></div><p>In practice, Strassen is only beneficial for $n \gtrsim 500$ on modern hardware - the constant factor from the 18 additions and the overhead of splitting and combining outweigh the savings for small matrices. Real libraries (like NumPy&rsquo;s BLAS backend) use highly tuned naive multiplication for most sizes and fall back to Strassen or its successors only at large $n$.</p>
-<blockquote>
-<p><strong>Trivia.</strong> Strassen is not the theoretical state of the art. The race to minimize the matrix multiplication exponent $\omega$ has continued for decades: Coppersmith and Winograd (1987) reached $O(n^{2.376})$, and a series of refinements brought it to $O(n^{2.371})$ as of 2024. These algorithms use a technique called the laser method and have constant factors so astronomically large that nobody implements them - they are purely theoretical. The conjecture is that $\omega = 2$ (matrix multiplication might be doable in $O(n^2)$) but this is unproven.</p>
-<p>In practice, Strassen itself is rarely used - and the reason is instructive. Modern CPUs have two weapons that the asymptotic analysis ignores: <strong>SIMD</strong> (a single instruction that multiplies 8 or 16 floats simultaneously) and <strong>cache blocking</strong> (tiling the matrix into chunks that fit in L1 cache so data is reused before being evicted). A naive triple loop, written carefully, maps perfectly to both - the inner loop is sequential memory access that a compiler can turn into a stream of AVX-512 vector instructions, and the blocking keeps every element in cache while all arithmetic involving it is done. Strassen breaks both of these. It needs to allocate and fill 7 extra $n/2 \times n/2$ matrices for M1-M7 - those additions scan the entire matrix, burning memory bandwidth before a single multiply happens. The recursive structure also creates irregular access patterns that fight the cache prefetcher. On top of that, the subtractions in Strassen introduce floating-point cancellation errors that make it numerically less stable than the naive algorithm (numerical stability means how much small rounding errors in the inputs get amplified by the computation - Strassen&rsquo;s intermediate subtractions can cause these errors to grow, which matters in scientific computing where precision is critical). The crossover where Strassen wins is around $n \sim 500$-$1000$, and most practical matrix multiplications never reach that size or are handled by batching smaller ones. The gap between the best theoretical algorithm and what actually runs fast in production is wider here than almost anywhere else in algorithms.</p>
-</blockquote>
-<blockquote>
-<p><strong>Discomfort check.</strong> The 7 products look like magic - how did Strassen find them? He didn&rsquo;t derive them by hand in the obvious way. He treated the problem algebraically: the entries of a $2 \times 2$ matrix product are bilinear forms in the inputs, and he searched for a decomposition of those forms using fewer rank-1 terms. The &ldquo;7&rdquo; is not obviously optimal - it&rsquo;s the best known for $2 \times 2$ block matrices, but the exact minimum (whether 6 works or 7 is tight) was an open problem for decades. In 2022, DeepMind&rsquo;s AlphaTensor found new algorithms for small matrix sizes using reinforcement learning, rediscovering known results and finding some new ones. The problem is harder than it looks.</p>
-</blockquote>
+</code></pre></div></details>
+<p><strong>In practice</strong>, Strassen only pays off for matrices beyond roughly 500 to 1,000 on a side. Below that, a carefully written triple loop wins, because it maps perfectly onto two things the asymptotics ignore. <strong>SIMD</strong> instructions multiply 8 or 16 numbers at once, and <strong>cache blocking</strong> keeps the working tiles in the fastest memory. Strassen fights both: it allocates seven temporary matrices, streams the whole input through memory for additions before multiplying anything, and its recursion scatters memory accesses. Its subtractions also amplify rounding error, which matters in scientific computing. So libraries like the BLAS behind NumPy mostly use tuned triple loops.</p>
+<details>
+<summary>Beyond Strassen: the race for ω, and how optimal is 7?</summary>
+<p>The smallest exponent $\omega$ with $O(n^\omega)$ matrix multiplication has been creeping down for decades: Coppersmith and Winograd reached about 2.376 in 1990, and refinements of their &ldquo;laser method&rdquo; brought it to about 2.371 by 2024. The constant factors are so astronomical that nobody implements these; they&rsquo;re purely theoretical. Many believe $\omega = 2$, but it&rsquo;s unproven.</p>
+<p>For $2 \times 2$ blocks, Strassen&rsquo;s 7 is optimal: Winograd proved in 1971 that 6 multiplications can&rsquo;t work. Strassen found his products by treating the block entries as bilinear forms and looking for a decomposition into fewer rank-one terms. Searching for such decompositions is hard, and in 2022 DeepMind&rsquo;s AlphaTensor used reinforcement learning to rediscover known schemes and find some new ones for small sizes.</p>
+</details>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -396,7 +352,7 @@ flowchart TD
 <th>$a$</th>
 <th>$b$</th>
 <th>$c$</th>
-<th>Master Theorem case</th>
+<th>Case</th>
 <th>Complexity</th>
 </tr>
 </thead>
@@ -406,7 +362,7 @@ flowchart TD
 <td>1</td>
 <td>2</td>
 <td>0</td>
-<td>Case 2</td>
+<td>Every level equal</td>
 <td>$O(\log n)$</td>
 </tr>
 <tr>
@@ -414,7 +370,15 @@ flowchart TD
 <td>2</td>
 <td>2</td>
 <td>1</td>
-<td>Case 2</td>
+<td>Every level equal</td>
+<td>$O(n \log n)$</td>
+</tr>
+<tr>
+<td>Closest pair</td>
+<td>2</td>
+<td>2</td>
+<td>1</td>
+<td>Every level equal</td>
 <td>$O(n \log n)$</td>
 </tr>
 <tr>
@@ -422,7 +386,7 @@ flowchart TD
 <td>3</td>
 <td>2</td>
 <td>1</td>
-<td>Case 1</td>
+<td>Leaves dominate</td>
 <td>$O(n^{1.585})$</td>
 </tr>
 <tr>
@@ -430,23 +394,15 @@ flowchart TD
 <td>7</td>
 <td>2</td>
 <td>2</td>
-<td>Case 1</td>
+<td>Leaves dominate</td>
 <td>$O(n^{2.807})$</td>
 </tr>
 <tr>
-<td>Closest pair</td>
-<td>2</td>
-<td>2</td>
-<td>1</td>
-<td>Case 2</td>
-<td>$O(n \log n)$</td>
-</tr>
-<tr>
-<td>Naive matrix multiply</td>
+<td>Naive block matrix multiply</td>
 <td>8</td>
 <td>2</td>
 <td>2</td>
-<td>Case 2 (equal)</td>
+<td>Leaves dominate</td>
 <td>$O(n^3)$</td>
 </tr>
 </tbody>
