@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795371947" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795372479" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,13 +23,11 @@
 
 <meta name="twitter:title" content="Minimum Spanning Trees &amp; Union-Find - Spanning a World on a Budget"/>
 <meta name="twitter:description" content="Helpful context:
- Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Greedy Algorithms - The Art of Never Looking Back    In the 1920s, Czech mathematician Otakar Borůvka was working for an electrical utility company in Moravia. His job: design an electrical network to connect a set of cities using the minimum amount of cable. He invented an algorithm to do it.
-Three decades later, in 1956, Joseph Kruskal independently published the same algorithm."/>
+ Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Greedy Algorithms - The Art of Never Looking Back    In 1926 the Czech mathematician Otakar Borůvka was asked by an electricity company in Moravia how to connect a set of towns using as little cable as possible. He invented an algorithm for it. In 1930 Vojtěch Jarník found another. In 1956 Joseph Kruskal published a third, and in 1957 Robert Prim rediscovered Jarník&rsquo;s."/>
 
     <meta property="og:title" content="Minimum Spanning Trees &amp; Union-Find - Spanning a World on a Budget" />
 <meta property="og:description" content="Helpful context:
- Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Greedy Algorithms - The Art of Never Looking Back    In the 1920s, Czech mathematician Otakar Borůvka was working for an electrical utility company in Moravia. His job: design an electrical network to connect a set of cities using the minimum amount of cable. He invented an algorithm to do it.
-Three decades later, in 1956, Joseph Kruskal independently published the same algorithm." />
+ Graph Algorithms &amp; Traversal - Maps, Networks, and Hidden Order  Greedy Algorithms - The Art of Never Looking Back    In 1926 the Czech mathematician Otakar Borůvka was asked by an electricity company in Moravia how to connect a set of towns using as little cable as possible. He invented an algorithm for it. In 1930 Vojtěch Jarník found another. In 1956 Joseph Kruskal published a third, and in 1957 Robert Prim rediscovered Jarník&rsquo;s." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/minimum-spanning-trees-union-find/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -155,7 +156,7 @@ Three decades later, in 1956, Joseph Kruskal independently published the same al
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          7 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -168,31 +169,25 @@ Three decades later, in 1956, Joseph Kruskal independently published the same al
 </li>
 </ul>
 <hr>
-<p>In the 1920s, Czech mathematician Otakar Borůvka was working for an electrical utility company in Moravia. His job: design an electrical network to connect a set of cities using the minimum amount of cable. He invented an algorithm to do it.</p>
-<p>Three decades later, in 1956, Joseph Kruskal independently published the same algorithm. A year after that, Robert Prim published yet another version. The same fundamental structure - reinvented three times across 30 years, in two different countries, for two different applications - because it is the natural answer to a natural question.</p>
-<p>The question: how do you connect all nodes in a network with minimum total edge cost?</p>
+<p>In 1926 the Czech mathematician Otakar Borůvka was asked by an electricity company in Moravia how to connect a set of towns using as little cable as possible. He invented an algorithm for it. In 1930 Vojtěch Jarník found another. In 1956 Joseph Kruskal published a third, and in 1957 Robert Prim rediscovered Jarník&rsquo;s.</p>
+<p>The same problem, solved again and again by people working independently, because it&rsquo;s the natural answer to a natural question: <strong>how do you connect everything at the lowest total cost?</strong></p>
+<div class="sf" data-sf="player" data-src="/data/minimum-spanning-trees-union-find/mst.json">This is an interactive animation. It needs JavaScript to run.</div>
 <hr>
 <h2 id="spanning-trees-and-why-minimum-ones-matter">Spanning Trees and Why Minimum Ones Matter</h2>
-<p>A <strong>spanning tree</strong> of a connected undirected graph is a subgraph that:</p>
-<ul>
-<li>Includes all $V$ vertices</li>
-<li>Is connected</li>
-<li>Has no cycles</li>
-</ul>
-<p>Any spanning tree of a $V$-vertex graph has exactly $V - 1$ edges. (One edge fewer would disconnect it; one edge more would create a cycle.)</p>
-<p>A <strong>minimum spanning tree (MST)</strong> is a spanning tree with the smallest possible total edge weight.</p>
-<p>Applications: designing road networks, laying fiber-optic cable, building efficient electrical grids, clustering in machine learning (remove the longest edges), approximating TSP.</p>
+<p>A <strong>spanning tree</strong> of a connected graph uses some of its edges to connect <em>every</em> vertex, with no cycles. It always has exactly $V - 1$ edges: one fewer would leave something disconnected, one more would close a loop. A <strong>minimum spanning tree (MST)</strong> is a spanning tree of least total weight. MSTs design road, cable and power networks, cluster data, and help approximate the travelling salesman problem.</p>
 <hr>
 <h2 id="why-greedy-works-the-cut-property">Why Greedy Works: The Cut Property</h2>
-<p>Both Kruskal&rsquo;s and Prim&rsquo;s algorithms are greedy. What makes greedy correct for MST when it fails for so many other problems?</p>
-<p>The answer is the <strong>cut property</strong>, which is the theoretical foundation for both algorithms.</p>
-<p><strong>Definition.</strong> A <strong>cut</strong> of a graph is a partition of $V$ into two non-empty sets $(S, V \setminus S)$. An edge <strong>crosses</strong> the cut if one endpoint is in $S$ and the other is in $V \setminus S$.</p>
-<p><strong>Cut property.</strong> For any cut of the graph, if edge $e$ is the unique minimum-weight edge crossing the cut, then $e$ is in every MST.</p>
-<p><strong>Proof sketch.</strong> Suppose $e$ is not in some MST $T$. Adding $e$ to $T$ creates a cycle. That cycle must include at least one other edge $f$ that crosses the same cut (since $e$ crosses the cut, and a cycle must cross any cut an even number of times). Since $e$ is the unique minimum across the cut, $w(e) &lt; w(f)$. Swap $f$ for $e$: the new tree is connected, acyclic, and has smaller total weight - contradicting that $T$ was an MST.</p>
-<p>This theorem is why greedy is correct here: at each step, both algorithms add a minimum-weight edge across some cut, and the cut property guarantees it belongs to some MST.</p>
+<p>Kruskal and Prim are both <a href="/posts/greedy-algorithms/" target="_blank" rel="noopener noreferrer">greedy</a>
+, and greedy usually fails. Here it&rsquo;s provably right, because of the <strong>cut property</strong>.</p>
+<p>A <strong>cut</strong> splits the vertices into two non-empty groups; an edge <strong>crosses</strong> it if its ends are on different sides.</p>
+<blockquote>
+<p><strong>Cut property.</strong> For any cut, if $e$ is the unique cheapest edge crossing it, then $e$ is in every MST.</p>
+</blockquote>
+<p><strong>Why.</strong> Suppose $e$ is not in some MST $T$. Adding $e$ to $T$ creates a cycle. That cycle must include at least one other edge $f$ that crosses the same cut (since $e$ crosses the cut, and a cycle must cross any cut an even number of times). Since $e$ is the unique minimum across the cut, $w(e) &lt; w(f)$. Swap $f$ for $e$: the new tree is connected, acyclic, and has smaller total weight - contradicting that $T$ was an MST.</p>
+<p>Both algorithms only ever add a cheapest edge across some cut, so every edge they add belongs to an MST.</p>
 <hr>
 <h2 id="kruskals-algorithm">Kruskal&rsquo;s Algorithm</h2>
-<p>Sort all edges by weight. Process them in increasing order: add an edge to the MST if and only if it doesn&rsquo;t create a cycle.</p>
+<p>Sort the edges by weight, and keep each one unless it would close a cycle, as in the first animation above.</p>
 <pre tabindex="0"><code>Kruskal(G, w):
     sort edges by weight
     T = empty set
@@ -204,7 +199,7 @@ Three decades later, in 1956, Joseph Kruskal independently published the same al
 <p><strong>Time complexity.</strong> Sorting $E$ edges: $O(E \log E)$. Each cycle-detection check: this is where Union-Find comes in (see below). Total: $O(E \log E)$, dominated by sorting.</p>
 <hr>
 <h2 id="prims-algorithm">Prim&rsquo;s Algorithm</h2>
-<p>Grow a tree greedily from a starting vertex. At each step, add the minimum-weight edge connecting the current tree to a vertex not yet in the tree.</p>
+<p>Grow one tree from a starting vertex, always adding the cheapest edge that reaches a new vertex. Switch the animation to Prim to watch it.</p>
 <pre tabindex="0"><code>Prim(G, w, r):
     for each v: key[v] = infinity, in_tree[v] = false
     key[r] = 0
@@ -217,7 +212,8 @@ Three decades later, in 1956, Joseph Kruskal independently published the same al
                 key[v] = w(u,v)
                 parent[v] = u
                 Q.decrease_key(v, key[v])
-</code></pre><p><strong>Time complexity.</strong> The bottleneck is the priority queue. A <strong>binary heap</strong> is the standard implementation - it stores elements in a tree-shaped array where the smallest element is always at the top. Extracting the minimum costs $O(\log V)$ and updating a key (<code>decrease_key</code>) costs $O(\log V)$, giving $O((V + E) \log V) = O(E \log V)$ overall for connected graphs. A <strong>Fibonacci heap</strong> is a more sophisticated structure that makes <code>decrease_key</code> cost only $O(1)$ amortised (by lazily deferring reorganisation), reducing the total to $O(E + V \log V)$ - a meaningful win on dense graphs where <code>decrease_key</code> is called many times. In practice, binary heaps are almost always used because Fibonacci heaps have large constant factors and complex implementation.</p>
+</code></pre><p><strong>Time complexity.</strong> The priority queue is the bottleneck. With a <a href="/posts/trees-and-heaps/" target="_blank" rel="noopener noreferrer">binary heap</a>
+, extract-min and decrease-key are $O(\log V)$ each: $O(E \log V)$ in total. A <strong>Fibonacci heap</strong> makes decrease-key $O(1)$ amortized, for $O(E + V \log V)$, a real gain on dense graphs; in practice binary heaps usually win anyway, because Fibonacci heaps have large constant factors.</p>
 <p>Prim&rsquo;s is structurally identical to Dijkstra&rsquo;s algorithm for shortest paths - the only difference is what we minimize (edge weight to the tree, not cumulative path distance). Understanding one gives you the other for free.</p>
 <hr>
 <h2 id="union-find-the-workhorse-of-kruskals">Union-Find: The Workhorse of Kruskal&rsquo;s</h2>
@@ -245,7 +241,8 @@ def union(x, y):
     if rank[rx] &lt; rank[ry]: rx, ry = ry, rx   // union by rank
     parent[ry] = rx
     if rank[rx] == rank[ry]: rank[rx] += 1
-</code></pre><p>The amortized cost per operation with both optimisations is $O(\alpha(n))$, where $\alpha$ is the inverse Ackermann function - a value that never exceeds 5 for any input size you will ever encounter in practice. Treat it as effectively constant.</p>
+</code></pre><p>With both optimizations, each operation costs $O(\alpha(n))$ amortized, where $\alpha$ is the inverse Ackermann function: at most 4 for any input that could fit in the universe. Treat it as constant. <a href="/posts/amortized-analysis/#application-union-find" target="_blank" rel="noopener noreferrer">Amortized Analysis</a>
+ says more.</p>
 <hr>
 <h2 id="prims-vs-kruskals-when-to-use-which">Prim&rsquo;s vs. Kruskal&rsquo;s: When to Use Which</h2>
 <p>Both find the MST. In practice:</p>
@@ -257,7 +254,7 @@ def union(x, y):
 <hr>
 <h2 id="applications">Applications</h2>
 <p><strong>Network design.</strong> Design a road network, fiber-optic cable layout, or power grid to connect all nodes with minimum total cost.</p>
-<p><strong>Cluster analysis.</strong> Run Kruskal&rsquo;s; stop before adding the $k$ most expensive edges. The resulting $k$ components are a natural clustering. This is single-linkage hierarchical clustering.</p>
+<p><strong>Cluster analysis.</strong> Run Kruskal&rsquo;s but stop when $k$ components remain, which is the same as deleting the $k - 1$ most expensive MST edges. The $k$ pieces are a natural clustering: single-linkage hierarchical clustering.</p>
 <p><strong>Image segmentation.</strong> Model each pixel as a vertex; edge weights encode color similarity between adjacent pixels. An MST groups similar pixels and can be thresholded to segment the image.</p>
 <p><strong>Approximation algorithms.</strong> A 2-approximation for metric TSP: compute the MST, then do a DFS traversal. The MST cost is a lower bound on the optimal tour (remove any edge from the tour to get a spanning tree), so the DFS traversal gives at most $2 \times$ optimal.</p>
 <hr>
@@ -299,7 +296,7 @@ def union(x, y):
 </tbody>
 </table>
 <p>The cut property is the one theorem you need to understand why MST algorithms are correct. Every greedy step - whether Kruskal&rsquo;s picks the globally cheapest edge, or Prim&rsquo;s picks the cheapest edge connecting the current tree to a new vertex - is adding a minimum-weight edge across some cut. The cut property guarantees that edge belongs to some MST. After $V - 1$ such steps, you have the MST.</p>
-<p>The same structure, reinvented by Borůvka in the 1920s and rediscovered twice in the 1950s. It&rsquo;s the natural answer to the minimum connectivity question - once you see it, you can&rsquo;t imagine doing it any other way.</p>
+<p>Borůvka, Jarník, Kruskal and Prim each found it independently. Once you see the cut property, it&rsquo;s hard to imagine doing it any other way.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
