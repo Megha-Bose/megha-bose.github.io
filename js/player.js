@@ -170,7 +170,9 @@
     var avail = Math.min(stage.clientWidth || W, 640);
     var k = Math.max(1, Math.min(2.2, W / avail * 0.85));
     var R = (g.r || 18) * k;
-    var plot = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'sf-graph', role: 'img', 'aria-label': spec.title });
+    // Enlarged nodes need room at the edges, so pad the canvas by the growth.
+    var pad = (g.r || 18) * (k - 1) + 2;
+    var plot = svg('svg', { viewBox: (-pad) + ' ' + (-pad) + ' ' + (W + 2 * pad) + ' ' + (H + 2 * pad), class: 'sf-graph', role: 'img', 'aria-label': spec.title });
     var defs = svg('defs');
     var arrow = svg('marker', { id: 'sf-arrow-' + Math.random().toString(36).slice(2), viewBox: '0 0 10 10', refX: 10, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, [svg('path', { d: 'M0 0L10 5L0 10z', style: 'fill: var(--sf-muted)' })]);
     defs.appendChild(arrow);
