@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795369382" />
+    <script src="/js/algo-demos.js?v=1795368931" defer></script>
+    <script src="/js/player.js?v=1795369726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,13 @@
 
 <meta name="twitter:title" content="Turing Machines - The Minimal Model of Everything a Computer Can Do"/>
 <meta name="twitter:description" content="Helpful context:
- Automata Theory - What Machines Can and Cannot Compute  Context-Free Grammars - Languages With Recursive Rules    In 1936, a 24-year-old Alan Turing was trying to solve a foundational problem in mathematics. David Hilbert had asked in 1928: is there a mechanical procedure that could, given any mathematical statement, decide whether it is provable? The Entscheidungsproblem - the decision problem. Could mathematics itself be automated?"/>
+ Automata Theory - What Machines Can and Cannot Compute  Context-Free Grammars - Languages With Recursive Rules    In 1928 David Hilbert asked whether there&rsquo;s a mechanical procedure that can take any mathematical statement and decide whether it&rsquo;s provable: the Entscheidungsproblem. Could mathematics itself be automated?
+In 1936 a 24-year-old Alan Turing answered no. To do it he first had to pin down what &ldquo;mechanical procedure&rdquo; even means, so he invented the simplest machine he could: a tape, a read/write head, and a short list of rules."/>
 
     <meta property="og:title" content="Turing Machines - The Minimal Model of Everything a Computer Can Do" />
 <meta property="og:description" content="Helpful context:
- Automata Theory - What Machines Can and Cannot Compute  Context-Free Grammars - Languages With Recursive Rules    In 1936, a 24-year-old Alan Turing was trying to solve a foundational problem in mathematics. David Hilbert had asked in 1928: is there a mechanical procedure that could, given any mathematical statement, decide whether it is provable? The Entscheidungsproblem - the decision problem. Could mathematics itself be automated?" />
+ Automata Theory - What Machines Can and Cannot Compute  Context-Free Grammars - Languages With Recursive Rules    In 1928 David Hilbert asked whether there&rsquo;s a mechanical procedure that can take any mathematical statement and decide whether it&rsquo;s provable: the Entscheidungsproblem. Could mathematics itself be automated?
+In 1936 a 24-year-old Alan Turing answered no. To do it he first had to pin down what &ldquo;mechanical procedure&rdquo; even means, so he invented the simplest machine he could: a tape, a read/write head, and a short list of rules." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/turing-machines/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -153,7 +158,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          9 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -166,112 +171,84 @@
 </li>
 </ul>
 <hr>
-<p>In 1936, a 24-year-old Alan Turing was trying to solve a foundational problem in mathematics. David Hilbert had asked in 1928: is there a mechanical procedure that could, given any mathematical statement, decide whether it is provable? The <em>Entscheidungsproblem</em> - the decision problem. Could mathematics itself be automated?</p>
-<p>To answer the question, Turing first had to define what &ldquo;mechanical procedure&rdquo; means. He invented an abstract machine as simple as he could make it: no graphics, no keyboard, no network. Just a tape, a read/write head, and a finite set of rules. He proved this bare machine could compute anything computable. Then he proved it couldn&rsquo;t decide the Entscheidungsproblem - answering Hilbert&rsquo;s question with a decisive no.</p>
-<p>We are still using Turing&rsquo;s definition of &ldquo;computation&rdquo; today. Every time someone says &ldquo;this problem is unsolvable&rdquo; or &ldquo;this algorithm runs in polynomial time,&rdquo; they are implicitly talking about Turing machines.</p>
+<p>In 1928 David Hilbert asked whether there&rsquo;s a mechanical procedure that can take any mathematical statement and decide whether it&rsquo;s provable: the <em>Entscheidungsproblem</em>. Could mathematics itself be automated?</p>
+<p>In 1936 a 24-year-old Alan Turing answered no. To do it he first had to pin down what &ldquo;mechanical procedure&rdquo; even means, so he invented the simplest machine he could: a tape, a read/write head, and a short list of rules. That bare machine turned out to compute anything that can be computed at all. We still use his definition. Whenever someone calls a problem unsolvable, or an algorithm polynomial-time, they&rsquo;re talking about Turing machines.</p>
 <hr>
 <h2 id="the-machine">The Machine</h2>
-<p>Imagine an infinitely long tape divided into cells. Each cell holds a symbol - either a character from some alphabet, or a special blank symbol (written $\sqcup$). A read/write head sits on one cell at a time. A finite control (like a DFA, but now with more authority) is in one of finitely many states.</p>
-<p>At each step, the machine:</p>
+<p>An infinitely long <strong>tape</strong> is divided into cells, each holding one symbol or a blank ($\sqcup$). A <strong>head</strong> sits on one cell. A finite <strong>control</strong> is in one of a few states. Every step, the machine:</p>
 <ol>
-<li>Reads the symbol under the head</li>
-<li>Writes a (possibly different) symbol to that cell</li>
-<li>Moves the head one cell left or one cell right</li>
-<li>Transitions to a new state</li>
+<li>reads the symbol under the head,</li>
+<li>writes a symbol in its place (possibly the same one),</li>
+<li>moves one cell left or right,</li>
+<li>switches to a new state.</li>
 </ol>
-<p>That&rsquo;s the entire machine. Nothing else. Formally, a Turing machine is a 7-tuple $M = (Q, \Sigma, \Gamma, \delta, q_0, q_\text{accept}, q_\text{reject})$ where $\Gamma$ is the tape alphabet (including the blank), and $\delta: Q \times \Gamma \to Q \times \Gamma \times \{L, R\}$ is the transition function that reads a state and tape symbol and outputs a new state, a symbol to write, and a direction to move.</p>
-<p>The machine starts with its input written on the tape, head at the leftmost character, in state $q_0$. It halts when it reaches $q_\text{accept}$ (accept) or $q_\text{reject}$ (reject). If it never reaches either, it runs forever.</p>
-<p>A <strong>configuration</strong> captures everything about the machine&rsquo;s current situation: the current state, the entire tape contents, and the head position. You can think of the computation as a sequence of configurations, each yielding the next by one transition step.</p>
+<p>That&rsquo;s the whole machine. It halts when it reaches the <em>accept</em> or <em>reject</em> state, and if it never reaches either, it runs forever. Here&rsquo;s one at work:</p>
+<div class="sf" data-sf="player" data-src="/data/turing-machines/abc.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>The rules it follows are just a table: <em>&ldquo;in state q1 reading b: write Y, move right, go to q2.&quot;</em> Six working states and eighteen rules, and it decides a language that no pushdown automaton can.</p>
+<p>Formally, a Turing machine is a 7-tuple $M = (Q, \Sigma, \Gamma, \delta, q_0, q_\text{accept}, q_\text{reject})$, where $\Gamma$ is the tape alphabet including the blank, and the transition function $\delta: Q \times \Gamma \to Q \times \Gamma \times \{L, R\}$ maps a state and a symbol to a new state, a symbol to write, and a direction. A <strong>configuration</strong> - state, tape contents, head position - captures everything about a moment of the computation, and a run is just a sequence of configurations.</p>
 <hr>
-<h2 id="why-this-is-more-powerful-than-a-pda">Why This Is More Powerful Than a PDA</h2>
-<p>A pushdown automaton has a stack - but a stack only lets you access the top. The TM has a full read/write tape it can traverse in both directions. That two-way access is what makes the difference.</p>
-<p>Consider $\{a^n b^n c^n : n \geq 0\}$ - equal numbers of $a$&rsquo;s, $b$&rsquo;s, and $c$&rsquo;s. We proved in the previous post that no pushdown automaton can recognize this. A Turing machine can. Here&rsquo;s how:</p>
-<ol>
-<li>Scan right across the tape. If you see an $a$, cross it off (write $X$). Continue right, skip any crossed-off symbols, and cross off the first uncrossed $b$. Continue right, skip crossed-off symbols, cross off the first uncrossed $c$.</li>
-<li>Return the head to the left end of the tape.</li>
-<li>Repeat until all symbols are crossed off, then accept - or reject if the counts don&rsquo;t match up.</li>
-</ol>
-<p>The machine can do this because it can move the head left and right freely, using the tape as working memory. A PDA can match $a$&rsquo;s against $b$&rsquo;s with its stack, but it can&rsquo;t also match against $c$&rsquo;s - the stack is gone after matching $a$&rsquo;s with $b$&rsquo;s.</p>
+<h2 id="why-this-beats-a-pushdown-automaton">Why This Beats a Pushdown Automaton</h2>
+<p>$\{a^n b^n c^n\}$ is <a href="/posts/context-free-grammars-parsing/" target="_blank" rel="noopener noreferrer">not context-free</a>
+: a stack can match the $a$&rsquo;s against the $b$&rsquo;s, but then the count is gone and there&rsquo;s nothing left to check the $c$&rsquo;s against.</p>
+<p>The Turing machine above doesn&rsquo;t need to <em>remember</em> a count, because it <strong>writes on its own input</strong>. It crosses off one of each letter per round, walks back, and repeats. A tape it can read, rewrite and move along in both directions is working memory with no limit, and that&rsquo;s the whole difference.</p>
 <hr>
 <h2 id="the-church-turing-thesis">The Church-Turing Thesis</h2>
-<p>We now have three models: DFAs (recognizing regular languages), PDAs (context-free languages), and Turing machines. Each is strictly more powerful than the previous. Is there something more powerful than a TM?</p>
-<p>The <strong>Church-Turing thesis</strong> says: any function that can be computed by any reasonable physical process can be computed by a Turing machine.</p>
-<p>This is <em>not</em> a theorem - it can&rsquo;t be, because &ldquo;reasonable physical process&rdquo; is not a mathematical term. It&rsquo;s a thesis about the relationship between the formal model and physical reality. But it has been tested against every model of computation anyone has proposed:</p>
-<ul>
-<li>Lambda calculus (Church&rsquo;s formalism, same year as Turing&rsquo;s paper)</li>
-<li>Register machines</li>
-<li>Cellular automata</li>
-<li>RAM models</li>
-<li>Quantum computers</li>
-</ul>
-<p>Every one of these models computes exactly the same set of functions as Turing machines (with quantum computers computing the same functions, sometimes faster - more on this below). No one has ever proposed an intuitively computable function that a TM can&rsquo;t compute.</p>
-<p>The practical implication: to show a problem is undecidable (has no algorithmic solution), it suffices to show no Turing machine can decide it. You don&rsquo;t need to analyze every conceivable computing device.</p>
+<p>Finite automata recognize regular languages, pushdown automata context-free ones, and Turing machines strictly more. Is there anything more powerful still?</p>
+<p>The <strong>Church-Turing thesis</strong> says no: anything that can be computed by any reasonable physical process can be computed by a Turing machine. It isn&rsquo;t a theorem and can&rsquo;t be, since &ldquo;reasonable physical process&rdquo; isn&rsquo;t a mathematical object. But every model anyone has proposed computes exactly the same functions: Church&rsquo;s lambda calculus from the same year, register machines, cellular automata, the RAM model, and quantum computers.</p>
+<p>That&rsquo;s what makes impossibility results so powerful. To show no algorithm can solve a problem, it&rsquo;s enough to show no Turing machine can.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> The Church-Turing thesis says a Turing machine can compute anything computable. But quantum computers can do things classical computers struggle with - Shor&rsquo;s algorithm factors integers exponentially faster than any known classical algorithm. Doesn&rsquo;t this refute the thesis?</p>
-<p>No. Quantum computers don&rsquo;t compute <em>new functions</em> - they compute the same functions, just sometimes faster. Shor&rsquo;s algorithm factors integers, which a classical TM can also factor (just not in polynomial time). The Church-Turing thesis is about what <em>can</em> be computed, not about <em>how fast</em>. The stronger &ldquo;Extended&rdquo; Church-Turing thesis - that polynomial-time computation is equivalent across models - is actually threatened by quantum computing, but that&rsquo;s a different claim.</p>
+<p><strong>&ldquo;Don&rsquo;t quantum computers break this?&quot;</strong> No. Shor&rsquo;s algorithm factors integers exponentially faster than any known classical method, but a classical Turing machine can factor too, just slowly. Quantum computers compute the same <em>functions</em>, sometimes much faster. What they threaten is the <em>Extended</em> Church-Turing thesis, the claim that polynomial time means the same thing on every reasonable machine. That&rsquo;s a separate claim.</p>
 </blockquote>
 <hr>
-<h2 id="variants-more-tapes-more-nondeterminism-same-power">Variants: More Tapes, More Nondeterminism, Same Power</h2>
-<p>Once you have one TM, you can ask: what if we make it fancier?</p>
-<p><strong>Multi-tape Turing machines</strong> have $k$ tapes, each with its own head, operating simultaneously. This is much more convenient for algorithm design - you can use one tape for input, one for scratch work, one for output. But you can simulate any $k$-tape TM with a single-tape TM, with at most an $O(t^2)$ slowdown (where $t$ is the number of steps). So multi-tape TMs recognize the same languages; they just do it faster.</p>
-<p><strong>Nondeterministic Turing machines (NTMs)</strong> allow the transition function to produce a set of possible next configurations rather than just one - the machine branches into all possibilities simultaneously, accepting if any branch accepts. This is a huge conceptual extension. But again, you can simulate any NTM with a deterministic TM, by doing a breadth-first search over the computation tree. The simulation may be exponentially slower, but it halts whenever the NTM halts. Same languages, different time.</p>
-<p><strong>Probabilistic TMs</strong> flip coins at each step. Same languages again.</p>
-<p>All these variants are equivalent in terms of what they can recognize. This robustness is one reason the Turing machine model is so compelling - the definition doesn&rsquo;t depend on the specific choices you make about the hardware.</p>
+<h2 id="variants-fancier-machines-same-power">Variants: Fancier Machines, Same Power</h2>
+<ul>
+<li><strong>Multi-tape machines</strong> give each of $k$ tapes its own head: one for input, one for scratch work, one for output. Much easier to program, but a single-tape machine can simulate one with at most a quadratic slowdown, $O(t^2)$ for $t$ steps.</li>
+<li><strong>Nondeterministic machines</strong> may branch into several possible next steps, accepting if any branch accepts. A deterministic machine can simulate this with a breadth-first search over all the branches. It can be exponentially slower, but it recognizes the same languages.</li>
+<li><strong>Probabilistic machines</strong> flip coins at each step. Same languages again.</li>
+</ul>
+<p>Bolt on any of these extras and the set of solvable problems stays exactly the same. That robustness is a big part of why the definition is so convincing: it doesn&rsquo;t depend on hardware details.</p>
 <hr>
 <h2 id="the-universal-turing-machine">The Universal Turing Machine</h2>
-<p>Here is the idea that changed everything: you can write a Turing machine that takes <em>another Turing machine&rsquo;s description</em> as input and simulates it.</p>
-<p>This is the <strong>Universal Turing Machine (UTM)</strong>. Given as input an encoding of a TM $M$ and a string $w$, the UTM simulates $M$ running on $w$: it accepts if $M$ accepts, rejects if $M$ rejects, and loops if $M$ loops.</p>
-<p>The UTM is the theoretical basis of stored-program computers. Before this idea, the conventional view was that the &ldquo;program&rdquo; was the hardware (you physically reconfigured the machine to change what it computed). Turing&rsquo;s insight was that the program could be <em>data</em> - the machine reads a description of what to compute, then computes it. Every modern computer, from your phone to a supercomputer, is a physical realization of a Universal Turing Machine.</p>
-<blockquote>
-<p><strong>Discomfort check: what does &ldquo;program as input&rdquo; actually mean?</strong></p>
-<p>When the text says &ldquo;a Turing machine takes another Turing machine as input,&rdquo; it is easy to picture something circular - like running a <code>.py</code> file inside another Python interpreter. But the mechanism is simpler and more concrete than that.</p>
-<p>A Turing machine is fully described by its transition table: a finite list of rules of the form &ldquo;if in state $q$ reading symbol $s$, then write $s'$, move left/right, go to state $q'$.&rdquo; That table is just a string of symbols. You can write it out as text - say, a numbered list of rows. That text is a valid input string, and any Turing machine can read it off its tape the way it reads any other input.</p>
-<p>So &ldquo;giving a TM as input&rdquo; means: encode the transition table as a string and put that string on the tape. The UTM reads this encoding, rebuilds the described machine&rsquo;s rules in its own working memory, and then steps through what that machine would do on the rest of the tape - character by character, state by state, as if it were the described machine running.</p>
-<p><strong>A tiny example.</strong> Say you have a very simple machine $M$ with just two rules:</p>
-<ul>
-<li>If in state $q_0$ reading <code>0</code>, accept.</li>
-<li>If in state $q_0$ reading <code>1</code>, reject.</li>
-</ul>
-<p>You encode $M$ as the string <code>(q0,0,ACCEPT)(q0,1,REJECT)</code> and put it on the UTM&rsquo;s tape, followed by a separator <code>#</code> and the actual input - say <code>0</code>. The tape looks like:</p>
+<p>The idea that changed everything: a Turing machine&rsquo;s rule table is just a finite string of symbols, so it can be written onto another machine&rsquo;s tape. The <strong>Universal Turing Machine</strong> reads a description of any machine $M$ plus an input $w$, and simulates $M$ running on $w$. It accepts if $M$ accepts, rejects if $M$ rejects, and runs forever if $M$ does.</p>
+<p>Before this, a machine&rsquo;s program <em>was</em> its wiring; to change what it computed, you physically rebuilt it. Turing showed the program could be <strong>data</strong>. Every computer you&rsquo;ve used, from your phone to a supercomputer, is a physical universal Turing machine. Your CPU reads machine-code instructions out of memory and carries them out, exactly as the UTM reads a rule table off its tape.</p>
+<details>
+<summary>What "a program as input" actually means, with a tiny example</summary>
+<p>A machine $M$ is fully described by its rule table, a finite list of &ldquo;in state $q$ reading $s$: write $s'$, move, go to $q'$&rdquo;. Written out as text, that table is an ordinary input string.</p>
+<p>Take a two-rule machine: in $q_0$ reading <code>0</code>, accept; in $q_0$ reading <code>1</code>, reject. Encode it as <code>(q0,0,ACCEPT)(q0,1,REJECT)</code>, put a separator <code>#</code> after it, then the real input:</p>
 <p><code>(q0,0,ACCEPT)(q0,1,REJECT) # 0</code></p>
-<p>The UTM now runs. It first reads everything before <code>#</code>, learning the two rules. Then it moves to the input section, sees <code>0</code>, and looks up: &ldquo;my simulated machine is in state $q_0$ and reading <code>0</code> - rule says ACCEPT.&rdquo; So the UTM accepts. If the input were <code>1</code>, it would look up the second rule and reject. The UTM itself never &ldquo;knew&rdquo; anything about accepting or rejecting on <code>0</code> vs <code>1</code> - it learned that behavior by reading $M$&rsquo;s description.</p>
-<p>This is exactly what happens when you run <code>python script.py</code>. The Python interpreter (UTM) reads <code>script.py</code> (the encoding of $M$), then processes <code>sys.argv</code> (the input $w$). The interpreter has no built-in knowledge of what your script does - it learns by reading the file.</p>
-<p>Is this the same as programs we write on computers? Yes, exactly. A Python script is a text description of what a virtual machine should do. Python&rsquo;s interpreter reads that text and executes it. Your CPU is a physical UTM: it reads machine-code instructions (an encoding of &ldquo;what to compute&rdquo;) from memory and carries them out. The theoretical result from 1936 is the conceptual foundation of the stored-program computer - the idea that the program and the data live in the same place, that code is just a special kind of data, and that one general-purpose machine can run any program you hand it.</p>
-</blockquote>
-<p>The UTM also enables the diagonalization argument that makes the halting problem undecidable - which is the subject of the next post.</p>
+<p>The UTM reads everything before <code>#</code> and learns the two rules. Then it moves to the input, sees <code>0</code>, and looks up what its simulated machine does in state $q_0$ reading <code>0</code>: accept. With input <code>1</code> it would reject. The UTM never knew anything about <code>0</code> or <code>1</code>; it learned that behavior by reading $M$&rsquo;s description.</p>
+<p>That&rsquo;s exactly <code>python script.py</code>. The interpreter has no idea what your script does until it reads the file. Code is just a particular kind of data, and one general-purpose machine can run any program you give it.</p>
+</details>
+<p>The UTM also powers the diagonal argument that makes the halting problem undecidable, which is the next post.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
 <thead>
 <tr>
-<th>Model</th>
+<th>Machine</th>
 <th>Memory</th>
-<th>Closure under complement</th>
-<th>Example language decidable</th>
+<th>Can recognize, for example</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Finite automaton</td>
-<td>None (finite states)</td>
-<td>Yes</td>
+<td>A fixed set of states</td>
 <td>$\{w : w \text{ contains } 01\}$</td>
 </tr>
 <tr>
 <td>Pushdown automaton</td>
-<td>Stack</td>
-<td>No</td>
+<td>One stack</td>
 <td>$\{0^n 1^n : n \geq 0\}$</td>
 </tr>
 <tr>
 <td>Turing machine</td>
-<td>Infinite tape</td>
-<td>Yes (if decidable)</td>
+<td>An unbounded tape it can rewrite</td>
 <td>$\{a^n b^n c^n : n \geq 0\}$</td>
 </tr>
 </tbody>
 </table>
-<p>The Turing machine is our universal model of computation. Variants - multi-tape, nondeterministic, probabilistic - are all equivalent in what they can recognize, though they differ in efficiency. The Church-Turing thesis says that nothing more powerful (in terms of what can be computed) is possible for any physical device.</p>
+<p>The Turing machine is our model of what computation <em>is</em>. Multi-tape, nondeterministic and probabilistic variants all recognize the same languages, though their speeds differ, and the Church-Turing thesis says no physical device can do more.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>

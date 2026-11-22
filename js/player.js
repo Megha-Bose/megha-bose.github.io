@@ -26,6 +26,9 @@
   var D = window.AlgoDemos;
   var h = D.h, svg = D.svg, frame = D.frame, stepper = D.stepper;
 
+  // Label colour on a filled token: dark ink, except on grey where the surface colour reads better.
+  function ink(t) { return !t || !TOKENS[t] ? '' : t === 'muted' ? 'var(--sf-surface)' : 'var(--sf-ink)'; }
+
   var TOKENS = { a: 'var(--sf-a)', b: 'var(--sf-b)', c: 'var(--sf-c)', muted: 'var(--sf-muted)', good: 'var(--sf-good)', bad: 'var(--sf-bad)' };
 
   function build(root, spec) {
@@ -124,7 +127,7 @@
         var t = fr.cls && fr.cls[i];
         bar.style.height = (Math.max(v, 0) / max * 100) + '%';
         bar.style.background = t ? TOKENS[t] : '';
-        bar.style.color = t && t !== 'muted' ? 'var(--sf-ink)' : '';
+        bar.style.color = ink(t);
         bar.textContent = n <= 16 ? String(v) : '';
         marks[i].textContent = (fr.marks && fr.marks[i]) || '';
       });
@@ -152,7 +155,7 @@
         var t = fr.cls && fr.cls[i];
         cell.className = 'sf-cell' + (v === null || v === '' ? ' is-empty' : '') + (t === 'gone' ? ' is-gone' : '');
         cell.style.background = t && TOKENS[t] ? TOKENS[t] : '';
-        cell.style.color = t && TOKENS[t] && t !== 'muted' ? 'var(--sf-ink)' : '';
+        cell.style.color = ink(t);
         cell.textContent = v === null ? '' : String(v);
         if (marks[i]) marks[i].textContent = (fr.marks && fr.marks[i]) || '';
       });
@@ -258,7 +261,7 @@
         var td = cells[r][c];
         td.textContent = v === null || v === undefined ? '' : String(v);
         td.style.background = t && TOKENS[t] ? TOKENS[t] : '';
-        td.style.color = t && TOKENS[t] && t !== 'muted' ? 'var(--sf-ink)' : '';
+        td.style.color = ink(t);
       }
     };
   };
