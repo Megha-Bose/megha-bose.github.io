@@ -203,7 +203,7 @@
         : svg('text', { x: nd.x + R + 4 * k, y: nd.y + 4.5 * k, class: 'sf-node-sub', 'text-anchor': 'start', style: 'font-size:' + (12.5 * k) + 'px' });
       var grp = svg('g', { class: 'sf-node-g' }, [circle, label, sub]);
       nodeLayer.appendChild(grp);
-      nodeEls[nd.id] = { g: grp, circle: circle, label: label, sub: sub };
+      nodeEls[nd.id] = { g: grp, circle: circle, label: label, sub: sub, base: nd.label !== undefined ? nd.label : nd.id };
     });
     plot.appendChild(edgeLayer);
     plot.appendChild(nodeLayer);
@@ -216,6 +216,7 @@
         el.circle.classList.toggle('is-ring', info.ring === true);
         el.label.style.fill = info.cls === 'muted' ? 'var(--sf-surface)' : info.cls ? 'var(--sf-ink)' : '';
         el.sub.textContent = info.sub !== undefined ? String(info.sub) : '';
+        el.label.textContent = String(info.label !== undefined ? info.label : el.base);
         el.g.style.opacity = info.hide ? 0 : '';
       });
       var seen = [];
