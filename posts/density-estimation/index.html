@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -211,6 +214,7 @@ Density estimation asks a different question entirely. You have data points $x_1
 <p>$$\hat{p}(x) = \frac{1}{n h} \sum_{i=1}^n K\!\left(\frac{x - x_i}{h}\right)$$</p>
 <p>The kernel $K$ is typically a Gaussian: $K(u) = \frac{1}{\sqrt{2\pi}} e^{-u^2/2}$. Each data point contributes a Gaussian bell curve of width $h$ centered at its location.</p>
 <p>The parameter $h$ is called the <strong>bandwidth</strong>. It plays the same role as bin width in a histogram. A small $h$ produces a spiky estimate that closely tracks individual points - high variance, potentially capturing noise. A large $h$ over-smooths and misses real structure in the distribution.</p>
+<div class="sf" data-sf="player" data-src="/data/density-estimation/kde.json"></div>
 <p><strong>Bandwidth selection.</strong> The bandwidth $h$ can be chosen by cross-validation: hold out some data points, fit KDE on the rest, and evaluate the log-likelihood of the held-out points under the estimated density. Repeat for multiple values of $h$ and pick the best. For 1D data with an approximately Gaussian distribution, <strong>Silverman&rsquo;s rule of thumb</strong> gives a quick estimate:</p>
 <p>$$h \approx 1.06 \cdot \hat{\sigma} \cdot n^{-1/5}$$</p>
 <p>Here $\hat{\sigma}$ is the sample standard deviation and $n$ is the number of data points. This rule is derived by minimizing the mean integrated squared error under the assumption that the true distribution is Gaussian - so it works well for near-Gaussian data and less well for strongly multi-modal data.</p>
@@ -228,7 +232,7 @@ kde<span style="color:#f92672">.</span>fit(X)
 t <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linspace(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">500</span>)<span style="color:#f92672">.</span>reshape(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>)
 log_density <span style="color:#f92672">=</span> kde<span style="color:#f92672">.</span>score_samples(t)
 density <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>exp(log_density)
-</code></pre></div><p><strong>The curse of dimensionality in KDE.</strong> In high dimensions, the bandwidth required to capture a smooth estimate grows exponentially with dimension. With $d$ dimensions, you need roughly $n \sim h^{-d}$ data points to populate the neighborhood around each query point. For $d = 10$ and $h = 0.1$, this is $10^{10}$ points - impractical. KDE works well in 1 to 3 dimensions; beyond 5 or so, you need either parametric assumptions or enormous amounts of data.</p>
+</code></pre></div><p><strong>The curse of dimensionality in KDE.</strong> In high dimensions, the amount of data needed for a smooth estimate grows exponentially with dimension. With $d$ dimensions, you need roughly $n \sim h^{-d}$ data points to populate the neighborhood around each query point. For $d = 10$ and $h = 0.1$, this is $10^{10}$ points - impractical. KDE works well in 1 to 3 dimensions; beyond 5 or so, you need either parametric assumptions or enormous amounts of data.</p>
 <h2 id="applications">Applications</h2>
 <p><strong>Anomaly detection.</strong> Train a KDE (or GMM) on normal data. At inference time, compute $\hat{p}(x_{\text{new}})$. If this value is below a threshold $\tau$, flag the point as anomalous. The threshold $\tau$ is chosen based on the acceptable false positive rate. This approach makes the anomaly score interpretable: it is a probability, not an opaque score from a tree ensemble.</p>
 <p><strong>Generative modeling.</strong> Once you have fit $\hat{p}(x)$, you can sample from it. For a KDE, sampling is easy: pick a data point $x_i$ uniformly at random, then draw a sample from $\mathcal{N}(x_i, h^2 I)$. The result is a new point that looks like your training data but is not a copy. VAEs and normalizing flows are deep learning extensions of this idea - they learn $p(x)$ over complex manifolds like images, where KDE would fail due to dimensionality.</p>
