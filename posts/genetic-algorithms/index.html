@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412931" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -183,7 +186,10 @@ Evolution doesn&rsquo;t improve a single organism. It maintains a population. Be
 <li><strong>Replace</strong> the old population with the new one (possibly with elitism).</li>
 <li>Repeat from step 2 until a stopping criterion is met.</li>
 </ol>
-<p>The design choices - representation, selection, crossover, mutation, replacement - determine everything about the algorithm&rsquo;s behavior.</p>
+<p>The design choices - representation, selection, crossover, mutation, replacement - determine everything about the algorithm&rsquo;s behavior. Here is the whole loop on the four-peak landscape from the <a href="/posts/local-search-hill-climbing/" target="_blank" rel="noopener noreferrer">local search</a>
+ posts:</p>
+<div class="sf" data-sf="player" data-src="/data/genetic-algorithms/evolve.json"></div>
+<p>No individual climbs anything. The population moves uphill because fitter individuals leave more offspring, and crossover lets two half-good strings produce a child better than either.</p>
 <hr>
 <h2 id="representation-matters">Representation Matters</h2>
 <p>How you encode a solution as a <strong>chromosome</strong> is the most important design decision. The encoding shapes the neighborhood structure implicitly defined by crossover and mutation.</p>
@@ -197,7 +203,7 @@ Evolution doesn&rsquo;t improve a single organism. It maintains a population. Be
 <p>$$p_i = \frac{f(x_i)}{\sum_{j=1}^\mu f(x_j)}.$$</p>
 <p>Simple, but sensitive to scaling. If one individual has fitness far higher than the others, it dominates reproduction and diversity collapses - the population converges prematurely.</p>
 <p><strong>Tournament selection.</strong> Sample $k$ individuals at random; the one with the highest fitness wins and becomes a parent. Repeat for the second parent. Tournament size $k$ controls selection pressure: $k = 2$ is mild, $k = 7$ is strong. Tournament selection is robust to fitness scaling and is the standard in practice.</p>
-<p><strong>Rank selection.</strong> Sort by fitness and assign selection probability based on rank. Avoids the scaling problem but reduces selective pressure compared to fitness-proportionate selection.</p>
+<p><strong>Rank selection.</strong> Sort by fitness and assign selection probability based on rank. Avoids the scaling problem: selection pressure stays the same whether the fitness values are close together or wildly spread out.</p>
 <hr>
 <h2 id="crossover">Crossover</h2>
 <p>Crossover combines two parent chromosomes to produce offspring.</p>
@@ -238,7 +244,7 @@ Evolution doesn&rsquo;t improve a single organism. It maintains a population. Be
 <h2 id="genetic-programming">Genetic Programming</h2>
 <p><strong>Genetic programming</strong> evolves programs rather than fixed-length strings. Solutions are represented as trees: internal nodes are functions (arithmetic operations, conditionals, Boolean operators); leaves are terminals (constants, input variables).</p>
 <p>Crossover swaps subtrees between parents. Mutation replaces a subtree with a randomly generated one. The fitness function is performance on a test set - how well the program solves the target task.</p>
-<p>GP has been used for symbolic regression (rediscovering physical equations from data), automatic circuit design (NASA&rsquo;s evolved antenna for the ST5 spacecraft), and game-playing strategy evolution. In symbolic regression, GP can rediscover equations like $F = ma$ from experimental data, given the right terminal and function sets.</p>
+<p>GP has been used for symbolic regression (finding formulas that fit data), automatic design (John Koza&rsquo;s evolved analog circuits), and game-playing strategies. Its cousins in evolutionary design produced NASA&rsquo;s oddly bent antenna that flew on the ST5 spacecraft in 2006. In symbolic regression, Schmidt and Lipson (2009) recovered conservation laws of pendulums and oscillators directly from motion-capture data.</p>
 <hr>
 <h2 id="cma-es-state-of-the-art-for-continuous-problems">CMA-ES: State of the Art for Continuous Problems</h2>
 <p>For continuous optimization, the <strong>Covariance Matrix Adaptation Evolution Strategy (CMA-ES)</strong> is the state of the art among evolutionary approaches. It maintains:</p>
@@ -248,7 +254,7 @@ Evolution doesn&rsquo;t improve a single organism. It maintains a population. Be
 <li>A step size $\sigma$.</li>
 </ul>
 <p>At each generation, sample $\lambda$ offspring from $\mathcal{N}(m, \sigma^2 C)$, evaluate fitness, and update $m$, $C$, and $\sigma$ based on the top-$\mu$ individuals. The covariance matrix adapts to the local geometry of the fitness landscape - if the function has strong correlations between variables, $C$ learns to reflect that, allowing efficient search in elongated valleys.</p>
-<p>CMA-ES achieves near-quadratic convergence on smooth functions and is competitive with L-BFGS on hard non-convex problems where gradient information is unavailable.</p>
+<p>CMA-ES converges linearly on smooth functions, and it is unaffected by rotating the coordinates or rescaling the objective. That makes it a go-to method for non-convex, black-box problems with tens to hundreds of variables, where no gradient is available.</p>
 <hr>
 <h2 id="gas-vs-simulated-annealing">GAs vs. Simulated Annealing</h2>
 <table>
@@ -287,8 +293,8 @@ Evolution doesn&rsquo;t improve a single organism. It maintains a population. Be
 </tr>
 <tr>
 <td>When best</td>
-<td>Smooth landscapes, clear temperature analogy</td>
-<td>Problems with compositional structure, discrete search spaces</td>
+<td>A natural random move and cheap evaluations</td>
+<td>Problems whose good solutions combine good parts</td>
 </tr>
 </tbody>
 </table>
