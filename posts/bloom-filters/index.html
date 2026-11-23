@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -177,6 +180,7 @@
 <p><strong>Adding an item</strong>: hash it with all $k$ hash functions. Set the bit at each resulting position to 1.</p>
 <p><strong>Checking membership</strong>: hash the query item with all $k$ hash functions. If any of the resulting bit positions is 0, the item is definitely not in the set - you would have set all those bits when you added it. If all positions are 1, the item is probably in the set.</p>
 <p>The &ldquo;probably&rdquo; is the core of the tradeoff. It is possible that all $k$ bits for a query item happen to be set by combinations of other items that were added - even though this particular item was never added. This is a <strong>false positive</strong>: the filter says &ldquo;possibly in set&rdquo; but the item is actually absent. False positives are acceptable in many applications. What is not possible is a false negative: if an item was added, all its bits were set, and they remain set (bits are never cleared). A &ldquo;definitely not&rdquo; answer is always correct.</p>
+<div class="sf" data-sf="player" data-src="/data/bloom-filters/bloom.json"></div>
 <h2 id="the-math">The Math</h2>
 <p>The false positive probability $p$ is approximately:</p>
 <p>$$p \approx \left(1 - e^{-kn/m}\right)^k$$</p>
@@ -185,7 +189,7 @@
 <p>$$k = \frac{m}{n} \ln 2 \approx 0.693 \cdot \frac{m}{n}$$</p>
 <p>Substituting back, the minimum false positive rate for a given number of bits per item $b = m/n$ is approximately:</p>
 <p>$$p \approx (0.6185)^b$$</p>
-<p>In concrete terms: 10 bits per element gives a false positive rate of roughly 1%. 20 bits per element gives roughly 0.0001%. A hash set storing the full items takes 64 bits per element (an 8-byte pointer) or more. A bloom filter achieves 1% error with 10 bits - over 6x smaller, and it scales to any set size with zero additional overhead.</p>
+<p>In concrete terms: 10 bits per element gives a false positive rate of roughly 1%. 20 bits per element gives roughly 0.007%. A hash set storing the full items takes 64 bits per element (an 8-byte pointer) or more. A bloom filter achieves 1% error with 10 bits - over 6x smaller, and it scales to any set size with zero additional overhead.</p>
 <p>The space is fixed at $m$ bits regardless of how many items you add. This is the killer feature: a bloom filter for a billion-item set uses the same memory as one tuned for that capacity, and inserting the billionth item is exactly as fast as inserting the first.</p>
 <h2 id="where-bloom-filters-are-used">Where Bloom Filters Are Used</h2>
 <p><strong>LSM trees and databases</strong>: Cassandra, RocksDB, HBase, and LevelDB all store a bloom filter per SSTable. Before reading an SSTable from disk, the engine checks the bloom filter. A false-positive rate of 1% means that for keys that don&rsquo;t exist, 99% of SSTable reads are avoided. The entire point of LSM trees is high write throughput - bloom filters are what keep read performance from collapsing.</p>
@@ -193,7 +197,7 @@
 <p><strong>CDNs and caching</strong>: a CDN does not want to cache every object - caching a resource that is only ever fetched once wastes memory. One strategy: only cache an object on the second request. A bloom filter tracks which URLs have been seen once. First request: not in filter, add it to filter, don&rsquo;t cache. Second request: in filter (true positive), cache it. False positives (caching something on its second &ldquo;apparent&rdquo; visit despite it being a true first) are acceptable - the cost is slightly over-caching, not a correctness issue.</p>
 <p><strong>Databases: &ldquo;username taken&rdquo; checks</strong>: before querying the database to check if a username exists, check a bloom filter. If the filter says &ldquo;definitely not,&rdquo; the username is available without a database round trip. If it says &ldquo;possibly,&rdquo; query the database to confirm. At signup rates of millions per day, this matters.</p>
 <p><strong>Bitcoin SPV nodes</strong>: Simplified Payment Verification nodes do not store the full blockchain. They use bloom filters to tell full nodes which transactions they care about. A full node filters transactions through the SPV node&rsquo;s bloom filter before sending them - drastically reducing bandwidth. False positives result in a few extra transactions being sent; false negatives are impossible.</p>
-<p><strong>Spell checkers</strong>: the original application Bloom described. Store the dictionary as a bloom filter. A word that produces a false positive looks &ldquo;correct&rdquo; to the spell checker when it is not. Acceptable at low false positive rates.</p>
+<p><strong>Spell checkers</strong>: one of the earliest applications (Bloom&rsquo;s own 1970 paper used a hyphenation dictionary; early Unix spell checkers used the same trick). Store the dictionary as a bloom filter. A word that produces a false positive looks &ldquo;correct&rdquo; to the spell checker when it is not. Acceptable at low false positive rates.</p>
 <p><strong>Akamai</strong>: Akamai uses bloom filters to avoid caching &ldquo;one-hit wonders&rdquo; - items requested exactly once that would displace more popular items from cache. A bloom filter tracks all requested URLs; something is only admitted to cache if it has been seen before (i.e., it is in the filter).</p>
 <h2 id="limitations">Limitations</h2>
 <p><strong>No deletion</strong>: setting bits to 1 is irreversible. Removing an item would require clearing bits, but those bits may be shared with other items. Clearing them creates false negatives - which violate the core guarantee.</p>
