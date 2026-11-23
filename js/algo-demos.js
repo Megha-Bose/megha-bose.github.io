@@ -47,14 +47,17 @@
   }
 
   // Step / Play / Reset. `demo.step()` returns true while more steps remain.
-  function stepper(root, slot, demo, interval) {
+  // opts: { autoplay: false } for exercises the reader should work through themselves.
+  function stepper(root, slot, demo, interval, opts) {
+    opts = opts || {};
     var timer = null;
     var finished = false;
     var touched = false;
     var stepBtn = h('button', { class: 'sf-btn', type: 'button', text: 'Step' });
     var playBtn = h('button', { class: 'sf-btn sf-btn-primary', type: 'button', text: 'Play' });
     var resetBtn = h('button', { class: 'sf-btn', type: 'button', text: 'Reset' });
-    [playBtn, stepBtn, resetBtn].forEach(function (btn) { slot.appendChild(btn); });
+    var backBtn = demo.back ? h('button', { class: 'sf-btn', type: 'button', text: 'Back' }) : null;
+    [playBtn, backBtn, stepBtn, resetBtn].forEach(function (btn) { if (btn) slot.appendChild(btn); });
 
     function sync() {
       stepBtn.disabled = finished;
@@ -85,9 +88,10 @@
     stepBtn.addEventListener('click', function () { touched = true; stop(); advance(); });
     playBtn.addEventListener('click', function () { touched = true; if (timer) stop(); else play(); });
     resetBtn.addEventListener('click', function () { touched = true; reset(); });
+    if (backBtn) backBtn.addEventListener('click', function () { touched = true; stop(); demo.back(); finished = false; sync(); });
 
     // Play once when the demo scrolls into view, unless the reader got there first.
-    if (!REDUCED && 'IntersectionObserver' in window) {
+    if (!REDUCED && opts.autoplay !== false && 'IntersectionObserver' in window) {
       // Start when most of the demo is visible, or, for a demo taller than the
       // screen, when it fills most of the screen.
       var watcher = new IntersectionObserver(function (entries) {

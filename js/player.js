@@ -96,8 +96,9 @@
         st.f += 1;
         render();
         return st.f < frames.length - 1;
-      }
-    }, function () { return scenarios[st.s].interval || spec.interval || 700; });
+      },
+      back: spec.autoplay === false ? function () { if (st.f > 0) { st.f -= 1; render(); } } : null
+    }, function () { return scenarios[st.s].interval || spec.interval || 700; }, { autoplay: spec.autoplay !== false });
     render();
   }
 
@@ -378,12 +379,22 @@
     }
     table.appendChild(body);
     stage.appendChild(h('div', { class: 'sf-table-wrap' }, [table]));
+    // grid.plain = ["r,c", ...]: cells that are labels on the worksheet, not values
+    var plain = g.plain || [];
     return function (fr) {
       for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
         var v = fr.cells[r][c];
         var t = fr.cellCls && fr.cellCls[r + ',' + c];
         var td = cells[r][c];
-        td.textContent = v === null || v === undefined ? '' : String(v);
+        var isLabel = plain.indexOf(r + ',' + c) >= 0;
+        td.classList.toggle('is-label', isLabel);
+        if (isLabel && c > 0) {
+          // headings over a matrix float, so a long label doesn't widen its column
+          td.textContent = '';
+          td.appendChild(h('span', { class: 'sf-float', text: v === null || v === undefined ? '' : String(v) }));
+        } else {
+          td.textContent = v === null || v === undefined ? '' : String(v);
+        }
         // null is a spacer: no cell at all
         td.style.background = v === null ? 'transparent' : (t && TOKENS[t] ? TOKENS[t] : '');
         td.style.color = ink(t);
