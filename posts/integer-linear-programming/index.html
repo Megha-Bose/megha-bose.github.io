@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412931" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -182,11 +185,13 @@
 <p>For some problems the gap is exactly 1 - the LP relaxation automatically produces integer solutions. For others, the gap can be arbitrarily large. A clean example: vertex cover.</p>
 <p><strong>Vertex cover ILP.</strong> Given a graph $G = (V, E)$, find the smallest subset $S \subseteq V$ such that every edge has at least one endpoint in $S$. Write it as:</p>
 <p>$$\min \sum_{v} x_v \quad \text{s.t.} \quad x_u + x_v \geq 1 \text{ for each edge } (u,v), \quad x_v \in \{0,1\}.$$</p>
-<p>The LP relaxation allows $x_v \in [0, 1]$. On any graph, setting $x_v = 1/2$ for all $v$ is always feasible (every edge constraint is satisfied with equality). So the LP relaxation has value $n/2$. On a graph whose minimum vertex cover has size $n/2 + 1$ (e.g., a certain dense random graph), the gap is close to 1 - not dramatic. But on a $k$-clique, the LP gives $k/2$ while you need all $k-1$ vertices, giving a gap of $(k-1)/(k/2) \to 2$. The integrality gap for vertex cover ILP is 2.</p>
+<p>The LP relaxation allows $x_v \in [0, 1]$. On any graph, setting $x_v = 1/2$ for all $v$ is feasible (every edge constraint holds with equality), so the LP optimum is at most $n/2$. On a $k$-clique that is exactly the LP optimum, $k/2$, while any real cover needs $k-1$ vertices: a gap of $(k-1)/(k/2) \to 2$. And the gap is never worse than 2, since rounding every $x_v \geq 1/2$ up to 1 gives a valid cover at most twice the LP value. The integrality gap for vertex cover is exactly 2.</p>
 <p>This gap matters: it limits how good any LP-rounding-based approximation algorithm can be, and it tells you how much information the LP relaxation captures about the ILP.</p>
 <hr>
 <h2 id="branch-and-bound">Branch and Bound</h2>
-<p>Branch and bound is the backbone of every modern ILP solver. The idea: explore a tree of increasingly constrained LPs, using LP bounds to prune branches that can&rsquo;t improve on the best integer solution found so far.</p>
+<p>Branch and bound is the backbone of every modern ILP solver. The idea: explore a tree of increasingly constrained LPs, using LP bounds to prune branches that can&rsquo;t improve on the best integer solution found so far. With two variables you can watch the whole thing happen to the feasible region:</p>
+<div class="sf" data-sf="player" data-src="/data/integer-linear-programming/bnb.json"></div>
+<p>Notice two things. Rounding the LP answer was useless: the optimum $(0, 5)$ is nowhere near the LP corner $(2.25, 3.75)$. And the last branch, worth at most 39, was discarded without being searched, because a 40 was already in hand. That is the whole trick, and it scales to millions of variables.</p>
 <p><strong>The algorithm:</strong></p>
 <ol>
 <li>Solve the LP relaxation. If the solution is integer, record it as the incumbent. If the LP is infeasible, stop (infeasible ILP).</li>
@@ -201,7 +206,7 @@
 </ol>
 <p>The LP at each node provides an <strong>upper bound</strong> on what any integer solution in that subtree can achieve. If this bound is below the current best integer solution, there&rsquo;s no point exploring further - prune.</p>
 <p>The key insight is that LP bounds get tighter as we add constraints. Deep in the tree, the LP relaxation at each node is forced to be close to integral, so the bounds become very informative.</p>
-<p><strong>Variable selection</strong> - which fractional variable to branch on - profoundly affects performance. Branching on variables with fractional values close to 0.5 tends to produce balanced trees. <strong>Node selection</strong> - which open node to explore next - is equally important. Best-first (explore the node with the highest LP bound) uses more memory but finds good solutions quickly. Depth-first uses less memory but may get stuck in bad branches. Modern solvers blend both.</p>
+<p><strong>Variable selection</strong> - which fractional variable to branch on - profoundly affects performance. The intuitive rule, branch on the variable closest to 0.5, turns out to be barely better than choosing at random. Modern solvers use <em>strong branching</em> (tentatively solve both children for a few candidates and see which raises the bound most) and <em>pseudocosts</em> (remember how much each variable&rsquo;s branchings helped before). <strong>Node selection</strong> - which open node to explore next - is equally important. Depth-first, as in the demo, uses little memory and finds feasible solutions quickly. Best-first (always expand the node with the highest LP bound) proves optimality with the fewest nodes but can hold a huge frontier in memory and find feasible solutions late. Modern solvers blend both.</p>
 <hr>
 <h2 id="cutting-planes">Cutting Planes</h2>
 <p>Instead of branching, you can add linear constraints that cut off the fractional solution without removing any integer-feasible points. These are called <strong>cutting planes</strong> or <strong>cuts</strong>.</p>
@@ -220,7 +225,7 @@
 </blockquote>
 <p>Which matrices are TU? Two beautiful families:</p>
 <p><strong>Bipartite graph incidence matrices.</strong> The vertex-edge incidence matrix of a bipartite graph (rows = vertices, columns = edges, $A_{ve} = 1$ if vertex $v$ is an endpoint of edge $e$) is TU. This means bipartite matching, assignment problems, and bipartite covering problems can all be solved as LPs - no branch and bound needed. The LP relaxation automatically gives integer solutions.</p>
-<p><strong>Network flow matrices.</strong> The constraint matrix for any min-cost flow problem on a directed graph is TU. This is why shortest path, maximum flow, and transportation problems are all polynomial - even though they look like ILPs, the LP relaxation is always integral.</p>
+<p><strong>Network flow matrices.</strong> The node-arc incidence matrix of any directed graph is TU, so min-cost flow problems with integer capacities and demands always have integer optimal solutions. That is why shortest path, maximum flow, and transportation problems can be solved as plain LPs - they look like ILPs, but the LP relaxation is already integral.</p>
 <p><strong>Interval matrices.</strong> Many scheduling-on-intervals problems have TU constraint matrices. When you can encode your problem as a network flow or bipartite matching, you&rsquo;re in polynomial time. When you can&rsquo;t, you&rsquo;re in branch-and-bound territory.</p>
 <hr>
 <blockquote>
