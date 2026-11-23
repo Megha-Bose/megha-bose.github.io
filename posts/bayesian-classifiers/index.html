@@ -222,7 +222,7 @@
 <h2 id="maximum-likelihood-estimation-for-class-conditional-densities">Maximum Likelihood Estimation for Class-Conditional Densities</h2>
 <p>To use the Bayes classifier in practice, we need to estimate $p(x \mid C=k)$ and $P(C=k)$ from training data. The prior is estimated straightforwardly as the fraction of training points in each class: $\hat{P}(C=k) = n_k / n$, where $n_k$ is the number of training points in class $k$ and $n = \sum_k n_k$.</p>
 <p>For the class-conditional density, we assume a parametric form and estimate the parameters by maximum likelihood (MLE) within each class. Under the Gaussian assumption $p(x \mid C=k) = \mathcal{N}(x; \mu_k, \Sigma_k)$, the MLE estimates are the class-specific sample mean and sample covariance:</p>
-<p>$$\hat{\mu}<em>k = \frac{1}{n_k} \sum</em>{x \in C_k} x, \qquad \hat{\Sigma}<em>k = \frac{1}{n_k} \sum</em>{x \in C_k} (x - \hat{\mu}_k)(x - \hat{\mu}_k)^\top.$$</p>
+<p>$$\hat{\mu}_k = \frac{1}{n_k} \sum_{x \in C_k} x, \qquad \hat{\Sigma}_k = \frac{1}{n_k} \sum_{x \in C_k} (x - \hat{\mu}_k)(x - \hat{\mu}_k)^\top.$$</p>
 <p>These are QDA estimates. For LDA, we additionally assume $\Sigma_k = \Sigma$ for all $k$, and pool the within-class covariances:</p>
 <p>$$\hat{\Sigma} = \frac{1}{n} \sum_{k=1}^K \sum_{x \in C_k} (x - \hat{\mu}_k)(x - \hat{\mu}_k)^\top.$$</p>
 <p>The pooled covariance is the weighted average of the per-class covariances, with weights proportional to class sizes. LDA is more data-efficient than QDA: it estimates $O(d^2)$ parameters for a single shared $\Sigma$ rather than $K \cdot O(d^2)$ parameters for $K$ separate covariance matrices. When $n$ is small relative to $K d^2$, QDA tends to overfit, and LDA&rsquo;s regularization through parameter sharing improves generalization.</p>
@@ -235,24 +235,24 @@
 <p>$$P(C=k \mid x) \propto P(C=k) \prod_{j=1}^d p(x_j \mid C=k),$$</p>
 <p>and the Naive Bayes classifier assigns class $k^* = \arg\max_k \left[\log P(C=k) + \sum_{j=1}^d \log p(x_j \mid C=k)\right].$</p>
 <p>The parametric form chosen for each $p(x_j \mid C=k)$ depends on the feature type:</p>
-<p><strong>Gaussian Naive Bayes</strong> assumes $p(x_j \mid C=k) = \mathcal{N}(x_j; \mu_{jk}, \sigma_{jk}^2)$. The MLE estimates are the per-feature, per-class sample mean and variance: $\hat{\mu}<em>{jk} = \frac{1}{n_k}\sum</em>{x \in C_k} x_j$ and $\hat{\sigma}<em>{jk}^2 = \frac{1}{n_k}\sum</em>{x \in C_k}(x_j - \hat{\mu}_{jk})^2$. This requires estimating $2Kd$ scalars rather than a $Kd \times d$ covariance matrix &ndash; a dramatic reduction.</p>
+<p><strong>Gaussian Naive Bayes</strong> assumes $p(x_j \mid C=k) = \mathcal{N}(x_j; \mu_{jk}, \sigma_{jk}^2)$. The MLE estimates are the per-feature, per-class sample mean and variance: $\hat{\mu}_{jk} = \frac{1}{n_k}\sum_{x \in C_k} x_j$ and $\hat{\sigma}_{jk}^2 = \frac{1}{n_k}\sum_{x \in C_k}(x_j - \hat{\mu}_{jk})^2$. This requires estimating $2Kd$ scalars rather than a $Kd \times d$ covariance matrix &ndash; a dramatic reduction.</p>
 <p><strong>Bernoulli Naive Bayes</strong> handles binary features. Each $p(x_j = 1 \mid C=k) = \theta_{jk}$ is estimated as the fraction of class-$k$ training points with $x_j = 1$. This is the natural model when each feature is an indicator variable.</p>
-<p><strong>Multinomial Naive Bayes</strong> is the standard for text classification with a bag-of-words representation. Here $x_j$ is the count of word $j$ in a document, and $p(\text{word}<em>j \mid C=k) = \theta</em>{jk}$ is estimated as the count of word $j$ in all class-$k$ documents divided by the total word count in class-$k$ documents. Classification scores documents by the log-probability of the word sequence under each class model, plus the log-prior.</p>
+<p><strong>Multinomial Naive Bayes</strong> is the standard for text classification with a bag-of-words representation. Here $x_j$ is the count of word $j$ in a document, and $p(\text{word}_j \mid C=k) = \theta_{jk}$ is estimated as the count of word $j$ in all class-$k$ documents divided by the total word count in class-$k$ documents. Classification scores documents by the log-probability of the word sequence under each class model, plus the log-prior.</p>
 <p><strong>Why does Naive Bayes work despite the independence assumption being violated?</strong> In practice, features are almost never conditionally independent given the class. In text, words co-occur in strong patterns; in images, adjacent pixels are highly correlated. Yet Naive Bayes often achieves competitive accuracy. The reason is that we ultimately only need the decision boundary to be correct, not the density estimates themselves. The Naive Bayes posterior $\tilde{P}(C=k \mid x) \propto P(C=k)\prod_j p(x_j \mid C=k)$ is a distorted version of the true posterior, but the argmax &ndash; the class it assigns &ndash; can agree with the true Bayes classifier even when the probability values are badly miscalibrated. The decision boundary is determined by the sign of the log-posterior ratio, and this can be correct even when the individual log-posteriors are off by a constant or a multiplicative factor. The independence assumption biases the density estimates, but it biases them in a correlated way that largely preserves the ranking of classes.</p>
 <p>A useful way to see this: even if $\prod_j p(x_j \mid C=1)$ underestimates the true $p(x \mid C=1)$ because it ignores within-class correlations, it may underestimate $p(x \mid C=2)$ by a similar factor, leaving the ratio &ndash; and thus the decision &ndash; unchanged. Naive Bayes is biased but robust.</p>
 <hr>
 <h2 id="bayesian-learning-vs-mle">Bayesian Learning vs MLE</h2>
 <p>The Naive Bayes classifier and LDA/QDA both use MLE to estimate their parameters from training data. MLE finds the single parameter vector $\hat{\theta}$ that maximizes the likelihood of the training data:</p>
-<p>$$\hat{\theta}<em>{\text{MLE}} = \arg\max</em>\theta p(\mathcal{D} \mid \theta).$$</p>
+<p>$$\hat{\theta}_{\text{MLE}} = \arg\max_\theta p(\mathcal{D} \mid \theta).$$</p>
 <p>This treats the parameters as fixed but unknown. Bayesian learning takes a different view: parameters are random variables with a prior distribution $p(\theta)$, and training data updates this prior to a posterior:</p>
 <p>$$p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta) p(\theta).$$</p>
 <p>The <strong>MAP estimate</strong> (maximum a posteriori) finds the mode of this posterior:</p>
-<p>$$\hat{\theta}<em>{\text{MAP}} = \arg\max</em>\theta \left[\log p(\mathcal{D} \mid \theta) + \log p(\theta)\right].$$</p>
+<p>$$\hat{\theta}_{\text{MAP}} = \arg\max_\theta \left[\log p(\mathcal{D} \mid \theta) + \log p(\theta)\right].$$</p>
 <p>MAP is equivalent to MLE with a regularization term: the log-prior $\log p(\theta)$ penalizes parameter values that are unlikely under the prior. A Gaussian prior on $\theta$ with mean zero corresponds to $L_2$ regularization. A Laplace prior corresponds to $L_1$ regularization. MLE is the limiting case of MAP with a uniform prior.</p>
 <p>Full Bayesian prediction goes further, averaging over all parameter values weighted by the posterior rather than committing to a single estimate:</p>
 <p>$$p(y \mid x, \mathcal{D}) = \int p(y \mid x, \theta) p(\theta \mid \mathcal{D}) d\theta.$$</p>
 <p>This predictive distribution is more calibrated than a point estimate &ndash; it incorporates parameter uncertainty. However, this integral is usually intractable for complex models, which is why MAP and MLE remain the workhorses in practice.</p>
-<p>For categorical distributions &ndash; as in Multinomial Naive Bayes &ndash; the conjugate prior is the Dirichlet distribution. If we place a Dirichlet prior $\text{Dir}(\alpha_1, \ldots, \alpha_V)$ on the word probabilities $(\theta_{1k}, \ldots, \theta_{Vk})$ for class $k$, the posterior given the observed word counts $n_{jk}$ is again Dirichlet with updated parameters $\alpha_j + n_{jk}$. The MAP estimate adds $\alpha_j - 1$ pseudo-counts to each word. Setting $\alpha_j = 2$ for all $j$ (a uniform Dirichlet) gives Laplace smoothing: $\hat{\theta}<em>{jk} = (n</em>{jk} + 1)/(n_k + V)$. This prevents zero probabilities for words not seen in the training set of class $k$, which would otherwise make the Naive Bayes posterior zero for any document containing an unseen word &ndash; a severe failure mode without smoothing.</p>
+<p>For categorical distributions &ndash; as in Multinomial Naive Bayes &ndash; the conjugate prior is the Dirichlet distribution. If we place a Dirichlet prior $\text{Dir}(\alpha_1, \ldots, \alpha_V)$ on the word probabilities $(\theta_{1k}, \ldots, \theta_{Vk})$ for class $k$, the posterior given the observed word counts $n_{jk}$ is again Dirichlet with updated parameters $\alpha_j + n_{jk}$. The MAP estimate adds $\alpha_j - 1$ pseudo-counts to each word. Setting $\alpha_j = 2$ for all $j$ (a uniform Dirichlet) gives Laplace smoothing: $\hat{\theta}_{jk} = (n_{jk} + 1)/(n_k + V)$. This prevents zero probabilities for words not seen in the training set of class $k$, which would otherwise make the Naive Bayes posterior zero for any document containing an unseen word &ndash; a severe failure mode without smoothing.</p>
 <hr>
 <h2 id="example-face-recognition-with-eigenfaces">Example: Face Recognition with Eigenfaces</h2>
 <p>Face recognition is a canonical example of Bayesian classification applied to high-dimensional data. Each face image is a vector $x \in \mathbb{R}^d$, where $d$ is the number of pixels (e.g., $d = 100 \times 100 = 10{,}000$ for a modest grayscale image). Each class $k$ corresponds to the identity of a person.</p>
@@ -304,7 +304,7 @@
 </tr>
 <tr>
 <td>MLE for LDA</td>
-<td>$\hat{\mu}<em>k = \frac{1}{n_k}\sum</em>{x \in C_k} x$; $\hat{\Sigma} = \frac{1}{n}\sum_k \sum_{x \in C_k}(x-\hat{\mu}_k)(x-\hat{\mu}_k)^\top$</td>
+<td>$\hat{\mu}_k = \frac{1}{n_k}\sum_{x \in C_k} x$; $\hat{\Sigma} = \frac{1}{n}\sum_k \sum_{x \in C_k}(x-\hat{\mu}_k)(x-\hat{\mu}_k)^\top$</td>
 </tr>
 <tr>
 <td>Naive Bayes assumption</td>
@@ -312,11 +312,11 @@
 </tr>
 <tr>
 <td>Gaussian Naive Bayes</td>
-<td>Each $p(x_j \mid C=k) = \mathcal{N}(x_j; \hat{\mu}<em>{jk}, \hat{\sigma}</em>{jk}^2)$; $2Kd$ parameters</td>
+<td>Each $p(x_j \mid C=k) = \mathcal{N}(x_j; \hat{\mu}_{jk}, \hat{\sigma}_{jk}^2)$; $2Kd$ parameters</td>
 </tr>
 <tr>
 <td>Multinomial Naive Bayes</td>
-<td>$\hat{\theta}<em>{jk} = n</em>{jk}/n_k$; Laplace smoothing adds pseudo-counts</td>
+<td>$\hat{\theta}_{jk} = n_{jk}/n_k$; Laplace smoothing adds pseudo-counts</td>
 </tr>
 <tr>
 <td>Naive Bayes robustness</td>
@@ -324,7 +324,7 @@
 </tr>
 <tr>
 <td>MAP estimate</td>
-<td>$\hat{\theta}<em>{\text{MAP}} = \arg\max</em>\theta [\log p(\mathcal{D} \mid \theta) + \log p(\theta)]$; MLE with regularization</td>
+<td>$\hat{\theta}_{\text{MAP}} = \arg\max_\theta [\log p(\mathcal{D} \mid \theta) + \log p(\theta)]$; MLE with regularization</td>
 </tr>
 <tr>
 <td>Dirichlet-Multinomial</td>
@@ -366,7 +366,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

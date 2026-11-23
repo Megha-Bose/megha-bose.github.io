@@ -185,7 +185,7 @@ This distance treats every dimension as equally important. If your features are 
 <p>The <strong>Mahalanobis distance</strong> is the most natural generalization of Euclidean distance that can be learned:</p>
 <p>$$d_M(x, y) = \sqrt{(x - y)^\top M (x - y)}$$</p>
 <p>Here $M$ is a $d \times d$ positive semi-definite matrix. When $M = I$ (the identity matrix), this reduces exactly to Euclidean distance. When $M$ is diagonal, it scales each dimension independently - a weighted Euclidean distance. When $M$ is a full positive semi-definite matrix, it can rotate and scale the feature space in any direction. Because $M$ is positive semi-definite, all three metric properties are satisfied automatically.</p>
-<p><strong>Intuition for what $M$ does.</strong> Any positive semi-definite matrix $M$ can be written as $M = L^\top L$ for some matrix $L$. Then $d_M(x, y) = |L(x-y)|_2$. So the Mahalanobis distance is just the Euclidean distance after applying the linear transformation $L$ to the data. Learning $M$ is equivalent to learning a linear transformation of the feature space where Euclidean distance is meaningful.</p>
+<p><strong>Intuition for what $M$ does.</strong> Any positive semi-definite matrix $M$ can be written as $M = L^\top L$ for some matrix $L$. Then $d_M(x, y) = \|L(x-y)\|_2$. So the Mahalanobis distance is just the Euclidean distance after applying the linear transformation $L$ to the data. Learning $M$ is equivalent to learning a linear transformation of the feature space where Euclidean distance is meaningful.</p>
 <p><strong>Learning the matrix $M$ is metric learning.</strong></p>
 <h2 id="linear-metric-learning---lmnn">Linear Metric Learning - LMNN</h2>
 <p><strong>Large Margin Nearest Neighbor (LMNN)</strong> learning is a classical metric learning algorithm. The idea is intuitive: for each training point $x_i$, define its $k$ same-class neighbors as its <strong>target neighbors</strong> - the points it should be close to. Then optimize $M$ to satisfy two constraints:</p>
@@ -197,7 +197,7 @@ This distance treats every dimension as equally important. If your features are 
 <p>LMNN works well when the data is low-dimensional and the class structure is locally consistent. It is an important baseline and its formulation makes the intuition of metric learning concrete.</p>
 <h2 id="siamese-networks">Siamese Networks</h2>
 <p>The deep learning approach to metric learning replaces the linear transformation $L$ with a neural network $f_\theta$. Two copies of the same network - sharing all weights - process two inputs and produce embeddings. The distance between the embeddings determines whether the inputs are similar.</p>
-<p><strong>Architecture.</strong> A Siamese network takes two inputs $x_a$ and $x_b$, passes each through the same neural network $f_\theta$ (same weights, applied independently), and produces embeddings $z_a = f_\theta(x_a)$ and $z_b = f_\theta(x_b)$. The distance $d(z_a, z_b) = |z_a - z_b|_2$ is used as a similarity score.</p>
+<p><strong>Architecture.</strong> A Siamese network takes two inputs $x_a$ and $x_b$, passes each through the same neural network $f_\theta$ (same weights, applied independently), and produces embeddings $z_a = f_\theta(x_a)$ and $z_b = f_\theta(x_b)$. The distance $d(z_a, z_b) = \|z_a - z_b\|_2$ is used as a similarity score.</p>
 <p>Weight sharing is critical: using the same weights for both inputs guarantees that the distance is symmetric. It also means the network generalizes - the same function is applied to every input, so a representation learned from one example transfers to all inputs.</p>
 <p><strong>Training with contrastive loss.</strong> Training pairs are labeled &ldquo;same class&rdquo; or &ldquo;different class.&rdquo; The <strong>contrastive loss</strong> is:</p>
 <p>$$\mathcal{L} = y \cdot d(z_a, z_b)^2 + (1 - y) \cdot \max(0, m - d(z_a, z_b))^2$$</p>
@@ -212,7 +212,7 @@ This distance treats every dimension as equally important. If your features are 
 <li>A <strong>negative</strong> $n$ - an example from a different class.</li>
 </ul>
 <p>The loss enforces that the anchor is closer to the positive than to the negative by at least a margin $\alpha$:</p>
-<p>$$\mathcal{L} = \max!\left(0,\ d(f(a), f(p))^2 - d(f(a), f(n))^2 + \alpha\right)$$</p>
+<p>$$\mathcal{L} = \max\!\left(0,\ d(f(a), f(p))^2 - d(f(a), f(n))^2 + \alpha\right)$$</p>
 <p>If the anchor is already closer to the positive than the negative by more than $\alpha$, the loss is zero - this triplet is &ldquo;easy&rdquo; and contributes nothing. Gradient only flows for triplets where the constraint is violated or nearly so.</p>
 <p><strong>Hard negative mining.</strong> For a given anchor and positive, choose the negative that is closest to the anchor in the current embedding space - the &ldquo;hardest&rdquo; negative. This ensures that most triplets in a batch are &ldquo;hard&rdquo; and contribute meaningful gradient. Without hard negative mining, most triplets are easy and training stagnates. In practice, semi-hard negatives (negatives farther than the positive but within the margin) are often more stable than the absolute hardest negatives.</p>
 <p><strong>Worked example.</strong> Anchor $a$ is a photo of person A. Positive $p$ is a different photo of person A. Negative $n$ is a photo of person B. The triplet loss says: the embedding of $a$ must be closer to $p$ than to $n$ by at least $\alpha = 0.2$. If $d(f(a), f(p)) = 0.5$ and $d(f(a), f(n)) = 0.6$, the loss is $\max(0, 0.5 - 0.6 + 0.2) = \max(0, 0.1) = 0.1$. There is a constraint violation and the loss is positive. If instead $d(f(a), f(n)) = 0.8$, the loss is $\max(0, 0.5 - 0.8 + 0.2) = \max(0, -0.1) = 0$. The triplet is easy and contributes no gradient.</p>
@@ -289,7 +289,8 @@ This distance treats every dimension as equally important. If your features are 
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

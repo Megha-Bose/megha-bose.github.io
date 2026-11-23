@@ -179,23 +179,23 @@
 <li>$\text{Vrfy}_k(m, t)$ outputs accept or reject.</li>
 <li>Correctness: $\text{Vrfy}_k(m, \text{Mac}_k(m)) = \text{accept}$ always.</li>
 </ul>
-<p><strong>Security (EUF-CMA: existential unforgeability under chosen message attack).</strong> The adversary can adaptively query $\text{Mac}_k(\cdot)$ on any messages of its choice. It wins if it produces a valid $(m^<em>, t^</em>)$ where $m^*$ was not previously queried. The advantage must be negligible for all PPT adversaries.</p>
+<p><strong>Security (EUF-CMA: existential unforgeability under chosen message attack).</strong> The adversary can adaptively query $\text{Mac}_k(\cdot)$ on any messages of its choice. It wins if it produces a valid $(m^*, t^*)$ where $m^*$ was not previously queried. The advantage must be negligible for all PPT adversaries.</p>
 <hr>
 <h2 id="problematic-taggings">Problematic Taggings</h2>
 <p>Before building a secure MAC, it helps to see what breaks.</p>
-<p><strong>Issue 1: Fixed-prefix extension.</strong> Tag $m$ by computing $t = F_k(m)$ (one PRF evaluation). For variable-length messages, append blocks: $t = F_k(m_1) | F_k(m_2) | \cdots$. Attack: the adversary queries $\text{Mac}$ on separate single-block messages $m_1$ and $m_2$, getting $t_1 = F_k(m_1)$ and $t_2 = F_k(m_2)$. It then forges a tag for the two-block message $m_1 | m_2$ as $(t_1, t_2)$ - a valid concatenated tag it never queried.</p>
-<p><strong>Issue 2: Length extension.</strong> Many naive hash-based MACs suffer from length extension: given $H(k | m)$, an adversary can compute $H(k | m | \text{pad} | m')$ without knowing $k$, simply by continuing the hash computation from the internal state. This breaks any MAC of the form $H(k | m)$.</p>
+<p><strong>Issue 1: Fixed-prefix extension.</strong> Tag $m$ by computing $t = F_k(m)$ (one PRF evaluation). For variable-length messages, append blocks: $t = F_k(m_1) \| F_k(m_2) \| \cdots$. Attack: the adversary queries $\text{Mac}$ on separate single-block messages $m_1$ and $m_2$, getting $t_1 = F_k(m_1)$ and $t_2 = F_k(m_2)$. It then forges a tag for the two-block message $m_1 \| m_2$ as $(t_1, t_2)$ - a valid concatenated tag it never queried.</p>
+<p><strong>Issue 2: Length extension.</strong> Many naive hash-based MACs suffer from length extension: given $H(k \| m)$, an adversary can compute $H(k \| m \| \text{pad} \| m')$ without knowing $k$, simply by continuing the hash computation from the internal state. This breaks any MAC of the form $H(k \| m)$.</p>
 <p><strong>Issue 3: Prefix reuse in CBC-MAC.</strong> If the adversary knows $\text{Mac}_k(m) = t$, and the MAC is computed by running a CBC chain, it can often forge a tag for a related message by XOR-ing the first block with $t$ - because that cancels out the chaining and reuses the MAC computation.</p>
 <hr>
 <h2 id="cbc-mac">CBC-MAC</h2>
-<p><strong>Construction.</strong> For a fixed-length message $m = m_1 | m_2 | \cdots | m_\ell$ of $\ell$ blocks:
-$$t_0 = 0^n, \quad t_i = F_k(t_{i-1} \oplus m_i), \quad \text{Mac}<em>k(m) = t</em>\ell$$
+<p><strong>Construction.</strong> For a fixed-length message $m = m_1 \| m_2 \| \cdots \| m_\ell$ of $\ell$ blocks:
+$$t_0 = 0^n, \quad t_i = F_k(t_{i-1} \oplus m_i), \quad \text{Mac}_k(m) = t_\ell$$
 Apply the block cipher in CBC mode, starting from the all-zeros IV, and output the final block.</p>
 <p><strong>Security.</strong> For a fixed message length $\ell$, CBC-MAC (also called raw CBC-MAC) is EUF-CMA secure assuming $F_k$ is a PRF. The proof uses the PRF security to replace $F_k$ with a random function, then argues directly that the random-function CBC chain is unpredictable.</p>
 <hr>
 <h2 id="variable-length-cbc-mac-and-the-attack">Variable-Length CBC-MAC and the Attack</h2>
 <p><strong>Problem.</strong> If we use the same key for messages of different lengths, CBC-MAC is broken.</p>
-<p><strong>Attack.</strong> Let $m = m_1$ be a single block and suppose $\text{Mac}_k(m_1) = t$. Now consider the two-block message $m_1 | (t \oplus m_1)$:</p>
+<p><strong>Attack.</strong> Let $m = m_1$ be a single block and suppose $\text{Mac}_k(m_1) = t$. Now consider the two-block message $m_1 \| (t \oplus m_1)$:</p>
 <ul>
 <li>$t_1 = F_k(0 \oplus m_1) = t$</li>
 <li>$t_2 = F_k(t \oplus (t \oplus m_1)) = F_k(m_1) = t$</li>
@@ -204,10 +204,10 @@ Apply the block cipher in CBC mode, starting from the all-zeros IV, and output t
 <p>The root cause: the chaining structure means a one-block MAC output perfectly predicts where the two-block computation will land.</p>
 <hr>
 <h2 id="secure-cbc-mac-for-variable-lengths">Secure CBC-MAC for Variable Lengths</h2>
-<p><strong>Fix 1: Prepend the length.</strong> Mac the message $\ell | m_1 | m_2 | \cdots | m_\ell$ (prepend the block count). Now the attack above fails: $m_1$ is tagged as $(1 | m_1)$ while the two-block message is tagged as $(2 | m_1 | t \oplus m_1)$ - different starting blocks, different computations.</p>
+<p><strong>Fix 1: Prepend the length.</strong> Mac the message $\ell \| m_1 \| m_2 \| \cdots \| m_\ell$ (prepend the block count). Now the attack above fails: $m_1$ is tagged as $(1 \| m_1)$ while the two-block message is tagged as $(2 \| m_1 \| t \oplus m_1)$ - different starting blocks, different computations.</p>
 <p><strong>Fix 2: ECBC-MAC (encrypted CBC-MAC).</strong> Use two independent keys $k_1, k_2$. Compute the raw CBC-MAC under $k_1$, then encrypt the final tag with $F_{k_2}$: $\text{Mac} = F_{k_2}(\text{CBC-MAC}_{k_1}(m))$. The extra encryption destroys the algebraic structure that the variable-length attack exploits. ECBC-MAC is provably secure for variable-length messages.</p>
 <p><strong>Fix 3: CMAC (standardized variant).</strong> Use the length prefix approach with a specific padding scheme: pad the last block with 1 followed by zeros ($10^*$ padding) to make it distinguishable, then XOR with one of two subkeys derived from $k$ depending on whether the message was already block-aligned. CMAC is the NIST standard.</p>
-<p>The general requirement: the MAC over messages of different lengths must ensure that a valid $(\ell, m)$ pair cannot help forge a tag for any different $(\ell', m')$. The internal prefix trick ($| \ell | m |$ or $| i | m |$) ensures this by making each call to the MAC function structurally distinct.</p>
+<p>The general requirement: the MAC over messages of different lengths must ensure that a valid $(\ell, m)$ pair cannot help forge a tag for any different $(\ell', m')$. The internal prefix trick ($\| \ell \| m \|$ or $\| i \| m \|$) ensures this by making each call to the MAC function structurally distinct.</p>
 <hr>
 <h2 id="collision-resistant-hash-functions">Collision-Resistant Hash Functions</h2>
 <p>A hash function $H: \{0,1\}^* \to \{0,1\}^n$ is <strong>collision-resistant</strong> if no PPT algorithm can find $x \neq x'$ with $H(x) = H(x')$ except with negligible probability.</p>
@@ -232,17 +232,17 @@ Apply the block cipher in CBC mode, starting from the all-zeros IV, and output t
 <h2 id="merkle-damgård-transform">Merkle-Damgård Transform</h2>
 <p>The MD transform builds a collision-resistant hash over arbitrary-length inputs from a collision-resistant <strong>compression function</strong> $h: \{0,1\}^{n+t} \to \{0,1\}^n$ (fixed input size).</p>
 <p><strong>Construction.</strong> Pad the message to a multiple of $t$ blocks. Append the length in the final padding block. Then:
-$$z_0 = \text{IV}, \quad z_i = h(z_{i-1} | m_i), \quad H(m) = z_\ell$$</p>
+$$z_0 = \text{IV}, \quad z_i = h(z_{i-1} \| m_i), \quad H(m) = z_\ell$$</p>
 <p><strong>Theorem.</strong> If $h$ is collision-resistant, then the MD hash is collision-resistant.</p>
 <p><em>Proof sketch.</em> Any collision $H(m) = H(m')$ with $m \neq m'$ implies a collision in $h$: trace back the chains to find the first block where they diverge. $\square$</p>
-<p>SHA-1, SHA-2 (SHA-256, SHA-512) all use Merkle-Damgård. The weakness: MD hashes are vulnerable to <strong>length extension attacks</strong> - given $H(m)$, one can compute $H(m | \text{pad} | m')$ for any $m'$ by continuing the computation from the final state $z_\ell$. This is why $H(k | m)$ is not a secure MAC (the adversary can extend without knowing $k$).</p>
+<p>SHA-1, SHA-2 (SHA-256, SHA-512) all use Merkle-Damgård. The weakness: MD hashes are vulnerable to <strong>length extension attacks</strong> - given $H(m)$, one can compute $H(m \| \text{pad} \| m')$ for any $m'$ by continuing the computation from the final state $z_\ell$. This is why $H(k \| m)$ is not a secure MAC (the adversary can extend without knowing $k$).</p>
 <p>SHA-3 (Keccak) uses a sponge construction instead of MD, eliminating length extension.</p>
 <hr>
 <h2 id="hmac">HMAC</h2>
 <p><strong>Construction.</strong> Given a hash function $H$ and a key $k$:
-$$\text{HMAC}_k(m) = H\bigl((k \oplus \text{opad}) | H((k \oplus \text{ipad}) | m)\bigr)$$
+$$\text{HMAC}_k(m) = H\bigl((k \oplus \text{opad}) \| H((k \oplus \text{ipad}) \| m)\bigr)$$
 where $\text{opad} = 0x5c5c\ldots$ and $\text{ipad} = 0x3636\ldots$ are fixed constants (the outer and inner padding).</p>
-<p><strong>Why this works.</strong> The inner hash $H((k \oplus \text{ipad}) | m)$ commits to both the key and the message. The outer hash $H((k \oplus \text{opad}) | \cdot)$ with a different key-derived value prevents length extension: even if an adversary can extend the inner hash, the outer key makes that useless. HMAC is provably secure under the assumption that $H$ is a PRF (or under weaker assumptions about the compression function).</p>
+<p><strong>Why this works.</strong> The inner hash $H((k \oplus \text{ipad}) \| m)$ commits to both the key and the message. The outer hash $H((k \oplus \text{opad}) \| \cdot)$ with a different key-derived value prevents length extension: even if an adversary can extend the inner hash, the outer key makes that useless. HMAC is provably secure under the assumption that $H$ is a PRF (or under weaker assumptions about the compression function).</p>
 <p>HMAC-SHA256 is the standard MAC in TLS, SSH, and most modern protocols. It inherits SHA-256&rsquo;s 128-bit collision resistance and, crucially, is not vulnerable to length extension.</p>
 <hr>
 <h2 id="bit-commitment-protocol">Bit Commitment Protocol</h2>
@@ -251,10 +251,10 @@ where $\text{opad} = 0x5c5c\ldots$ and $\text{ipad} = 0x3636\ldots$ are fixed co
 <li><strong>Hiding:</strong> the commitment reveals nothing about the committed value.</li>
 <li><strong>Binding:</strong> the sender cannot open the commitment to a different value.</li>
 </ul>
-<p><strong>Hash-based construction.</strong> To commit to a bit $b$: choose random $r \leftarrow \{0,1\}^n$; send $c = H(b | r)$. To reveal: send $(b, r)$. The receiver checks $H(b | r) = c$.</p>
+<p><strong>Hash-based construction.</strong> To commit to a bit $b$: choose random $r \leftarrow \{0,1\}^n$; send $c = H(b \| r)$. To reveal: send $(b, r)$. The receiver checks $H(b \| r) = c$.</p>
 <ul>
-<li><em>Hiding:</em> $H(b | r)$ is computationally indistinguishable from random (pseudorandom output of $H$).</li>
-<li><em>Binding:</em> opening to a different $b'$ requires finding $r'$ with $H(b' | r') = H(b | r)$ - a collision in $H$.</li>
+<li><em>Hiding:</em> $H(b \| r)$ is computationally indistinguishable from random (pseudorandom output of $H$).</li>
+<li><em>Binding:</em> opening to a different $b'$ requires finding $r'$ with $H(b' \| r') = H(b \| r)$ - a collision in $H$.</li>
 </ul>
 <p>Bit commitment is a foundational primitive for zero-knowledge proofs, coin-flipping protocols, and contract signing.</p>
 <hr>
@@ -281,7 +281,7 @@ where $\text{opad} = 0x5c5c\ldots$ and $\text{ipad} = 0x3636\ldots$ are fixed co
 </tr>
 <tr>
 <td>ECBC-MAC / length prefix</td>
-<td>Fix variable-length by encrypting final block or prepending $|\ell|$</td>
+<td>Fix variable-length by encrypting final block or prepending $\|\ell\|$</td>
 </tr>
 <tr>
 <td>Collision resistance</td>
@@ -297,7 +297,7 @@ where $\text{opad} = 0x5c5c\ldots$ and $\text{ipad} = 0x3636\ldots$ are fixed co
 </tr>
 <tr>
 <td>Length extension</td>
-<td>MD hash leaks internal state; $H(k|m)$ is insecure</td>
+<td>MD hash leaks internal state; $H(k\|m)$ is insecure</td>
 </tr>
 <tr>
 <td>HMAC</td>
@@ -332,7 +332,8 @@ where $\text{opad} = 0x5c5c\ldots$ and $\text{ipad} = 0x3636\ldots$ are fixed co
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

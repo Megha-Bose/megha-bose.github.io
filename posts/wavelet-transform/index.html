@@ -228,21 +228,21 @@ Take a recording of a Beethoven piano sonata. It contains hundreds of frequencie
 <p><strong>Discomfort check.</strong> Why must a wavelet have zero mean? Consider what happens if $\int \psi(t) dt \neq 0$. Then $|\hat{\psi}(0)| &gt; 0$: the wavelet has energy at frequency zero, meaning it responds to the constant (DC) level of the signal. But the constant level carries no information about change or oscillation - it is just the baseline. A wavelet is meant to detect oscillatory features, transients, and variations. It should be blind to the background level. The admissibility condition $\hat{\psi}(0) = 0$ ensures the wavelet ignores DC and responds only to variations. Without it, the wavelet transform would confound signal features with signal level.</p>
 </blockquote>
 <p>Given a &ldquo;mother wavelet&rdquo; $\psi(t)$, generate a family by scaling (stretching or compressing) and translating (shifting):</p>
-<p>$$\psi_{a,b}(t) = \frac{1}{\sqrt{a}}\psi\left(\frac{t-b}{a}\right), \qquad a &gt; 0,; b \in \mathbb{R}.$$</p>
-<p>The scale parameter $a$ controls the duration: large $a$ stretches $\psi$ (longer duration, lower frequency); small $a$ compresses $\psi$ (shorter duration, higher frequency). The translation parameter $b$ shifts the center time. The $1/\sqrt{a}$ normalization keeps $|\psi_{a,b}|_2 = |\psi|_2$ for all $a, b$.</p>
+<p>$$\psi_{a,b}(t) = \frac{1}{\sqrt{a}}\psi\left(\frac{t-b}{a}\right), \qquad a &gt; 0,\; b \in \mathbb{R}.$$</p>
+<p>The scale parameter $a$ controls the duration: large $a$ stretches $\psi$ (longer duration, lower frequency); small $a$ compresses $\psi$ (shorter duration, higher frequency). The translation parameter $b$ shifts the center time. The $1/\sqrt{a}$ normalization keeps $\|\psi_{a,b}\|_2 = \|\psi\|_2$ for all $a, b$.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> What is the relationship between scale $a$ and frequency? If $\psi(t)$ has most of its energy at frequency $\omega_0$, then $\psi(t/a)$ has most of its energy at frequency $\omega_0/a$. Smaller $a$ means the wavelet is compressed in time, so it oscillates more rapidly - higher frequency. Larger $a$ means the wavelet is stretched out - lower frequency. The scale parameter is inversely proportional to frequency. This is why wavelet analysis is sometimes called a &ldquo;constant-$Q$&rdquo; analysis: the ratio of center frequency to bandwidth is constant, whereas the STFT maintains constant absolute bandwidth.</p>
 </blockquote>
 <hr>
 <h2 id="section-5-the-continuous-wavelet-transform">Section 5: The Continuous Wavelet Transform</h2>
 <p><strong>Definition.</strong> The <strong>Continuous Wavelet Transform (CWT)</strong> of $f(t)$ is:</p>
-<p>$$W(a, b) = \langle f, \psi_{a,b}\rangle = \int_{-\infty}^{\infty} f(t) \psi_{a,b}^<em>(t) dt = \frac{1}{\sqrt{a}}\int_{-\infty}^{\infty} f(t) \psi^</em>\left(\frac{t-b}{a}\right) dt.$$</p>
+<p>$$W(a, b) = \langle f, \psi_{a,b}\rangle = \int_{-\infty}^{\infty} f(t) \psi_{a,b}^*(t) dt = \frac{1}{\sqrt{a}}\int_{-\infty}^{\infty} f(t) \psi^*\left(\frac{t-b}{a}\right) dt.$$</p>
 <p>The coefficient $W(a, b)$ measures how much the signal $f$ at time $b$ resembles the wavelet at scale $a$.</p>
 <p><strong>Interpretation.</strong> Large $|W(a, b)|$ means $f$ has a feature near time $b$ that looks like $\psi$ at scale $a$ (i.e., at frequency $\sim \omega_0/a$). Small $|W(a, b)|$ means the signal does not have that feature at that scale and time.</p>
 <p><strong>Reconstruction.</strong> Under the <strong>admissibility condition</strong> $C_\psi = \int_0^{\infty} |\hat{\psi}(\omega)|^2/\omega d\omega &lt; \infty$ (which is guaranteed when $\hat{\psi}(0) = 0$ and $\hat{\psi}$ is well-behaved), the original signal can be recovered:</p>
 <p>$$f(t) = \frac{1}{C_\psi}\int_0^{\infty}\int_{-\infty}^{\infty} W(a,b) \psi_{a,b}(t) \frac{db da}{a^2}.$$</p>
 <p>This is the inverse CWT. It says the signal is a continuous superposition of scaled-and-shifted wavelets, weighted by the CWT coefficients.</p>
-<p><strong>Energy conservation (CWT Parseval).</strong> $|f|^2 = \frac{1}{C_\psi}\int_0^{\infty}\int_{-\infty}^{\infty}|W(a,b)|^2 \frac{db da}{a^2}$.</p>
+<p><strong>Energy conservation (CWT Parseval).</strong> $\|f\|^2 = \frac{1}{C_\psi}\int_0^{\infty}\int_{-\infty}^{\infty}|W(a,b)|^2 \frac{db da}{a^2}$.</p>
 <p>The CWT is redundant - there are infinitely many $(a, b)$ pairs, far more than the original signal has degrees of freedom. This redundancy is often useful for analysis (you can see the structure at every scale and time smoothly), but wasteful for compression or computation.</p>
 <hr>
 <h2 id="section-6-the-scalogram">Section 6: The Scalogram</h2>
@@ -380,14 +380,14 @@ Take a recording of a Beethoven piano sonata. It contains hundreds of frequencie
 <p>Removes small coefficients that are likely noise, keeps large ones that are likely signal.</p>
 <p><strong>Soft thresholding (shrinkage).</strong> Shrink all coefficients toward zero:</p>
 <p>$$\hat{w} = \text{sign}(w)\max(|w| - \lambda, 0).$$</p>
-<p>This produces a continuous estimator (unlike hard thresholding, which has a jump at $\pm\lambda$) and corresponds to minimizing $|y - f|^2/2 + \lambda|f|_{\ell^1}$ (Lasso regression in the wavelet domain).</p>
+<p>This produces a continuous estimator (unlike hard thresholding, which has a jump at $\pm\lambda$) and corresponds to minimizing $\|y - f\|^2/2 + \lambda\|f\|_{\ell^1}$ (Lasso regression in the wavelet domain).</p>
 <p><strong>Universal threshold.</strong> The Donoho-Johnstone universal threshold is $\lambda = \sigma\sqrt{2\log N}$ where $N$ is the signal length and $\sigma$ is the noise standard deviation (estimated from the finest-scale wavelet coefficients). At this threshold, the probability that any noise coefficient exceeds $\lambda$ is less than $1/N$ - so with high probability, all retained coefficients are signal. The resulting estimator achieves mean squared error within a logarithmic factor of the oracle estimator (which knows the true signal location).</p>
 <p>In practice: estimate $\sigma$ from the median absolute deviation of the finest-scale detail coefficients $d_1[k]$: $\hat{\sigma} = \text{median}(|d_1[k]|)/0.6745$. Apply soft thresholding to all detail coefficients except the finest scale (to avoid over-smoothing transients). Invert the DWT. The result is a denoised estimate of $f$.</p>
 <hr>
 <h2 id="section-16-compressed-sensing---a-brief-detour">Section 16: Compressed Sensing - A Brief Detour</h2>
 <p>Wavelet sparsity has implications that go beyond compression. Compressed sensing (Donoho, Candès, Tao, ~2005) makes a startling claim: if a signal has a sparse representation in some basis, you can reconstruct it exactly from far fewer measurements than the Nyquist-Shannon sampling theorem would suggest.</p>
 <p>The idea: you have a signal $f$ that has only $k$ nonzero coefficients in the wavelet domain - the other $N - k$ are zero. Naively, you would need $N$ samples to determine $f$. But it can be shown that with $O(k\log N)$ random linear measurements (projections of $f$ onto random vectors), you can recover $f$ exactly via convex optimization (specifically, $\ell^1$ minimization).</p>
-<p>Why $\ell^1$? The $\ell^1$ norm $|c|_1 = \sum |c_k|$ promotes sparsity in optimization because the level sets of $|c|_1$ are cross-polytopes (diamond shapes in 2D, octahedra in 3D) - they have corners on the coordinate axes. An optimization problem minimizing $\ell^1$ subject to constraints tends to find solutions where many coordinates are exactly zero.</p>
+<p>Why $\ell^1$? The $\ell^1$ norm $\|c\|_1 = \sum |c_k|$ promotes sparsity in optimization because the level sets of $\|c\|_1$ are cross-polytopes (diamond shapes in 2D, octahedra in 3D) - they have corners on the coordinate axes. An optimization problem minimizing $\ell^1$ subject to constraints tends to find solutions where many coordinates are exactly zero.</p>
 <p>Wavelet sparsity is the key to making compressed sensing work for natural signals. Seismic imaging uses compressed sensing with wavelet-sparse signal models to reconstruct subsurface structure from far fewer measurements than traditional methods require. MRI uses compressed sensing with wavelet sparsity to reduce scan time (fewer $k$-space measurements, faster scans, less patient discomfort).</p>
 <p>This represents a shift in the philosophy of signal acquisition: instead of sampling at the Nyquist rate and then compressing, you acquire fewer measurements from the start, choosing them in a way that enables reconstruction of the sparse wavelet representation.</p>
 <hr>
@@ -496,7 +496,7 @@ Take a recording of a Beethoven piano sonata. It contains hundreds of frequencie
 </tr>
 <tr>
 <td>Scalogram</td>
-<td>2D plot of $|W(a,b)|^2$ vs. time $b$ and scale $a$; visual time-frequency map</td>
+<td>2D plot of $\|W(a,b)\|^2$ vs. time $b$ and scale $a$; visual time-frequency map</td>
 </tr>
 <tr>
 <td>Vanishing moments</td>
@@ -540,7 +540,8 @@ Take a recording of a Beethoven piano sonata. It contains hundreds of frequencie
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

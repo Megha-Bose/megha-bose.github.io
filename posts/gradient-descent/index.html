@@ -186,15 +186,15 @@ Your strategy: take a small step in the direction of steepest descent." />
 </ul>
 <p>We subtract the gradient because we want to decrease $L$, not increase it. The gradient points uphill; moving opposite to it moves downhill.</p>
 <p><strong>Why does subtracting the gradient decrease the loss?</strong> By the first-order Taylor expansion:</p>
-<p>$$L(w - \eta \nabla L(w)) \approx L(w) - \eta |\nabla L(w)|^2$$</p>
+<p>$$L(w - \eta \nabla L(w)) \approx L(w) - \eta \|\nabla L(w)\|^2$$</p>
 <p>For small enough $\eta$ and nonzero gradient, the right side is strictly less than $L(w)$. Every gradient descent step decreases the loss - at least locally and for sufficiently small step size.</p>
 <p>The approximation becomes exact as $\eta \to 0$, which is why very small learning rates are guaranteed to decrease the loss at every step. Very small steps, however, means very slow convergence.</p>
 <hr>
 <h2 id="why-the-gradient-points-uphill">Why the Gradient Points Uphill</h2>
 <p>The gradient $\nabla L(w)$ at a point $w$ is the vector of partial derivatives:</p>
 <p>$$\nabla L(w) = \left(\frac{\partial L}{\partial w_1}, \frac{\partial L}{\partial w_2}, \ldots, \frac{\partial L}{\partial w_d}\right)$$</p>
-<p>Its key geometric property: among all unit vectors $v$, the directional derivative $\nabla L(w) \cdot v$ is maximized when $v = \nabla L(w) / |\nabla L(w)|$. The gradient points in the direction of maximum increase of $L$.</p>
-<p>Proof: by Cauchy-Schwarz, $\nabla L(w) \cdot v \leq |\nabla L(w)| |v| = |\nabla L(w)|$ with equality when $v \propto \nabla L(w)$.</p>
+<p>Its key geometric property: among all unit vectors $v$, the directional derivative $\nabla L(w) \cdot v$ is maximized when $v = \nabla L(w) / \|\nabla L(w)\|$. The gradient points in the direction of maximum increase of $L$.</p>
+<p>Proof: by Cauchy-Schwarz, $\nabla L(w) \cdot v \leq \|\nabla L(w)\| \|v\| = \|\nabla L(w)\|$ with equality when $v \propto \nabla L(w)$.</p>
 <p>Conversely, $-\nabla L(w)$ is the direction of maximum decrease. Moving in this direction gives the largest reduction in $L$ per unit distance, at first order. That&rsquo;s why gradient descent moves opposite the gradient - it&rsquo;s the locally optimal direction to walk.</p>
 <hr>
 <h2 id="the-learning-rate-the-goldilocks-problem">The Learning Rate: The Goldilocks Problem</h2>
@@ -202,7 +202,7 @@ Your strategy: take a small step in the direction of steepest descent." />
 <p><strong>Too small:</strong> Each step reduces the loss by a tiny amount. Convergence happens but takes an impractical number of iterations. With $\eta = 10^{-6}$, a problem that should train in hours might take years.</p>
 <p><strong>Too large:</strong> The step overshoots the minimum. Imagine standing in a bowl-shaped valley: if you step too far downhill, you end up on the other side of the bowl, possibly higher than where you started. The loss can oscillate, diverge, or zigzag without converging.</p>
 <p><strong>Just right:</strong> Fast convergence to the minimum (or a good local minimum, for non-convex problems).</p>
-<p>Theoretically, for a function with an $L$-Lipschitz gradient (meaning $|\nabla L(w_1) - \nabla L(w_2)| \leq L |w_1 - w_2|$), the optimal constant step size is $\eta = 1/L$. The Lipschitz constant $L$ is related to the largest eigenvalue of the Hessian - how sharply curved the loss surface is. Steeper curvature requires a smaller step.</p>
+<p>Theoretically, for a function with an $L$-Lipschitz gradient (meaning $\|\nabla L(w_1) - \nabla L(w_2)\| \leq L \|w_1 - w_2\|$), the optimal constant step size is $\eta = 1/L$. The Lipschitz constant $L$ is related to the largest eigenvalue of the Hessian - how sharply curved the loss surface is. Steeper curvature requires a smaller step.</p>
 <p>In practice, $L$ is unknown and varies across the loss surface. Common approaches:</p>
 <p><strong>Constant learning rate:</strong> Pick one value and hope. Works for simple problems.</p>
 <p><strong>Step decay:</strong> Reduce $\eta$ by a factor (say 10) every fixed number of iterations.</p>
@@ -215,7 +215,7 @@ Your strategy: take a small step in the direction of steepest descent." />
 <p>$$L(\lambda w_1 + (1-\lambda)w_2) \leq \lambda L(w_1) + (1-\lambda)L(w_2)$$</p>
 <p>The function curves upward. Any local minimum is also a global minimum. Gradient descent cannot get stuck.</p>
 <p>For a $\mu$-strongly convex function with $L$-Lipschitz gradient (both the linear regression MSE loss and the logistic regression cross-entropy loss satisfy this), gradient descent with learning rate $\eta = 1/L$ converges at rate:</p>
-<p>$$L(w_t) - L(w^<em>) \leq \left(1 - \frac{\mu}{L}\right)^t \left(L(w_0) - L(w^</em>)\right)$$</p>
+<p>$$L(w_t) - L(w^*) \leq \left(1 - \frac{\mu}{L}\right)^t \left(L(w_0) - L(w^*)\right)$$</p>
 <p>This is <strong>geometric (linear) convergence</strong>: each step reduces the error by a constant factor $(1 - \mu/L) &lt; 1$. After $t$ steps, the error is exponentially small in $t$. The number of steps to reach error $\varepsilon$ is $O((L/\mu) \log(1/\varepsilon))$.</p>
 <p>The ratio $\kappa = L/\mu$ is the <strong>condition number</strong>. Poorly conditioned functions (large $\kappa$) converge slowly. This is why feature normalization matters: it reduces the condition number of the Hessian (makes eigenvalues more uniform), which speeds up convergence.</p>
 <hr>
@@ -278,7 +278,7 @@ $$v_t = \beta_2 v_{t-1} + (1-\beta_2) (\nabla L(w_t))^2 \quad \text{(second mome
 <hr>
 <h2 id="gradient-clipping">Gradient Clipping</h2>
 <p>In recurrent networks (and sometimes transformers), gradients can become very large - not because the function has high curvature everywhere, but because the loss is extremely sensitive to certain weights in certain rare configurations. An update of $w \leftarrow w - \eta \nabla L$ can take a catastrophically large step.</p>
-<p><strong>Gradient clipping</strong> limits the maximum step size. Before each update, if $|\nabla L| &gt; C$ for some threshold $C$, scale the gradient down: $\nabla L \leftarrow C \cdot \nabla L / |\nabla L|$.</p>
+<p><strong>Gradient clipping</strong> limits the maximum step size. Before each update, if $\|\nabla L\| &gt; C$ for some threshold $C$, scale the gradient down: $\nabla L \leftarrow C \cdot \nabla L / \|\nabla L\|$.</p>
 <p>This caps the magnitude of the update while preserving its direction. It&rsquo;s a simple fix for the &ldquo;exploding gradient&rdquo; problem that doesn&rsquo;t require changing the model architecture or loss function.</p>
 <hr>
 <h2 id="summary">Summary</h2>
@@ -348,7 +348,7 @@ $$v_t = \beta_2 v_{t-1} + (1-\beta_2) (\nabla L(w_t))^2 \quad \text{(second mome
 </tr>
 <tr>
 <td>Gradient clipping</td>
-<td>Cap $|\nabla L|$ to prevent explosive updates</td>
+<td>Cap $\|\nabla L\|$ to prevent explosive updates</td>
 </tr>
 </tbody>
 </table>
@@ -374,7 +374,8 @@ $$v_t = \beta_2 v_{t-1} + (1-\beta_2) (\nabla L(w_t))^2 \quad \text{(second mome
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

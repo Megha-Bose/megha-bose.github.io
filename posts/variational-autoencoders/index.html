@@ -20,11 +20,11 @@
 
 <meta name="twitter:title" content="Variational Autoencoders - Encoding Structure Into the Latent Space"/>
 <meta name="twitter:description" content="Helpful context:
- Maximum Likelihood - The Parameters That Make Your Data Most Probable  Probability Distributions - The Shapes That Randomness Takes    A standard autoencoder compresses data into a low-dimensional code and then reconstructs it. Train an encoder $f$ and a decoder $g$ to minimize $|x - g(f(x))|^2$ over a dataset, and the network learns to pack the information in $x$ into a bottleneck vector $z = f(x)$."/>
+ Maximum Likelihood - The Parameters That Make Your Data Most Probable  Probability Distributions - The Shapes That Randomness Takes    A standard autoencoder compresses data into a low-dimensional code and then reconstructs it. Train an encoder $f$ and a decoder $g$ to minimize $\|x - g(f(x))\|^2$ over a dataset, and the network learns to pack the information in $x$ into a bottleneck vector $z = f(x)$."/>
 
     <meta property="og:title" content="Variational Autoencoders - Encoding Structure Into the Latent Space" />
 <meta property="og:description" content="Helpful context:
- Maximum Likelihood - The Parameters That Make Your Data Most Probable  Probability Distributions - The Shapes That Randomness Takes    A standard autoencoder compresses data into a low-dimensional code and then reconstructs it. Train an encoder $f$ and a decoder $g$ to minimize $|x - g(f(x))|^2$ over a dataset, and the network learns to pack the information in $x$ into a bottleneck vector $z = f(x)$." />
+ Maximum Likelihood - The Parameters That Make Your Data Most Probable  Probability Distributions - The Shapes That Randomness Takes    A standard autoencoder compresses data into a low-dimensional code and then reconstructs it. Train an encoder $f$ and a decoder $g$ to minimize $\|x - g(f(x))\|^2$ over a dataset, and the network learns to pack the information in $x$ into a bottleneck vector $z = f(x)$." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/variational-autoencoders/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2024-07-15T00:00:00+00:00" />
@@ -166,7 +166,7 @@
 </li>
 </ul>
 <hr>
-<p>A standard autoencoder compresses data into a low-dimensional code and then reconstructs it. Train an encoder $f$ and a decoder $g$ to minimize $|x - g(f(x))|^2$ over a dataset, and the network learns to pack the information in $x$ into a bottleneck vector $z = f(x)$. This works well as a compression tool - but it leaves the latent space completely unstructured. The codes that arise during training occupy some strange, data-dependent region of $\mathbb{R}^d$, with no principled geometry. If you want to generate a new sample, you need a point $z$ to decode. But where should you sample from? The training procedure says nothing about this. You could try sampling from a Gaussian and decoding, but there is no reason to expect the decoder to produce anything sensible at a random point in $\mathbb{R}^d$, because nothing during training required the encoder outputs to look like samples from any particular distribution.</p>
+<p>A standard autoencoder compresses data into a low-dimensional code and then reconstructs it. Train an encoder $f$ and a decoder $g$ to minimize $\|x - g(f(x))\|^2$ over a dataset, and the network learns to pack the information in $x$ into a bottleneck vector $z = f(x)$. This works well as a compression tool - but it leaves the latent space completely unstructured. The codes that arise during training occupy some strange, data-dependent region of $\mathbb{R}^d$, with no principled geometry. If you want to generate a new sample, you need a point $z$ to decode. But where should you sample from? The training procedure says nothing about this. You could try sampling from a Gaussian and decoding, but there is no reason to expect the decoder to produce anything sensible at a random point in $\mathbb{R}^d$, because nothing during training required the encoder outputs to look like samples from any particular distribution.</p>
 <p>This is the core limitation that variational autoencoders address. A VAE imposes a prior distribution on the latent space - typically a standard Gaussian $p(z) = \mathcal{N}(0, I)$ - and trains the model so that the encoder&rsquo;s output codes look like samples from this prior. The result is a latent space with real geometric structure: nearby points decode to similar outputs, the entire space is &ldquo;filled in&rdquo; by the prior, and new samples can be generated simply by sampling $z \sim \mathcal{N}(0, I)$ and running the decoder. The price you pay for this structure is a more involved training objective - the evidence lower bound - and the need for a clever device called the reparameterization trick that makes gradient-based training possible.</p>
 <p>The VAE, introduced by Kingma and Welling in 2013, sits at the intersection of deep learning and Bayesian inference. Unlike a standard autoencoder, which is purely a compression algorithm, the VAE is a latent variable generative model: it defines a joint distribution $p_\theta(x, z) = p_\theta(x \mid z) p(z)$ over observations and latent codes, and training corresponds to approximate maximum likelihood in this model. Understanding why the ELBO is the right objective, why the reparameterization trick is necessary, and what the KL term does to the geometry of the latent space reveals a coherent and beautiful design that has influenced nearly every subsequent generative model.</p>
 <hr>
@@ -185,56 +185,56 @@
 <p>Starting from the log-marginal-likelihood, we introduce $q_\phi(z \mid x)$ by multiplying and dividing inside the log:</p>
 <p>$$\log p_\theta(x) = \log \int p_\theta(x \mid z) p(z) dz = \log \int q_\phi(z \mid x) \frac{p_\theta(x \mid z) p(z)}{q_\phi(z \mid x)} dz.$$</p>
 <p>By Jensen&rsquo;s inequality (since $\log$ is concave, $\log \mathbb{E}[Y] \geq \mathbb{E}[\log Y]$):</p>
-<p>$$\log p_\theta(x) \geq \int q_\phi(z \mid x) \log\frac{p_\theta(x \mid z) p(z)}{q_\phi(z \mid x)} dz = \mathbb{E}<em>{q</em>\phi(z \mid x)}\left[\log p_\theta(x \mid z)\right] - D_{\mathrm{KL}}\left(q_\phi(z \mid x) ;|; p(z)\right).$$</p>
+<p>$$\log p_\theta(x) \geq \int q_\phi(z \mid x) \log\frac{p_\theta(x \mid z) p(z)}{q_\phi(z \mid x)} dz = \mathbb{E}_{q_\phi(z \mid x)}\left[\log p_\theta(x \mid z)\right] - D_{\mathrm{KL}}\left(q_\phi(z \mid x) \;\|\; p(z)\right).$$</p>
 <p>This lower bound is the <strong>Evidence Lower Bound (ELBO)</strong>:</p>
-<p>$$\mathcal{L}(\theta, \phi; x) = \underbrace{\mathbb{E}<em>{q</em>\phi(z \mid x)}\left[\log p_\theta(x \mid z)\right]}<em>{\text{reconstruction term}} - \underbrace{D</em>{\mathrm{KL}}\left(q_\phi(z \mid x) ;|; p(z)\right)}_{\text{KL regularization}}.$$</p>
+<p>$$\mathcal{L}(\theta, \phi; x) = \underbrace{\mathbb{E}_{q_\phi(z \mid x)}\left[\log p_\theta(x \mid z)\right]}_{\text{reconstruction term}} - \underbrace{D_{\mathrm{KL}}\left(q_\phi(z \mid x) \;\|\; p(z)\right)}_{\text{KL regularization}}.$$</p>
 <p>There is an exact relationship between the log-marginal-likelihood and the ELBO. Rewriting the marginal as an expectation over $q_\phi$:</p>
-<p>$$\log p_\theta(x) = \mathcal{L}(\theta, \phi; x) + D_{\mathrm{KL}}\left(q_\phi(z \mid x) ;|; p_\theta(z \mid x)\right).$$</p>
+<p>$$\log p_\theta(x) = \mathcal{L}(\theta, \phi; x) + D_{\mathrm{KL}}\left(q_\phi(z \mid x) \;\|\; p_\theta(z \mid x)\right).$$</p>
 <p>Since KL divergence is always non-negative, $\log p_\theta(x) \geq \mathcal{L}(\theta, \phi; x)$. The gap between the two is exactly the KL divergence between the approximate and true posterior. Maximizing the ELBO simultaneously pushes up the log-likelihood and pushes the approximate posterior toward the true posterior. This is the sense in which VAE training is approximate Bayesian inference: we are doing the best we can to maximize likelihood under the constraint that the posterior is approximated by a tractable family.</p>
 <hr>
 <h2 id="the-two-terms-of-the-elbo">The Two Terms of the ELBO</h2>
 <p>The ELBO decomposes into two opposing forces that together shape the latent space.</p>
-<p>The <strong>reconstruction term</strong> $\mathbb{E}<em>{q</em>\phi(z \mid x)}[\log p_\theta(x \mid z)]$ measures how well the decoder can reconstruct $x$ from latent codes drawn from the encoder&rsquo;s distribution. For a Gaussian decoder with fixed variance $\sigma^2$, this becomes $-\frac{1}{2\sigma^2}\mathbb{E}<em>{q</em>\phi}[|x - \mu_\theta(z)|^2]$ up to a constant - exactly a reconstruction loss. Maximizing this term encourages the encoder to map $x$ to a code $z$ from which the decoder can faithfully reconstruct $x$.</p>
-<p>The <strong>KL regularization term</strong> $D_{\mathrm{KL}}(q_\phi(z \mid x) | p(z))$ measures how far the encoder&rsquo;s distribution over $z$ is from the prior $\mathcal{N}(0, I)$. Minimizing this term forces the encoder to produce distributions that look like the prior. If the encoder tries to make $q_\phi(z \mid x)$ a very tight distribution around some arbitrary code far from the origin, the KL term penalizes this. The KL term is the key to the VAE&rsquo;s structure: without it, the encoder would simply collapse to a point estimate (a standard autoencoder), and the latent space would be unstructured.</p>
+<p>The <strong>reconstruction term</strong> $\mathbb{E}_{q_\phi(z \mid x)}[\log p_\theta(x \mid z)]$ measures how well the decoder can reconstruct $x$ from latent codes drawn from the encoder&rsquo;s distribution. For a Gaussian decoder with fixed variance $\sigma^2$, this becomes $-\frac{1}{2\sigma^2}\mathbb{E}_{q_\phi}[\|x - \mu_\theta(z)\|^2]$ up to a constant - exactly a reconstruction loss. Maximizing this term encourages the encoder to map $x$ to a code $z$ from which the decoder can faithfully reconstruct $x$.</p>
+<p>The <strong>KL regularization term</strong> $D_{\mathrm{KL}}(q_\phi(z \mid x) \| p(z))$ measures how far the encoder&rsquo;s distribution over $z$ is from the prior $\mathcal{N}(0, I)$. Minimizing this term forces the encoder to produce distributions that look like the prior. If the encoder tries to make $q_\phi(z \mid x)$ a very tight distribution around some arbitrary code far from the origin, the KL term penalizes this. The KL term is the key to the VAE&rsquo;s structure: without it, the encoder would simply collapse to a point estimate (a standard autoencoder), and the latent space would be unstructured.</p>
 <p>Training maximizes the ELBO jointly over $\theta$ (decoder parameters) and $\phi$ (encoder parameters). The reconstruction term wants $q_\phi$ to be a precise, data-specific code; the KL term wants $q_\phi$ to spread out and match the prior. The learned representations balance these pressures, resulting in a structured, regularized latent space.</p>
 <p><strong>Why Gaussian specifically?</strong> The choice of standard Gaussian prior $\mathcal{N}(0, I)$ is not arbitrary. The standard Gaussian is factored - its components are independent. The KL divergence from $q_\phi(z|x)$ to $\mathcal{N}(0,I)$ penalizes two things simultaneously: (1) pushing the mean away from zero or the variance away from one, and (2) introducing correlations between dimensions. An independent Gaussian prior says &ldquo;the components of $z$ should be independent.&rdquo; KL minimization enforces this: a posterior with correlated dimensions pays a higher KL cost than one without. This pressure toward independence is what makes the latent space structured - each dimension tends to encode a separate factor of variation, because encoding the same information in correlated dimensions wastes KL budget.</p>
 <p>This is why $\beta$-VAE works: increasing $\beta$ increases the independence pressure, trading reconstruction fidelity for more disentangled (more independent) representations. The Gaussian prior is a soft constraint saying &ldquo;use independent codes,&rdquo; and $\beta$ controls how hard the constraint is.</p>
-<p><strong>What &ldquo;structured latent space&rdquo; actually means.</strong> The aggregate posterior $q(z) = \mathbb{E}<em>{x \sim p</em>\text{data}}[q_\phi(z|x)]$ is approximately Gaussian when the KL term is well-optimized. This means that sampling $z \sim \mathcal{N}(0, I)$ gives points that the decoder has been trained on - not arbitrary random inputs, but the full range of natural images (or whatever the data is). Interpolation works because the path between two points in Gaussian space stays within the high-density region of the aggregate posterior. This would not hold if the latent space were unstructured: interpolating between two encodings might pass through regions the decoder has never seen.</p>
+<p><strong>What &ldquo;structured latent space&rdquo; actually means.</strong> The aggregate posterior $q(z) = \mathbb{E}_{x \sim p_\text{data}}[q_\phi(z|x)]$ is approximately Gaussian when the KL term is well-optimized. This means that sampling $z \sim \mathcal{N}(0, I)$ gives points that the decoder has been trained on - not arbitrary random inputs, but the full range of natural images (or whatever the data is). Interpolation works because the path between two points in Gaussian space stays within the high-density region of the aggregate posterior. This would not hold if the latent space were unstructured: interpolating between two encodings might pass through regions the decoder has never seen.</p>
 <hr>
 <h2 id="the-reparameterization-trick">The Reparameterization Trick</h2>
-<p>To maximize the ELBO with gradient descent, we need to compute gradients with respect to $\phi$ of the reconstruction term $\mathbb{E}<em>{q</em>\phi(z \mid x)}[\log p_\theta(x \mid z)]$. The standard VAE encoder produces a Gaussian:</p>
+<p>To maximize the ELBO with gradient descent, we need to compute gradients with respect to $\phi$ of the reconstruction term $\mathbb{E}_{q_\phi(z \mid x)}[\log p_\theta(x \mid z)]$. The standard VAE encoder produces a Gaussian:</p>
 <p>$$q_\phi(z \mid x) = \mathcal{N}(z; \mu_\phi(x), \text{diag}(\sigma_\phi^2(x))),$$</p>
 <p>where $\mu_\phi(x)$ and $\sigma_\phi^2(x)$ are the outputs of a neural network. To compute the expectation, we need to sample $z \sim q_\phi(z \mid x)$. But sampling is not differentiable - if you write $z \sim \mathcal{N}(\mu_\phi(x), \sigma_\phi^2(x) \cdot I)$, the sampling step does not have a gradient with respect to $\phi$. The randomness is tangled up with the parameters, and backpropagation cannot flow through it.</p>
 <p>The <strong>reparameterization trick</strong> disentangles the randomness from the parameters. Instead of sampling $z$ directly from $q_\phi(z \mid x)$, we write:</p>
 <p>$$z = \mu_\phi(x) + \sigma_\phi(x) \odot \varepsilon, \qquad \varepsilon \sim \mathcal{N}(0, I),$$</p>
 <p>where $\odot$ denotes elementwise multiplication. The random variable $\varepsilon$ has a fixed, parameter-free distribution - it is sampled from $\mathcal{N}(0, I)$ independently of $\phi$. All the dependence on $\phi$ has been moved into the deterministic transformation $z = \mu_\phi(x) + \sigma_\phi(x) \odot \varepsilon$.</p>
 <p>Now the gradient with respect to $\phi$ can flow through $\mu_\phi$ and $\sigma_\phi$ by standard backpropagation. The reconstruction loss becomes $\log p_\theta(x \mid \mu_\phi(x) + \sigma_\phi(x) \odot \varepsilon)$, evaluated at a fixed sample $\varepsilon$, and this expression is differentiable in $\phi$. The Monte Carlo gradient estimator is:</p>
-<p>$$\nabla_\phi \mathbb{E}<em>{q</em>\phi(z \mid x)}\left[\log p_\theta(x \mid z)\right] \approx \nabla_\phi \log p_\theta\left(x \mid \mu_\phi(x) + \sigma_\phi(x) \odot \varepsilon\right), \qquad \varepsilon \sim \mathcal{N}(0, I).$$</p>
+<p>$$\nabla_\phi \mathbb{E}_{q_\phi(z \mid x)}\left[\log p_\theta(x \mid z)\right] \approx \nabla_\phi \log p_\theta\left(x \mid \mu_\phi(x) + \sigma_\phi(x) \odot \varepsilon\right), \qquad \varepsilon \sim \mathcal{N}(0, I).$$</p>
 <p>This is an unbiased estimate of the gradient, and computing it requires just a single sample $\varepsilon$ in practice. The reason this estimator is low-variance compared to naive approaches (like the REINFORCE estimator) is that the gradient flows through a deterministic path - the randomness $\varepsilon$ does not depend on $\phi$, so there is no need to differentiate through the sampling distribution itself.</p>
 <p>Without the reparameterization trick, training a VAE end-to-end would require high-variance gradient estimators like REINFORCE, which are known to be impractical for continuous latent variables with thousands of dimensions. The trick is what makes VAEs scalable: the encoder, sampling step, and decoder form a single differentiable computation graph through which standard backpropagation applies.</p>
 <hr>
 <h2 id="architecture">Architecture</h2>
 <p>The VAE is implemented as two neural networks trained jointly.</p>
 <p>The <strong>encoder</strong> takes an observation $x$ and produces the parameters of a Gaussian distribution over $z$:</p>
-<p>$$x ;\longrightarrow; \left[\mu_\phi(x),; \log \sigma_\phi^2(x)\right] \in \mathbb{R}^d \times \mathbb{R}^d.$$</p>
+<p>$$x \;\longrightarrow\; \left[\mu_\phi(x),\; \log \sigma_\phi^2(x)\right] \in \mathbb{R}^d \times \mathbb{R}^d.$$</p>
 <p>Outputting $\log \sigma^2$ rather than $\sigma^2$ directly is a practical choice: it keeps the variance strictly positive (via exponentiation) and makes optimization numerically more stable, since the log scale prevents the network from accidentally producing negative or zero variances.</p>
 <p>The <strong>sampling step</strong> applies the reparameterization trick: sample $\varepsilon \sim \mathcal{N}(0, I)$ and compute $z = \mu_\phi(x) + \exp(\frac{1}{2}\log \sigma_\phi^2(x)) \odot \varepsilon$. This step is not a learned module but a fixed differentiable operation inserted between encoder and decoder.</p>
 <p>The <strong>decoder</strong> takes $z \in \mathbb{R}^d$ and produces the parameters of the observation distribution:</p>
-<p>$$z ;\longrightarrow; p_\theta(x \mid z).$$</p>
+<p>$$z \;\longrightarrow\; p_\theta(x \mid z).$$</p>
 <p>For image data, the decoder typically outputs pixel means $\mu_\theta(z) \in [0,1]^D$ (via a sigmoid output layer), and the reconstruction loss is the binary cross-entropy between $x$ and $\mu_\theta(z)$, which corresponds to a Bernoulli likelihood. For continuous real-valued data, a Gaussian decoder is used and the reconstruction loss is mean-squared error.</p>
 <p>The total training loss for a single data point is:</p>
-<p>$$\mathcal{L} = -\mathbb{E}<em>{\varepsilon \sim \mathcal{N}(0,I)}\left[\log p</em>\theta(x \mid \mu_\phi(x) + \sigma_\phi(x) \odot \varepsilon)\right] + D_{\mathrm{KL}}\left(q_\phi(z \mid x) ;|; p(z)\right),$$</p>
+<p>$$\mathcal{L} = -\mathbb{E}_{\varepsilon \sim \mathcal{N}(0,I)}\left[\log p_\theta(x \mid \mu_\phi(x) + \sigma_\phi(x) \odot \varepsilon)\right] + D_{\mathrm{KL}}\left(q_\phi(z \mid x) \;\|\; p(z)\right),$$</p>
 <p>minimized by stochastic gradient descent with respect to both $\theta$ and $\phi$ simultaneously. In practice, the expectation over $\varepsilon$ is approximated with a single sample per training step - this is sufficient because the variance of the reparameterized gradient estimator is low.</p>
 <hr>
 <h2 id="the-kl-term-in-closed-form">The KL Term in Closed Form</h2>
 <p>One of the practical advantages of choosing Gaussian distributions for both $q_\phi$ and $p$ is that the KL term has a closed-form expression that requires no sampling.</p>
 <p>For a diagonal Gaussian $q_\phi(z \mid x) = \mathcal{N}(\mu, \text{diag}(\sigma^2))$ and prior $p(z) = \mathcal{N}(0, I)$, the KL divergence factors over dimensions. For a single scalar dimension with mean $\mu$ and variance $\sigma^2$:</p>
-<p>$$D_{\mathrm{KL}}\left(\mathcal{N}(\mu, \sigma^2) ;|; \mathcal{N}(0, 1)\right) = \frac{1}{2}\left(\sigma^2 + \mu^2 - 1 - \log \sigma^2\right).$$</p>
+<p>$$D_{\mathrm{KL}}\left(\mathcal{N}(\mu, \sigma^2) \;\|\; \mathcal{N}(0, 1)\right) = \frac{1}{2}\left(\sigma^2 + \mu^2 - 1 - \log \sigma^2\right).$$</p>
 <p>This can be derived from the general formula for the KL between two Gaussians:</p>
-<p>$$D_{\mathrm{KL}}\left(\mathcal{N}(\mu_1, \sigma_1^2) ;|; \mathcal{N}(\mu_2, \sigma_2^2)\right) = \log\frac{\sigma_2}{\sigma_1} + \frac{\sigma_1^2 + (\mu_1 - \mu_2)^2}{2\sigma_2^2} - \frac{1}{2}.$$</p>
+<p>$$D_{\mathrm{KL}}\left(\mathcal{N}(\mu_1, \sigma_1^2) \;\|\; \mathcal{N}(\mu_2, \sigma_2^2)\right) = \log\frac{\sigma_2}{\sigma_1} + \frac{\sigma_1^2 + (\mu_1 - \mu_2)^2}{2\sigma_2^2} - \frac{1}{2}.$$</p>
 <p>Setting $\mu_1 = \mu$, $\sigma_1^2 = \sigma^2$, $\mu_2 = 0$, $\sigma_2^2 = 1$ gives $\log(1/\sigma) + (\sigma^2 + \mu^2)/2 - 1/2 = \frac{1}{2}(\sigma^2 + \mu^2 - 1 - \log \sigma^2)$.</p>
 <p>For a $d$-dimensional latent code with diagonal covariance, the total KL is the sum over dimensions:</p>
-<p>$$D_{\mathrm{KL}}\left(q_\phi(z \mid x) ;|; p(z)\right) = \frac{1}{2}\sum_{j=1}^d \left(\sigma_j^2 + \mu_j^2 - 1 - \log \sigma_j^2\right).$$</p>
+<p>$$D_{\mathrm{KL}}\left(q_\phi(z \mid x) \;\|\; p(z)\right) = \frac{1}{2}\sum_{j=1}^d \left(\sigma_j^2 + \mu_j^2 - 1 - \log \sigma_j^2\right).$$</p>
 <p>This can be computed exactly in a single forward pass, without any Monte Carlo sampling. In implementation, since the encoder outputs $\log \sigma^2$ rather than $\sigma^2$, you compute $\sigma^2 = \exp(\log \sigma^2)$ and the sum above. The closed-form KL also makes the gradient of the KL term exact, removing one source of variance from the overall gradient estimator.</p>
 <hr>
 <h2 id="latent-space-structure">Latent Space Structure</h2>
@@ -247,7 +247,7 @@
 <hr>
 <h2 id="vae-vs-standard-autoencoder">VAE vs Standard Autoencoder</h2>
 <p>The differences between a VAE and a standard autoencoder run deeper than just adding a regularization term.</p>
-<p>A standard autoencoder learns a deterministic function $z = f_\phi(x)$. The latent code is a point, not a distribution. There is no probability model - no likelihood, no prior, no posterior. The training objective is purely reconstruction: minimize $|x - g_\theta(f_\phi(x))|^2$. The autoencoder is a lossy compression algorithm, and a very good one for that purpose, but it is not a generative model.</p>
+<p>A standard autoencoder learns a deterministic function $z = f_\phi(x)$. The latent code is a point, not a distribution. There is no probability model - no likelihood, no prior, no posterior. The training objective is purely reconstruction: minimize $\|x - g_\theta(f_\phi(x))\|^2$. The autoencoder is a lossy compression algorithm, and a very good one for that purpose, but it is not a generative model.</p>
 <p>A VAE learns a stochastic encoder $q_\phi(z \mid x)$: a distribution over codes given a data point. The training objective is the ELBO, which comes from an explicit probabilistic model. The encoder is an approximate Bayesian posterior, and the decoder defines a likelihood. This probabilistic scaffolding is what enables generation: the model defines $p_\theta(x) = \int p_\theta(x \mid z) p(z) dz$, and new samples are drawn from this distribution by ancestral sampling (first $z$, then $x \mid z$).</p>
 <table>
 <thead>
@@ -293,14 +293,14 @@
 <hr>
 <h2 id="beta-vae-and-disentanglement">$\beta$-VAE and Disentanglement</h2>
 <p>The $\beta$-VAE (Higgins et al., 2017) modifies the ELBO by introducing a coefficient $\beta &gt; 1$ on the KL term:</p>
-<p>$$\mathcal{L}<em>\beta = \mathbb{E}</em>{q_\phi(z \mid x)}\left[\log p_\theta(x \mid z)\right] - \beta D_{\mathrm{KL}}\left(q_\phi(z \mid x) ;|; p(z)\right).$$</p>
+<p>$$\mathcal{L}_\beta = \mathbb{E}_{q_\phi(z \mid x)}\left[\log p_\theta(x \mid z)\right] - \beta D_{\mathrm{KL}}\left(q_\phi(z \mid x) \;\|\; p(z)\right).$$</p>
 <p>The motivation is <strong>disentanglement</strong>: the goal that each dimension of the latent code $z_j$ independently controls a single, interpretable factor of variation in the data - pose, lighting, identity, shape - without mixing factors across dimensions. In an image dataset of faces, a perfectly disentangled model would have one latent dimension controlling azimuth, another controlling lighting direction, another controlling smile, and so on.</p>
 <p>Why does a larger $\beta$ promote disentanglement? The standard Gaussian prior $\mathcal{N}(0, I)$ has independent dimensions - no correlations between $z_j$ and $z_k$. The KL term penalizes the encoder whenever $q_\phi(z \mid x)$ develops correlations or non-isotropic structure. With $\beta &gt; 1$, this pressure is amplified: the encoder is more strongly pushed toward producing latent codes whose marginal distribution over each dimension independently matches $\mathcal{N}(0, 1)$. This pressure encourages the model to use its limited &ldquo;budget&rdquo; of latent capacity efficiently, dedicating each dimension to capturing a distinct source of variation.</p>
 <p>The tradeoff is real. Higher $\beta$ forces the encoder to compress information more aggressively into independent dimensions, which hurts reconstruction quality - the model cannot represent complex, entangled structure as accurately. Lower $\beta$ (approaching 1, the standard VAE) gives better reconstructions but less interpretable latent dimensions. The choice of $\beta$ is a fundamental design decision: use $\beta = 1$ when generation fidelity matters, use $\beta \gg 1$ when you want an interpretable latent space for downstream tasks or human-in-the-loop control.</p>
 <hr>
 <h2 id="comparison-with-other-generative-models">Comparison with Other Generative Models</h2>
 <p>VAEs occupy a specific position in the landscape of deep generative models, with characteristic strengths and weaknesses compared to GANs and normalizing flows.</p>
-<p><strong>VAEs vs GANs.</strong> A GAN (Generative Adversarial Network) trains a generator and discriminator in competition, without any explicit likelihood objective. GANs are capable of producing strikingly sharp, photorealistic samples - the adversarial loss pushes the generator to match fine-grained perceptual statistics that a pixel-wise reconstruction loss ignores entirely. VAEs, by contrast, tend to produce blurry samples, especially for high-resolution images. The reason is the reconstruction term: $\mathbb{E}<em>{q</em>\phi}[|x - \mu_\theta(z)|^2]$ is minimized by the pixel-wise mean, which averages over the uncertainty in $z$ and produces blurry outputs when the mapping from $z$ to $x$ is one-to-many.</p>
+<p><strong>VAEs vs GANs.</strong> A GAN (Generative Adversarial Network) trains a generator and discriminator in competition, without any explicit likelihood objective. GANs are capable of producing strikingly sharp, photorealistic samples - the adversarial loss pushes the generator to match fine-grained perceptual statistics that a pixel-wise reconstruction loss ignores entirely. VAEs, by contrast, tend to produce blurry samples, especially for high-resolution images. The reason is the reconstruction term: $\mathbb{E}_{q_\phi}[\|x - \mu_\theta(z)\|^2]$ is minimized by the pixel-wise mean, which averages over the uncertainty in $z$ and produces blurry outputs when the mapping from $z$ to $x$ is one-to-many.</p>
 <p>However, GANs lack an explicit probabilistic model. There is no density $p_\theta(x)$ - only a generator that produces samples. Training is a minimax game that can suffer from mode collapse (the generator learns to produce a small variety of samples to fool the discriminator) and training instability (the discriminator and generator can fail to reach equilibrium). VAEs have none of these problems: training maximizes a single objective (the ELBO), converges reliably, and gives an explicit (approximate) lower bound on log-likelihood that can be evaluated on held-out data.</p>
 <p><strong>VAEs vs Normalizing Flows.</strong> A normalizing flow learns an exact, invertible mapping between data space and a simple latent distribution, giving exact likelihood computation via the change-of-variables formula. Flows achieve higher log-likelihoods than VAEs because they do not introduce the approximation gap from the variational posterior - there is no ELBO, just the exact likelihood. But flows require the generator to be invertible and have matching input and output dimensions, which severely limits the architectural choices available and makes them expensive at high resolution.</p>
 <p><strong>VAEs vs Score-Based Diffusion Models.</strong> Modern diffusion models dramatically outperform VAEs in sample quality while maintaining stable training and probabilistic grounding. Diffusion models define a forward process that gradually adds noise to data, and learn to reverse this process. They can be understood as hierarchical VAEs with a fixed encoder (the forward noising process) and a learned decoder (the reverse denoising process). The cost is inference speed: generating a sample requires many sequential denoising steps, whereas a VAE decodes in a single forward pass.</p>
@@ -383,19 +383,19 @@
 </tr>
 <tr>
 <td>ELBO</td>
-<td>$\mathcal{L} = \mathbb{E}<em>{q</em>\phi}[\log p_\theta(x \mid z)] - D_{\mathrm{KL}}(q_\phi | p)$; lower bounds $\log p_\theta(x)$</td>
+<td>$\mathcal{L} = \mathbb{E}_{q_\phi}[\log p_\theta(x \mid z)] - D_{\mathrm{KL}}(q_\phi \| p)$; lower bounds $\log p_\theta(x)$</td>
 </tr>
 <tr>
 <td>ELBO gap</td>
-<td>$\log p_\theta(x) - \mathcal{L} = D_{\mathrm{KL}}(q_\phi(z \mid x) | p_\theta(z \mid x)) \geq 0$</td>
+<td>$\log p_\theta(x) - \mathcal{L} = D_{\mathrm{KL}}(q_\phi(z \mid x) \| p_\theta(z \mid x)) \geq 0$</td>
 </tr>
 <tr>
 <td>Reconstruction term</td>
-<td>$\mathbb{E}<em>{q</em>\phi}[\log p_\theta(x \mid z)]$; pushes encoder to produce decodable codes</td>
+<td>$\mathbb{E}_{q_\phi}[\log p_\theta(x \mid z)]$; pushes encoder to produce decodable codes</td>
 </tr>
 <tr>
 <td>KL regularization</td>
-<td>$D_{\mathrm{KL}}(q_\phi(z \mid x) | p(z))$; pushes encoder toward the prior</td>
+<td>$D_{\mathrm{KL}}(q_\phi(z \mid x) \| p(z))$; pushes encoder toward the prior</td>
 </tr>
 <tr>
 <td>Reparameterization trick</td>
@@ -461,7 +461,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

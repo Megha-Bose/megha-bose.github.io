@@ -175,7 +175,7 @@
 <h2 id="pca-directions-of-maximum-variance">PCA: Directions of Maximum Variance</h2>
 <p><strong>Principal Component Analysis</strong> is the canonical linear dimensionality reduction method. The intuition: if your data lives in a 2D plane embedded in 3D space, you only need two coordinates to describe it. PCA finds those coordinates automatically.</p>
 <p>More precisely, PCA finds the directions in $\mathbb{R}^d$ along which the data has the most variance. The first principal component $u_1$ is the unit vector that maximizes the variance of the projection $u_1^\top x$:</p>
-<p>$$u_1 = \arg\max_{|u|=1} \text{Var}(u^\top X) = \arg\max_{|u|=1} u^\top \Sigma u$$</p>
+<p>$$u_1 = \arg\max_{\|u\|=1} \text{Var}(u^\top X) = \arg\max_{\|u\|=1} u^\top \Sigma u$$</p>
 <p>where $\Sigma$ is the covariance matrix of the data. By the Lagrangian solution, this is the eigenvector of $\Sigma$ corresponding to the largest eigenvalue. The second principal component $u_2$ is the direction of next-greatest variance, constrained to be orthogonal to $u_1$ - this is the second eigenvector of $\Sigma$. Continuing this way gives all $d$ principal components, ordered by decreasing variance (eigenvalue).</p>
 <p>To reduce to $k$ dimensions, project each data point onto the top $k$ principal components:</p>
 <p>$$z = U_k^\top (x - \mu)$$</p>
@@ -198,12 +198,12 @@
 <p><strong>t-Distributed Stochastic Neighbor Embedding</strong> (van der Maaten and Hinton, 2008) is designed for visualization: mapping high-dimensional data to 2D or 3D in a way that reveals cluster structure.</p>
 <p>The key idea: represent pairwise relationships as probabilities, and find a 2D configuration that matches those probabilities.</p>
 <p><strong>Step 1.</strong> For each pair of points $i, j$ in the original high-dimensional space, compute a probability $p_{ij}$ that reflects their similarity. Points that are close neighbors get high probability; distant points get near-zero probability. The similarity is computed using a Gaussian kernel centered at each point:</p>
-<p>$$p_{j|i} = \frac{\exp(-|x_i - x_j|^2 / 2\sigma_i^2)}{\sum_{k \neq i} \exp(-|x_i - x_k|^2 / 2\sigma_i^2)}$$</p>
+<p>$$p_{j|i} = \frac{\exp(-\|x_i - x_j\|^2 / 2\sigma_i^2)}{\sum_{k \neq i} \exp(-\|x_i - x_k\|^2 / 2\sigma_i^2)}$$</p>
 <p>The bandwidth $\sigma_i$ is chosen so that the effective number of neighbors (the perplexity) equals a user-specified value (typically 5-50).</p>
 <p><strong>Step 2.</strong> Initialize 2D points $y_1, \ldots, y_n$ randomly. Compute pairwise similarities $q_{ij}$ in the 2D space using a Student&rsquo;s t-distribution with one degree of freedom (heavier tails than Gaussian - this helps separate clusters):</p>
-<p>$$q_{ij} = \frac{(1 + |y_i - y_j|^2)^{-1}}{\sum_{k \neq l} (1 + |y_k - y_l|^2)^{-1}}$$</p>
+<p>$$q_{ij} = \frac{(1 + \|y_i - y_j\|^2)^{-1}}{\sum_{k \neq l} (1 + \|y_k - y_l\|^2)^{-1}}$$</p>
 <p><strong>Step 3.</strong> Minimize the KL divergence between $P$ and $Q$ using gradient descent:</p>
-<p>$$\text{KL}(P | Q) = \sum_{i \neq j} p_{ij} \log \frac{p_{ij}}{q_{ij}}$$</p>
+<p>$$\text{KL}(P \| Q) = \sum_{i \neq j} p_{ij} \log \frac{p_{ij}}{q_{ij}}$$</p>
 <p>The asymmetry of KL divergence matters: it penalizes heavily when $p_{ij}$ is large but $q_{ij}$ is small (nearby points mapped far apart) more than when $p_{ij}$ is small but $q_{ij}$ is large (distant points mapped nearby). The result is that local neighborhood structure is well-preserved; global distances are not.</p>
 <p><strong>Limitations of t-SNE.</strong> The 2D embedding is not a projection - you cannot apply it to new points without rerunning the algorithm. The result depends on hyperparameters (perplexity, learning rate, number of iterations) and the random initialization. Cluster sizes and inter-cluster distances in a t-SNE plot are not meaningful - two clusters that appear close may be globally distant. t-SNE is useful for visualization and exploration, not for learning representations used in downstream tasks.</p>
 <hr>
@@ -218,7 +218,7 @@
 <h2 id="autoencoders-nonlinear-dimensionality-reduction">Autoencoders: Nonlinear Dimensionality Reduction</h2>
 <p>An <strong>autoencoder</strong> is a neural network trained to reconstruct its input through a bottleneck:</p>
 <p>$$x \xrightarrow{\text{encoder}} z \xrightarrow{\text{decoder}} \hat{x}$$</p>
-<p>The encoder $f: \mathbb{R}^d \to \mathbb{R}^k$ compresses the input to a low-dimensional latent representation $z$. The decoder $g: \mathbb{R}^k \to \mathbb{R}^d$ reconstructs the original from $z$. Training minimizes reconstruction loss $|x - \hat{x}|^2$.</p>
+<p>The encoder $f: \mathbb{R}^d \to \mathbb{R}^k$ compresses the input to a low-dimensional latent representation $z$. The decoder $g: \mathbb{R}^k \to \mathbb{R}^d$ reconstructs the original from $z$. Training minimizes reconstruction loss $\|x - \hat{x}\|^2$.</p>
 <p>The bottleneck dimension $k$ is the dimensionality of the representation. By forcing information through this bottleneck, the network must learn to compress - keeping only the most important structure and discarding noise.</p>
 <p><strong>Why autoencoders can do what PCA cannot.</strong> PCA can only learn linear projections. If the low-dimensional structure is nonlinear (a curved manifold, a set of discrete clusters, a generative factor like &ldquo;rotation angle&rdquo; or &ldquo;facial expression&rdquo;), PCA will miss it. An autoencoder with nonlinear activations can represent and exploit this structure. A nonlinear encoder can &ldquo;unfold&rdquo; the Swiss roll that PCA cannot.</p>
 <p><strong>Variants.</strong> A <strong>variational autoencoder</strong> (VAE) enforces a probabilistic structure on the latent space, making it useful for generation, not just compression. A <strong>denoising autoencoder</strong> is trained to reconstruct clean inputs from noisy ones, learning more robust representations. A <strong>sparse autoencoder</strong> adds a sparsity penalty to the latent code, encouraging each feature to activate for a small number of inputs.</p>
@@ -302,7 +302,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

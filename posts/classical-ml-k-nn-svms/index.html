@@ -165,7 +165,7 @@ Every classification algorithm is an answer to one question: how do you use that
 <hr>
 <h2 id="feature-space-and-classifier-design">Feature Space and Classifier Design</h2>
 <p>A <strong>feature vector</strong> $\mathbf{x} \in \mathbb{R}^d$ represents a data point. Each of the $d$ coordinates is a measured property - pixel intensity, word frequency, sensor reading. The <strong>feature space</strong> $\mathbb{R}^d$ contains all possible inputs.</p>
-<p>A <strong>classifier</strong> is a function $f: \mathbb{R}^d \to \{1, \ldots, K\}$ mapping each input to one of $K$ class labels. The goal is to learn $f$ from training data $\{(\mathbf{x}<em>i, y_i)\}</em>{i=1}^n$ where $\mathbf{x}_i \in \mathbb{R}^d$ and $y_i \in \{1, \ldots, K\}$.</p>
+<p>A <strong>classifier</strong> is a function $f: \mathbb{R}^d \to \{1, \ldots, K\}$ mapping each input to one of $K$ class labels. The goal is to learn $f$ from training data $\{(\mathbf{x}_i, y_i)\}_{i=1}^n$ where $\mathbf{x}_i \in \mathbb{R}^d$ and $y_i \in \{1, \ldots, K\}$.</p>
 <p>Every classifier partitions the feature space into $K$ <strong>decision regions</strong> - the set of points mapped to each class. The boundaries between regions are the <strong>decision boundaries</strong>. The classifier&rsquo;s inductive bias determines the shape of these boundaries: KNN produces boundaries that are piecewise-linear (Voronoi cells), linear classifiers produce boundaries that are hyperplanes (half-spaces).</p>
 <p>The fundamental tension in learning a classifier is the <strong>bias-variance tradeoff</strong>. A classifier with too much flexibility perfectly separates training points but fails on new data - it has memorized noise rather than pattern. A classifier with too little flexibility imposes structure that the data does not support - it misses real patterns. Choosing the right class of functions $f$ is most of the work.</p>
 <hr>
@@ -178,7 +178,7 @@ Every classification algorithm is an answer to one question: how do you use that
 <li>Return the majority class among those $k$ neighbors:</li>
 </ol>
 <p>$$f(\mathbf{x}) = \underset{c}{\arg\max} \sum_{i \in \mathcal{N}_k(\mathbf{x})} \mathbf{1}[y_i = c]$$</p>
-<p>The Euclidean distance $d(\mathbf{x}, \mathbf{z}) = |\mathbf{x} - \mathbf{z}|_2$ is the standard choice, but other metrics (Manhattan, cosine, Mahalanobis) can be substituted depending on the problem.</p>
+<p>The Euclidean distance $d(\mathbf{x}, \mathbf{z}) = \|\mathbf{x} - \mathbf{z}\|_2$ is the standard choice, but other metrics (Manhattan, cosine, Mahalanobis) can be substituted depending on the problem.</p>
 <h3 id="the-voronoi-diagram-and-k1">The Voronoi Diagram and k=1</h3>
 <p>For $k = 1$, the decision boundary is exactly the <strong>Voronoi diagram</strong> of the training points. Each training point $\mathbf{x}_i$ defines a Voronoi cell - the set of all points closer to $\mathbf{x}_i$ than to any other training point. The 1-NN classifier assigns every test point the label of whichever training point owns the Voronoi cell containing it.</p>
 <p>The resulting decision boundary can be arbitrarily complex: it has one cell per training point, so $n$ cells total, and the boundary wiggles around every example in the training set. This is the hallmark of overfitting. A single mislabeled training point creates a small &ldquo;island&rdquo; of the wrong class in the middle of another class&rsquo;s territory.</p>
@@ -204,7 +204,7 @@ Every classification algorithm is an answer to one question: how do you use that
 <p>$$f(\mathbf{x}) = \text{sign}(\mathbf{w} \cdot \mathbf{x} + b)$$</p>
 <p>where $\mathbf{w} \in \mathbb{R}^d$ is the <strong>weight vector</strong> (normal to the hyperplane) and $b \in \mathbb{R}$ is the <strong>bias</strong>. The decision boundary is the hyperplane $\{\mathbf{x} : \mathbf{w} \cdot \mathbf{x} + b = 0\}$.</p>
 <p>The <strong>signed distance</strong> from a point $\mathbf{x}$ to the hyperplane is:</p>
-<p>$$\text{dist}(\mathbf{x}) = \frac{\mathbf{w} \cdot \mathbf{x} + b}{|\mathbf{w}|}$$</p>
+<p>$$\text{dist}(\mathbf{x}) = \frac{\mathbf{w} \cdot \mathbf{x} + b}{\|\mathbf{w}\|}$$</p>
 <p>Points with $\mathbf{w} \cdot \mathbf{x} + b &gt; 0$ are classified as $+1$; those with $\mathbf{w} \cdot \mathbf{x} + b &lt; 0$ as $-1$. The magnitude of $\mathbf{w} \cdot \mathbf{x} + b$ measures how far the point is from the boundary - a natural confidence score.</p>
 <p>Learning a linear classifier means learning $\mathbf{w}$ and $b$. The geometry is fixed (a hyperplane); the question is which hyperplane.</p>
 <h3 id="gradient-descent-and-the-hinge-loss">Gradient Descent and the Hinge Loss</h3>
@@ -215,25 +215,25 @@ Every classification algorithm is an answer to one question: how do you use that
 <h3 id="the-perceptron">The Perceptron</h3>
 <p>The <strong>Perceptron</strong> is the simplest online learning algorithm for linear classifiers. It initializes $\mathbf{w} = 0$, $b = 0$ and processes one training example at a time. When it makes an error - when $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \leq 0$ - it updates:</p>
 <p>$$\mathbf{w} \leftarrow \mathbf{w} + y_i \mathbf{x}_i, \quad b \leftarrow b + y_i$$</p>
-<p>This update moves $\mathbf{w}$ in the direction of $y_i \mathbf{x}_i$, which increases $y_i(\mathbf{w} \cdot \mathbf{x}_i + b)$ by $y_i^2 |\mathbf{x}_i|^2 = |\mathbf{x}_i|^2 &gt; 0$. The misclassified point is less wrong after the update.</p>
-<p>The <strong>Perceptron convergence theorem</strong> guarantees termination on linearly separable data. Let $R = \max_i |\mathbf{x}_i|$ (radius of the data) and $\gamma$ (the <strong>margin</strong>) be the maximum over all weight vectors $\mathbf{w}$ with $|\mathbf{w}| = 1$ of $\min_i y_i(\mathbf{w} \cdot \mathbf{x}_i + b)$. Then the Perceptron makes at most:</p>
+<p>This update moves $\mathbf{w}$ in the direction of $y_i \mathbf{x}_i$, which increases $y_i(\mathbf{w} \cdot \mathbf{x}_i + b)$ by $y_i^2 \|\mathbf{x}_i\|^2 = \|\mathbf{x}_i\|^2 &gt; 0$. The misclassified point is less wrong after the update.</p>
+<p>The <strong>Perceptron convergence theorem</strong> guarantees termination on linearly separable data. Let $R = \max_i \|\mathbf{x}_i\|$ (radius of the data) and $\gamma$ (the <strong>margin</strong>) be the maximum over all weight vectors $\mathbf{w}$ with $\|\mathbf{w}\| = 1$ of $\min_i y_i(\mathbf{w} \cdot \mathbf{x}_i + b)$. Then the Perceptron makes at most:</p>
 <p>$$\left(\frac{R}{\gamma}\right)^2 \text{ updates}$$</p>
-<p>before converging to a correct classifier. A large margin means few updates; a small margin can mean many. The proof shows that correct updates increase $\mathbf{w} \cdot \mathbf{w}^<em>$ (alignment with the true separating direction) while bounding the growth of $|\mathbf{w}|$, so the angle between $\mathbf{w}$ and $\mathbf{w}^</em>$ strictly decreases with each update.</p>
+<p>before converging to a correct classifier. A large margin means few updates; a small margin can mean many. The proof shows that correct updates increase $\mathbf{w} \cdot \mathbf{w}^*$ (alignment with the true separating direction) while bounding the growth of $\|\mathbf{w}\|$, so the angle between $\mathbf{w}$ and $\mathbf{w}^*$ strictly decreases with each update.</p>
 <p>The Perceptron has a critical limitation: it finds <em>some</em> separating hyperplane but not necessarily the best one. On non-separable data it never converges. The SVM resolves both issues.</p>
 <hr>
 <h2 id="support-vector-machines">Support Vector Machines</h2>
 <p>Among all hyperplanes that correctly separate the training data, which one should we choose? The answer is the one with the <strong>maximum margin</strong> - the largest minimum distance from any training point to the hyperplane.</p>
 <p>The margin matters because it controls generalization. A hyperplane that passes close to training points is sensitive to small perturbations - moving a training point slightly could flip the classification. A wide-margin hyperplane is robust to such perturbations. The maximum-margin hyperplane is the most &ldquo;confident&rdquo; separator.</p>
 <h3 id="hard-margin-svm">Hard-Margin SVM</h3>
-<p>For a separating hyperplane $\mathbf{w} \cdot \mathbf{x} + b = 0$, the distance from training point $\mathbf{x}_i$ to the hyperplane is $\frac{y_i(\mathbf{w} \cdot \mathbf{x}_i + b)}{|\mathbf{w}|}$ (using $y_i$ to get the signed distance with the correct sign). Normalizing so that the closest training point has $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) = 1$, the margin is $\frac{2}{|\mathbf{w}|}$. The hyperplanes $\mathbf{w} \cdot \mathbf{x} + b = \pm 1$ are called the <strong>gutters</strong> and pass through the closest points of each class, called <strong>support vectors</strong>.</p>
-<p>Maximizing the margin $\frac{2}{|\mathbf{w}|}$ is equivalent to minimizing $|\mathbf{w}|^2$. The <strong>hard-margin SVM</strong> is the quadratic program:</p>
-<p>$$\min_{\mathbf{w}, b} \frac{1}{2}|\mathbf{w}|^2 \quad \text{subject to} \quad y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \geq 1 \quad \forall i$$</p>
+<p>For a separating hyperplane $\mathbf{w} \cdot \mathbf{x} + b = 0$, the distance from training point $\mathbf{x}_i$ to the hyperplane is $\frac{y_i(\mathbf{w} \cdot \mathbf{x}_i + b)}{\|\mathbf{w}\|}$ (using $y_i$ to get the signed distance with the correct sign). Normalizing so that the closest training point has $y_i(\mathbf{w} \cdot \mathbf{x}_i + b) = 1$, the margin is $\frac{2}{\|\mathbf{w}\|}$. The hyperplanes $\mathbf{w} \cdot \mathbf{x} + b = \pm 1$ are called the <strong>gutters</strong> and pass through the closest points of each class, called <strong>support vectors</strong>.</p>
+<p>Maximizing the margin $\frac{2}{\|\mathbf{w}\|}$ is equivalent to minimizing $\|\mathbf{w}\|^2$. The <strong>hard-margin SVM</strong> is the quadratic program:</p>
+<p>$$\min_{\mathbf{w}, b} \frac{1}{2}\|\mathbf{w}\|^2 \quad \text{subject to} \quad y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \geq 1 \quad \forall i$$</p>
 <p>This requires the data to be linearly separable. When it is not, the constraints are infeasible and the hard-margin SVM has no solution.</p>
 <h3 id="soft-margin-svm">Soft-Margin SVM</h3>
 <p>The <strong>soft-margin SVM</strong> allows constraints to be violated by introducing <strong>slack variables</strong> $\xi_i \geq 0$. Point $i$ violates the margin constraint when $\xi_i &gt; 0$; it is misclassified when $\xi_i &gt; 1$. The optimization becomes:</p>
-<p>$$\min_{\mathbf{w}, b, \boldsymbol{\xi}} \frac{1}{2}|\mathbf{w}|^2 + C \sum_{i=1}^n \xi_i \quad \text{subject to} \quad y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \geq 1 - \xi_i,; \xi_i \geq 0 \quad \forall i$$</p>
+<p>$$\min_{\mathbf{w}, b, \boldsymbol{\xi}} \frac{1}{2}\|\mathbf{w}\|^2 + C \sum_{i=1}^n \xi_i \quad \text{subject to} \quad y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \geq 1 - \xi_i,\; \xi_i \geq 0 \quad \forall i$$</p>
 <p>The hyperparameter $C &gt; 0$ controls the tradeoff: large $C$ penalizes violations heavily (narrow margin, fits training data closely), small $C$ tolerates many violations (wide margin, potentially more robust). In the limit $C \to \infty$, the soft-margin SVM reduces to the hard-margin SVM.</p>
-<p>Substituting the optimal $\xi_i = \max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$, the objective becomes $\frac{1}{2}|\mathbf{w}|^2 + C \sum_i \max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$ - exactly the hinge loss with $\ell_2$ regularization. The SVM primal is regularized empirical risk minimization with the hinge loss.</p>
+<p>Substituting the optimal $\xi_i = \max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$, the objective becomes $\frac{1}{2}\|\mathbf{w}\|^2 + C \sum_i \max(0, 1 - y_i(\mathbf{w} \cdot \mathbf{x}_i + b))$ - exactly the hinge loss with $\ell_2$ regularization. The SVM primal is regularized empirical risk minimization with the hinge loss.</p>
 <h3 id="dual-formulation">Dual Formulation</h3>
 <p>The primal SVM is a convex quadratic program with $d + n + 1$ variables. For large $d$ (or infinite-dimensional feature maps), the <strong>dual formulation</strong> is more useful.</p>
 <p>By Lagrangian duality, introducing multipliers $\alpha_i \geq 0$ for the margin constraints and $\mu_i \geq 0$ for $\xi_i \geq 0$, the dual problem is:</p>
@@ -251,7 +251,7 @@ Every classification algorithm is an answer to one question: how do you use that
 <h3 id="common-kernels">Common Kernels</h3>
 <p><strong>Linear kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = \mathbf{x} \cdot \mathbf{z}$. This corresponds to $\phi = \text{id}$, the identity map. Recovers the standard linear SVM.</p>
 <p><strong>Polynomial kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = (\mathbf{x} \cdot \mathbf{z} + 1)^p$. Corresponds to all monomials of degree up to $p$ in the input features. For $d = 2$ and $p = 2$, the feature map is $\phi(x_1, x_2) = (1, \sqrt{2}x_1, \sqrt{2}x_2, x_1^2, \sqrt{2}x_1 x_2, x_2^2)$ - six dimensions from two, computed via a single inner product.</p>
-<p><strong>Radial basis function (RBF) / Gaussian kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = \exp\left(-\frac{|\mathbf{x} - \mathbf{z}|^2}{2\sigma^2}\right)$. This corresponds to an infinite-dimensional feature map. The bandwidth $\sigma$ controls locality: small $\sigma$ makes the kernel sensitive only to very nearby points (risk of overfitting), large $\sigma$ makes it broad (risk of underfitting). The RBF kernel is by far the most widely used in practice.</p>
+<p><strong>Radial basis function (RBF) / Gaussian kernel:</strong> $K(\mathbf{x}, \mathbf{z}) = \exp\left(-\frac{\|\mathbf{x} - \mathbf{z}\|^2}{2\sigma^2}\right)$. This corresponds to an infinite-dimensional feature map. The bandwidth $\sigma$ controls locality: small $\sigma$ makes the kernel sensitive only to very nearby points (risk of overfitting), large $\sigma$ makes it broad (risk of underfitting). The RBF kernel is by far the most widely used in practice.</p>
 <h3 id="mercers-condition">Mercer&rsquo;s Condition</h3>
 <p>Not every function $K$ is a valid kernel. For $K$ to correspond to an inner product in some Hilbert space, the <strong>kernel matrix</strong> $K_{ij} = K(\mathbf{x}_i, \mathbf{x}_j)$ must be <strong>positive semidefinite</strong> for any finite set of points $\{\mathbf{x}_1, \ldots, \mathbf{x}_n\}$. This is <strong>Mercer&rsquo;s condition</strong>.</p>
 <p>A positive semidefinite kernel guarantees that the dual optimization problem is convex and has a unique solution. Constructing new kernels from existing ones is safe using these facts: sums of valid kernels are valid, products of valid kernels are valid, and a positive constant multiple of a valid kernel is valid.</p>
@@ -264,7 +264,7 @@ Every classification algorithm is an answer to one question: how do you use that
 <p>Binary SVMs classify into two classes. Extending to $K &gt; 2$ classes requires a strategy for combining binary classifiers.</p>
 <h3 id="one-vs-rest">One-vs-Rest</h3>
 <p><strong>One-vs-Rest (OvR)</strong> trains $K$ binary classifiers. Classifier $k$ is trained to separate class $k$ from all other classes combined (labeled $+1$ and $-1$ respectively). At test time, each classifier produces a score $f_k(\mathbf{x}) = \mathbf{w}_k \cdot \mathbf{x} + b_k$, and the point is assigned the class with the highest score:</p>
-<p>$$\hat{y} = \underset{k}{\arg\max}; f_k(\mathbf{x})$$</p>
+<p>$$\hat{y} = \underset{k}{\arg\max}\; f_k(\mathbf{x})$$</p>
 <p>OvR is fast: $K$ classifiers, each trained on $n$ points. The downside is class imbalance - classifier $k$ has 1 positive class vs. $K-1$ negative classes, so even random prediction gives $(K-1)/K$ &ldquo;accuracy.&rdquo; The decision regions of different classifiers may also conflict: there may be regions where multiple classifiers predict $+1$ (ambiguous) or all predict $-1$ (no class claimed).</p>
 <h3 id="one-vs-one">One-vs-One</h3>
 <p><strong>One-vs-One (OvO)</strong> trains $\binom{K}{2} = K(K-1)/2$ binary classifiers, one for every pair of classes $(j, k)$. Classifier $(j,k)$ is trained only on data from classes $j$ and $k$. At test time, each classifier votes for one class, and the class with the most votes wins.</p>
@@ -352,7 +352,8 @@ Every classification algorithm is an answer to one question: how do you use that
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

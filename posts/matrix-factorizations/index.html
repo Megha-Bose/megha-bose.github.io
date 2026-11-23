@@ -191,14 +191,14 @@
 <p><strong>Theorem.</strong> If $A$ is nonsingular, then $PA = LU$ exists and $U$ is nonsingular. The factorization $A = LU$ (without pivoting) is unique when it exists.</p>
 <p><em>Uniqueness proof.</em> If $A = L_1 U_1 = L_2 U_2$, then $L_2^{-1} L_1 = U_2 U_1^{-1}$. The left side is unit lower triangular; the right side is upper triangular. A matrix that is both unit lower and upper triangular must be $I$. So $L_1 = L_2$ and $U_1 = U_2$. $\square$</p>
 <h3 id="numerical-notes">Numerical Notes</h3>
-<p>Partial pivoting (LAPACK&rsquo;s <code>dgetrf</code>) ensures $|l_{ij}| \leq 1$, bounding the <strong>growth factor</strong> $g = |U|<em>\infty / |A|</em>\infty$. In the worst case $g$ can be exponentially large ($g = 2^{n-1}$ for a specific adversarial matrix), but in practice partial pivoting is extremely reliable. <strong>Complete pivoting</strong> (pivoting rows <em>and</em> columns) has provably bounded growth but is rarely needed.</p>
+<p>Partial pivoting (LAPACK&rsquo;s <code>dgetrf</code>) ensures $|l_{ij}| \leq 1$, bounding the <strong>growth factor</strong> $g = \|U\|_\infty / \|A\|_\infty$. In the worst case $g$ can be exponentially large ($g = 2^{n-1}$ for a specific adversarial matrix), but in practice partial pivoting is extremely reliable. <strong>Complete pivoting</strong> (pivoting rows <em>and</em> columns) has provably bounded growth but is rarely needed.</p>
 <h2 id="qr-decomposition">QR Decomposition</h2>
 <h3 id="the-factorization-1">The Factorization</h3>
 <p><strong>Theorem (QR Decomposition).</strong> For any $A \in \mathbb{R}^{m \times n}$ with $m \geq n$, there exists a factorization</p>
 <p>$$A = QR,$$</p>
 <p>where $Q \in \mathbb{R}^{m \times m}$ is orthogonal ($Q^T Q = I$) and $R \in \mathbb{R}^{m \times n}$ is upper triangular (zero below the diagonal).</p>
 <p>The <strong>thin QR</strong> keeps only the first $n$ columns of $Q$:</p>
-<p>$$A = \hat{Q}\hat{R}, \quad \hat{Q} \in \mathbb{R}^{m \times n},; \hat{R} \in \mathbb{R}^{n \times n},$$</p>
+<p>$$A = \hat{Q}\hat{R}, \quad \hat{Q} \in \mathbb{R}^{m \times n},\; \hat{R} \in \mathbb{R}^{n \times n},$$</p>
 <p>where $\hat{Q}$ has orthonormal columns ($\hat{Q}^T \hat{Q} = I_n$) and $\hat{R}$ is square upper triangular.</p>
 <p><strong>Uniqueness.</strong> If $A$ has full column rank and we require diagonal entries of $R$ to be positive, the thin QR is unique.</p>
 <h3 id="gram---schmidt-process">Gram - Schmidt Process</h3>
@@ -217,14 +217,14 @@ for j = 2, ..., n:
 </code></pre><p>The columns $q_1, \ldots, q_n$ are the orthonormal basis (columns of $\hat{Q}$), and $r_{ij}$ fill $\hat{R}$.</p>
 <p><strong>Modified Gram - Schmidt</strong> (MGS) reorders the operations to subtract projections one at a time and is more numerically stable (avoids catastrophic cancellation when $a_j$ is nearly in the span of earlier columns). Even MGS loses orthogonality in floating point when columns are nearly dependent; in that case, use <strong>Householder QR</strong>.</p>
 <h3 id="householder-reflections">Householder Reflections</h3>
-<p>A <strong>Householder reflector</strong> is $H = I - 2vv^T / (v^T v)$, an orthogonal matrix that reflects across the hyperplane orthogonal to $v$. By choosing $v$ appropriately, $H$ maps any vector $x$ to $|x|e_1$.</p>
+<p>A <strong>Householder reflector</strong> is $H = I - 2vv^T / (v^T v)$, an orthogonal matrix that reflects across the hyperplane orthogonal to $v$. By choosing $v$ appropriately, $H$ maps any vector $x$ to $\|x\|e_1$.</p>
 <p>Householder QR applies $n$ reflectors from the left:</p>
 <p>$$H_n \cdots H_2 H_1 A = R \implies Q^T = H_n \cdots H_1 \implies Q = H_1 \cdots H_n.$$</p>
-<p>This is <strong>backward stable</strong>: the computed $Q$ and $R$ satisfy $A + \delta A = QR$ where $|\delta A|_F / |A|<em>F = O(\varepsilon</em>{\text{machine}})$.</p>
+<p>This is <strong>backward stable</strong>: the computed $Q$ and $R$ satisfy $A + \delta A = QR$ where $\|\delta A\|_F / \|A\|_F = O(\varepsilon_{\text{machine}})$.</p>
 <h3 id="application-least-squares">Application: Least Squares</h3>
-<p>The overdetermined system $Ax \approx b$ ($A \in \mathbb{R}^{m \times n}$, $m &gt; n$, full column rank) has least squares solution minimizing $|Ax - b|_2^2$.</p>
+<p>The overdetermined system $Ax \approx b$ ($A \in \mathbb{R}^{m \times n}$, $m &gt; n$, full column rank) has least squares solution minimizing $\|Ax - b\|_2^2$.</p>
 <p>Using thin QR $A = \hat{Q}\hat{R}$:</p>
-<p>$$|Ax - b|^2 = |\hat{Q}\hat{R}x - b|^2 = |\hat{R}x - \hat{Q}^T b|^2 + |(I - \hat{Q}\hat{Q}^T)b|^2.$$</p>
+<p>$$\|Ax - b\|^2 = \|\hat{Q}\hat{R}x - b\|^2 = \|\hat{R}x - \hat{Q}^T b\|^2 + \|(I - \hat{Q}\hat{Q}^T)b\|^2.$$</p>
 <p>The second term is independent of $x$; minimizing requires $\hat{R}x = \hat{Q}^T b$. Since $\hat{R}$ is square upper triangular and nonsingular (full rank assumed):</p>
 <p>$$\hat{R}x^\ast = \hat{Q}^T b \quad \text{(solve by back-substitution)}.$$</p>
 <p>This is numerically superior to the normal equations $A^T A x = A^T b$ (which squares the condition number).</p>
@@ -398,7 +398,8 @@ for j = 2, ..., n:
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

@@ -213,7 +213,7 @@ And yet, nobody uses this algorithm to train modern neural networks." />
 <p>SGD with a constant learning rate makes slow progress through ravines. A ravine is an elongated valley: the loss decreases steeply in one direction (the walls of the ravine) but very gently in another (the floor, pointing toward the minimum). In the steep direction, large gradients cause oscillations - the step overshoots, the gradient reverses, the next step overshoots back. In the gentle direction, small gradients mean slow progress.</p>
 <p>The cumulative effect: much of the gradient computation is wasted on the oscillating direction, and progress toward the minimum is slow.</p>
 <p>Momentum adds a velocity to the optimizer. Instead of using only the current gradient, the update accumulates an exponentially weighted moving average of past gradients:</p>
-<p>$$\mathbf{v}<em>t = \beta \mathbf{v}</em>{t-1} + (1-\beta)\nabla f(\mathbf{x}_t),$$</p>
+<p>$$\mathbf{v}_t = \beta \mathbf{v}_{t-1} + (1-\beta)\nabla f(\mathbf{x}_t),$$</p>
 <p>$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \mathbf{v}_t.$$</p>
 <p>The hyperparameter $\beta \in [0, 1)$ controls the memory length. With $\beta = 0$, $\mathbf{v_t} = \nabla f(\mathbf{x_t})$ - no memory, just the current gradient. With $\beta = 0.9$, the velocity is an exponentially decaying average of approximately $1/(1-0.9) = 10$ past gradients.</p>
 <p><strong>Why momentum helps in ravines.</strong></p>
@@ -229,7 +229,7 @@ And yet, nobody uses this algorithm to train modern neural networks." />
 <p>Nesterov&rsquo;s modification looks small - computing the gradient at a &ldquo;lookahead&rdquo; position instead of the current position - but it has meaningful consequences.</p>
 <p><strong>Standard momentum:</strong> compute gradient at current position $\mathbf{x_t}$, then update.</p>
 <p><strong>Nesterov momentum:</strong> compute gradient at the anticipated position $\mathbf{x_t} - \beta\mathbf{v_{t-1}}$ (where the current velocity would take you), then correct:</p>
-<p>$$\mathbf{v}<em>t = \beta \mathbf{v}</em>{t-1} + (1-\beta)\nabla f(\mathbf{x}<em>t - \beta\mathbf{v}</em>{t-1}),$$</p>
+<p>$$\mathbf{v}_t = \beta \mathbf{v}_{t-1} + (1-\beta)\nabla f(\mathbf{x}_t - \beta\mathbf{v}_{t-1}),$$</p>
 <p>$$\mathbf{x}_{t+1} = \mathbf{x}_t - \alpha \mathbf{v}_t.$$</p>
 <p><strong>Physical intuition.</strong> Standard momentum is like a ball that first looks at where it is now, then commits to its velocity. Nesterov momentum is like a ball that projects where its current velocity will take it, looks at the gradient there, and incorporates that information before committing. If the lookahead position is on the downslope of a hill that standard momentum is about to overshoot, Nesterov can see this and slow down in advance.</p>
 <p><strong>Theoretical consequence.</strong> For smooth convex objectives, Nesterov momentum achieves $O(1/t^2)$ convergence - the same as Nesterov accelerated gradient descent from the previous post. Standard gradient descent with momentum achieves only $O(1/t)$. The Nesterov modification is what creates the acceleration.</p>
@@ -286,8 +286,8 @@ And yet, nobody uses this algorithm to train modern neural networks." />
 </blockquote>
 <p><strong>Why Adam works across diverse problems.</strong></p>
 <p>The effective update per parameter is:</p>
-<p>$$\Delta x_j = \alpha \frac{\hat{m}<em>{t,j}}{\sqrt{\hat{v}</em>{t,j}} + \epsilon}.$$</p>
-<p>The numerator $\hat{m}<em>{t,j}$ is the momentum - the trend of the gradient. The denominator $\sqrt{\hat{v}</em>{t,j}}$ is the estimated standard deviation of recent gradients. Their ratio is approximately a signal-to-noise ratio: how large is the trend relative to the variability?</p>
+<p>$$\Delta x_j = \alpha \frac{\hat{m}_{t,j}}{\sqrt{\hat{v}_{t,j}} + \epsilon}.$$</p>
+<p>The numerator $\hat{m}_{t,j}$ is the momentum - the trend of the gradient. The denominator $\sqrt{\hat{v}_{t,j}}$ is the estimated standard deviation of recent gradients. Their ratio is approximately a signal-to-noise ratio: how large is the trend relative to the variability?</p>
 <p>Parameters whose gradient is consistently large (low variability) get a step of roughly $\alpha$ regardless of the raw gradient magnitude - the large gradient is divided by the large denominator. Parameters whose gradient oscillates wildly (high variability) get a smaller step. The update magnitudes are automatically bounded to be roughly $\alpha$.</p>
 <p>This scale-independence is what makes Adam work with a single learning rate across diverse architectures, datasets, and tasks. The same $\alpha = 10^{-3}$ often works for language models, image classifiers, and reinforcement learning - not because the problems have similar gradient scales, but because Adam normalizes them all to a similar effective step size.</p>
 <hr>
@@ -340,7 +340,7 @@ And yet, nobody uses this algorithm to train modern neural networks." />
 <p><strong>Transformers</strong> (GPT, BERT, T5, ViT, and all attention-based architectures): always use AdamW. SGD fails to converge reliably on attention mechanisms. The architecture requires adaptive step sizes.</p>
 </li>
 <li>
-<p><strong>ConvNets for image classification</strong> (ResNet, EfficientNet): carefully tuned SGD with momentum and cosine annealing often gives $0.5$-$1.5%$ better top-1 accuracy than Adam. AdamW is close and requires less tuning.</p>
+<p><strong>ConvNets for image classification</strong> (ResNet, EfficientNet): carefully tuned SGD with momentum and cosine annealing often gives $0.5$-$1.5\%$ better top-1 accuracy than Adam. AdamW is close and requires less tuning.</p>
 </li>
 <li>
 <p><strong>Fine-tuning pretrained models</strong>: use AdamW with small learning rate ($10^{-5}$ range) and warmup. The pretrained weights need gentle, consistent updates.</p>
@@ -362,7 +362,7 @@ And yet, nobody uses this algorithm to train modern neural networks." />
 <p><strong>SGD with momentum for vision:</strong></p>
 <p>$$\beta = 0.9, \quad \text{weight decay} = 10^{-4}, \quad \alpha = 0.1.$$</p>
 <p>Cosine annealing from $0.1$ to $0$. Batch size $256$; scale $\alpha$ linearly if batch size changes.</p>
-<p><strong>Gradient clipping.</strong> For recurrent networks and transformers, clip the gradient norm before updating: if $|\nabla f| &gt; c$, scale the gradient to have norm $c$. Typical $c = 1.0$ or $c = 5.0$. Gradient clipping prevents the occasional very large gradient (from a bad batch) from destroying the model.</p>
+<p><strong>Gradient clipping.</strong> For recurrent networks and transformers, clip the gradient norm before updating: if $\|\nabla f\| &gt; c$, scale the gradient to have norm $c$. Typical $c = 1.0$ or $c = 5.0$. Gradient clipping prevents the occasional very large gradient (from a bad batch) from destroying the model.</p>
 <p><strong>Diagnosing training problems:</strong></p>
 <ul>
 <li>Loss spikes: reduce $\alpha$, add warmup, check for bad batches, add gradient clipping.</li>
@@ -393,7 +393,8 @@ And yet, nobody uses this algorithm to train modern neural networks." />
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

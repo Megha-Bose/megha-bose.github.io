@@ -197,7 +197,7 @@
 <p><strong>Decisional Diffie-Hellman (DDH).</strong> The following two distributions are computationally indistinguishable:</p>
 <p>$$(g^a, g^b, g^{ab}) \approx_c (g^a, g^b, g^c)$$</p>
 <p>where $a, b, c \leftarrow \mathbb{Z}_q$ are uniform. No PPT adversary can distinguish the real DH triple from a random triple with non-negligible advantage.</p>
-<p>DDH is stronger than CDH (which only asks to compute $g^{ab}$, not distinguish it). If CDH is hard, it does not automatically follow that DDH is hard - the gap matters. DDH fails in $\mathbb{Z}_p^<em>$ for certain primes: the Legendre symbol $\left(\frac{g^{ab}}{p}\right)$ can be computed from $g^a$ and $g^b$, leaking the parity of the discrete log. DDH does hold in prime-order subgroups of $\mathbb{Z}_p^</em>$ and in well-chosen elliptic curve groups.</p>
+<p>DDH is stronger than CDH (which only asks to compute $g^{ab}$, not distinguish it). If CDH is hard, it does not automatically follow that DDH is hard - the gap matters. DDH fails in $\mathbb{Z}_p^*$ for certain primes: the Legendre symbol $\left(\frac{g^{ab}}{p}\right)$ can be computed from $g^a$ and $g^b$, leaking the parity of the discrete log. DDH does hold in prime-order subgroups of $\mathbb{Z}_p^*$ and in well-chosen elliptic curve groups.</p>
 <p>The DDH assumption is the algebraic foundation for proving CPA security of ElGamal encryption. Concretely: if an adversary could distinguish ElGamal ciphertexts, it could distinguish DH triples, contradicting DDH.</p>
 <hr>
 <h2 id="elgamal-encryption">ElGamal Encryption</h2>
@@ -243,14 +243,14 @@
 <hr>
 <h2 id="pkcs1-v15-and-rsa-oaep">PKCS#1 v1.5 and RSA-OAEP</h2>
 <p><strong>PKCS#1 v1.5.</strong> Add structured random padding before encrypting:</p>
-<p>$$\text{Enc}(m) = (0x00 | 0x02 | \text{random bytes} | 0x00 | m)^e \bmod N$$</p>
+<p>$$\text{Enc}(m) = (0x00 \| 0x02 \| \text{random bytes} \| 0x00 \| m)^e \bmod N$$</p>
 <p>The random bytes make encryption non-deterministic, defeating small-message and common-modulus attacks. This was the standard for TLS for many years.</p>
 <p>But broken under CCA: <strong>Bleichenbacher&rsquo;s 1998 attack</strong> showed that if a TLS server reveals whether a decrypted ciphertext begins with $0x00\ 0x02$ (a PKCS conformant message - often just an error code), an adversary can iteratively query the server with crafted ciphertexts and narrow down the plaintext. The attack requires roughly $10^6$ adaptive queries. The padding format itself becomes an oracle. This attack is still relevant today: variants surface regularly in TLS implementations.</p>
 <p><strong>RSA-OAEP (Optimal Asymmetric Encryption Padding).</strong> The current standard. The message is mixed with randomness through a pair of hash-based mask generating functions before encrypting:</p>
 <ol>
 <li>Choose random $r \leftarrow \{0,1\}^k$.</li>
-<li>Compute $X = (m | 0^{k_0}) \oplus G(r)$ and $Y = r \oplus H(X)$, where $G, H$ are mask generating functions built from a hash.</li>
-<li>Encrypt $(X | Y)^e \bmod N$.</li>
+<li>Compute $X = (m \| 0^{k_0}) \oplus G(r)$ and $Y = r \oplus H(X)$, where $G, H$ are mask generating functions built from a hash.</li>
+<li>Encrypt $(X \| Y)^e \bmod N$.</li>
 </ol>
 <p>In the random oracle model (where $G$ and $H$ are modeled as truly random functions), RSA-OAEP is CCA-secure: any CCA adversary can be reduced to an inverter for the raw RSA function. The random oracle model is an idealization, but RSA-OAEP has withstood extensive cryptanalysis and is the padding scheme mandated by modern standards.</p>
 <hr>
@@ -326,7 +326,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

@@ -186,7 +186,7 @@
 <hr>
 <h2 id="the-loss-function">The Loss Function</h2>
 <p>We need a way to measure how wrong our predictions are. The standard choice is <strong>mean squared error</strong> (MSE):</p>
-<p>$$L(w) = \frac{1}{m} \sum_{i=1}^{m} \left(h_w(x^{(i)}) - y^{(i)}\right)^2 = \frac{1}{m} |Xw - y|^2$$</p>
+<p>$$L(w) = \frac{1}{m} \sum_{i=1}^{m} \left(h_w(x^{(i)}) - y^{(i)}\right)^2 = \frac{1}{m} \|Xw - y\|^2$$</p>
 <p>Why squared error rather than absolute error $|h_w(x^{(i)}) - y^{(i)}|$ or something else?</p>
 <p><strong>Mathematical convenience.</strong> The squared error is differentiable everywhere. Absolute error has a kink at zero and is not differentiable there, making optimization harder. MSE is a smooth bowl - it has a unique minimum, and calculus can find it.</p>
 <p><strong>Probabilistic justification.</strong> Suppose the true relationship is $y^{(i)} = w^T x^{(i)} + \varepsilon^{(i)}$ where each noise term $\varepsilon^{(i)} \sim \mathcal{N}(0, \sigma^2)$ is an independent Gaussian error. Then the likelihood of the data is:</p>
@@ -195,9 +195,9 @@
 <p>Large errors get penalized proportionally more (quadratically) than small ones. A prediction that&rsquo;s off by 10 incurs 100 units of loss; a prediction off by 20 incurs 400. This is a feature, not a bug - it strongly penalizes outlier predictions.</p>
 <hr>
 <h2 id="the-normal-equations-exact-solution">The Normal Equations: Exact Solution</h2>
-<p>The loss $L(w) = \frac{1}{m}|Xw - y|^2$ is a quadratic function of $w$. Quadratic functions have a unique minimum (if the leading coefficient is positive), and calculus can find it exactly. Set the gradient to zero.</p>
+<p>The loss $L(w) = \frac{1}{m}\|Xw - y\|^2$ is a quadratic function of $w$. Quadratic functions have a unique minimum (if the leading coefficient is positive), and calculus can find it exactly. Set the gradient to zero.</p>
 <p><strong>Computing the gradient.</strong> Expand the squared norm:</p>
-<p>$$|Xw - y|^2 = (Xw - y)^T(Xw - y) = w^T X^T X w - 2 y^T X w + y^T y$$</p>
+<p>$$\|Xw - y\|^2 = (Xw - y)^T(Xw - y) = w^T X^T X w - 2 y^T X w + y^T y$$</p>
 <p>Differentiating with respect to $w$:</p>
 <p>$$\nabla_w L = \frac{1}{m}(2X^T X w - 2 X^T y) = \frac{2}{m} X^T(Xw - y)$$</p>
 <p>Set this to zero:</p>
@@ -212,7 +212,7 @@
 <h2 id="geometric-interpretation-projection">Geometric Interpretation: Projection</h2>
 <p>Here is the most elegant way to see what linear regression is doing.</p>
 <p>The predictions $\hat{y} = Xw$ are always in the <strong>column space</strong> of $X$ - the set of all vectors that can be written as linear combinations of the columns of $X$. As $w$ ranges over all possible weight vectors, $Xw$ traces out a subspace of $\mathbb{R}^m$.</p>
-<p>The true labels $y$ almost certainly don&rsquo;t lie in this subspace (unless the data fits a hyperplane perfectly, which real data never does). We want to find the point in col$(X)$ that is closest to $y$. Closest in the Euclidean sense means minimizing $|Xw - y|^2$.</p>
+<p>The true labels $y$ almost certainly don&rsquo;t lie in this subspace (unless the data fits a hyperplane perfectly, which real data never does). We want to find the point in col$(X)$ that is closest to $y$. Closest in the Euclidean sense means minimizing $\|Xw - y\|^2$.</p>
 <p>The closest point in a subspace to a vector outside it is the <strong>orthogonal projection</strong>. The residual vector $y - \hat{y}$ must be perpendicular to every column of $X$:</p>
 <p>$$X^T (y - \hat{y}) = 0 \implies X^T y = X^T X w \implies w = (X^T X)^{-1} X^T y$$</p>
 <p>The normal equations literally say &ldquo;the residuals are normal (perpendicular) to the column space.&rdquo; This is where the name comes from. Ordinary least squares is the orthogonal projection of the label vector onto the column space of the feature matrix.</p>
@@ -249,10 +249,10 @@
 <p>$R^2$ is the fraction of variance explained by the model. It&rsquo;s a useful summary but not a complete picture - a model can have high $R^2$ on training data but poor $R^2$ on test data (overfitting).</p>
 <hr>
 <h2 id="ridge-regression-regularization">Ridge Regression: Regularization</h2>
-<p>Linear regression minimizes $|Xw - y|^2$. If $n$ is large relative to $m$, or if features are highly correlated, the solution can have very large weights - it fits the training data well by exploiting collinearities, then generalizes poorly.</p>
+<p>Linear regression minimizes $\|Xw - y\|^2$. If $n$ is large relative to $m$, or if features are highly correlated, the solution can have very large weights - it fits the training data well by exploiting collinearities, then generalizes poorly.</p>
 <p><strong>Ridge regression</strong> adds a penalty on the size of the weights:</p>
-<p>$$L_{\text{ridge}}(w) = |Xw - y|^2 + \lambda |w|^2$$</p>
-<p>The $\lambda |w|^2$ term is the regularizer. Taking the gradient and setting to zero:</p>
+<p>$$L_{\text{ridge}}(w) = \|Xw - y\|^2 + \lambda \|w\|^2$$</p>
+<p>The $\lambda \|w\|^2$ term is the regularizer. Taking the gradient and setting to zero:</p>
 <p>$$2X^T(Xw - y) + 2\lambda w = 0$$</p>
 <p>$$w_{\text{ridge}} = (X^T X + \lambda I)^{-1} X^T y$$</p>
 <p>Two things to notice. First, $(X^T X + \lambda I)$ is always invertible for $\lambda &gt; 0$, even when $X^T X$ is singular. Adding $\lambda$ to the diagonal shifts all eigenvalues up by $\lambda$, so none are zero. Ridge regression solves the collinearity problem by construction.</p>
@@ -261,10 +261,10 @@
 <hr>
 <h2 id="lasso-sparse-solutions">Lasso: Sparse Solutions</h2>
 <p><strong>Lasso</strong> (Least Absolute Shrinkage and Selection Operator) replaces the squared penalty with an absolute value:</p>
-<p>$$L_{\text{lasso}}(w) = |Xw - y|^2 + \lambda |w|_1 = |Xw - y|^2 + \lambda \sum_j |w_j|$$</p>
+<p>$$L_{\text{lasso}}(w) = \|Xw - y\|^2 + \lambda \|w\|_1 = \|Xw - y\|^2 + \lambda \sum_j |w_j|$$</p>
 <p>The $\ell_1$ penalty has a remarkable property: the optimal solution often has many weights equal to exactly zero. Lasso simultaneously fits the model and performs feature selection, automatically setting irrelevant weights to zero.</p>
-<p>Why does $\ell_1$ produce sparsity while $\ell_2$ doesn&rsquo;t? The geometry is the reason. The $\ell_2$ ball $\{w : |w|^2 \leq c\}$ is a smooth sphere. The $\ell_1$ ball $\{w : |w|_1 \leq c\}$ has corners - one at each coordinate axis. The constrained minimum of a function on a smooth sphere can be anywhere on the boundary, but on the $\ell_1$ ball, the minimum tends to hit corners where many coordinates are zero.</p>
-<p>Lasso doesn&rsquo;t have a closed-form solution (because $|w|_1$ is not differentiable at $w_j = 0$). It requires iterative methods such as coordinate descent. But it&rsquo;s an indispensable tool when you have many features and expect only a few to be relevant.</p>
+<p>Why does $\ell_1$ produce sparsity while $\ell_2$ doesn&rsquo;t? The geometry is the reason. The $\ell_2$ ball $\{w : \|w\|^2 \leq c\}$ is a smooth sphere. The $\ell_1$ ball $\{w : \|w\|_1 \leq c\}$ has corners - one at each coordinate axis. The constrained minimum of a function on a smooth sphere can be anywhere on the boundary, but on the $\ell_1$ ball, the minimum tends to hit corners where many coordinates are zero.</p>
+<p>Lasso doesn&rsquo;t have a closed-form solution (because $\|w\|_1$ is not differentiable at $w_j = 0$). It requires iterative methods such as coordinate descent. But it&rsquo;s an indispensable tool when you have many features and expect only a few to be relevant.</p>
 <hr>
 <h2 id="assumptions-and-when-they-break">Assumptions and When They Break</h2>
 <p>Linear regression makes several assumptions. Knowing them tells you when the model is trustworthy and when you should be suspicious.</p>
@@ -290,7 +290,7 @@
 </tr>
 <tr>
 <td>MSE loss</td>
-<td>$L = \frac{1}{m}|Xw - y|^2$</td>
+<td>$L = \frac{1}{m}\|Xw - y\|^2$</td>
 <td>Differentiable, unique minimum</td>
 </tr>
 <tr>
@@ -325,7 +325,7 @@
 </tr>
 <tr>
 <td>Lasso</td>
-<td>$|Xw - y|^2 + \lambda|w|_1$</td>
+<td>$\|Xw - y\|^2 + \lambda\|w\|_1$</td>
 <td>Sparse weights; feature selection</td>
 </tr>
 </tbody>
@@ -354,7 +354,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

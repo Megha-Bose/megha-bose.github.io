@@ -164,8 +164,8 @@
 </li>
 </ul>
 <hr>
-<p>Two users click &ldquo;Transfer $500&rdquo; on their banking app at exactly the same moment. Both requests hit the server simultaneously. Both read the same balance - $700. Both compute the new balance: $200. Both write $200 back. One transfer disappears. The account that should show $200 shows $200, but the balance that should show -$300 shows $200 too. $500 has been conjured from nothing.</p>
-<p>This is a race condition. It is not a theoretical problem. Knight Capital Group lost $440 million in 45 minutes in 2012, partly due to a race condition in their order-routing system. Therac-25 radiation therapy machines killed patients in the late 1980s due to a race condition in their control software. Concurrency bugs do not show up in testing and they do not care about your code review process.</p>
+<p>Two users click &ldquo;Transfer <span class="nomath">$</span>500&rdquo; on their banking app at exactly the same moment. Both requests hit the server simultaneously. Both read the same balance - <span class="nomath">$</span>700. Both compute the new balance: $200. Both write $200 back. One transfer disappears. The account that should show $200 shows $200, but the balance that should show -$300 shows $200 too. <span class="nomath">$</span>500 has been conjured from nothing.</p>
+<p>This is a race condition. It is not a theoretical problem. Knight Capital Group lost <span class="nomath">$</span>440 million in 45 minutes in 2012, partly due to a race condition in their order-routing system. Therac-25 radiation therapy machines killed patients in the late 1980s due to a race condition in their control software. Concurrency bugs do not show up in testing and they do not care about your code review process.</p>
 <h2 id="why-concurrency-exists-two-different-problems">Why Concurrency Exists: Two Different Problems</h2>
 <p>Before diving into solutions, it is worth separating the two motivations for concurrent code - they have different solutions.</p>
 <p><strong>I/O-bound concurrency:</strong> Your program spends most of its time waiting. Waiting for a database query to return. Waiting for an HTTP request to complete. Waiting for a file read. A single-threaded program that makes 100 HTTP requests does so serially - request 1 finishes, then request 2 starts. But while request 1 is in flight, the CPU is idle. Concurrency lets you have 100 requests in flight simultaneously, even on a single CPU core.</p>
@@ -293,7 +293,7 @@ asyncio<span style="color:#f92672">.</span>run(main())
 <p>The cost: CPU-bound work blocks the event loop. If a coroutine runs a tight computation for 100 ms without any <code>await</code>, every other coroutine waits 100 ms. Long CPU work must be offloaded to <code>asyncio.run_in_executor</code> (a thread or process pool) or broken into smaller chunks with explicit <code>await asyncio.sleep(0)</code> yields.</p>
 <p>A practical rule of thumb: for I/O-bound Python servers handling thousands of concurrent connections, asyncio is the right model. For CPU-bound work, multiprocessing. For small numbers of concurrent tasks with shared state, threading is often simpler than async. Do not reach for async because it sounds modern.</p>
 <h2 id="distributed-locks-when-the-lock-is-across-machines">Distributed Locks: When the Lock is Across Machines</h2>
-<p>The bank balance race condition from the opening does not disappear in a distributed system - it gets worse. If two servers can both handle &ldquo;Transfer $500&rdquo; requests for the same account simultaneously, you need a distributed lock.</p>
+<p>The bank balance race condition from the opening does not disappear in a distributed system - it gets worse. If two servers can both handle &ldquo;Transfer <span class="nomath">$</span>500&rdquo; requests for the same account simultaneously, you need a distributed lock.</p>
 <p><strong>Redis SETNX</strong> is the classic approach: before processing a transaction, try to set a key with <code>SETNX</code> (Set if Not eXists). If the set succeeds, you hold the lock. If not, another server holds it. Expire the key automatically so a crashed server does not hold the lock forever.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> redis
 r <span style="color:#f92672">=</span> redis<span style="color:#f92672">.</span>Redis()
@@ -412,7 +412,8 @@ lock_held <span style="color:#f92672">=</span> r<span style="color:#f92672">.</s
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

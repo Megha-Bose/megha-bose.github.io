@@ -170,15 +170,15 @@
 <hr>
 <h2 id="the-zero-sum-game">The Zero-Sum Game</h2>
 <p>The GAN objective is a minimax game:</p>
-<p>$$\min_G \max_D ; V(D, G) = \mathbb{E}<em>{x \sim p</em>{\text{data}}}[\log D(x)] + \mathbb{E}_{z \sim p_z}[\log(1 - D(G(z)))]$$</p>
+<p>$$\min_G \max_D \; V(D, G) = \mathbb{E}_{x \sim p_{\text{data}}}[\log D(x)] + \mathbb{E}_{z \sim p_z}[\log(1 - D(G(z)))]$$</p>
 <p>To understand why each term appears, consider each player&rsquo;s incentives separately.</p>
 <p>The <strong>discriminator</strong> $D$ wants to maximize $V$:</p>
 <ul>
-<li>The first term $\mathbb{E}<em>{x \sim p</em>{\text{data}}}[\log D(x)]$ is maximized when $D(x) \approx 1$ on real data - the discriminator correctly identifies real samples.</li>
+<li>The first term $\mathbb{E}_{x \sim p_{\text{data}}}[\log D(x)]$ is maximized when $D(x) \approx 1$ on real data - the discriminator correctly identifies real samples.</li>
 <li>The second term $\mathbb{E}_{z \sim p_z}[\log(1 - D(G(z)))]$ is maximized when $D(G(z)) \approx 0$ on generated samples - the discriminator correctly identifies fakes.</li>
 </ul>
 <p>The <strong>generator</strong> $G$ wants to minimize $V$. It has no influence over the first term (it does not produce real data), so it focuses on the second: it wants $D(G(z)) \approx 1$, meaning the discriminator classifies generated samples as real. Minimizing $\mathbb{E}[\log(1 - D(G(z)))]$ is equivalent to maximizing $\mathbb{E}[D(G(z))]$.</p>
-<p>This is a zero-sum game: the payoff to $G$ is exactly $-V(D,G)$ and the payoff to $D$ is $+V(D,G)$. Every gain for one player is a loss for the other. Game theory tells us that such games have <strong>Nash equilibria</strong> - pairs $(D^<em>, G^</em>)$ from which neither player benefits by unilaterally deviating. The GAN framework bets that gradient descent finds this equilibrium, and that the equilibrium corresponds to $p_G = p_{\text{data}}$.</p>
+<p>This is a zero-sum game: the payoff to $G$ is exactly $-V(D,G)$ and the payoff to $D$ is $+V(D,G)$. Every gain for one player is a loss for the other. Game theory tells us that such games have <strong>Nash equilibria</strong> - pairs $(D^*, G^*)$ from which neither player benefits by unilaterally deviating. The GAN framework bets that gradient descent finds this equilibrium, and that the equilibrium corresponds to $p_G = p_{\text{data}}$.</p>
 <p>Notice that the value function $V$ is also the cross-entropy loss for a binary classifier. The first term is the expected log-likelihood of labeling real data as real; the second is the expected log-likelihood of labeling generated data as fake. Training the discriminator to maximize $V$ is exactly training a binary classifier with cross-entropy loss on a balanced dataset of real and generated samples. This connection makes implementation straightforward: discriminator training is standard supervised learning.</p>
 <hr>
 <h2 id="optimal-discriminator">Optimal Discriminator</h2>
@@ -202,23 +202,23 @@
 <hr>
 <h2 id="optimal-generator-and-the-nash-equilibrium">Optimal Generator and the Nash Equilibrium</h2>
 <p>Now substitute $D^*$ back into $V$ to find the objective the generator effectively faces. This tells us what the generator is actually optimizing when the discriminator plays optimally.</p>
-<p>$$C(G) = V(D^*, G) = \mathbb{E}<em>{x \sim p</em>{\text{data}}} \left[ \log \frac{p_{\text{data}}(x)}{p_{\text{data}}(x) + p_G(x)} \right] + \mathbb{E}<em>{x \sim p_G} \left[ \log \frac{p_G(x)}{p</em>{\text{data}}(x) + p_G(x)} \right]$$</p>
+<p>$$C(G) = V(D^*, G) = \mathbb{E}_{x \sim p_{\text{data}}} \left[ \log \frac{p_{\text{data}}(x)}{p_{\text{data}}(x) + p_G(x)} \right] + \mathbb{E}_{x \sim p_G} \left[ \log \frac{p_G(x)}{p_{\text{data}}(x) + p_G(x)} \right]$$</p>
 <p>To identify what this expression equals, we rewrite it by inserting a factor of 2 in the denominators (and subtracting $\log 2$ twice to compensate):</p>
-<p>$$C(G) = \mathbb{E}<em>{x \sim p</em>{\text{data}}} \left[ \log \frac{p_{\text{data}}(x)}{\frac{p_{\text{data}}(x) + p_G(x)}{2}} \right] + \mathbb{E}<em>{x \sim p_G} \left[ \log \frac{p_G(x)}{\frac{p</em>{\text{data}}(x) + p_G(x)}{2}} \right] - \log 4$$</p>
-<p>The first expectation is $\text{KL}!\left(p_{\text{data}} ,\Big|, \frac{p_{\text{data}} + p_G}{2}\right)$ and the second is $\text{KL}!\left(p_G ,\Big|, \frac{p_{\text{data}} + p_G}{2}\right)$, where $\text{KL}(P | Q) = \mathbb{E}_{x \sim P}[\log P(x) - \log Q(x)]$ is the Kullback-Leibler divergence.</p>
+<p>$$C(G) = \mathbb{E}_{x \sim p_{\text{data}}} \left[ \log \frac{p_{\text{data}}(x)}{\frac{p_{\text{data}}(x) + p_G(x)}{2}} \right] + \mathbb{E}_{x \sim p_G} \left[ \log \frac{p_G(x)}{\frac{p_{\text{data}}(x) + p_G(x)}{2}} \right] - \log 4$$</p>
+<p>The first expectation is $\text{KL}\!\left(p_{\text{data}} \,\Big\|\, \frac{p_{\text{data}} + p_G}{2}\right)$ and the second is $\text{KL}\!\left(p_G \,\Big\|\, \frac{p_{\text{data}} + p_G}{2}\right)$, where $\text{KL}(P \| Q) = \mathbb{E}_{x \sim P}[\log P(x) - \log Q(x)]$ is the Kullback-Leibler divergence.</p>
 <p>Recall the Jensen-Shannon divergence between two distributions $P$ and $Q$:</p>
-<p>$$\text{JSD}(P | Q) = \frac{1}{2} \text{KL}!\left(P ,\Big|, \frac{P+Q}{2}\right) + \frac{1}{2} \text{KL}!\left(Q ,\Big|, \frac{P+Q}{2}\right)$$</p>
+<p>$$\text{JSD}(P \| Q) = \frac{1}{2} \text{KL}\!\left(P \,\Big\|\, \frac{P+Q}{2}\right) + \frac{1}{2} \text{KL}\!\left(Q \,\Big\|\, \frac{P+Q}{2}\right)$$</p>
 <p>Therefore:</p>
-<p>$$\boxed{C(G) = 2 \cdot \text{JSD}(p_{\text{data}} | p_G) - \log 4}$$</p>
+<p>$$\boxed{C(G) = 2 \cdot \text{JSD}(p_{\text{data}} \| p_G) - \log 4}$$</p>
 <p>This is the central theoretical result. When the discriminator plays optimally, minimizing the generator&rsquo;s objective is equivalent to minimizing the Jensen-Shannon divergence between the true data distribution and the generated distribution.</p>
-<p>Since $\text{JSD}(P | Q) \geq 0$ always, we have $C(G) \geq -\log 4$, with equality if and only if $p_G = p_{\text{data}}$. The Nash equilibrium is therefore:</p>
+<p>Since $\text{JSD}(P \| Q) \geq 0$ always, we have $C(G) \geq -\log 4$, with equality if and only if $p_G = p_{\text{data}}$. The Nash equilibrium is therefore:</p>
 <ul>
 <li>The generator produces the true data distribution: $p_G = p_{\text{data}}$</li>
 <li>The discriminator is uniformly $1/2$: $D^* = 1/2$ everywhere</li>
 <li>The minimax value is $V^* = -\log 4$</li>
 </ul>
 <p><strong>Why JSD and not KL?</strong> KL divergence is asymmetric and infinite when $p_G$ assigns zero probability to regions where $p_{\text{data}}$ is positive (mode dropping). JSD is symmetric and always finite, because it measures KL to the mixture $\frac{p_{\text{data}} + p_G}{2}$, which is positive wherever either component is. More importantly: the discriminator&rsquo;s job is to estimate $p_{\text{data}}(x) / (p_{\text{data}}(x) + p_G(x))$, which is exactly the ratio needed to compute the JSD - without ever computing the individual densities explicitly. The discriminator converts an intractable density estimation problem into a tractable classification problem.</p>
-<p><strong>Why can&rsquo;t we just minimize KL directly?</strong> $\text{KL}(p_G | p_{\text{data}})$ (mode-seeking) penalizes heavily when $p_G$ puts mass where $p_{\text{data}}$ has none - leading to sharp but incomplete coverage. $\text{KL}(p_{\text{data}} | p_G)$ (mode-covering) penalizes missing modes of $p_{\text{data}}$ - but requires computing the density ratio, which is intractable in high dimensions. JSD is estimated via classification accuracy: a tractable stand-in for an intractable density problem.</p>
+<p><strong>Why can&rsquo;t we just minimize KL directly?</strong> $\text{KL}(p_G \| p_{\text{data}})$ (mode-seeking) penalizes heavily when $p_G$ puts mass where $p_{\text{data}}$ has none - leading to sharp but incomplete coverage. $\text{KL}(p_{\text{data}} \| p_G)$ (mode-covering) penalizes missing modes of $p_{\text{data}}$ - but requires computing the density ratio, which is intractable in high dimensions. JSD is estimated via classification accuracy: a tractable stand-in for an intractable density problem.</p>
 <hr>
 <h2 id="training-procedure">Training Procedure</h2>
 <p>The theory requires simultaneous minimax optimization. In practice, this is approximated by alternating gradient updates:</p>
@@ -264,18 +264,18 @@
 <p>$$W_1(P, Q) = \inf_{\gamma \in \Pi(P,Q)} \mathbb{E}_{(x,y) \sim \gamma}[d(x, y)]$$</p>
 <p>where $\Pi(P,Q)$ is the set of all joint distributions (couplings) $\gamma(x,y)$ with marginals $P$ and $Q$. The coupling specifies which &ldquo;sand particle&rdquo; from $P$ gets transported to which location in $Q$; the infimum is over all possible transportation plans.</p>
 <p>This infimum over all couplings is computationally intractable. But by the <strong>Kantorovich-Rubinstein duality theorem</strong>, there is an equivalent formulation:</p>
-<p>$$W_1(P, Q) = \sup_{|f|<em>L \leq 1} \left[ \mathbb{E}</em>{x \sim P}[f(x)] - \mathbb{E}_{x \sim Q}[f(x)] \right]$$</p>
+<p>$$W_1(P, Q) = \sup_{\|f\|_L \leq 1} \left[ \mathbb{E}_{x \sim P}[f(x)] - \mathbb{E}_{x \sim Q}[f(x)] \right]$$</p>
 <p>where the supremum is over all 1-Lipschitz functions $f: \mathcal{X} \to \mathbb{R}$ (functions that don&rsquo;t change the output by more than 1 per unit change in input). The intuition: the best &ldquo;witness function&rdquo; $f$ that is 1-Lipschitz and maximally separates the two distributions is exactly measuring the earth mover&rsquo;s cost.</p>
-<p>This dual form is amenable to learning: instead of a discriminator outputting probabilities, WGAN uses a <strong>critic</strong> $f_w: \mathcal{X} \to \mathbb{R}$ (no final sigmoid, so output is an unbounded real number) trained to maximize $\mathbb{E}<em>{x \sim p</em>{\text{data}}}[f_w(x)] - \mathbb{E}<em>{z \sim p_z}[f_w(G</em>\theta(z))]$ subject to $f_w$ being 1-Lipschitz.</p>
+<p>This dual form is amenable to learning: instead of a discriminator outputting probabilities, WGAN uses a <strong>critic</strong> $f_w: \mathcal{X} \to \mathbb{R}$ (no final sigmoid, so output is an unbounded real number) trained to maximize $\mathbb{E}_{x \sim p_{\text{data}}}[f_w(x)] - \mathbb{E}_{z \sim p_z}[f_w(G_\theta(z))]$ subject to $f_w$ being 1-Lipschitz.</p>
 <p>The WGAN objective is:</p>
-<p>$$\min_G \max_{|f|<em>L \leq 1} ; \mathbb{E}</em>{x \sim p_{\text{data}}}[f(x)] - \mathbb{E}_{z \sim p_z}[f(G(z))]$$</p>
+<p>$$\min_G \max_{\|f\|_L \leq 1} \; \mathbb{E}_{x \sim p_{\text{data}}}[f(x)] - \mathbb{E}_{z \sim p_z}[f(G(z))]$$</p>
 <p>Enforcing the Lipschitz constraint is the main technical challenge. The original WGAN paper proposes weight clipping: after each discriminator update, clip all weights to $[-c, c]$. Weight clipping works but constrains the critic toward very simple functions.</p>
-<p><strong>Gradient Penalty (WGAN-GP).</strong> A better enforcement is to penalize the gradient norm of the critic (Gulrajani et al., 2017). A 1-Lipschitz function has $|\nabla f|_2 \leq 1$ everywhere; the optimal transport function has $|\nabla f|_2 = 1$ along transport paths. So we penalize deviations from norm 1 along straight lines between real and generated samples:</p>
-<p>$$\mathcal{L}<em>{\text{GP}} = \lambda ; \mathbb{E}</em>{\hat{x} \sim p_{\hat{x}}} \left[ \left( |\nabla_{\hat{x}} f_w(\hat{x})|_2 - 1 \right)^2 \right]$$</p>
+<p><strong>Gradient Penalty (WGAN-GP).</strong> A better enforcement is to penalize the gradient norm of the critic (Gulrajani et al., 2017). A 1-Lipschitz function has $\|\nabla f\|_2 \leq 1$ everywhere; the optimal transport function has $\|\nabla f\|_2 = 1$ along transport paths. So we penalize deviations from norm 1 along straight lines between real and generated samples:</p>
+<p>$$\mathcal{L}_{\text{GP}} = \lambda \; \mathbb{E}_{\hat{x} \sim p_{\hat{x}}} \left[ \left( \|\nabla_{\hat{x}} f_w(\hat{x})\|_2 - 1 \right)^2 \right]$$</p>
 <p>where $\hat{x} = \epsilon x + (1-\epsilon) G(z)$ with $\epsilon \sim \text{Uniform}[0,1]$.</p>
 <p><strong>WGAN practical advantages:</strong></p>
 <ul>
-<li>The critic loss $\mathbb{E}<em>{p</em>{\text{data}}}[f] - \mathbb{E}<em>{p_z}[f(G(z))]$ estimates $W_1(p</em>{\text{data}}, p_G)$ and decreases monotonically with sample quality - unlike the standard GAN discriminator loss, which oscillates and is uninterpretable.</li>
+<li>The critic loss $\mathbb{E}_{p_{\text{data}}}[f] - \mathbb{E}_{p_z}[f(G(z))]$ estimates $W_1(p_{\text{data}}, p_G)$ and decreases monotonically with sample quality - unlike the standard GAN discriminator loss, which oscillates and is uninterpretable.</li>
 <li>Training is more stable, mode collapse is less frequent.</li>
 <li>No architectural constraints on the critic (batch normalization, etc.) beyond enforcing Lipschitz.</li>
 <li>The cost: slower training (critics must be near-optimal before each generator update, so the original paper uses 5 critic updates per generator update) and sensitivity to the gradient penalty weight $\lambda$.</li>
@@ -289,14 +289,14 @@
 <li>Discriminator: $D(x, y) \to [0,1]$ - given a sample and condition, output probability that $x$ is real given label $y$</li>
 </ul>
 <p>The objective becomes:</p>
-<p>$$\min_G \max_D ; V(D, G) = \mathbb{E}<em>{(x,y) \sim p</em>{\text{data}}}[\log D(x, y)] + \mathbb{E}_{z \sim p_z, y \sim p_y}[\log(1 - D(G(z, y), y))]$$</p>
+<p>$$\min_G \max_D \; V(D, G) = \mathbb{E}_{(x,y) \sim p_{\text{data}}}[\log D(x, y)] + \mathbb{E}_{z \sim p_z, y \sim p_y}[\log(1 - D(G(z, y), y))]$$</p>
 <p>The discriminator now assesses whether a sample is not only realistic but also consistent with the given condition. This prevents the generator from producing realistic samples of the wrong class. Conditioning is typically implemented by concatenating the label embedding (or other signal) to the input of both networks, or via feature-wise linear modulation (FiLM) layers that use the condition to shift and scale intermediate feature maps.</p>
 <p><strong>Pix2Pix</strong> (Isola et al., 2017) uses a conditional GAN where $y$ is an entire image: paired training examples $(y, x)$ where $y$ is a source image (a semantic label map, a daytime photo, a sketch) and $x$ is the corresponding target image (a photograph, a nighttime photo, a realistic rendering). Because the discriminator sees both the output and the conditioning image, it detects not just unrealistic outputs but outputs that fail to correspond to the input. The pix2pix objective also adds an L1 reconstruction term to prevent blurriness.</p>
 <hr>
 <h2 id="applications">Applications</h2>
 <p><strong>Image synthesis.</strong> Progressive GAN, StyleGAN, and BigGAN produce photorealistic images at high resolution. StyleGAN2 generates faces indistinguishable from photographs in controlled studies. The key architectural innovation in StyleGAN is the style-based generator: instead of feeding the latent code $z$ directly into the network, it is mapped through a series of fully connected layers to a style code $w$ that controls affine transformations (scale and shift) of feature maps at every layer of the synthesis network. This disentangles high-level semantic attributes (identity, pose) from fine-grained details (texture, lighting) and enables meaningful interpolation in latent space.</p>
 <p><strong>Data augmentation.</strong> Generated samples can augment training sets, particularly where labeled data is scarce. Medical imaging is a canonical example: synthetic CT scans, histology slides, or retinal images improve classifier performance when real annotated examples are expensive.</p>
-<p><strong>Domain adaptation.</strong> CycleGAN addresses unpaired domain transfer: two generators $G_{A \to B}$ and $G_{B \to A}$ together with two discriminators $D_A$ and $D_B$, with a cycle-consistency loss $|G_{B \to A}(G_{A \to B}(x)) - x|_1$ that prevents degenerate mappings. This allows style transfer without paired training data.</p>
+<p><strong>Domain adaptation.</strong> CycleGAN addresses unpaired domain transfer: two generators $G_{A \to B}$ and $G_{B \to A}$ together with two discriminators $D_A$ and $D_B$, with a cycle-consistency loss $\|G_{B \to A}(G_{A \to B}(x)) - x\|_1$ that prevents degenerate mappings. This allows style transfer without paired training data.</p>
 <p><strong>Scientific applications.</strong> GANs have been applied to molecule generation for drug discovery (generators on graph-structured molecular representations), turbulence simulation (high-resolution fluid dynamics from coarse simulations), and anomaly detection (using the discriminator as an anomaly scorer after training on normal data only).</p>
 <hr>
 <h2 id="summary">Summary</h2>
@@ -310,7 +310,7 @@
 <tbody>
 <tr>
 <td>GAN objective</td>
-<td>$\min_G \max_D ; \mathbb{E}<em>{p</em>{\text{data}}}[\log D(x)] + \mathbb{E}_{p_z}[\log(1 - D(G(z)))]$</td>
+<td>$\min_G \max_D \; \mathbb{E}_{p_{\text{data}}}[\log D(x)] + \mathbb{E}_{p_z}[\log(1 - D(G(z)))]$</td>
 </tr>
 <tr>
 <td>Optimal discriminator</td>
@@ -318,7 +318,7 @@
 </tr>
 <tr>
 <td>Generator objective under $D^*$</td>
-<td>$C(G) = 2 \cdot \text{JSD}(p_{\text{data}} | p_G) - \log 4$</td>
+<td>$C(G) = 2 \cdot \text{JSD}(p_{\text{data}} \| p_G) - \log 4$</td>
 </tr>
 <tr>
 <td>Nash equilibrium</td>
@@ -338,11 +338,11 @@
 </tr>
 <tr>
 <td>Kantorovich-Rubinstein</td>
-<td>$W_1(P,Q) = \sup_{|f|_L \leq 1} \mathbb{E}_P[f] - \mathbb{E}_Q[f]$; converts to critic training</td>
+<td>$W_1(P,Q) = \sup_{\|f\|_L \leq 1} \mathbb{E}_P[f] - \mathbb{E}_Q[f]$; converts to critic training</td>
 </tr>
 <tr>
 <td>Gradient penalty</td>
-<td>Penalize $(|\nabla_{\hat{x}} f(\hat{x})|_2 - 1)^2$ on interpolated samples; better than weight clipping</td>
+<td>Penalize $(\|\nabla_{\hat{x}} f(\hat{x})\|_2 - 1)^2$ on interpolated samples; better than weight clipping</td>
 </tr>
 <tr>
 <td>Conditional GAN</td>
@@ -373,7 +373,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

@@ -229,10 +229,10 @@
 <p>where $\sigma$ is applied elementwise (for example, $\sigma(t) = 1/(1 + e^{-t})$ or $\sigma(t) = \max(0, t)$). Output layer:</p>
 <p>$$\hat{y} = W_2 h + b_2, \quad \hat{y} \in \mathbb{R}^k$$</p>
 <p>Loss (squared error):</p>
-<p>$$L = |\hat{y} - y|^2 = \sum_{i=1}^k (\hat{y}_i - y_i)^2$$</p>
+<p>$$L = \|\hat{y} - y\|^2 = \sum_{i=1}^k (\hat{y}_i - y_i)^2$$</p>
 <p>where $y \in \mathbb{R}^k$ is the true label. We want $\partial L / \partial W_1$ and $\partial L / \partial W_2$.</p>
 <p>The computation is a chain:</p>
-<p>$$x \xrightarrow{W_1, b_1} z \xrightarrow{\sigma} h \xrightarrow{W_2, b_2} \hat{y} \xrightarrow{|\cdot - y|^2} L$$</p>
+<p>$$x \xrightarrow{W_1, b_1} z \xrightarrow{\sigma} h \xrightarrow{W_2, b_2} \hat{y} \xrightarrow{\|\cdot - y\|^2} L$$</p>
 <p>Four steps. The chain rule says: take the derivative at each step, multiply them in order.</p>
 <p><strong>Step 1: derivative of the loss.</strong></p>
 <p>$L = \sum_i (\hat{y}_i - y_i)^2$, so $\partial L / \partial \hat{y}_i = 2(\hat{y}_i - y_i)$.</p>
@@ -241,7 +241,7 @@
 <p>This is the upstream gradient from the loss. It has shape $1 \times k$.</p>
 <p><strong>Step 2: derivative of the output layer.</strong></p>
 <p>The output layer is $\hat{y} = W_2 h + b_2$. We want $\partial \hat{y} / \partial h$.</p>
-<p>$\hat{y}<em>i = \sum_j (W_2)</em>{ij} h_j + (b_2)_i$, so $\partial \hat{y}<em>i / \partial h_j = (W_2)</em>{ij}$.</p>
+<p>$\hat{y}_i = \sum_j (W_2)_{ij} h_j + (b_2)_i$, so $\partial \hat{y}_i / \partial h_j = (W_2)_{ij}$.</p>
 <p>The Jacobian is:</p>
 <p>$$\frac{\partial \hat{y}}{\partial h} = W_2$$</p>
 <p>This is the matrix $W_2$ itself, which has shape $k \times m$.</p>
@@ -300,24 +300,24 @@
 <p>Andrej Karpathy, in his essay &ldquo;Yes You Should Understand Backprop,&rdquo; argues that treating backpropagation as an automatic black box is a leaky abstraction - it hides the consequences you need to reason about when debugging and designing networks. His framing: think of the computation graph not as a function to differentiate but as a <em>circuit</em> through which a signal flows forward (activations) and backward (gradients). Each operation is a gate. Each gate has a distinct personality - a characteristic way of routing and transforming the upstream gradient. Once you internalize the four basic gate behaviors, you can predict gradient pathologies without computing anything.</p>
 <p><strong>The add gate: gradient distributor.</strong></p>
 <p>Forward: $z = x + y$. Local gradients $\partial z / \partial x = 1$ and $\partial z / \partial y = 1$. Backward:</p>
-<p>$$rac{\partial L}{\partial x} = g, \quad rac{\partial L}{\partial y} = g$$</p>
+<p>$$\frac{\partial L}{\partial x} = g, \quad \frac{\partial L}{\partial y} = g$$</p>
 <p>The add gate copies the upstream gradient $g$ to both inputs unchanged. Neither input value affects how much gradient the other receives. The add gate cannot weaken a gradient.</p>
 <p>This is the complete explanation of why residual connections preserve gradient flow. A residual block computes $h = x + f(x)$. In the backward pass, the add gate copies the upstream gradient to both branches: one copy flows into $f(x)$, one flows directly into $x$ with no modification whatsoever. No matter how deep the network, the skip path carries the upstream gradient back to earlier layers at full strength. Skip connections do not &ldquo;help gradients flow&rdquo; in some vague sense - the add gate is incapable of reducing the gradient that passes through it.</p>
 <p><strong>The multiply gate: gradient swapper.</strong></p>
 <p>Forward: $z = xy$. Backward:</p>
-<p>$$rac{\partial L}{\partial x} = g \cdot y, \quad rac{\partial L}{\partial y} = g \cdot x$$</p>
+<p>$$\frac{\partial L}{\partial x} = g \cdot y, \quad \frac{\partial L}{\partial y} = g \cdot x$$</p>
 <p>The multiply gate switches: to find the gradient flowing into $x$, scale the upstream gradient by $y$ (the <em>other</em> input), and vice versa. The two inputs swap roles.</p>
 <p>In a linear layer $z = wx$, the gradient with respect to the weight $w$ is $g \cdot x$ - the upstream error scaled by the input. This means each weight&rsquo;s gradient is proportional to the value of the input feeding into it. If input features have wildly different scales - say one feature is always near $0.001$ and another near $1000$ - the corresponding weight gradients differ by a factor of $10^6$. Both weights update in every gradient step, but at completely different effective learning rates. This is not a subtle effect: it is the multiply gate making the gradient literally proportional to the input value. Input normalization corrects for this by ensuring all inputs have comparable magnitudes, so all weight gradients are on the same scale.</p>
 <p><strong>The max gate: gradient router.</strong></p>
 <p>Forward: $z = \max(x, y)$. Backward: gradient goes entirely to the winner, zero to the loser.</p>
-<p>$$rac{\partial L}{\partial x} = g \cdot \mathbf{1}[x \geq y], \quad rac{\partial L}{\partial y} = g \cdot \mathbf{1}[y &gt; x]$$</p>
-<p>The max gate is a binary switch that routes the full gradient to whichever input won the competition, and sends exactly zero to the other. $	ext{ReLU}(x) = \max(0, x)$ is this gate applied to one input against a fixed threshold of zero. When $x &gt; 0$, the gradient passes through at full strength. When $x \leq 0$, the gate shuts completely.</p>
+<p>$$\frac{\partial L}{\partial x} = g \cdot \mathbf{1}[x \geq y], \quad \frac{\partial L}{\partial y} = g \cdot \mathbf{1}[y &gt; x]$$</p>
+<p>The max gate is a binary switch that routes the full gradient to whichever input won the competition, and sends exactly zero to the other. $\text{ReLU}(x) = \max(0, x)$ is this gate applied to one input against a fixed threshold of zero. When $x &gt; 0$, the gradient passes through at full strength. When $x \leq 0$, the gate shuts completely.</p>
 <p>This is the precise explanation of <strong>dead ReLU neurons</strong>. If a neuron&rsquo;s pre-activation is negative on every training example - due to a bad initialization or an unlucky large update early in training - the max gate always routes zero gradient backward. Every weight feeding that neuron receives zero gradient. They never update. The neuron is permanently silent: not because the network decided to suppress it, but because the gate mechanically blocked every signal that might have corrected it.</p>
 <p><strong>The sigmoid gate: gradient squasher.</strong></p>
 <p>Forward: $\sigma(x) = 1/(1 + e^{-x})$. Backward:</p>
-<p>$$rac{\partial L}{\partial x} = g \cdot \sigma(x)(1 - \sigma(x))$$</p>
-<p>The local gradient $\sigma(x)(1-\sigma(x))$ has a maximum of $rac{1}{4}$ at $x = 0$ and falls toward zero at both extremes. Every gradient that passes through a sigmoid is multiplied by at most $0.25$.</p>
-<p>This is not a probabilistic tendency. It is a hard ceiling. In a ten-layer network with sigmoid activations, the gradient at the first layer is at most $(0.25)^{10} pprox 10^{-6}$ of the loss gradient - already below double-precision floating-point significance and no information whatsoever about the loss can propagate to the earliest layers. Vanishing gradients in deep sigmoid networks are not a statistical artifact of poor initialization. They are the inevitable consequence of passing through ten consecutive gates that each cut the signal by at least 75%.</p>
+<p>$$\frac{\partial L}{\partial x} = g \cdot \sigma(x)(1 - \sigma(x))$$</p>
+<p>The local gradient $\sigma(x)(1-\sigma(x))$ has a maximum of $\frac{1}{4}$ at $x = 0$ and falls toward zero at both extremes. Every gradient that passes through a sigmoid is multiplied by at most $0.25$.</p>
+<p>This is not a probabilistic tendency. It is a hard ceiling. In a ten-layer network with sigmoid activations, the gradient at the first layer is at most $(0.25)^{10} \approx 10^{-6}$ of the loss gradient - already below double-precision floating-point significance and no information whatsoever about the loss can propagate to the earliest layers. Vanishing gradients in deep sigmoid networks are not a statistical artifact of poor initialization. They are the inevitable consequence of passing through ten consecutive gates that each cut the signal by at least 75%.</p>
 <p>ReLU is the solution precisely because it has no squashing behavior for positive inputs: its local gradient is exactly 1 when active, so gradients pass through it at full strength. The max gate either passes the gradient unchanged or blocks it entirely - it cannot attenuate it.</p>
 <p><strong>The practical upshot.</strong></p>
 <p>Every gradient pathology in deep learning has a gate-level diagnosis:</p>
@@ -358,7 +358,7 @@
 </blockquote>
 <h2 id="section-8-why-backward-and-not-forward">Section 8: Why Backward and Not Forward?</h2>
 <p>There are two orders in which you can multiply a chain of matrices. Suppose the chain is:</p>
-<p>$$\frac{\partial L}{\partial x} = \underbrace{\frac{\partial L}{\partial \hat{y}}}<em>{1 \times k} \cdot \underbrace{\frac{\partial \hat{y}}{\partial h}}</em>{k \times m} \cdot \underbrace{\frac{\partial h}{\partial z}}<em>{m \times m} \cdot \underbrace{\frac{\partial z}{\partial x}}</em>{m \times d}$$</p>
+<p>$$\frac{\partial L}{\partial x} = \underbrace{\frac{\partial L}{\partial \hat{y}}}_{1 \times k} \cdot \underbrace{\frac{\partial \hat{y}}{\partial h}}_{k \times m} \cdot \underbrace{\frac{\partial h}{\partial z}}_{m \times m} \cdot \underbrace{\frac{\partial z}{\partial x}}_{m \times d}$$</p>
 <p>Matrix multiplication is associative, so you can choose the order. There are two natural choices:</p>
 <p><strong>Forward accumulation</strong> (left to right): start with $\partial L / \partial \hat{y}$ and multiply each subsequent Jacobian on the right.</p>
 <p>At each step, the accumulated result is a row vector. Its size changes as you multiply: $1 \times k$, then $1 \times m$, then $1 \times m$, then $1 \times d$. Each multiplication involves a row vector times a matrix - cheap.</p>
@@ -372,7 +372,7 @@
 <hr>
 <h2 id="section-9-the-computational-graph">Section 9: The Computational Graph</h2>
 <p>Any computation can be represented as a directed acyclic graph (DAG), where each node is an operation and each edge carries a value. The forward pass evaluates nodes in topological order, and the backward pass does the same in reverse.</p>
-<p>For our two-layer network, the nodes are: multiply by $W_1$, add $b_1$, apply $\sigma$, multiply by $W_2$, add $b_2$, compute $|\cdot - y|^2$. Each has:</p>
+<p>For our two-layer network, the nodes are: multiply by $W_1$, add $b_1$, apply $\sigma$, multiply by $W_2$, add $b_2$, compute $\|\cdot - y\|^2$. Each has:</p>
 <ul>
 <li>A forward rule: how to compute the output given the input.</li>
 <li>A backward rule: how to compute the local Jacobian and multiply it with the upstream gradient.</li>
@@ -387,7 +387,7 @@
 <p><strong>The complete algorithm, stated precisely.</strong> Given a computation graph with nodes $v_1, \ldots, v_n$ in topological order (so $v_n$ is the loss):</p>
 <p>Forward pass: for $i = 1, \ldots, n$, compute $v_i$ from the values of its inputs. Store all intermediate values.</p>
 <p>Backward pass: initialize $\bar{v}_n = 1$ (the &ldquo;upstream gradient&rdquo; at the loss node is just 1, since $\partial L / \partial L = 1$). For $i = n-1, n-2, \ldots, 1$:</p>
-<p>$$\bar{v}<em>i = \sum</em>{j: j \text{ depends on } i} \bar{v}_j \cdot \frac{\partial v_j}{\partial v_i}$$</p>
+<p>$$\bar{v}_i = \sum_{j: j \text{ depends on } i} \bar{v}_j \cdot \frac{\partial v_j}{\partial v_i}$$</p>
 <p>At the end, $\bar{v}_i = \partial L / \partial v_i$ for every node $i$. In particular, $\bar{w}_k = \partial L / \partial w_k$ for every weight node $w_k$.</p>
 <p>This is backpropagation. It is a dynamic programming algorithm that computes all partial derivatives simultaneously by traversing the graph once backward.</p>
 <hr>
@@ -448,7 +448,7 @@
 <p>Backpropagation computes all $N$ partial derivatives in the cost of roughly two forward passes (one for the forward pass, one for the backward pass). This is not an approximation - it is exact (up to floating-point precision). The efficiency gain is a factor of $N/2$, which for large models is tens of millions.</p>
 <p>The efficiency follows entirely from the structure of the chain rule and the choice to evaluate it in reverse order, reusing intermediate results.</p>
 <p><strong>Numerical gradient checking.</strong> Even though finite differences cannot be used to train large networks, they are useful for verifying that your backpropagation implementation is correct. For a small test network, compute gradients with both backpropagation and finite differences, then compare:</p>
-<p>$$\text{relative error} = \frac{|\nabla_{\text{backprop}} L - \nabla_{\text{finite diff}} L|}{|\nabla_{\text{backprop}} L| + |\nabla_{\text{finite diff}} L|}$$</p>
+<p>$$\text{relative error} = \frac{\|\nabla_{\text{backprop}} L - \nabla_{\text{finite diff}} L\|}{\|\nabla_{\text{backprop}} L\| + \|\nabla_{\text{finite diff}} L\|}$$</p>
 <p>A relative error below $10^{-5}$ usually indicates a correct implementation. Larger errors indicate a bug in the backward pass. Gradient checking is the standard debugging tool for backpropagation implementations.</p>
 <p>The centered finite difference formula $[L(w_k + \epsilon) - L(w_k - \epsilon)] / (2\epsilon)$ is more accurate than the one-sided version, giving error $O(\epsilon^2)$ instead of $O(\epsilon)$. Use $\epsilon \approx 10^{-4}$ for checking with double precision.</p>
 <p><strong>Memory and the backward pass.</strong> One practical constraint: the backward pass must access the activations computed during the forward pass (you need $h$ to compute $\partial L / \partial W_2$, you need $z$ to evaluate $\sigma'(z)$, etc.). For deep networks, storing all intermediate activations requires memory proportional to the number of layers times the batch size times the layer width.</p>
@@ -525,8 +525,8 @@
 <td>n/a</td>
 </tr>
 <tr>
-<td>Squared loss $L = |y - t|^2$</td>
-<td>$L = |y - t|^2$</td>
+<td>Squared loss $L = \|y - t\|^2$</td>
+<td>$L = \|y - t\|^2$</td>
 <td>$2(y - t)^T$</td>
 <td>n/a</td>
 </tr>
@@ -563,7 +563,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

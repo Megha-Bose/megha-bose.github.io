@@ -188,7 +188,7 @@
 <li>Challenge: $c^* \leftarrow \text{Enc}_k(m_b)$.</li>
 <li>$A$ continues querying, then outputs $b'$.</li>
 </ol>
-<p><strong>Claim: any deterministic encryption scheme is CPA-insecure.</strong> $A$ queries $\text{Enc}_k(m_0)$ before the challenge. When it receives $c^<em>$, it checks if $c^</em> = \text{Enc}_k(m_0)$. If yes, $b' = 0$; else $b' = 1$. Determinism means $\text{Enc}_k(m_0)$ is always the same, so this wins with probability 1.</p>
+<p><strong>Claim: any deterministic encryption scheme is CPA-insecure.</strong> $A$ queries $\text{Enc}_k(m_0)$ before the challenge. When it receives $c^*$, it checks if $c^* = \text{Enc}_k(m_0)$. If yes, $b' = 0$; else $b' = 1$. Determinism means $\text{Enc}_k(m_0)$ is always the same, so this wins with probability 1.</p>
 <p><strong>Fix: randomized encryption.</strong> $\text{Enc}$ must be randomized - using fresh randomness each call. The same message encrypts to different ciphertexts on different calls.</p>
 <hr>
 <h2 id="pseudorandom-functions-and-permutations">Pseudorandom Functions and Permutations</h2>
@@ -199,7 +199,7 @@ where $k \leftarrow \{0,1\}^n$ and $f$ is a uniformly random function. The disti
 <p>PRFs exist if OWFs exist (via the Goldreich-Goldwasser-Micali construction). PRPs exist if PRFs exist - Luby-Rackoff: a 3-round Feistel network with PRF round functions gives a PRP.</p>
 <hr>
 <h2 id="modes-of-operation">Modes of Operation</h2>
-<p>A block cipher $F_k: \{0,1\}^n \to \{0,1\}^n$ encrypts one $n$-bit block. To encrypt a variable-length message $m = m_1 | m_2 | \cdots | m_\ell$, choose a mode of operation.</p>
+<p>A block cipher $F_k: \{0,1\}^n \to \{0,1\}^n$ encrypts one $n$-bit block. To encrypt a variable-length message $m = m_1 \| m_2 \| \cdots \| m_\ell$, choose a mode of operation.</p>
 <h3 id="ecb-electronic-codebook---broken">ECB (Electronic Codebook) - Broken</h3>
 <p>$c_i = F_k(m_i)$. Each block encrypted independently with the same key.</p>
 <p><strong>Why it fails:</strong> Deterministic. Identical plaintext blocks produce identical ciphertext blocks. The famous ECB penguin: an image encrypted block-by-block in ECB retains its visual structure because pixel blocks with the same values encrypt identically. Never use ECB for more than one block.</p>
@@ -212,13 +212,13 @@ Decryption: $m_i = F_k^{-1}(c_i) \oplus c_{i-1}$.</p>
 <p>$$z_0 = \text{IV}, \quad z_i = F_k(z_{i-1}), \quad c_i = m_i \oplus z_i$$
 The keystream $z_1, z_2, \ldots$ is computed from $F_k$ applied to itself, independently of the message. Encryption reduces to XOR with a pseudorandom stream. This turns the block cipher into a stream cipher. The keystream can be precomputed. Error propagation: a bit flip in $c_i$ corrupts only $m_i$ (unlike CBC where a flip in $c_i$ also scrambles $m_{i+1}$).</p>
 <h3 id="ctr-counter-mode">CTR (Counter Mode)</h3>
-<p>$$c_i = m_i \oplus F_k(\text{IV} | i)$$
-The keystream is $F_k(\text{IV}|1), F_k(\text{IV}|2), \ldots$ - the block cipher applied to a counter. Fully parallelizable (unlike CBC). Standard and widely used (AES-CTR).</p>
+<p>$$c_i = m_i \oplus F_k(\text{IV} \| i)$$
+The keystream is $F_k(\text{IV}\|1), F_k(\text{IV}\|2), \ldots$ - the block cipher applied to a counter. Fully parallelizable (unlike CBC). Standard and widely used (AES-CTR).</p>
 <p>CTR and OFB are CPA-secure. For multi-message security, the IV must be unique (not necessarily random) - no two encryptions under the same key should use the same counter block.</p>
 <hr>
 <h2 id="cpa-security-from-prf">CPA Security from PRF</h2>
 <p><strong>Theorem.</strong> CTR mode using a PRF is CPA-secure.</p>
-<p><em>Proof sketch.</em> The keystream from $F_k(\text{IV}|i)$ with a random IV is indistinguishable from a truly random string. XOR with a random string gives a one-time-pad-secure encryption. Any distinguisher for CTR output can be used to distinguish $F_k$ from a random function - contradicting PRF security. $\square$</p>
+<p><em>Proof sketch.</em> The keystream from $F_k(\text{IV}\|i)$ with a random IV is indistinguishable from a truly random string. XOR with a random string gives a one-time-pad-secure encryption. Any distinguisher for CTR output can be used to distinguish $F_k$ from a random function - contradicting PRF security. $\square$</p>
 <p>The formal proof uses a hybrid: replace $F_k$ with a truly random function, show security under the random function (direct argument), then argue the replacement was undetectable (PRF security).</p>
 <hr>
 <h2 id="chosen-ciphertext-security-cca">Chosen-Ciphertext Security (CCA)</h2>
@@ -328,7 +328,8 @@ The keystream is $F_k(\text{IV}|1), F_k(\text{IV}|2), \ldots$ - the block cipher
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

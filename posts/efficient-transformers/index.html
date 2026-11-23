@@ -254,7 +254,7 @@
 <li><strong>Communication overhead:</strong> in distributed training, expert outputs from different GPUs must be aggregated. This &ldquo;all-to-all&rdquo; communication becomes a bottleneck.</li>
 </ul>
 <p><strong>Load balancing is the hardest part.</strong> A naive MoE collapses: the router learns to always send tokens to the same 1-2 experts (they get more gradient signal, get better, attract more tokens - a rich-get-richer collapse). Every serious MoE implementation adds a load balancing auxiliary loss:</p>
-<p>$$\mathcal{L}<em>{\text{aux}} = \alpha \sum</em>{i=1}^{E} f_i \cdot P_i$$</p>
+<p>$$\mathcal{L}_{\text{aux}} = \alpha \sum_{i=1}^{E} f_i \cdot P_i$$</p>
 <p>where $f_i$ is the fraction of tokens routed to expert $i$, $P_i$ is the average routing probability for expert $i$, and $\alpha$ controls the strength. In perfect balance, $f_i = P_i = 1/E$ for all $i$, so $\mathcal{L}_{\text{aux}} = \alpha/E$. Any deviation increases this loss. The coefficient $\alpha$ must be tuned carefully - too small and experts collapse, too large and the router becomes uniform (ignoring token content entirely).</p>
 <p><strong>Shared experts</strong> (used in DeepSeek-V2/V3) are always-active experts that absorb common patterns, freeing specialised experts to focus on rarer distributions. One shared expert is typically sufficient. <strong>Expert granularity</strong> - more experts with smaller dimensions vs fewer with larger - trades off parameter efficiency against specialization. Recent models (DeepSeek, Kimi K2) use high sparsity: 8 active experts out of 64-384 total. Loss-free load balancing (DeepSeek-V3 approach) adds a learned bias to routing scores rather than a loss term, avoiding interference with the primary training objective.</p>
 <hr>
@@ -374,7 +374,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

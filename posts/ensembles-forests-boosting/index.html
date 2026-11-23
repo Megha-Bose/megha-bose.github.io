@@ -209,7 +209,7 @@
 <p>$$F_m(x) = F_{m-1}(x) + \eta \cdot h_m(x)$$</p>
 <p>where $\eta$ is a learning rate (shrinkage) and $h_m$ is the $m$-th base learner, a small decision tree. The key question is what $h_m$ should approximate. The answer is: the <strong>negative gradient</strong> of the loss evaluated at the current ensemble predictions.</p>
 <p>Define the pseudo-residuals at step $m$:</p>
-<p>$$r_i^{(m)} = -\left.\frac{\partial \mathcal{L}(y_i, F(x_i))}{\partial F(x_i)}\right|<em>{F = F</em>{m-1}}$$</p>
+<p>$$r_i^{(m)} = -\left.\frac{\partial \mathcal{L}(y_i, F(x_i))}{\partial F(x_i)}\right|_{F = F_{m-1}}$$</p>
 <p>The new tree $h_m$ is fitted to these pseudo-residuals: minimize $\sum_i (r_i^{(m)} - h_m(x_i))^2$. The tree is then added to the ensemble, and the process repeats.</p>
 <p>For squared-error loss $\mathcal{L}(y, F) = \frac{1}{2}(y - F)^2$, the negative gradient is simply $r_i = y_i - F_{m-1}(x_i)$, the ordinary residual. This is exactly residual fitting: each tree corrects the errors of the current ensemble. For other loss functions, the pseudo-residuals generalize this notion. For log-loss (binary classification), the gradient involves the probability estimates of the current model, automatically downweighting examples the model is already confident about. For absolute loss $\mathcal{L}(y, F) = |y - F|$, the pseudo-residuals are signs, producing a robust form of boosting less sensitive to outliers than squared-error boosting.</p>
 <p>The learning rate $\eta$ is a shrinkage parameter that scales each tree&rsquo;s contribution. Smaller $\eta$ means more trees are needed but typically gives better generalization: slower learning lets each tree correct only a small portion of the current error, preventing any single tree from dominating. The practical recommendation is to use small $\eta$ (0.01 to 0.1) and early stopping on a validation set to choose $T$.</p>
@@ -219,7 +219,7 @@
 <p>At step $m$, define for each example:</p>
 <p>$$g_i = \frac{\partial \mathcal{L}(y_i, F_{m-1}(x_i))}{\partial F_{m-1}(x_i)}, \qquad h_i = \frac{\partial^2 \mathcal{L}(y_i, F_{m-1}(x_i))}{\partial F_{m-1}(x_i)^2}$$</p>
 <p>The second-order approximation of the objective with respect to the new tree&rsquo;s outputs gives a closed-form optimal leaf weight for each leaf $j$:</p>
-<p>$$w_j^* = -\frac{\sum_{i \in \text{leaf}<em>j} g_i}{\sum</em>{i \in \text{leaf}_j} h_i + \lambda}$$</p>
+<p>$$w_j^* = -\frac{\sum_{i \in \text{leaf}_j} g_i}{\sum_{i \in \text{leaf}_j} h_i + \lambda}$$</p>
 <p>where $\lambda$ is an L2 regularization term on leaf weights. The quality score for a tree structure is also derived in closed form, so XGBoost can evaluate candidate splits analytically. An L1 penalty $\alpha$ on leaf weights further promotes sparsity.</p>
 <p>Additional improvements in XGBoost over standard GBM:</p>
 <ul>
@@ -352,7 +352,8 @@ model<span style="color:#f92672">.</span>fit(
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

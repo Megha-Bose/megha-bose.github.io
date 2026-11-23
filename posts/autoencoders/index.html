@@ -170,18 +170,18 @@
 <hr>
 <h2 id="standard-autoencoders">Standard Autoencoders</h2>
 <p>An autoencoder is a composition of two functions. The <strong>encoder</strong> $f: \mathbb{R}^D \to \mathbb{R}^d$ maps an input $x$ to a code (latent representation) $z = f(x)$. The <strong>decoder</strong> $g: \mathbb{R}^d \to \mathbb{R}^D$ maps the code back to input space. The model is trained to minimize the <strong>reconstruction loss</strong> over a dataset $\{x^{(i)}\}$:</p>
-<p>$$\mathcal{L} = \frac{1}{n} \sum_{i=1}^n | x^{(i)} - g(f(x^{(i)})) |^2$$</p>
+<p>$$\mathcal{L} = \frac{1}{n} \sum_{i=1}^n \| x^{(i)} - g(f(x^{(i)})) \|^2$$</p>
 <p>The critical constraint is $d \ll D$: the code dimension is much smaller than the input dimension. This bottleneck is what forces the encoder to compress. Without it, the network could learn the identity map with zero loss and zero effort. With it, the network must decide what to preserve and what to discard, and the right answer is to preserve whatever accounts for the most variation across the dataset.</p>
 <p>The encoder and decoder are typically parameterized as multilayer perceptrons. The encoder might be $f(x) = \sigma(W_2 \sigma(W_1 x + b_1) + b_2)$ for some weight matrices $W_1, W_2$ and activation $\sigma$; the decoder mirrors this structure. Training is done by gradient descent on $\mathcal{L}$ via backpropagation - there are no special labels, only the input itself serving as its own target. This is why autoencoders are called self-supervised.</p>
 <p>The latent code $z$ can be used for downstream tasks. If the encoder has learned a good representation, a linear classifier on $z$ should perform well even when the original data is too high-dimensional for direct classification. This is the representation learning payoff: the compression forces the network to discover the factors of variation that generalize.</p>
 <hr>
 <h2 id="linear-autoencoders-and-pca">Linear Autoencoders and PCA</h2>
 <p>Suppose both the encoder and decoder are linear functions: $f(x) = Wx$ with $W \in \mathbb{R}^{d \times D}$, and $g(z) = Vz$ with $V \in \mathbb{R}^{D \times d}$. The reconstruction loss becomes:</p>
-<p>$$\mathcal{L} = \frac{1}{n} \sum_{i=1}^n | x^{(i)} - VWx^{(i)} |^2 = | X - XW^\top V^\top |_F^2$$</p>
+<p>$$\mathcal{L} = \frac{1}{n} \sum_{i=1}^n \| x^{(i)} - VWx^{(i)} \|^2 = \| X - XW^\top V^\top \|_F^2$$</p>
 <p>where $X \in \mathbb{R}^{n \times D}$ is the data matrix (rows are examples, assumed mean-centered).</p>
 <p>The claim is that the optimal linear autoencoder performs <strong>exactly PCA</strong>. More precisely, the composition $VW$ at the minimum of $\mathcal{L}$ is the orthogonal projection onto the subspace spanned by the top $d$ eigenvectors of the sample covariance matrix $\Sigma = \frac{1}{n} X^\top X$.</p>
 <p><strong>Proof via SVD.</strong> Let $X = U S V^\top$ be the singular value decomposition, where $U \in \mathbb{R}^{n \times D}$ has orthonormal columns, $S = \mathrm{diag}(\sigma_1, \ldots, \sigma_r)$ with $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r &gt; 0$, and $V \in \mathbb{R}^{D \times D}$ is orthogonal. The columns of $V$ are the eigenvectors of $X^\top X$, and $\sigma_k^2 / n$ are the eigenvalues of the covariance matrix.</p>
-<p>The reconstruction error is $|X - XV^\top W^\top W V|_F^2$ after substituting $W = \tilde{W} V^\top$ for some $\tilde{W}$. Working in the eigenvector basis, we want to find the rank-$d$ matrix $P = V W^\top W V^\top$ that minimizes $|X - XP|_F^2$. By the Eckart-Young theorem, the best rank-$d$ approximation to $X$ in Frobenius norm is $X_d = U_d S_d V_d^\top$, where $U_d, S_d, V_d$ are the leading $d$ components of the SVD. The projection is:</p>
+<p>The reconstruction error is $\|X - XV^\top W^\top W V\|_F^2$ after substituting $W = \tilde{W} V^\top$ for some $\tilde{W}$. Working in the eigenvector basis, we want to find the rank-$d$ matrix $P = V W^\top W V^\top$ that minimizes $\|X - XP\|_F^2$. By the Eckart-Young theorem, the best rank-$d$ approximation to $X$ in Frobenius norm is $X_d = U_d S_d V_d^\top$, where $U_d, S_d, V_d$ are the leading $d$ components of the SVD. The projection is:</p>
 <p>$$P^\star = V_d V_d^\top$$</p>
 <p>where $V_d \in \mathbb{R}^{D \times d}$ contains the top $d$ right singular vectors of $X$ (equivalently, top $d$ eigenvectors of the covariance matrix). The minimum reconstruction error is:</p>
 <p>$$\mathcal{L}^\star = \sum_{k=d+1}^{r} \sigma_k^2$$</p>
@@ -196,12 +196,12 @@
 <p>This is not just a geometric metaphor. It is why learned representations generalize: if the encoder captures the true degrees of freedom of the data, then points that are nearby on the manifold (similar images, similar sentences) map to nearby codes, and the downstream classifier can draw simple boundaries in code space even when the raw data requires complicated decision surfaces.</p>
 <hr>
 <h2 id="denoising-autoencoders">Denoising Autoencoders</h2>
-<p>A standard autoencoder trained to minimize $|x - g(f(x))|^2$ has a pathological solution: if $d \geq D$, the network can learn the identity map exactly, achieving zero loss without learning anything. Even with $d &lt; D$, a sufficiently expressive network can overfit and fail to generalize. The <strong>denoising autoencoder (DAE)</strong>, introduced by Vincent et al., fixes this by changing the problem.</p>
+<p>A standard autoencoder trained to minimize $\|x - g(f(x))\|^2$ has a pathological solution: if $d \geq D$, the network can learn the identity map exactly, achieving zero loss without learning anything. Even with $d &lt; D$, a sufficiently expressive network can overfit and fail to generalize. The <strong>denoising autoencoder (DAE)</strong>, introduced by Vincent et al., fixes this by changing the problem.</p>
 <p>Instead of reconstructing $x$ from $x$, the DAE is trained to reconstruct a clean input $x$ from a corrupted version $\tilde{x}$. Two corruption processes are common:</p>
 <p><strong>Gaussian noise:</strong> $\tilde{x} = x + \varepsilon$ where $\varepsilon \sim \mathcal{N}(0, \sigma^2 I)$.</p>
 <p><strong>Masking noise:</strong> each coordinate of $x$ is independently set to zero with probability $p$ (also called dropout noise).</p>
 <p>The loss is:</p>
-<p>$$\mathcal{L}<em>{\mathrm{DAE}} = \mathbb{E}</em>{x \sim p_{\mathrm{data}}}  \mathbb{E}_{\tilde{x} \sim q(\tilde{x}|x)} \left[ | x - g(f(\tilde{x})) |^2 \right]$$</p>
+<p>$$\mathcal{L}_{\mathrm{DAE}} = \mathbb{E}_{x \sim p_{\mathrm{data}}}  \mathbb{E}_{\tilde{x} \sim q(\tilde{x}|x)} \left[ \| x - g(f(\tilde{x})) \|^2 \right]$$</p>
 <p>The network sees corrupted $\tilde{x}$ but must predict clean $x$. This forces it to learn which directions in input space are informative (and thus worth recovering) and which are noise. The identity map is no longer a valid solution - applying the identity to $\tilde{x}$ reproduces the noise, not the signal.</p>
 <p><strong>Why DAEs learn the manifold.</strong> The optimal reconstruction $g(f(\tilde{x}))$ under squared loss is the conditional mean $\mathbb{E}[x \mid \tilde{x}]$. For small Gaussian noise $\varepsilon$ with covariance $\sigma^2 I$, this conditional mean points from $\tilde{x}$ back toward the data manifold: roughly, $\mathbb{E}[x \mid \tilde{x}] \approx \tilde{x} + \sigma^2 \nabla_x \log p(\tilde{x})$. The reconstruction vector $g(f(\tilde{x})) - \tilde{x}$ therefore approximates the <strong>score function</strong> $\nabla_x \log p(x)$ of the data distribution.</p>
 <p>This connection - denoising is equivalent to score matching - is the foundation of modern diffusion models. A DAE trained at noise level $\sigma$ is learning to estimate the score of the data distribution convolved with Gaussian noise of that level. The data manifold is the zero-set of the score-based vector field: it is where all the denoising arrows point toward. By forcing the network to denoise, we force it to learn the geometry of the data distribution, not just a compact representation of the training set.</p>
@@ -210,17 +210,17 @@
 <h2 id="sparse-autoencoders">Sparse Autoencoders</h2>
 <p>The bottleneck in a standard autoencoder achieves compression through dimensionality: $d \ll D$. A <strong>sparse autoencoder (SAE)</strong> achieves a different kind of compression: the code $h = f(x) \in \mathbb{R}^d$ is forced to be sparse, meaning that most of its entries are zero for any given input, even if $d \geq D$.</p>
 <p>The training objective adds an $\ell_1$ penalty on the hidden activations:</p>
-<p>$$\mathcal{L}_{\mathrm{SAE}} = | x - g(f(x)) |^2 + \lambda | h |_1$$</p>
-<p>where $h = f(x)$ and $\lambda &gt; 0$ controls the sparsity-reconstruction tradeoff. The $\ell_1$ norm $|h|_1 = \sum_k |h_k|$ is chosen over $\ell_2$ because it induces true zeros in the solution (by the subdifferential analysis of the $\ell_1$ penalty, a coordinate $h_k$ is set to exactly zero whenever the reconstruction gradient at that coordinate is small relative to $\lambda$).</p>
+<p>$$\mathcal{L}_{\mathrm{SAE}} = \| x - g(f(x)) \|^2 + \lambda \| h \|_1$$</p>
+<p>where $h = f(x)$ and $\lambda &gt; 0$ controls the sparsity-reconstruction tradeoff. The $\ell_1$ norm $\|h\|_1 = \sum_k |h_k|$ is chosen over $\ell_2$ because it induces true zeros in the solution (by the subdifferential analysis of the $\ell_1$ penalty, a coordinate $h_k$ is set to exactly zero whenever the reconstruction gradient at that coordinate is small relative to $\lambda$).</p>
 <p><strong>Overcomplete dictionaries.</strong> The striking regime is $d &gt; D$: the code dimension exceeds the input dimension. A standard autoencoder with $d &gt; D$ has no compression pressure at all and trivially learns the identity. An SAE with $d &gt; D$ is different: the code is high-dimensional but must be sparse - only $k \ll d$ entries active per input. This forces the model to learn an overcomplete dictionary of $d$ features such that any input can be reconstructed from a small subset of them. The analogy is to sparse coding: just as $k$-sparse signals can be recovered from few measurements via compressed sensing when the dictionary is incoherent, an SAE learns a dictionary in which each training example activates a small, distinct subset of features.</p>
 <p><strong>Why sparsity helps interpretability.</strong> A dense code $h \in \mathbb{R}^d$ is hard to interpret: every coordinate mixes many underlying factors. A sparse code is far more interpretable: if $h_k$ is active only when a particular feature is present in $x$, then $h_k$ can be associated with that feature by inspection. This is the basis for the application of sparse autoencoders in <strong>mechanistic interpretability</strong> of large language models.</p>
 <p>The superposition hypothesis, developed in circuits-style research, posits that neural networks store more concepts than they have neurons by representing each concept as a sparse linear combination of neurons (the neurons &ldquo;superpose&rdquo; many features in their activations). SAEs trained on the residual stream or MLP activations of a transformer can decompose these superposed representations: each SAE feature corresponds to a specific, human-interpretable concept (a name, a syntactic role, a factual category). Because the dictionary is overcomplete and the codes are sparse, each concept activates on the appropriate inputs and is silent otherwise - recovering the individual &ldquo;virtual neurons&rdquo; that the transformer has mixed together.</p>
 <hr>
 <h2 id="contractive-autoencoders">Contractive Autoencoders</h2>
 <p>The <strong>contractive autoencoder (CAE)</strong> regularizes the encoder by penalizing the sensitivity of the code to small input perturbations. Specifically, it adds a penalty on the Frobenius norm of the Jacobian of the encoder:</p>
-<p>$$\mathcal{L}_{\mathrm{CAE}} = | x - g(f(x)) |^2 + \lambda | J_f(x) |_F^2$$</p>
+<p>$$\mathcal{L}_{\mathrm{CAE}} = \| x - g(f(x)) \|^2 + \lambda \| J_f(x) \|_F^2$$</p>
 <p>where $J_f(x) \in \mathbb{R}^{d \times D}$ is the Jacobian of $f$ at $x$, with $(J_f)_{ij} = \partial f_i / \partial x_j$.</p>
-<p>The Frobenius norm $|J_f(x)|<em>F^2 = \sum</em>{i,j} (\partial f_i / \partial x_j)^2$ measures the total squared sensitivity: how much the code changes when the input is perturbed in any direction. Minimizing this forces the encoder to be locally contractive - to map nearby inputs to nearby codes, with small derivatives.</p>
+<p>The Frobenius norm $\|J_f(x)\|_F^2 = \sum_{i,j} (\partial f_i / \partial x_j)^2$ measures the total squared sensitivity: how much the code changes when the input is perturbed in any direction. Minimizing this forces the encoder to be locally contractive - to map nearby inputs to nearby codes, with small derivatives.</p>
 <p><strong>Why contraction is the right regularizer.</strong> The encoder&rsquo;s Jacobian has two kinds of directions: those tangent to the data manifold, and those normal to it. The reconstruction loss requires that the encoder be invertible (via the decoder) along the manifold - otherwise reconstruction fails. So the encoder&rsquo;s Jacobian cannot be small in the tangent directions. But in the normal directions - perturbations that move $x$ off the manifold - the encoder is free to contract sharply. The Jacobian penalty therefore pushes the encoder to have small singular values in the normal directions and larger ones in the tangent directions. This means the encoder has learned to distinguish tangent from normal: it knows the manifold.</p>
 <p><strong>Connection to DAEs.</strong> Alain and Bengio (2014) showed that for small Gaussian noise $\varepsilon \sim \mathcal{N}(0, \sigma^2 I)$, a DAE and a CAE converge to the same solution in the limit $\sigma \to 0$ when $\lambda = \sigma^2$. Both regularizers enforce the same geometric constraint - that the representation is insensitive to off-manifold perturbations - but via different mechanisms. The DAE does it by averaging over corrupted inputs; the CAE does it by directly penalizing the Jacobian. The equivalence confirms that the Jacobian penalty is the &ldquo;right&rdquo; thing to regularize.</p>
 <hr>
@@ -238,7 +238,7 @@
 <p>where $\sigma(x) = 1/(1 + e^{-x})$ is the sigmoid function and $W_{:j}$ is the $j$-th column of $W$. Each hidden unit $h_j$ turns on with probability that depends on how much the input $v$ aligns with the $j$-th column of $W$ - the $j$-th feature detector. Each visible unit $v_i$ turns on with probability determined by how much the hidden configuration $h$ supports pixel $i$.</p>
 <p>This factored structure means that given $v$, all $h_j$ can be sampled in parallel (no need to sample one at a time). Likewise given $h$, all $v_i$ can be sampled in parallel. This makes <strong>block Gibbs sampling</strong> efficient: alternate between sampling the full hidden layer given the visible, and sampling the full visible layer given the hidden.</p>
 <p><strong>Training: Contrastive Divergence.</strong> The log-likelihood gradient for an RBM is:</p>
-<p>$$\frac{\partial \log P(v)}{\partial W} = \mathbb{E}<em>{h \sim P(h|v)}[v h^\top] - \mathbb{E}</em>{(v',h') \sim P(v,h)}[v' h'^\top]$$</p>
+<p>$$\frac{\partial \log P(v)}{\partial W} = \mathbb{E}_{h \sim P(h|v)}[v h^\top] - \mathbb{E}_{(v',h') \sim P(v,h)}[v' h'^\top]$$</p>
 <p>The first term - the <strong>positive phase</strong> - is a sample from the model distribution with the visible units clamped to data. Since $P(h|v)$ is factorial, computing this expectation is tractable: $\mathbb{E}[h_j \mid v] = \sigma(c_j + v^\top W_{:j})$.</p>
 <p>The second term - the <strong>negative phase</strong> - requires sampling from the joint $P(v,h)$, which is intractable in general (it requires running Gibbs sampling to convergence). Hinton&rsquo;s <strong>contrastive divergence</strong> (CD-$k$) approximates this by running only $k$ steps of block Gibbs starting from the data:</p>
 <ol>
@@ -251,13 +251,13 @@
 <p>The gradient update is:</p>
 <p>$$\Delta W \propto \mathbb{E}[v^{(0)} (h^{(0)})^\top] - \mathbb{E}[v^{(k)} (h^{(k)})^\top]$$</p>
 <p>with analogous updates for $b$ and $c$.</p>
-<p><strong>Why CD-1 works.</strong> With $k = 1$ step, the negative phase sample $v^{(1)}$ is just one step away from the data. This is a biased estimator of the true gradient, but it works well in practice for two reasons. First, the bias decreases as training progresses - as the model improves, the one-step reconstruction $v^{(1)}$ comes to resemble the true model distribution. Second, CD-1 can be seen as minimizing a different objective (the contrastive divergence $\mathrm{KL}(p_0 | p_\infty) - \mathrm{KL}(p_1 | p_\infty)$, where $p_k$ is the distribution after $k$ Gibbs steps from data), which is well-defined and has the right fixed points.</p>
+<p><strong>Why CD-1 works.</strong> With $k = 1$ step, the negative phase sample $v^{(1)}$ is just one step away from the data. This is a biased estimator of the true gradient, but it works well in practice for two reasons. First, the bias decreases as training progresses - as the model improves, the one-step reconstruction $v^{(1)}$ comes to resemble the true model distribution. Second, CD-1 can be seen as minimizing a different objective (the contrastive divergence $\mathrm{KL}(p_0 \| p_\infty) - \mathrm{KL}(p_1 \| p_\infty)$, where $p_k$ is the distribution after $k$ Gibbs steps from data), which is well-defined and has the right fixed points.</p>
 <p>The positive phase increases the probability of data configurations; the negative phase decreases the probability of reconstructed (&ldquo;fantasy&rdquo;) configurations. This push-pull dynamic is the RBM&rsquo;s analog of maximizing likelihood, and it is what gives the model its generative power.</p>
 <p><strong>Deep Boltzmann Machines.</strong> Multiple RBMs can be stacked: the hidden units of one become the visible units of the next. Training is typically done greedily, one layer at a time. This yields a deep generative model with multiple levels of abstraction in its hidden representations. Deep Boltzmann Machines (DBMs) have joint connections between all adjacent layers and require a more sophisticated training procedure (variational mean-field inference for the positive phase), but they capture richer dependencies than stacked RBMs.</p>
 <hr>
 <h2 id="applications">Applications</h2>
 <p>The variants above each have a natural domain of application, shaped by what their regularizer enforces.</p>
-<p><strong>Anomaly detection.</strong> A standard autoencoder trained on normal data learns to reconstruct normal inputs well. Anomalous inputs - fraud, equipment faults, novel disease presentations - are off the learned manifold and reconstruct poorly. The reconstruction error $|x - g(f(x))|^2$ serves directly as an anomaly score, with no labeled anomaly examples needed during training. Denoising autoencoders work especially well here because the learned manifold is smoother and more stable.</p>
+<p><strong>Anomaly detection.</strong> A standard autoencoder trained on normal data learns to reconstruct normal inputs well. Anomalous inputs - fraud, equipment faults, novel disease presentations - are off the learned manifold and reconstruct poorly. The reconstruction error $\|x - g(f(x))\|^2$ serves directly as an anomaly score, with no labeled anomaly examples needed during training. Denoising autoencoders work especially well here because the learned manifold is smoother and more stable.</p>
 <p><strong>Representation learning.</strong> The encoder $f$ of any trained autoencoder can be used as a feature extractor. The resulting code $z = f(x)$ is typically much lower-dimensional than $x$ and captures semantically meaningful variation. Linear classifiers trained on $z$ often match or exceed nonlinear classifiers trained on $x$ directly - evidence that the autoencoder has extracted the relevant structure.</p>
 <p><strong>Generative sampling.</strong> RBMs are genuine generative models: block Gibbs sampling from $P(v)$ produces new samples from the learned distribution. Run Gibbs for sufficiently many steps starting from random noise, and the chain converges to samples from the model. This gives RBMs the ability to hallucinate new examples - new faces, new digits - that were not in the training set but look like they could have been.</p>
 <p><strong>Mechanistic interpretability.</strong> Sparse autoencoders trained on transformer activations have become a primary tool in the circuits research agenda for understanding large language models. The SAE decomposes the dense, superposed activations of a model into a sparse combination of human-interpretable features. By identifying which SAE features activate on which inputs, researchers can reverse-engineer what a model has learned: which features encode factual knowledge, which encode syntax, which mediate specific reasoning steps. The overcomplete, sparse code is essential here - a dense code would not give clean feature-to-concept correspondences.</p>
@@ -274,32 +274,32 @@
 <tbody>
 <tr>
 <td>Standard AE</td>
-<td>$|x - g(f(x))|^2$</td>
+<td>$\|x - g(f(x))\|^2$</td>
 <td>Compression via bottleneck $d \ll D$</td>
 </tr>
 <tr>
 <td>Linear AE</td>
-<td>$|x - g(f(x))|^2$, linear $f,g$</td>
+<td>$\|x - g(f(x))\|^2$, linear $f,g$</td>
 <td>Equivalent to PCA; optimal $VW = V_d V_d^\top$</td>
 </tr>
 <tr>
 <td>Nonlinear AE</td>
-<td>$|x - g(f(x))|^2$, nonlinear $f,g$</td>
+<td>$\|x - g(f(x))\|^2$, nonlinear $f,g$</td>
 <td>Learns curved manifolds; beyond PCA</td>
 </tr>
 <tr>
 <td>Denoising AE</td>
-<td>$\mathbb{E}|x - g(f(\tilde{x}))|^2$</td>
+<td>$\mathbb{E}\|x - g(f(\tilde{x}))\|^2$</td>
 <td>Learns score function; manifold-aware</td>
 </tr>
 <tr>
 <td>Sparse AE</td>
-<td>$|x - g(f(x))|^2 + \lambda|h|_1$</td>
+<td>$\|x - g(f(x))\|^2 + \lambda\|h\|_1$</td>
 <td>Sparse codes; overcomplete dictionaries; interpretability</td>
 </tr>
 <tr>
 <td>Contractive AE</td>
-<td>$|x - g(f(x))|^2 + \lambda|J_f|_F^2$</td>
+<td>$\|x - g(f(x))\|^2 + \lambda\|J_f\|_F^2$</td>
 <td>Small Jacobian off manifold; equiv. to DAE in limit</td>
 </tr>
 <tr>
@@ -330,7 +330,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

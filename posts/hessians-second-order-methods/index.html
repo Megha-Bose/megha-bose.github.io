@@ -267,8 +267,8 @@ $$\frac{\partial^2 f}{\partial x \partial y} = 2x + 3y^2$$</p>
 <p>So $\lambda_i$ is exactly the curvature of $f$ in the direction $v_i$. A positive eigenvalue means upward curvature (bowl) in that direction; a negative eigenvalue means downward curvature (hill) in that direction.</p>
 <blockquote>
 <p><strong>Discomfort check: how does the Hessian become diagonal in the eigenbasis?</strong></p>
-<p>A matrix representation records what a linear map does to each basis vector. In the standard basis ${e_1, e_2}$, the $(i,j)$ entry of $H$ records how much of $e_i$ appears in the output $He_j$. Off-diagonal entries are nonzero because $He_j$ is typically a mix of $e_1$ and $e_2$ - one axis&rsquo;s output contaminates the other.</p>
-<p>Switch to the eigenbasis ${v_1, \ldots, v_n}$. The $(i,j)$ entry now records how much of $v_i$ appears in $Hv_j$. By the definition of eigenvector:
+<p>A matrix representation records what a linear map does to each basis vector. In the standard basis $\{e_1, e_2\}$, the $(i,j)$ entry of $H$ records how much of $e_i$ appears in the output $He_j$. Off-diagonal entries are nonzero because $He_j$ is typically a mix of $e_1$ and $e_2$ - one axis&rsquo;s output contaminates the other.</p>
+<p>Switch to the eigenbasis $\{v_1, \ldots, v_n\}$. The $(i,j)$ entry now records how much of $v_i$ appears in $Hv_j$. By the definition of eigenvector:
 $$Hv_j = \lambda_j v_j.$$
 The output lies entirely in the $v_j$ direction. There is no component of any other $v_i$ ($i \neq j$) present. So the off-diagonal entries vanish before any calculation is needed - it is an immediate consequence of what an eigenvector is.</p>
 <p><strong>The algebra.</strong> The $(i,j)$ entry in the eigenbasis is $v_i^T(Hv_j) = v_i^T(\lambda_j v_j) = \lambda_j(v_i \cdot v_j)$. Since $H$ is symmetric, its eigenvectors are orthogonal: $v_i \cdot v_j = 0$ for $i \neq j$. Off-diagonal entry: $\lambda_j \cdot 0 = 0$. Diagonal entry ($i = j$): $\lambda_i (v_i \cdot v_i) = \lambda_i \cdot 1 = \lambda_i$. The Hessian in the eigenbasis is $\text{diag}(\lambda_1, \ldots, \lambda_n)$.</p>
@@ -363,9 +363,9 @@ Each eigenvector direction contributes independently, with eigenvalue $\lambda_i
 </tbody>
 </table>
 <p><strong>Proof of sufficiency for minimum.</strong> Suppose all eigenvalues $\lambda_i &gt; 0$. Let $\lambda_{\min} = \min_i \lambda_i &gt; 0$. Then:</p>
-<p>$$\delta^T H \delta = \sum_i \lambda_i c_i^2 \geq \lambda_{\min} \sum_i c_i^2 = \lambda_{\min} |\delta|^2$$</p>
+<p>$$\delta^T H \delta = \sum_i \lambda_i c_i^2 \geq \lambda_{\min} \sum_i c_i^2 = \lambda_{\min} \|\delta\|^2$$</p>
 <p>By the Taylor expansion:</p>
-<p>$$f(x^\ast + \delta) \approx f(x^\ast) + \frac{1}{2} \delta^T H \delta \geq f(x^\ast) + \frac{\lambda_{\min}}{2} |\delta|^2 &gt; f(x^\ast)$$</p>
+<p>$$f(x^\ast + \delta) \approx f(x^\ast) + \frac{1}{2} \delta^T H \delta \geq f(x^\ast) + \frac{\lambda_{\min}}{2} \|\delta\|^2 &gt; f(x^\ast)$$</p>
 <p>for small $\delta \neq 0$. So $x^\ast$ is a local minimum. $\square$</p>
 <p>The same argument with $\lambda_{\max} &lt; 0$ gives a local maximum.</p>
 <p>The indefinite case: there exist directions $v_+$ (eigenvector of positive eigenvalue) where $f$ increases and directions $v_-$ (eigenvector of negative eigenvalue) where $f$ decreases. This is exactly a saddle - uphill in some directions, downhill in others.</p>
@@ -395,7 +395,7 @@ Each eigenvector direction contributes independently, with eigenvalue $\lambda_i
 <li>Error of $0.01$: after one Newton step, error is approximately $0.0001$.</li>
 </ul>
 <p>The number of correct decimal digits doubles at each step. In practice, Newton&rsquo;s method often reaches machine precision in 5-10 steps, regardless of the problem.</p>
-<p><strong>Why the quadratic convergence?</strong> The Taylor expansion has an error term of order $|\delta|^3$. Near the minimum, this cubic error is what remains after the Newton step eliminates the linear and quadratic terms. If the current distance to the minimum is $\epsilon$, the error after the Newton step is $O(\epsilon^3) / O(\epsilon^2) = O(\epsilon)$&hellip; actually $O(\epsilon^2)$ after careful analysis, because the cubic remainder is $O(\epsilon^3)$ and dividing by the Hessian (which is $O(1)$) gives $O(\epsilon^3) / \lambda_{\min} \sim \epsilon^2$ when $\epsilon$ is already small.</p>
+<p><strong>Why the quadratic convergence?</strong> The Taylor expansion has an error term of order $\|\delta\|^3$. Near the minimum, this cubic error is what remains after the Newton step eliminates the linear and quadratic terms. If the current distance to the minimum is $\epsilon$, the error after the Newton step is $O(\epsilon^3) / O(\epsilon^2) = O(\epsilon)$&hellip; actually $O(\epsilon^2)$ after careful analysis, because the cubic remainder is $O(\epsilon^3)$ and dividing by the Hessian (which is $O(1)$) gives $O(\epsilon^3) / \lambda_{\min} \sim \epsilon^2$ when $\epsilon$ is already small.</p>
 <p><strong>The cost.</strong> The Newton step requires solving $H\delta = -\nabla f$, which in general costs $O(n^3)$ time and $O(n^2)$ memory. For a neural network with $n = 10^8$ parameters, the Hessian is an $10^8 \times 10^8$ matrix with $10^{16}$ entries - completely infeasible to store or invert.</p>
 <p>This is why gradient descent, despite slower convergence, is the default optimizer in deep learning: it costs $O(n)$ per step (just one backward pass), while Newton would cost $O(n^3)$.</p>
 <hr>
@@ -474,23 +474,23 @@ Each eigenvector direction contributes independently, with eigenvalue $\lambda_i
 <hr>
 <h2 id="section-16-the-gauss-newton-matrix---a-practical-approximation">Section 16: The Gauss-Newton Matrix - A Practical Approximation</h2>
 <p>Many optimization problems in ML have the form:</p>
-<p>$$\min_\theta \frac{1}{2} \sum_{i=1}^N r_i(\theta)^2 = \frac{1}{2} |r(\theta)|^2$$</p>
+<p>$$\min_\theta \frac{1}{2} \sum_{i=1}^N r_i(\theta)^2 = \frac{1}{2} \|r(\theta)\|^2$$</p>
 <p>where $r: \mathbb{R}^n \to \mathbb{R}^N$ is a vector of residuals (prediction errors). This is nonlinear least squares.</p>
-<p>The exact Hessian of $\frac{1}{2}|r(\theta)|^2$ is:</p>
+<p>The exact Hessian of $\frac{1}{2}\|r(\theta)\|^2$ is:</p>
 <p>$$H = J_r^T J_r + \sum_{i=1}^N r_i H_{r_i}$$</p>
 <p>where $J_r$ is the Jacobian of $r$ and $H_{r_i}$ is the Hessian of the $i$-th residual.</p>
 <p>The second term involves the Hessians of each residual - expensive and can be negative (making $H$ indefinite). The <strong>Gauss-Newton approximation</strong> drops this term:</p>
 <p>$$H \approx J_r^T J_r$$</p>
 <p>This approximation is:</p>
 <ul>
-<li>Always positive semidefinite (since $v^T J_r^T J_r v = |J_r v|^2 \geq 0$)</li>
+<li>Always positive semidefinite (since $v^T J_r^T J_r v = \|J_r v\|^2 \geq 0$)</li>
 <li>Accurate when residuals are small (the dropped term $\sum r_i H_{r_i}$ is small when $r_i \approx 0$)</li>
 <li>Computable from only the Jacobian (no second derivatives needed)</li>
 </ul>
 <p>The Gauss-Newton step is: $\theta \leftarrow \theta - (J_r^T J_r)^{-1} J_r^T r(\theta)$.</p>
-<p>This is exactly the least-squares normal equations: the update minimizes $|r(\theta) + J_r \delta|^2$ over $\delta$, which is a linear least-squares problem.</p>
+<p>This is exactly the least-squares normal equations: the update minimizes $\|r(\theta) + J_r \delta\|^2$ over $\delta$, which is a linear least-squares problem.</p>
 <p><strong>For neural networks.</strong> The loss $L = \frac{1}{2N}\sum_i (f_\theta(x_i) - y_i)^2$ is nonlinear least squares. The Gauss-Newton matrix $J^T J / N$ (where $J$ is the Jacobian of predictions with respect to $\theta$) approximates the Hessian without computing any second derivatives. This is cheaper and always positive semidefinite.</p>
-<p>The <strong>empirical Fisher information</strong> $\hat{F} = \frac{1}{N} \sum_i \nabla_\theta \log p_\theta(y_i|x_i) \nabla_\theta \log p_\theta(y_i|x_i)^T$ is another positive semidefinite approximation to the Hessian, related to Gauss-Newton for maximum likelihood estimation.</p>
+<p>The <strong>empirical Fisher information</strong> $\hat{F} = \frac{1}{N} \sum_i \nabla_\theta \log p_\theta(y_i|x_i) \allowbreak \nabla_\theta \log p_\theta(y_i|x_i)^T$ is another positive semidefinite approximation to the Hessian, related to Gauss-Newton for maximum likelihood estimation.</p>
 <hr>
 <h2 id="section-17-hessian-vector-products-without-computing-the-hessian">Section 17: Hessian-Vector Products Without Computing the Hessian</h2>
 <p>For a network with $n$ parameters, the Hessian has $n^2$ entries. Storing it requires $n^2$ memory. For $n = 10^6$, that is $10^{12}$ numbers - completely infeasible.</p>
@@ -507,7 +507,7 @@ Each eigenvector direction contributes independently, with eigenvalue $\lambda_i
 </ol>
 <p>Cost: two passes through the network (one forward, one backward). Memory: $O(n)$. The Hessian is never formed explicitly.</p>
 <p>In JAX: <code>jax.hessian(f)</code> computes the full Hessian, while <code>jax.grad(lambda x: jax.grad(f)(x) @ v)</code> computes the Hessian-vector product more efficiently.</p>
-<p><strong>Power iteration for the largest eigenvalue.</strong> Repeatedly compute $v \leftarrow Hv / |Hv|$. Each iteration costs one Hessian-vector product: $O(n)$. After convergence, $v$ is the eigenvector of the largest eigenvalue. The convergence rate depends on the gap between the two largest eigenvalues - fast if the largest eigenvalue is isolated.</p>
+<p><strong>Power iteration for the largest eigenvalue.</strong> Repeatedly compute $v \leftarrow Hv / \|Hv\|$. Each iteration costs one Hessian-vector product: $O(n)$. After convergence, $v$ is the eigenvector of the largest eigenvalue. The convergence rate depends on the gap between the two largest eigenvalues - fast if the largest eigenvalue is isolated.</p>
 <p>This is used to estimate the condition number and the sharpness $\lambda_{\max}$ of a minimum, which predicts generalization.</p>
 <hr>
 <h2 id="summary">Summary</h2>
@@ -562,8 +562,8 @@ Each eigenvector direction contributes independently, with eigenvalue $\lambda_i
 </tr>
 <tr>
 <td>Condition number</td>
-<td>$</td>
-<td>f''</td>
+<td>$|f''|$ determines convergence speed</td>
+<td>$\lambda_{\max}/\lambda_{\min}$ determines convergence speed</td>
 </tr>
 </tbody>
 </table>
@@ -590,7 +590,8 @@ Each eigenvector direction contributes independently, with eigenvalue $\lambda_i
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

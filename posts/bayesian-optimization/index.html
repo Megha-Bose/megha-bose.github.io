@@ -183,12 +183,12 @@
 <p>But both methods share a fatal flaw: they ignore what was already evaluated. If configuration $x = (0.001, 64, 0.3, 4, 256)$ gave 91% validation accuracy and configuration $x' = (0.001, 64, 0.3, 4, 512)$ is very similar, you have good reason to believe $x'$ will also perform well - or that slightly different values near $(0.001, 64, 0.3, 4, \cdot)$ might do even better. Grid search and random search throw away that information completely. Every evaluation is independent.</p>
 <h2 id="the-core-idea---use-what-you-already-know">The Core Idea - Use What You Already Know</h2>
 <p>Bayesian optimization builds a model of $f$ from the evaluations it has already made, then uses that model to decide intelligently where to evaluate next.</p>
-<p>After evaluating $f$ at points $x_1, \ldots, x_t$, you have a dataset of observations ${(x_i, f(x_i))}_{i=1}^t$. Fit a <strong>surrogate model</strong> - a probabilistic model that predicts $f(x)$ at every unobserved point $x$ and also quantifies its uncertainty about that prediction. Use the surrogate to compute an <strong>acquisition function</strong> that scores each candidate point $x$ by how useful it would be to evaluate next. Evaluate $f$ at the point that maximizes the acquisition function. Update the surrogate with the new observation. Repeat.</p>
+<p>After evaluating $f$ at points $x_1, \ldots, x_t$, you have a dataset of observations $\{(x_i, f(x_i))\}_{i=1}^t$. Fit a <strong>surrogate model</strong> - a probabilistic model that predicts $f(x)$ at every unobserved point $x$ and also quantifies its uncertainty about that prediction. Use the surrogate to compute an <strong>acquisition function</strong> that scores each candidate point $x$ by how useful it would be to evaluate next. Evaluate $f$ at the point that maximizes the acquisition function. Update the surrogate with the new observation. Repeat.</p>
 <p>This is <strong>sequential model-based optimization (SMBO)</strong>. Each evaluation informs the next. The surrogate gradually becomes more accurate as more observations accumulate, and the acquisition function focuses the remaining budget on the most promising regions.</p>
 <h2 id="gaussian-processes-as-the-surrogate">Gaussian Processes as the Surrogate</h2>
 <p>A <strong>Gaussian Process (GP)</strong> is the standard surrogate model for Bayesian optimization. A GP is a distribution over functions: it defines a probability distribution over all possible functions $f$, and conditioning on observations gives a posterior distribution over functions consistent with those observations.</p>
 <p>Formally, a GP is specified by a mean function $m(x)$ and a covariance kernel $k(x, x')$. The kernel captures how similar we expect $f$ to be at two nearby points. A common choice is the <strong>squared exponential kernel</strong>:</p>
-<p>$$k(x, x') = \sigma_f^2 \exp!\left(-\frac{|x - x'|^2}{2\ell^2}\right)$$</p>
+<p>$$k(x, x') = \sigma_f^2 \exp\!\left(-\frac{\|x - x'\|^2}{2\ell^2}\right)$$</p>
 <p>Here $\sigma_f^2$ is the signal variance (overall scale of $f$&rsquo;s variation) and $\ell$ is the <strong>length scale</strong> (how quickly $f$ changes - small $\ell$ means $f$ can vary rapidly, large $\ell$ means $f$ is smooth). Both are hyperparameters of the GP itself, learned from the observations by maximizing marginal likelihood.</p>
 <p>Given $t$ observations, the GP posterior at any new point $x$ is a Gaussian:</p>
 <p>$$p(f(x) \mid \text{data}) = \mathcal{N}(\mu(x), \sigma^2(x))$$</p>
@@ -198,7 +198,7 @@
 <p>The acquisition function $\alpha(x)$ takes the GP&rsquo;s posterior mean and variance at point $x$ and returns a score for how useful it would be to evaluate $f(x)$ next. Maximizing $\alpha$ gives the next point to evaluate.</p>
 <p>The central tension is <strong>exploration vs exploitation</strong>. Exploitation means evaluating near the current best known point - likely to give a good result but unlikely to discover something better. Exploration means evaluating in high-uncertainty regions - the GP does not know what is there, and there might be something excellent.</p>
 <p><strong>Expected Improvement (EI).</strong> Let $f^* = \max_{i \leq t} f(x_i)$ be the current best observed value. The expected improvement at $x$ is the expected amount by which $f(x)$ would exceed $f^*$:</p>
-<p>$$\text{EI}(x) = \mathbb{E}!\left[\max(0,\ f(x) - f^*)\right]$$</p>
+<p>$$\text{EI}(x) = \mathbb{E}\!\left[\max(0,\ f(x) - f^*)\right]$$</p>
 <p>Under the GP, $f(x) \sim \mathcal{N}(\mu(x), \sigma^2(x))$, and EI has a closed form:</p>
 <p>$$\text{EI}(x) = (\mu(x) - f^* - \xi) \cdot \Phi(Z) + \sigma(x) \cdot \phi(Z)$$</p>
 <p>where $Z = \frac{\mu(x) - f^* - \xi}{\sigma(x)}$, $\Phi$ is the standard normal CDF, $\phi$ is the standard normal PDF, and $\xi \geq 0$ is a small exploration parameter (typically 0.01).</p>
@@ -206,11 +206,11 @@
 <p><strong>Upper Confidence Bound (UCB).</strong> A simpler approach:</p>
 <p>$$\text{UCB}(x) = \mu(x) + \kappa \cdot \sigma(x)$$</p>
 <p>The acquisition score is just the mean plus $\kappa$ times the standard deviation. The hyperparameter $\kappa$ directly controls the exploration-exploitation trade-off: large $\kappa$ favors exploration of uncertain regions, small $\kappa$ favors exploitation near the current best.</p>
-<p><strong>Worked example.</strong> After 3 evaluations at $x \in {0.001, 0.01, 0.1}$ (learning rates) with validation accuracies ${85%, 91%, 79%}$, the GP posterior has high mean near $x = 0.01$ (the current best) and also high uncertainty near $x = 0.003$ (never evaluated, but adjacent to a good region). EI will score $x = 0.003$ highly: maybe the true optimum is nearby and we have not looked there yet. EI will score $x = 0.2$ (far from all evaluated points) highly for exploration. The next evaluation goes wherever EI is highest.</p>
+<p><strong>Worked example.</strong> After 3 evaluations at $x \in \{0.001, 0.01, 0.1\}$ (learning rates) with validation accuracies $\{85\%, 91\%, 79\%\}$, the GP posterior has high mean near $x = 0.01$ (the current best) and also high uncertainty near $x = 0.003$ (never evaluated, but adjacent to a good region). EI will score $x = 0.003$ highly: maybe the true optimum is nearby and we have not looked there yet. EI will score $x = 0.2$ (far from all evaluated points) highly for exploration. The next evaluation goes wherever EI is highest.</p>
 <h2 id="the-full-loop">The Full Loop</h2>
 <ol>
 <li>Evaluate $f$ at a small number of random configurations to initialize (typically 5-10 points).</li>
-<li>Fit a GP to the observed ${(x_i, f(x_i))}$ pairs.</li>
+<li>Fit a GP to the observed $\{(x_i, f(x_i))\}$ pairs.</li>
 <li>Maximize the acquisition function $\alpha(x)$ over the hyperparameter space to find $x_{\text{next}}$. (This inner optimization is cheap because evaluating $\alpha$ is fast - it just queries the GP.)</li>
 <li>Evaluate $f(x_{\text{next}})$ - train the model with those hyperparameters and measure validation accuracy.</li>
 <li>Add $(x_{\text{next}}, f(x_{\text{next}}))$ to the observations.</li>
@@ -309,7 +309,8 @@ print(study<span style="color:#f92672">.</span>best_params)
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

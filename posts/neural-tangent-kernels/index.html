@@ -178,20 +178,20 @@
 <p>Now linearize $f$ around the initial parameters:</p>
 <p>$$f(x; \theta) \approx f(x; \theta_0) + \nabla_\theta f(x; \theta_0)^\top (\theta - \theta_0).$$</p>
 <p>This is a linear model in $(\theta - \theta_0)$, with features $\nabla_\theta f(x; \theta_0)$ - the gradient of the network output with respect to the parameters, evaluated at initialization. In this linearized regime, the function $f$ evolves linearly during training, and the dynamics are completely determined by the matrix of inner products:</p>
-<p>$$K_{ij} = \left\langle \nabla_\theta f(x_i; \theta_0),; \nabla_\theta f(x_j; \theta_0) \right\rangle = \sum_{k=1}^p \frac{\partial f(x_i; \theta_0)}{\partial \theta_k} \frac{\partial f(x_j; \theta_0)}{\partial \theta_k}.$$</p>
+<p>$$K_{ij} = \left\langle \nabla_\theta f(x_i; \theta_0),\; \nabla_\theta f(x_j; \theta_0) \right\rangle = \sum_{k=1}^p \frac{\partial f(x_i; \theta_0)}{\partial \theta_k} \frac{\partial f(x_j; \theta_0)}{\partial \theta_k}.$$</p>
 <p>This is the <strong>Neural Tangent Kernel (NTK)</strong> matrix, evaluated at initialization. It is an $N \times N$ Gram matrix measuring how similar two inputs are in &ldquo;Jacobian space&rdquo; - how similarly a small parameter perturbation moves the network&rsquo;s output at $x_i$ versus $x_j$.</p>
 <hr>
 <h2 id="training-dynamics-under-the-ntk">Training Dynamics Under the NTK</h2>
-<p>In continuous-time gradient descent on the squared loss $\mathcal{L} = \frac{1}{2}|f(X;\theta) - y|^2$, the function values $u(t) = f(X;\theta(t))$ evolve as:</p>
+<p>In continuous-time gradient descent on the squared loss $\mathcal{L} = \frac{1}{2}\|f(X;\theta) - y\|^2$, the function values $u(t) = f(X;\theta(t))$ evolve as:</p>
 <p>$$\dot{u}(t) = -K(\theta(t)) (u(t) - y)$$</p>
-<p>where $K(\theta(t))<em>{ij} = \langle \nabla</em>\theta f(x_i;\theta), \nabla_\theta f(x_j;\theta) \rangle$ is the NTK matrix at time $t$. If $K$ were constant throughout training, this would be a linear ODE:</p>
+<p>where $K(\theta(t))_{ij} = \langle \nabla_\theta f(x_i;\theta), \nabla_\theta f(x_j;\theta) \rangle$ is the NTK matrix at time $t$. If $K$ were constant throughout training, this would be a linear ODE:</p>
 <p>$$\dot{u}(t) = -K_0 (u(t) - y)$$</p>
 <p>with solution $u(t) - y = e^{-K_0 t}(u(0) - y)$. The residual decays exponentially, and if $K_0$ is positive definite, $u(t) \to y$ as $t \to \infty$: training loss converges to zero. The rate of convergence for each &ldquo;direction&rdquo; in function space is governed by the eigenvalues of $K_0$: directions corresponding to large eigenvalues converge fast; directions corresponding to small eigenvalues converge slowly or not at all.</p>
 <p>This is exactly kernel regression. The solution to which $u(t)$ converges is:</p>
 <p>$$f^* = K_0 (K_0 + 0 \cdot I)^{-1} y = y$$</p>
 <p>(perfect interpolation on training data, if $K_0$ is invertible). For a new test point $x_*$, the prediction is:</p>
-<p>$$f(x_<em>) = k(x_</em>, X) K_0^{-1} y$$</p>
-<p>where $k(x_<em>, X) = [\langle \nabla_\theta f(x_</em>;\theta_0), \nabla_\theta f(x_i;\theta_0)\rangle]_i$ is the vector of kernel evaluations between the test point and training points. This is exactly the kernel regression prediction with kernel $K_0$.</p>
+<p>$$f(x_*) = k(x_*, X) K_0^{-1} y$$</p>
+<p>where $k(x_*, X) = [\langle \nabla_\theta f(x_*;\theta_0), \nabla_\theta f(x_i;\theta_0)\rangle]_i$ is the vector of kernel evaluations between the test point and training points. This is exactly the kernel regression prediction with kernel $K_0$.</p>
 <hr>
 <h2 id="the-infinite-width-result-jacot-et-al-2018">The Infinite-Width Result (Jacot et al., 2018)</h2>
 <p>The linearization above is an approximation for finite networks. The remarkable theorem of Jacot, Gabriel, and Hongler (2018) shows that for fully-connected networks with appropriate initialization (weights drawn iid with variance $1/n$ per layer), as the width $n \to \infty$:</p>
@@ -209,7 +209,7 @@
 <p>where $\Theta^{(L-1)}$ is the (L-1)-layer NTK, $K^{(L)}$ is the corresponding NNGP (Neural Network Gaussian Process) kernel, and $\dot{K}^{(L)}(x, x') = \mathbb{E}_{(u,v) \sim \mathcal{N}(0, \Sigma)}[\phi'(u)\phi'(v)]$ involves the derivative of the activation. For ReLU activations, these expectations can be computed in closed form using the arc-cosine kernel formula.</p>
 <p>For the NNGP kernel at layer $l$:</p>
 <p>$$K^{(l)}(x, x') = \mathbb{E}_{w \sim \mathcal{N}(0,I)}\left[\phi\left(w^\top x\right)\phi\left(w^\top x'\right)\right]$$</p>
-<p>which for ReLU gives $K^{(l)}(x, x') = \frac{|x||x'|}{2\pi}(\sin\theta + (\pi - \theta)\cos\theta)$ where $\theta = \arccos(x^\top x' / |x||x'|)$. The NTK for convolutional networks also has a recursive form, replacing dot products with spatial averages over patches.</p>
+<p>which for ReLU gives $K^{(l)}(x, x') = \frac{\|x\|\|x'\|}{2\pi}(\sin\theta + (\pi - \theta)\cos\theta)$ where $\theta = \arccos(x^\top x' / \|x\|\|x'\|)$. The NTK for convolutional networks also has a recursive form, replacing dot products with spatial averages over patches.</p>
 <hr>
 <h2 id="finite-width-corrections-and-feature-learning">Finite-Width Corrections and Feature Learning</h2>
 <p>The NTK analysis holds exactly only in the strict $n \to \infty$ limit. For finite $n$, two things change:</p>
@@ -224,9 +224,9 @@
 <hr>
 <h2 id="what-ntk-explains-about-generalization">What NTK Explains About Generalization</h2>
 <p>Despite its limitations, NTK theory provides the first clean theoretical explanation for why overparameterized networks generalize.</p>
-<p>In the infinite-width NTK regime, the trained network is exactly the minimum-norm interpolant of the training data in the reproducing kernel Hilbert space (RKHS) of $K^\infty$. The minimum-norm interpolant minimizes $|f|_{\mathcal{H}}$ subject to $f(x_i) = y_i$ for all training points. For kernel regression, classical theory gives bounds on the generalization error:</p>
-<p>$$\mathbb{E}\left[(f(x) - y)^2\right] \leq \frac{|f^*|_{\mathcal{H}}^2}{n} \cdot \text{(complexity term)}$$</p>
-<p>where $|f^*|_{\mathcal{H}}$ is the RKHS norm of the true function. If the true function has small RKHS norm under $K^\infty$ - if it is &ldquo;simple&rdquo; in the sense defined by the architecture&rsquo;s NTK - then the minimum-norm interpolant generalizes, even with more parameters than data points.</p>
+<p>In the infinite-width NTK regime, the trained network is exactly the minimum-norm interpolant of the training data in the reproducing kernel Hilbert space (RKHS) of $K^\infty$. The minimum-norm interpolant minimizes $\|f\|_{\mathcal{H}}$ subject to $f(x_i) = y_i$ for all training points. For kernel regression, classical theory gives bounds on the generalization error:</p>
+<p>$$\mathbb{E}\left[(f(x) - y)^2\right] \leq \frac{\|f^*\|_{\mathcal{H}}^2}{n} \cdot \text{(complexity term)}$$</p>
+<p>where $\|f^*\|_{\mathcal{H}}$ is the RKHS norm of the true function. If the true function has small RKHS norm under $K^\infty$ - if it is &ldquo;simple&rdquo; in the sense defined by the architecture&rsquo;s NTK - then the minimum-norm interpolant generalizes, even with more parameters than data points.</p>
 <p>This gives a concrete mechanism for implicit regularization: gradient descent on overparameterized networks converges to the minimum-norm solution in the NTK RKHS (or an approximation thereof for finite width). The implicit prior is that the target function should be simple relative to the network&rsquo;s NTK. For natural tasks (image classification, language), this is plausibly satisfied because the architecture&rsquo;s inductive biases align with the structure of the data.</p>
 <hr>
 <h2 id="summary">Summary</h2>
@@ -297,7 +297,7 @@
 </tr>
 <tr>
 <td>Kernel regression prediction</td>
-<td>$f(x_<em>) = k(x_</em>, X) K^{-1} y$</td>
+<td>$f(x_*) = k(x_*, X) K^{-1} y$</td>
 </tr>
 <tr>
 <td>Minimum-norm interpolant</td>
@@ -313,7 +313,7 @@
 </tr>
 <tr>
 <td>Generalization in NTK</td>
-<td>Bounded by $|f^*|_{\mathcal{H}}^2 / n$; holds if target has small RKHS norm</td>
+<td>Bounded by $\|f^*\|_{\mathcal{H}}^2 / n$; holds if target has small RKHS norm</td>
 </tr>
 </tbody>
 </table>
@@ -341,7 +341,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

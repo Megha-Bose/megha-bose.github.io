@@ -316,7 +316,7 @@ The hidden state $\mathbf{x_k} \in \mathbb{R}^d$ at layer $k$ is updated by addi
 <p>For Neural ODEs, stiffness translates to a large number of function evaluations per forward pass. Instead of 50-100 evaluations (typical for a well-conditioned ODE), a stiff Neural ODE might require 1000-10000 evaluations. Since each evaluation runs the neural network $f$, this is expensive.</p>
 <p><strong>The stiffness-expressivity trade-off.</strong> More expressive vector fields (larger weight matrices, more layers in $f$) tend to produce stiffer dynamics. The network has more capacity to create rapid variations in $\mathbf{x}(t)$, which the solver must resolve with small steps. Designing $f$ to produce well-conditioned, non-stiff dynamics while retaining expressivity is an open research problem.</p>
 <p><strong>Implicit solvers for stiff Neural ODEs.</strong> Implicit methods (backward Euler, implicit Runge-Kutta) can handle stiff dynamics with much larger step sizes. Each implicit step requires solving a nonlinear system
-$$\mathbf{y}<em>{n+1} = \mathbf{y}<em>n + hf(t</em>{n+1}, \mathbf{y}</em>{n+1})$$
+$$\mathbf{y}_{n+1} = \mathbf{y}_n + hf(t_{n+1}, \mathbf{y}_{n+1})$$
 for $\mathbf{y}_{n+1}$, typically via Newton&rsquo;s method. The cost per step is higher, but far fewer steps are needed. Libraries like <code>diffrax</code> provide implicit solvers (Kvaerno3, implicit Euler) for stiff Neural ODEs.</p>
 <hr>
 <h2 id="section-7b-numerical-solver-comparison">Section 7b: Numerical Solver Comparison</h2>
@@ -420,11 +420,11 @@ x_T  <span style="color:#f92672">=</span> sol<span style="color:#f92672">.</span
 <p><strong>Score-based diffusion.</strong> Modern diffusion models (DDPM, score-matching) define a stochastic process that gradually adds noise to data: $d\mathbf{x} = f(\mathbf{x}, t) dt + g(t) d\mathbf{W}$ (a stochastic differential equation). The denoising score function $\nabla \log p(\mathbf{x}, t)$ learned by the network plays the role of the drift term. The <strong>probability flow ODE</strong> - the deterministic ODE that has the same marginal densities as the SDE - is a Neural ODE:</p>
 <p>$$\frac{d\mathbf{x}}{dt} = f(\mathbf{x}, t) - \frac{1}{2}g(t)^2 \nabla \log p(\mathbf{x}, t)$$</p>
 <p>Solving this ODE backward from noise to data generates samples. Neural ODEs and diffusion models are deeply connected through this probability flow formulation.</p>
-<p><strong>The NTK and infinite width.</strong> As neural network width goes to infinity, the network dynamics during training become governed by the <strong>Neural Tangent Kernel</strong> (NTK). The evolution of the network&rsquo;s predictions is a linear ODE in function space: $\frac{d\hat{f}}{dt} = -\eta K (\hat{f} - f^<em>)$ where $K$ is the NTK and $f^</em>$ is the target. This linearization - and its implications for training dynamics and generalization - is another place where ODE theory illuminates deep learning.</p>
+<p><strong>The NTK and infinite width.</strong> As neural network width goes to infinity, the network dynamics during training become governed by the <strong>Neural Tangent Kernel</strong> (NTK). The evolution of the network&rsquo;s predictions is a linear ODE in function space: $\frac{d\hat{f}}{dt} = -\eta K (\hat{f} - f^*)$ where $K$ is the NTK and $f^*$ is the target. This linearization - and its implications for training dynamics and generalization - is another place where ODE theory illuminates deep learning.</p>
 <p><strong>Second-order ODEs and acceleration.</strong> Gradient descent is the Euler method on the gradient flow ODE $\frac{d\theta}{dt} = -\nabla L$. Momentum-based methods like Nesterov acceleration correspond to a second-order ODE:</p>
 <p>$$\ddot{\theta} + \frac{r}{t}\dot{\theta} = -\nabla L(\theta)$$</p>
 <p>for some $r &gt; 0$ (the continuous limit of Nesterov&rsquo;s algorithm, due to Su, Boyd, and Candes 2016). The oscillatory behavior familiar from momentum methods - the loss decreases faster than gradient descent but occasionally &ldquo;overshoots&rdquo; - is exactly the underdamped behavior of the second-order ODE with a particular damping coefficient. The ODE framework lets you analyze convergence rates, optimal damping, and the connection between different optimization algorithms through their continuous-time limits.</p>
-<p><strong>Deep equilibrium models.</strong> A <strong>deep equilibrium model</strong> (DEQ) finds the fixed point $\mathbf{x}^* = f(\mathbf{x}^<em>, \theta)$ directly, without running many forward passes. This is related to Neural ODEs via the connection $\mathbf{x}^</em> = \lim_{t \to \infty} \mathbf{x}(t)$ when the ODE is stable and has a unique equilibrium. DEQs trade the ODE solver for a root-finding algorithm (Newton&rsquo;s method or Broyden&rsquo;s method), which can be more efficient when only the fixed point is needed. The memory cost is also $O(d)$ via the implicit function theorem (not the adjoint). Both Neural ODEs and DEQs are members of the family of <strong>implicit depth models</strong> - networks whose effective depth is determined at inference time rather than fixed at design time.</p>
+<p><strong>Deep equilibrium models.</strong> A <strong>deep equilibrium model</strong> (DEQ) finds the fixed point $\mathbf{x}^* = f(\mathbf{x}^*, \theta)$ directly, without running many forward passes. This is related to Neural ODEs via the connection $\mathbf{x}^* = \lim_{t \to \infty} \mathbf{x}(t)$ when the ODE is stable and has a unique equilibrium. DEQs trade the ODE solver for a root-finding algorithm (Newton&rsquo;s method or Broyden&rsquo;s method), which can be more efficient when only the fixed point is needed. The memory cost is also $O(d)$ via the implicit function theorem (not the adjoint). Both Neural ODEs and DEQs are members of the family of <strong>implicit depth models</strong> - networks whose effective depth is determined at inference time rather than fixed at design time.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -523,7 +523,8 @@ x_T  <span style="color:#f92672">=</span> sol<span style="color:#f92672">.</span
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

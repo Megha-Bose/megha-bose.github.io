@@ -202,7 +202,7 @@
 <h2 id="autoregressive-flows">Autoregressive Flows</h2>
 <p>Coupling layers transform half the input as a function of the other half. Autoregressive flows generalize this: each dimension $z_i$ is transformed as a function of all previous dimensions $x_1, \ldots, x_{i-1}$.</p>
 <p>The autoregressive transformation is:</p>
-<p>$$z_i = h(x_i;; \mu_i(x_{&lt;i}),; \sigma_i(x_{&lt;i})),$$</p>
+<p>$$z_i = h(x_i;\; \mu_i(x_{&lt;i}),\; \sigma_i(x_{&lt;i})),$$</p>
 <p>where $h$ is an invertible scalar function (e.g., an affine shift: $z_i = \sigma_i(x_{&lt;i}) \cdot x_i + \mu_i(x_{&lt;i})$) and $\mu_i, \sigma_i$ are functions of the preceding variables. The Jacobian of this transformation is lower-triangular: $\partial z_i / \partial x_j = 0$ for $j &gt; i$ (since $z_i$ does not depend on $x_j$ for $j &gt; i$). The determinant is therefore the product of diagonal entries $\prod_i \sigma_i(x_{&lt;i})$.</p>
 <p><strong>Masked Autoregressive Flow (MAF)</strong> (Papamakarios et al., 2017) implements the autoregressive network $\mu_i(x_{&lt;i}), \sigma_i(x_{&lt;i})$ using a masked neural network (MADE) that enforces the autoregressive constraint by zeroing out connections that would violate it. A single network pass computes all $\mu_i$ and $\sigma_i$ in parallel. This makes density evaluation (forward pass, $O(d)$ in one shot) fast, but sampling requires sequential evaluation: to sample $z_1$, compute $\mu_1, \sigma_1$ (from an empty conditioning set); to sample $z_2$, need $x_1$, which requires inverting the transformation for $z_1$ first. Sampling thus takes $d$ sequential passes.</p>
 <p><strong>Inverse Autoregressive Flow (IAF)</strong> (Kingma et al., 2016) inverts the direction. It is an autoregressive transformation on the latent code $z$, designed to be fast at sampling but slow at density evaluation - the exact reverse of MAF. IAF is useful as a variational posterior in VAEs, where you need fast samples but do not need density evaluation.</p>
@@ -356,7 +356,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

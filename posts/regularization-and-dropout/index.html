@@ -181,7 +181,7 @@
 <hr>
 <h2 id="l2-regularization-weight-decay">L2 Regularization (Weight Decay)</h2>
 <p>The most straightforward fix is to add a penalty for parameter magnitude directly to the loss. <strong>L2 regularization</strong> augments the training objective with the squared Euclidean norm of the weight vector:</p>
-<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda |w|^2 = \mathcal{L}(w) + \lambda \sum_j w_j^2$$</p>
+<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda \|w\|^2 = \mathcal{L}(w) + \lambda \sum_j w_j^2$$</p>
 <p>where $\lambda &gt; 0$ is the regularization strength. The gradient becomes:</p>
 <p>$$\nabla_w \mathcal{L}_{\text{reg}} = \nabla_w \mathcal{L} + 2\lambda w$$</p>
 <p>A gradient descent update with step size $\eta$ then takes the form:</p>
@@ -191,13 +191,13 @@
 <p>The L2 penalty has a clean probabilistic justification. In Bayesian inference, we compute the posterior over weights given data: $p(w | \mathcal{D}) \propto p(\mathcal{D} | w) \cdot p(w)$. Maximum a posteriori (MAP) estimation maximizes this posterior, or equivalently minimizes the negative log-posterior:</p>
 <p>$$-\log p(w | \mathcal{D}) = -\log p(\mathcal{D} | w) - \log p(w) + \text{const}$$</p>
 <p>If the likelihood $p(\mathcal{D} | w)$ corresponds to a standard loss $\mathcal{L}(w)$ (as with Gaussian noise for squared loss, or Bernoulli for cross-entropy), and the prior on weights is an isotropic Gaussian:</p>
-<p>$$p(w) = \mathcal{N}(0, \sigma_w^2 I) \propto \exp\left(-\frac{|w|^2}{2\sigma_w^2}\right)$$</p>
+<p>$$p(w) = \mathcal{N}(0, \sigma_w^2 I) \propto \exp\left(-\frac{\|w\|^2}{2\sigma_w^2}\right)$$</p>
 <p>then the MAP objective is:</p>
-<p>$$-\log p(w | \mathcal{D}) = \mathcal{L}(w) + \frac{1}{2\sigma_w^2}|w|^2 + \text{const}$$</p>
+<p>$$-\log p(w | \mathcal{D}) = \mathcal{L}(w) + \frac{1}{2\sigma_w^2}\|w\|^2 + \text{const}$$</p>
 <p>This is exactly L2 regularization with $\lambda = \frac{1}{2\sigma_w^2}$. A small $\sigma_w^2$ (tight prior, strong belief that weights should be small) corresponds to large $\lambda$ (heavy regularization). A large $\sigma_w^2$ (diffuse prior) corresponds to small $\lambda$. L2 regularization is not an ad-hoc trick - it is MAP estimation under a Gaussian prior.</p>
 <h3 id="connection-to-ridge-regression">Connection to Ridge Regression</h3>
 <p>In the special case of linear regression with squared loss, L2 regularization has an exact closed-form solution. The objective is:</p>
-<p>$$\mathcal{L}_{\text{reg}}(w) = |Xw - y|^2 + \lambda|w|^2$$</p>
+<p>$$\mathcal{L}_{\text{reg}}(w) = \|Xw - y\|^2 + \lambda\|w\|^2$$</p>
 <p>Setting the gradient to zero:</p>
 <p>$$2X^T(Xw - y) + 2\lambda w = 0 \implies (X^TX + \lambda I)w = X^Ty$$</p>
 <p>$$w^* = (X^TX + \lambda I)^{-1}X^Ty$$</p>
@@ -205,7 +205,7 @@
 <hr>
 <h2 id="l1-regularization-and-sparsity">L1 Regularization and Sparsity</h2>
 <p><strong>L1 regularization</strong> replaces the squared norm penalty with the sum of absolute values:</p>
-<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda|w|_1 = \mathcal{L}(w) + \lambda \sum_j |w_j|$$</p>
+<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda\|w\|_1 = \mathcal{L}(w) + \lambda \sum_j |w_j|$$</p>
 <p>The key behavioral difference from L2 is that L1 regularization produces <strong>sparse solutions</strong>: many weights become exactly zero at the optimum, rather than being merely small. This is not a numerical coincidence - it is a geometric consequence of the structure of the L1 ball.</p>
 <h3 id="subgradient-and-non-differentiability">Subgradient and Non-differentiability</h3>
 <p>At $w_j = 0$, the term $\lambda|w_j|$ is not differentiable - the left and right derivatives are $-\lambda$ and $+\lambda$ respectively. We use the <strong>subgradient</strong> in place of the gradient. The subdifferential of $|w_j|$ at $w_j = 0$ is the interval $[-1, 1]$. An update rule using the subgradient applies:</p>
@@ -214,11 +214,11 @@
 <p>$$w_j \leftarrow \text{sign}(w_j - \eta \nabla_{w_j}\mathcal{L}) \cdot \max(|w_j - \eta \nabla_{w_j}\mathcal{L}| - \lambda\eta, 0)$$</p>
 <p>This is the proximal gradient step for L1 regularization. The hard zero is how sparsity emerges.</p>
 <h3 id="the-geometry-of-sparsity">The Geometry of Sparsity</h3>
-<p>The geometric reason L1 promotes sparsity while L2 does not: consider minimizing a convex loss $\mathcal{L}(w)$ subject to a norm constraint. For L2 the constraint set is a sphere $|w|_2 \leq c$, which is smooth and round. For L1 the constraint set is a diamond (in 2D) or hyperoctahedron (in higher dimensions) $|w|_1 \leq c$, which has sharp corners at the coordinate axes. The unconstrained loss minimum is usually not inside the constraint set. The constrained solution sits at the boundary where the level set of $\mathcal{L}(w)$ first touches the constraint set. For the smooth L2 ball, this touching point is generic and rarely lands exactly on an axis. For the L1 diamond, the corners (coordinate axes) are the most likely touching points because they are the &ldquo;pointiest&rdquo; parts of the boundary - level sets of smooth functions tend to hit corners rather than flat faces. A corner on a coordinate axis means some $w_j = 0$ exactly.</p>
+<p>The geometric reason L1 promotes sparsity while L2 does not: consider minimizing a convex loss $\mathcal{L}(w)$ subject to a norm constraint. For L2 the constraint set is a sphere $\|w\|_2 \leq c$, which is smooth and round. For L1 the constraint set is a diamond (in 2D) or hyperoctahedron (in higher dimensions) $\|w\|_1 \leq c$, which has sharp corners at the coordinate axes. The unconstrained loss minimum is usually not inside the constraint set. The constrained solution sits at the boundary where the level set of $\mathcal{L}(w)$ first touches the constraint set. For the smooth L2 ball, this touching point is generic and rarely lands exactly on an axis. For the L1 diamond, the corners (coordinate axes) are the most likely touching points because they are the &ldquo;pointiest&rdquo; parts of the boundary - level sets of smooth functions tend to hit corners rather than flat faces. A corner on a coordinate axis means some $w_j = 0$ exactly.</p>
 <p>In high dimensions with $p$ features, L1 regularization (also called <strong>Lasso</strong> in the regression context) finds solutions with at most $n$ nonzero coefficients when $n &lt; p$. This makes it valuable for feature selection: the nonzero weights identify which inputs actually matter.</p>
 <h3 id="elastic-net">Elastic Net</h3>
 <p><strong>Elastic Net</strong> combines L1 and L2 penalties:</p>
-<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda_1|w|_1 + \lambda_2|w|^2$$</p>
+<p>$$\mathcal{L}_{\text{reg}}(w) = \mathcal{L}(w) + \lambda_1\|w\|_1 + \lambda_2\|w\|^2$$</p>
 <p>The L2 term stabilizes the optimization when features are correlated (Lasso tends to pick one arbitrarily from a correlated group; Elastic Net can select all of them with shared weight). The L1 term maintains sparsity. In practice, Elastic Net often outperforms either penalty alone when $p \gg n$ and features are correlated.</p>
 <hr>
 <h2 id="early-stopping">Early Stopping</h2>
@@ -231,7 +231,7 @@
 <p>If overfitting occurs because the model exploits finite-sample artifacts, the most direct fix is to increase the effective size of the training set. <strong>Data augmentation</strong> creates additional training examples by applying label-preserving transformations to existing examples.</p>
 <p>For images, common augmentations include: random crops and resizes, horizontal flips, rotations, color jitter (brightness, contrast, saturation shifts), cutout (masking random rectangular regions), and mixup (interpolating two images and their labels: $\tilde{x} = \alpha x_i + (1-\alpha)x_j$, $\tilde{y} = \alpha y_i + (1-\alpha)y_j$). For text: synonym replacement, back-translation (translate to another language and back), random deletion of words, word order perturbations. For audio: time stretching, pitch shifting, noise injection, SpecAugment (masking blocks of time-frequency bins).</p>
 <p>The regularization effect is genuine, not just effective sample size increase. Augmentation injects inductive biases: using random flips tells the model that horizontal orientation should not affect the prediction. Using random crops tells the model that the object can appear anywhere. The model must be invariant to these transformations to minimize the augmented training loss, which is exactly what we want for generalization.</p>
-<p>Noise injection as augmentation has a direct connection to regularization: adding Gaussian noise $\epsilon \sim \mathcal{N}(0, \sigma^2 I)$ to inputs during training is equivalent to adding a term $\frac{\sigma^2}{2}\mathbb{E}\left[|\nabla_x \mathcal{L}|^2\right]$ to the loss, which penalizes large input gradients and promotes smooth decision boundaries. This is a form of Tikhonov regularization in input space.</p>
+<p>Noise injection as augmentation has a direct connection to regularization: adding Gaussian noise $\epsilon \sim \mathcal{N}(0, \sigma^2 I)$ to inputs during training is equivalent to adding a term $\frac{\sigma^2}{2}\mathbb{E}\left[\|\nabla_x \mathcal{L}\|^2\right]$ to the loss, which penalizes large input gradients and promotes smooth decision boundaries. This is a form of Tikhonov regularization in input space.</p>
 <hr>
 <h2 id="dropout">Dropout</h2>
 <p><strong>Dropout</strong> is a regularization technique specific to neural networks, introduced by Srivastava et al. in 2014. During each forward pass in training, every neuron&rsquo;s activation is independently set to zero with probability $p$ (the dropout probability, or &ldquo;drop rate&rdquo;). Neurons that are kept have their activations scaled by $\frac{1}{1-p}$. At test time, all neurons are used and no scaling is applied.</p>
@@ -285,13 +285,13 @@
 <tbody>
 <tr>
 <td>L2 (weight decay)</td>
-<td>Add $\lambda|w|^2$ to loss; weight decay update $(1-2\eta\lambda)w - \eta\nabla\mathcal{L}$</td>
+<td>Add $\lambda\|w\|^2$ to loss; weight decay update $(1-2\eta\lambda)w - \eta\nabla\mathcal{L}$</td>
 <td>Gaussian prior on weights; small weights preferred</td>
 <td>Almost always; default choice for neural networks</td>
 </tr>
 <tr>
 <td>L1 (Lasso)</td>
-<td>Add $\lambda|w|_1$ to loss; soft-thresholding updates</td>
+<td>Add $\lambda\|w\|_1$ to loss; soft-thresholding updates</td>
 <td>Laplace prior; sparse solutions</td>
 <td>Feature selection; high-dimensional, low-signal settings</td>
 </tr>
@@ -354,7 +354,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

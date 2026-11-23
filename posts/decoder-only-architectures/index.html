@@ -178,7 +178,7 @@
 <hr>
 <h2 id="the-causal-mask">The Causal Mask</h2>
 <p>The mechanism that makes decoder-only work is the <strong>causal attention mask</strong>. In standard self-attention, the attention matrix $A \in \mathbb{R}^{n \times n}$ has $A_{ij}$ representing how much token $i$ attends to token $j$. In causal attention, positions where $j &gt; i$ are masked to $-\infty$ before the softmax, so $\text{softmax}(-\infty) = 0$:</p>
-<p>$$A_{ij} = \begin{cases} \frac{q_i \cdot k_j}{\sqrt{d_k}} &amp; j \leq i \ -\infty &amp; j &gt; i \end{cases}$$</p>
+<p>$$A_{ij} = \begin{cases} \frac{q_i \cdot k_j}{\sqrt{d_k}} &amp; j \leq i \\ -\infty &amp; j &gt; i \end{cases}$$</p>
 <p>This lower-triangular mask enforces the property that each token&rsquo;s representation depends only on tokens to its left. This is what allows a decoder-only model to be trained efficiently: you feed in the full sequence and compute all positions in parallel during training, but each position only sees its causal context. The causal mask makes training equivalent to processing all prefixes simultaneously.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> If the decoder can only look left, how does it understand the full context of a long prompt? It doesn&rsquo;t need to - by the time it is generating the first output token, all prompt tokens are in its causal context. The decoder sees the full prompt (leftward) when generating the first output token, then sees the full prompt plus generated token 1 when generating token 2, and so on. The constraint is one-directional: the model cannot &ldquo;look ahead&rdquo; to future output tokens, which is what we want for autoregressive generation.</p>
@@ -279,7 +279,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

@@ -240,7 +240,7 @@ The question exposes a design choice that determines whether your upload endpoin
 <p><strong>Consumer lag monitoring:</strong> The critical operational metric for Kafka consumers is consumer lag - the gap between the latest offset in a partition and the consumer&rsquo;s committed offset. Growing lag means consumers are falling behind producers. CloudWatch (for Confluent Cloud or MSK) and Prometheus with the Kafka exporter expose this metric. Lag-based auto-scaling of consumer groups is the canonical response.</p>
 <p>For simpler use cases - job queues, webhook processing, async email - SQS requires none of this operational knowledge. The engineering team that reaches for Kafka for a few thousand messages per day is paying operational complexity tax they don&rsquo;t need.</p>
 <h2 id="event-sourcing-state-as-history">Event Sourcing: State as History</h2>
-<p><strong>Event sourcing</strong> flips the persistence model: instead of storing current state (&ldquo;user balance: $500&rdquo;), you store the <em>sequence of events that produced that state</em> (&ldquo;deposited $1000, withdrew $300, withdrew $200&rdquo;). Current state is reconstructed by replaying events.</p>
+<p><strong>Event sourcing</strong> flips the persistence model: instead of storing current state (&ldquo;user balance: <span class="nomath">$</span>500&rdquo;), you store the <em>sequence of events that produced that state</em> (&ldquo;deposited $1000, withdrew $300, withdrew <span class="nomath">$</span>200&rdquo;). Current state is reconstructed by replaying events.</p>
 <p>The benefits are real. You have a complete, immutable audit log by construction. You can replay events to reconstruct state at any point in time - invaluable for debugging (&ldquo;what did the system see when this wrong decision was made?&quot;). You can project the same event stream into multiple read models, each optimized for a different query pattern.</p>
 <p>The costs are also real. The read path requires projecting events into a queryable view - typically maintained as a separate database updated by consuming the event stream. Schema evolution is harder: events are immutable, so changing the shape of an event requires versioning the schema and handling multiple versions in your replay logic. For high-write-volume entities, the event log grows large and reconstructing current state from scratch becomes expensive (mitigated by snapshotting: storing periodic checkpoints of materialized state).</p>
 <p>Event sourcing pairs naturally with Kafka: the event log <em>is</em> a Kafka topic with compaction. This combination - <strong>CQRS</strong> (Command Query Responsibility Segregation) + event sourcing on Kafka - appears in systems like LinkedIn&rsquo;s activity feed, Confluent&rsquo;s stream processing products, and Martin Fowler&rsquo;s influential microservices work.</p>
@@ -314,7 +314,8 @@ The question exposes a design choice that determines whether your upload endpoin
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

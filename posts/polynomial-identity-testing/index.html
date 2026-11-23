@@ -213,9 +213,9 @@ $$\Pr[p(r_1, \ldots, r_n) = 0] \leq \frac{d}{|S|}$$</p>
 <summary>Why a wrong product is caught at least half the time</summary>
 <p><strong>Error probability when $AB \neq C$.</strong> Let $D = AB - C$. Since $AB \neq C$, $D$ is a nonzero matrix. We need to bound $\Pr[Dr = 0]$ when $r$ is uniform over $\{0, 1\}^n$.</p>
 <p>Since $D \neq 0$, there exists a row $i$ and a column $j$ such that $D_{ij} \neq 0$. The $i$-th component of $Dr$ is:</p>
-<p>$$(Dr)<em>i = \sum</em>{k=1}^{n} D_{ik} r_k = D_{ij} r_j + \sum_{k \neq j} D_{ik} r_k$$</p>
+<p>$$(Dr)_i = \sum_{k=1}^{n} D_{ik} r_k = D_{ij} r_j + \sum_{k \neq j} D_{ik} r_k$$</p>
 <p>View this as a linear polynomial in $r_j$ alone, with all other $r_k$ fixed. The coefficient of $r_j$ is $D_{ij} \neq 0$. Over the domain $\{0, 1\}$ for $r_j$, a nonzero degree-1 polynomial has at most 1 root, so:</p>
-<p>$$\Pr[(Dr)<em>i = 0 \mid r_1, \ldots, r</em>{j-1}, r_{j+1}, \ldots, r_n] \leq \frac{1}{2}$$</p>
+<p>$$\Pr[(Dr)_i = 0 \mid r_1, \ldots, r_{j-1}, r_{j+1}, \ldots, r_n] \leq \frac{1}{2}$$</p>
 <p>by Schwartz-Zippel with $d = 1$, $|S| = 2$. Since this holds for every fixed choice of the other coordinates:</p>
 <p>$$\Pr[Dr = 0] \leq \Pr[(Dr)_i = 0] \leq \frac{1}{2}$$</p>
 </details>
@@ -223,17 +223,17 @@ $$\Pr[p(r_1, \ldots, r_n) = 0] \leq \frac{d}{|S|}$$</p>
 <h2 id="the-isolation-lemma">The Isolation Lemma</h2>
 <p>Many problems - shortest paths, spanning trees, matchings - are easy one step at a time but hard to parallelize, because there may be <em>many</em> optimal answers and parallel processors can&rsquo;t agree on which one to build. Mulmuley, Vazirani and Vazirani (1987) fixed this by making the optimum unique, at random.</p>
 <blockquote>
-<p><strong>Isolation Lemma.</strong> Give each of $n$ elements an independent random weight from ${1, \ldots, 2n}$. For <em>any</em> family of subsets, with probability at least $1/2$ there is exactly one subset of minimum total weight.</p>
+<p><strong>Isolation Lemma.</strong> Give each of $n$ elements an independent random weight from $\{1, \ldots, 2n\}$. For <em>any</em> family of subsets, with probability at least $1/2$ there is exactly one subset of minimum total weight.</p>
 </blockquote>
 <p><strong>Why.</strong> For an element $i$, let $W_i^+$ be the lightest weight of a set containing $i$, and $W_i^-$ the lightest weight of a set without it. The minimum fails to be unique only if some $i$ is <strong>ambiguous</strong>: $W_i^+ = W_i^-$, with a lightest set containing $i$ and another avoiding it. Fix every other weight. Then $W_i^-$ doesn&rsquo;t depend on $w_i$, while $W_i^+$ rises by exactly 1 for every 1 added to $w_i$, so they&rsquo;re equal for at most one of the $2n$ possible values of $w_i$. Hence $i$ is ambiguous with probability at most $\frac{1}{2n}$, and a union bound over all $n$ elements gives at most $\frac{1}{2}$.</p>
-<p><strong>Perfect matching in parallel.</strong> For a bipartite graph with an $n \times n$ vertex split, give each edge a random weight $w_{ij}$ and build the <strong>weighted Edmonds matrix</strong>: $T_{ij} = 2^{w_{ij}}$ where there&rsquo;s an edge, 0 elsewhere. Each perfect matching $M$ contributes $\pm 2^{w(M)}$ to $\det T$. If the minimum-weight matching is unique, with weight $w^<em>$, every other term is a <em>higher</em> power of 2, so the highest power of 2 dividing $\det T$ is exactly $2^{w^</em>}$: the determinant is nonzero. Determinants can be computed in polylogarithmic parallel time, so this puts bipartite perfect matching in <strong>RNC</strong>, a landmark result of the 1980s. (MVV extended it to general graphs using the Tutte matrix.)</p>
+<p><strong>Perfect matching in parallel.</strong> For a bipartite graph with an $n \times n$ vertex split, give each edge a random weight $w_{ij}$ and build the <strong>weighted Edmonds matrix</strong>: $T_{ij} = 2^{w_{ij}}$ where there&rsquo;s an edge, 0 elsewhere. Each perfect matching $M$ contributes $\pm 2^{w(M)}$ to $\det T$. If the minimum-weight matching is unique, with weight $w^*$, every other term is a <em>higher</em> power of 2, so the highest power of 2 dividing $\det T$ is exactly $2^{w^*}$: the determinant is nonzero. Determinants can be computed in polylogarithmic parallel time, so this puts bipartite perfect matching in <strong>RNC</strong>, a landmark result of the 1980s. (MVV extended it to general graphs using the Tutte matrix.)</p>
 <hr>
 <h2 id="reedsolomon-codes">Reed–Solomon Codes</h2>
 <p>The same fact about roots gives one of the most widely used error-correcting codes. Encode a message $(m_0, \ldots, m_{k-1})$ as the polynomial $p(x) = m_0 + m_1 x + \cdots + m_{k-1} x^{k-1}$, and transmit its values at $n$ fixed points: $\big(p(\alpha_1), \ldots, p(\alpha_n)\big)$.</p>
 <p>Two different messages give different polynomials, whose difference has degree at most $k - 1$ and so at most $k - 1$ roots. So their codewords agree in at most $k - 1$ places and <strong>differ in at least $n - k + 1$</strong>. That meets the Singleton bound exactly, which makes Reed–Solomon codes <em>maximum distance separable</em>: no linear code of the same size does better. They protect CDs, QR codes, deep-space links and RAID storage.</p>
 <details>
 <summary>The details</summary>
-<p><strong>Reed-Solomon codes.</strong> Fix a finite field $\mathbb{F}_q$ and $n$ distinct evaluation points $\alpha_1, \ldots, \alpha_n \in \mathbb{F}<em>q$. A Reed-Solomon code of dimension $k$ encodes a message $(m_0, \ldots, m</em>{k-1}) \in \mathbb{F}_q^k$ as the evaluation vector:</p>
+<p><strong>Reed-Solomon codes.</strong> Fix a finite field $\mathbb{F}_q$ and $n$ distinct evaluation points $\alpha_1, \ldots, \alpha_n \in \mathbb{F}_q$. A Reed-Solomon code of dimension $k$ encodes a message $(m_0, \ldots, m_{k-1}) \in \mathbb{F}_q^k$ as the evaluation vector:</p>
 <p>$$\text{RS}(m) = (p(\alpha_1), p(\alpha_2), \ldots, p(\alpha_n))$$</p>
 <p>where $p(x) = m_0 + m_1 x + \cdots + m_{k-1} x^{k-1}$ is a polynomial of degree at most $k - 1$.</p>
 <p><strong>Minimum distance.</strong> Two distinct codewords $\text{RS}(m)$ and $\text{RS}(m')$ correspond to distinct polynomials $p$ and $p'$, so $p - p'$ is a nonzero polynomial of degree at most $k - 1$. By the univariate case of Schwartz-Zippel (or just the fundamental theorem of algebra), $p - p'$ has at most $k - 1$ roots. So $p$ and $p'$ agree on at most $k - 1$ of the $n$ evaluation points.</p>
@@ -272,7 +272,7 @@ $$\Pr[p(r_1, \ldots, r_n) = 0] \leq \frac{d}{|S|}$$</p>
 <tr>
 <td>Isolation lemma</td>
 <td>Make the optimum unique</td>
-<td>Random weights in ${1, \ldots, 2n}$</td>
+<td>Random weights in $\{1, \ldots, 2n\}$</td>
 <td>$\leq 1/2$ failure</td>
 <td>Enables RNC matching</td>
 </tr>
@@ -309,7 +309,8 @@ $$\Pr[p(r_1, \ldots, r_n) = 0] \leq \frac{d}{|S|}$$</p>
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

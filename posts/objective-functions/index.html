@@ -212,9 +212,9 @@
 <h2 id="kl-divergence-as-a-loss">KL Divergence as a Loss</h2>
 <p>The connection between cross-entropy and KL divergence matters for understanding what you&rsquo;re optimizing.</p>
 <p>Recall the KL divergence from a true distribution $p$ to a model distribution $q$:</p>
-<p>$$D_{\text{KL}}(p | q) = \sum_k p_k \log \frac{p_k}{q_k}.$$</p>
+<p>$$D_{\text{KL}}(p \| q) = \sum_k p_k \log \frac{p_k}{q_k}.$$</p>
 <p>The cross-entropy between $p$ and $q$ decomposes as:</p>
-<p>$$H(p, q) = H(p) + D_{\text{KL}}(p | q),$$</p>
+<p>$$H(p, q) = H(p) + D_{\text{KL}}(p \| q),$$</p>
 <p>where $H(p) = -\sum_k p_k \log p_k$ is the entropy of the true distribution.</p>
 <p>When you minimize cross-entropy over the model parameters $\theta$ (which affect $q$ but not $p$), $H(p)$ is a constant and drops out. So minimizing cross-entropy is exactly minimizing KL divergence. The loss is zero when $q = p$ - when your model perfectly captures the true distribution.</p>
 <blockquote>
@@ -224,9 +224,9 @@
 <h2 id="contrastive-losses">Contrastive Losses</h2>
 <p>Standard supervised losses compare each prediction to its label independently. Contrastive losses instead compare pairs or groups of examples, encouraging the model to learn a geometry where similar inputs are close and dissimilar inputs are far.</p>
 <p><strong>Triplet loss</strong> takes an anchor $a$, a positive $p$ (same class as $a$), and a negative $n$ (different class):</p>
-<p>$$L_{\text{triplet}} = \max(0, |f(a) - f(p)|^2 - |f(a) - f(n)|^2 + \alpha),$$</p>
+<p>$$L_{\text{triplet}} = \max(0, \|f(a) - f(p)\|^2 - \|f(a) - f(n)\|^2 + \alpha),$$</p>
 <p>where $\alpha$ is a margin. The loss is zero when the positive is already closer than the negative by at least $\alpha$; positive otherwise.</p>
-<p><strong>InfoNCE</strong> (used in SimCLR, CLIP) is a more modern formulation. Given a positive pair $(x, x^+)$ and $K-1$ negative samples $x^-<em>1, \ldots, x^-</em>{K-1}$:</p>
+<p><strong>InfoNCE</strong> (used in SimCLR, CLIP) is a more modern formulation. Given a positive pair $(x, x^+)$ and $K-1$ negative samples $x^-_1, \ldots, x^-_{K-1}$:</p>
 <p>$$L_{\text{InfoNCE}} = -\log \frac{\exp(f(x)^\top f(x^+)/\tau)}{\exp(f(x)^\top f(x^+)/\tau) + \sum_{j}\exp(f(x)^\top f(x^-_j)/\tau)},$$</p>
 <p>where $\tau$ is a temperature hyperparameter. This is a softmax over similarities - the loss encourages the model to identify the positive pair among the negatives.</p>
 <p>Contrastive losses are the core of self-supervised learning. They allow representation learning without labels: you can define positive pairs as augmented views of the same image, or aligned image-text pairs, without any human annotation.</p>
@@ -236,13 +236,13 @@
 <p>$$L(\theta) = L_{\text{data}}(\theta) + \lambda R(\theta).$$</p>
 <p>The regularization term $R(\theta)$ penalizes model complexity and reduces overfitting. The hyperparameter $\lambda$ controls the tradeoff.</p>
 <p><strong>L2 regularization</strong> (weight decay):</p>
-<p>$$R(\theta) = |\theta|^2 = \sum_j \theta_j^2.$$</p>
+<p>$$R(\theta) = \|\theta\|^2 = \sum_j \theta_j^2.$$</p>
 <p>This penalizes large weights. The probabilistic interpretation: L2 corresponds to placing a Gaussian prior $\theta_j \sim \mathcal{N}(0, 1/\lambda)$ on each weight. MAP estimation under this prior gives L2 regularization. The effect is to shrink all weights toward zero, reducing the model&rsquo;s ability to rely on any single feature.</p>
 <p><strong>L1 regularization</strong> (Lasso):</p>
-<p>$$R(\theta) = |\theta|_1 = \sum_j |\theta_j|.$$</p>
+<p>$$R(\theta) = \|\theta\|_1 = \sum_j |\theta_j|.$$</p>
 <p>The probabilistic interpretation: L1 corresponds to a Laplace prior on weights. The key property is sparsity: L1 regularization tends to set many weights exactly to zero, effectively performing feature selection. L2 shrinks everything; L1 zeroes things out.</p>
 <p><strong>Elastic net</strong>: combine both.</p>
-<p>$$R(\theta) = \alpha |\theta|_1 + (1-\alpha)|\theta|^2.$$</p>
+<p>$$R(\theta) = \alpha \|\theta\|_1 + (1-\alpha)\|\theta\|^2.$$</p>
 <p>You get both sparsity from L1 and the stability of L2.</p>
 <p><strong>Dropout</strong> is a different mechanism: during training, randomly zero out each neuron with probability $p$. This is not added to the loss function - it is applied during the forward pass. The effect is similar to ensembling many sub-networks, which reduces overfitting. At inference, all neurons are active and weights are scaled by $(1-p)$.</p>
 <hr>
@@ -292,7 +292,7 @@
 <p>$$P(y_1 \succ y_2 \mid x) = \sigma(r(x, y_1) - r(x, y_2)),$$</p>
 <p>where $r$ is the learned reward function and $\sigma$ is sigmoid. The reward model is trained with cross-entropy to predict which response was preferred. This is still a cross-entropy loss, but now over pairwise comparisons rather than class labels.</p>
 <p>The reward model is then used to fine-tune a language model with PPO or similar policy gradient methods. The full RLHF objective is a combination of maximizing expected reward plus a KL penalty to prevent the model from drifting too far from the base model:</p>
-<p>$$L_{\text{RLHF}} = -\mathbb{E}[r(x,y)] + \beta D_{\text{KL}}(\pi_\theta | \pi_{\text{ref}}).$$</p>
+<p>$$L_{\text{RLHF}} = -\mathbb{E}[r(x,y)] + \beta D_{\text{KL}}(\pi_\theta \| \pi_{\text{ref}}).$$</p>
 <p>The loss has become a design artifact encoding what &ldquo;better&rdquo; means according to human raters. Every choice in this pipeline - what questions to rate, who rates them, how to aggregate ratings - becomes encoded in the loss.</p>
 <hr>
 <h2 id="summary">Summary</h2>
@@ -314,7 +314,7 @@
 </tr>
 <tr>
 <td>MAE</td>
-<td>$\frac{1}{n}\sum|\hat{y}-y|$</td>
+<td>$\frac{1}{n}\sum\|\hat{y}-y\|$</td>
 <td>Robust regression</td>
 <td>Outlier-robust, non-differentiable at 0</td>
 </tr>
@@ -338,13 +338,13 @@
 </tr>
 <tr>
 <td>L2 reg</td>
-<td>$\lambda|\theta|^2$</td>
+<td>$\lambda\|\theta\|^2$</td>
 <td>General regularization</td>
 <td>Gaussian prior, shrinks weights</td>
 </tr>
 <tr>
 <td>L1 reg</td>
-<td>$\lambda|\theta|_1$</td>
+<td>$\lambda\|\theta\|_1$</td>
 <td>Sparse models</td>
 <td>Laplace prior, zeroes weights</td>
 </tr>
@@ -371,7 +371,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

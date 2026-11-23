@@ -217,10 +217,10 @@
 <p>Return to the opening example. Why does a tiny perturbation in $b$ produce a huge change in the solution to $Ax = b$?</p>
 <p>The answer is the <strong>condition number</strong> of $A$. This is a property of the problem, not of the algorithm.</p>
 <p><strong>Definition.</strong> The condition number of a matrix $A$ is:</p>
-<p>$$\kappa(A) = |A| \cdot |A^{-1}|$$</p>
-<p>where $|\cdot|$ is the matrix norm induced by the vector norm (the largest factor by which $A$ can stretch a vector). For symmetric matrices, $\kappa(A) = |\lambda_{\max}| / |\lambda_{\min}|$ - the ratio of the largest to the smallest eigenvalue in absolute value. For general matrices, it equals $\sigma_{\max} / \sigma_{\min}$, the ratio of the largest to smallest singular value.</p>
-<p><strong>What the condition number measures.</strong> If you perturb $b$ by a relative amount $\varepsilon$ (so $|b' - b| / |b| = \varepsilon$), the relative change in the solution satisfies:</p>
-<p>$$\frac{|x' - x|}{|x|} \leq \kappa(A) \cdot \varepsilon$$</p>
+<p>$$\kappa(A) = \|A\| \cdot \|A^{-1}\|$$</p>
+<p>where $\|\cdot\|$ is the matrix norm induced by the vector norm (the largest factor by which $A$ can stretch a vector). For symmetric matrices, $\kappa(A) = |\lambda_{\max}| / |\lambda_{\min}|$ - the ratio of the largest to the smallest eigenvalue in absolute value. For general matrices, it equals $\sigma_{\max} / \sigma_{\min}$, the ratio of the largest to smallest singular value.</p>
+<p><strong>What the condition number measures.</strong> If you perturb $b$ by a relative amount $\varepsilon$ (so $\|b' - b\| / \|b\| = \varepsilon$), the relative change in the solution satisfies:</p>
+<p>$$\frac{\|x' - x\|}{\|x\|} \leq \kappa(A) \cdot \varepsilon$$</p>
 <p>The condition number amplifies the relative error. If $\kappa(A) = 10^6$ and your input has 16 significant digits, your output has at most 10 significant digits. If $\kappa(A) = 10^{16}$, you have zero reliable digits - the solution is garbage, regardless of which algorithm you use.</p>
 <p>For the matrix in the opening example, $\kappa(A) \approx 4 \times 10^6$. A perturbation of $10^{-3}$ in $b$ can produce a change of $10^{-3} \times 4 \times 10^6 = 4000$ in $x$. This is what we observed.</p>
 <blockquote>
@@ -230,10 +230,10 @@
 <hr>
 <h2 id="section-5-forward-and-backward-error-analysis">Section 5: Forward and Backward Error Analysis</h2>
 <p>Before discussing what makes an algorithm stable or unstable, we need a framework for measuring what &ldquo;wrong&rdquo; means.</p>
-<p><strong>Forward error.</strong> Given an algorithm that computes an approximation $\hat{x}$ to the true answer $x^<em>$, the forward error is simply the difference $|\hat{x} - x^</em>|$. This is what you care about directly: how far off is the answer?</p>
+<p><strong>Forward error.</strong> Given an algorithm that computes an approximation $\hat{x}$ to the true answer $x^*$, the forward error is simply the difference $\|\hat{x} - x^*\|$. This is what you care about directly: how far off is the answer?</p>
 <p>The problem with forward error analysis is that bounding it requires knowing the exact answer $x^*$, which defeats the purpose.</p>
 <p><strong>Backward error.</strong> John Wilkinson (1919-1986) proposed a more powerful approach. Instead of asking &ldquo;how far is $\hat{x}$ from the true answer?&rdquo;, ask: &ldquo;for what input would $\hat{x}$ be the exact answer?&rdquo;</p>
-<p>More precisely: you want to compute $f(x)$ and your algorithm produces $\hat{y}$. The backward error is the smallest perturbation $\delta x$ such that $\hat{y} = f(x + \delta x)$ exactly. If the backward error $|\delta x| / |x|$ is small - say, of order $\varepsilon_{\text{mach}}$ - then the algorithm is producing the exact answer to a very slightly different problem. This is backward stability.</p>
+<p>More precisely: you want to compute $f(x)$ and your algorithm produces $\hat{y}$. The backward error is the smallest perturbation $\delta x$ such that $\hat{y} = f(x + \delta x)$ exactly. If the backward error $\|\delta x\| / \|x\|$ is small - say, of order $\varepsilon_{\text{mach}}$ - then the algorithm is producing the exact answer to a very slightly different problem. This is backward stability.</p>
 <p>An algorithm is <strong>backward stable</strong> if the computed answer is the exact answer to a problem that is close to the original problem. &ldquo;Close&rdquo; means &ldquo;within machine precision.&rdquo;</p>
 <p><strong>Why backward stability is the right standard.</strong> If an algorithm is backward stable and the problem is well-conditioned ($\kappa$ small), then the forward error is also small:</p>
 <p>$$\text{forward error} \leq \kappa \times \text{backward error} \approx \kappa \varepsilon_{\text{mach}}$$</p>
@@ -247,7 +247,7 @@
 <p><strong>Gaussian elimination without pivoting.</strong> At each step, divide by the current diagonal entry (the pivot). If a pivot is small, the multiplier - the ratio used to eliminate the variable below - is large. Large multipliers amplify rounding errors in subsequent steps.</p>
 <p>Example: solve the system with $A = \begin{pmatrix} 0.0001 &amp; 1 \\ 1 &amp; 1 \end{pmatrix}$, $b = \begin{pmatrix} 1 \\ 2 \end{pmatrix}$. The exact solution is approximately $x = (1.0001, 0.9999)$. Without pivoting, the first multiplier is $1 / 0.0001 = 10000$. This large multiplier can cause the accumulated errors to dominate the answer.</p>
 <p><strong>Gaussian elimination with partial pivoting.</strong> Before eliminating in column $j$, swap rows so that the largest entry in that column is the pivot. This keeps all multipliers at most 1 in absolute value, preventing error amplification.</p>
-<p>The formal statement: Gaussian elimination with partial pivoting is backward stable. This means the computed solution $\hat{x}$ is the exact solution to a perturbed problem $(A + \delta A)\hat{x} = b$ where $|\delta A| / |A|$ is small (of order $\varepsilon_{\text{mach}}$ times a manageable factor). In practice, partial pivoting is stable for virtually all matrices that arise in applications.</p>
+<p>The formal statement: Gaussian elimination with partial pivoting is backward stable. This means the computed solution $\hat{x}$ is the exact solution to a perturbed problem $(A + \delta A)\hat{x} = b$ where $\|\delta A\| / \|A\|$ is small (of order $\varepsilon_{\text{mach}}$ times a manageable factor). In practice, partial pivoting is stable for virtually all matrices that arise in applications.</p>
 <p>The distinction between the condition number of a problem and the stability of an algorithm is crucial:</p>
 <ul>
 <li><strong>Condition number</strong>: property of the problem. Determines the best accuracy any algorithm can achieve.</li>
@@ -315,7 +315,7 @@ $$(a + b\epsilon) \cdot (c + d\epsilon) = ac + (ad + bc)\epsilon$$</p>
 <p><strong>The conjugate gradient method (CG).</strong> For symmetric positive definite $A$ (eigenvalues all positive), CG is optimal among iterative methods. It minimizes $\frac{1}{2} x^T A x - b^T x$ over successively larger subspaces (Krylov subspaces).</p>
 <p>In theory, CG converges in at most $n$ steps to the exact solution (ignoring rounding). In practice, it converges much faster when $A$ has favorable eigenvalue structure.</p>
 <p>The convergence rate depends on the condition number. After $k$ iterations:</p>
-<p>$$\frac{|x^{(k)} - x|_A}{|x^{(0)} - x|_A} \leq 2 \left( \frac{\sqrt{\kappa(A)} - 1}{\sqrt{\kappa(A)} + 1} \right)^k$$</p>
+<p>$$\frac{\|x^{(k)} - x\|_A}{\|x^{(0)} - x\|_A} \leq 2 \left( \frac{\sqrt{\kappa(A)} - 1}{\sqrt{\kappa(A)} + 1} \right)^k$$</p>
 <p>For $\kappa(A) = 100$, the factor is $(9/11)^k \approx 0.82^k$: you need about $\log(1/\varepsilon) / \log(1/0.82) \approx 5 \log(1/\varepsilon)$ iterations for precision $\varepsilon$. For $\kappa(A) = 10000$, the factor is $(99/101)^k \approx 0.98^k$: five times more iterations.</p>
 <p>Condition number strikes again. The same problem that causes Gaussian elimination to give a wrong answer causes CG to converge slowly.</p>
 <p><strong>Preconditioning.</strong> The cure is to transform the problem. Instead of solving $Ax = b$, solve $P^{-1}Ax = P^{-1}b$ where $P$ is a matrix chosen to approximate $A$ but be easy to invert. If $P \approx A$, then $P^{-1}A \approx I$, which has condition number 1. Good preconditioners can reduce $\kappa(P^{-1}A)$ dramatically, accelerating CG by orders of magnitude.</p>
@@ -335,7 +335,7 @@ $$(a + b\epsilon) \cdot (c + d\epsilon) = ac + (ad + bc)\epsilon$$</p>
 <p>Is this stable? Does it converge? The answer depends on the learning rate $\alpha$ and the curvature of $f$.</p>
 <p>Consider minimizing a convex quadratic $f(x) = \frac{1}{2} x^T A x - b^T x$ where $A$ is symmetric positive definite. The gradient is $\nabla f(x) = Ax - b$. The update is:</p>
 <p>$$x^{(k+1)} = x^{(k)} - \alpha (Ax^{(k)} - b)$$</p>
-<p>Let $e^{(k)} = x^{(k)} - x^<em>$ be the error (where $x^</em> = A^{-1}b$ is the minimizer). Then:</p>
+<p>Let $e^{(k)} = x^{(k)} - x^*$ be the error (where $x^* = A^{-1}b$ is the minimizer). Then:</p>
 <p>$$e^{(k+1)} = (I - \alpha A) e^{(k)}$$</p>
 <p>The error at step $k$ is $(I - \alpha A)^k e^{(0)}$. For this to go to zero, all eigenvalues of $I - \alpha A$ must be inside the unit disk. If $\lambda_1 \leq \lambda_2 \leq \cdots \leq \lambda_n$ are the eigenvalues of $A$, the eigenvalues of $I - \alpha A$ are $1 - \alpha \lambda_i$. We need:</p>
 <p>$$|1 - \alpha \lambda_i| &lt; 1 \quad \text{for all } i$$</p>
@@ -358,7 +358,7 @@ $$(a + b\epsilon) \cdot (c + d\epsilon) = ac + (ad + bc)\epsilon$$</p>
 <p>The connection to condition numbers: the matrix $(I - hA)$ that must be solved at each step of an implicit method is often well-conditioned when $A$ has eigenvalues of similar magnitude. When the eigenvalues span many orders of magnitude (the stiff case), the matrix can be ill-conditioned, and the linear solve at each step requires care.</p>
 <hr>
 <h2 id="section-14-the-condition-number-and-its-computation">Section 14: The Condition Number and Its Computation</h2>
-<p>How do you compute the condition number of a matrix in practice? The definition $\kappa(A) = |A| \cdot |A^{-1}|$ requires computing $A^{-1}$, which is exactly as expensive as solving the linear system and potentially numerically unstable itself.</p>
+<p>How do you compute the condition number of a matrix in practice? The definition $\kappa(A) = \|A\| \cdot \|A^{-1}\|$ requires computing $A^{-1}$, which is exactly as expensive as solving the linear system and potentially numerically unstable itself.</p>
 <p>The practical answer: the condition number is $\sigma_{\max} / \sigma_{\min}$ where $\sigma_{\max}$ and $\sigma_{\min}$ are the largest and smallest singular values. Singular value decomposition (SVD) computes all singular values and is backward stable. For an $n \times n$ matrix, SVD costs $O(n^3)$ but provides the condition number as a byproduct.</p>
 <p>For very large matrices, computing the exact condition number is too expensive. Instead, estimate it: the power iteration method approximates the largest singular value $\sigma_{\max}$ by repeatedly multiplying by $A^T A$ and normalizing. The smallest singular value is harder - it requires inverse iteration, which involves solving a linear system with $A^T A$ at each step.</p>
 <p>Numerical libraries (LAPACK, SciPy) provide condition number estimators that are less expensive than full SVD. They produce lower bounds on the condition number, which are sufficient for deciding whether a problem is ill-conditioned.</p>
@@ -395,7 +395,7 @@ $$(a + b\epsilon) \cdot (c + d\epsilon) = ac + (ad + bc)\epsilon$$</p>
 <h2 id="section-17-worked-example---the-softmax-in-practice">Section 17: Worked Example - the Softmax in Practice</h2>
 <p>Here is a case where these ideas appear directly in ML code.</p>
 <p>The softmax function maps a vector $z \in \mathbb{R}^k$ to a probability distribution:</p>
-<p>$$\text{softmax}(z)<em>i = \frac{e^{z_i}}{\sum</em>{j=1}^k e^{z_j}}$$</p>
+<p>$$\text{softmax}(z)_i = \frac{e^{z_i}}{\sum_{j=1}^k e^{z_j}}$$</p>
 <p>If any $z_i$ is large (say, $z_i = 1000$), then $e^{z_i} = e^{1000}$ is astronomically large - far beyond the range of double precision floating point, which saturates at about $e^{709}$. The result is <code>inf</code>, and the division <code>inf / inf</code> produces <code>nan</code>. The computation fails entirely.</p>
 <p>The fix is algebraic, exactly like the $\sqrt{x+1} - \sqrt{x}$ fix from Section 3. Subtract the maximum entry first:</p>
 <p>$$\text{softmax}(z)_i = \frac{e^{z_i - c}}{\sum_j e^{z_j - c}}, \quad c = \max_j z_j$$</p>
@@ -437,7 +437,7 @@ $$(a + b\epsilon) \cdot (c + d\epsilon) = ac + (ad + bc)\epsilon$$</p>
 </tr>
 <tr>
 <td>Condition number $\kappa(A)$</td>
-<td>$|A| \cdot |A^{-1}|$</td>
+<td>$\|A\| \cdot \|A^{-1}\|$</td>
 <td>Amplifies input errors by factor $\kappa$; ill-conditioned problems have no reliable solutions</td>
 </tr>
 <tr>
@@ -481,7 +481,8 @@ $$(a + b\epsilon) \cdot (c + d\epsilon) = ac + (ad + bc)\epsilon$$</p>
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {

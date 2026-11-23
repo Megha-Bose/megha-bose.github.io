@@ -214,9 +214,9 @@
 <hr>
 <h2 id="section-2-the-total-derivative---formal-definition">Section 2: The Total Derivative - Formal Definition</h2>
 <p><strong>Definition.</strong> A function $f: \mathbb{R}^n \to \mathbb{R}^m$ is <strong>differentiable</strong> at $x$ if there exists a linear map $Df(x): \mathbb{R}^n \to \mathbb{R}^m$ such that:</p>
-<p>$$\lim_{|\delta| \to 0} \frac{|f(x + \delta) - f(x) - Df(x)\delta|}{|\delta|} = 0$$</p>
+<p>$$\lim_{\|\delta\| \to 0} \frac{\|f(x + \delta) - f(x) - Df(x)\delta\|}{\|\delta\|} = 0$$</p>
 <p>When such a linear map exists, it is unique and called the <strong>total derivative</strong> (or <strong>Fréchet derivative</strong>) of $f$ at $x$.</p>
-<p>In words: $Df(x)$ is the unique linear map such that $f(x + \delta) \approx f(x) + Df(x)\delta$ with an error that is smaller than $|\delta|$ as $\delta \to 0$.</p>
+<p>In words: $Df(x)$ is the unique linear map such that $f(x + \delta) \approx f(x) + Df(x)\delta$ with an error that is smaller than $\|\delta\|$ as $\delta \to 0$.</p>
 <p>This is exactly the same definition as for $f: \mathbb{R} \to \mathbb{R}$, where $Df(x) = f'(x)$ is the number that satisfies $f(x + h) \approx f(x) + f'(x) h$ with error $o(h)$. The only change is that everything is now vector-valued and the linear map is a matrix.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> The derivative being a linear map - not just a number - might feel strange. But you have been using this idea all along. When you write $f(x + h) \approx f(x) + f'(x) h$, the right-hand side is the linear function $h \mapsto f'(x) h$ added to $f(x)$. The &ldquo;linear function $h \mapsto f'(x) h$&rdquo; is a linear map from $\mathbb{R}$ to $\mathbb{R}$, encoded by the number $f'(x)$. In higher dimensions, the same linear map exists, but it needs a matrix to encode it.</p>
@@ -252,7 +252,7 @@
 <p>At $(1, 2)$: $J_f = \begin{pmatrix} 2 &amp; 1 \\ 2 &amp; 1 \end{pmatrix}$. This matrix has rank 1 ($\det = 2 - 2 = 0$): the map $f$ is locally non-injective at this point. Two different nearby inputs get sent to the same output direction.</p>
 <p>At $(1, 0)$: $J_f = \begin{pmatrix} 2 &amp; 1 \\ 0 &amp; 1 \end{pmatrix}$. This has rank 2 ($\det = 2 \neq 0$): the map is locally invertible at this point.</p>
 <p><strong>Example 3: Softmax.</strong> The softmax function maps $\mathbb{R}^n \to \mathbb{R}^n$:</p>
-<p>$$\text{softmax}(x)<em>i = \frac{e^{x_i}}{\sum</em>{j=1}^n e^{x_j}} = s_i$$</p>
+<p>$$\text{softmax}(x)_i = \frac{e^{x_i}}{\sum_{j=1}^n e^{x_j}} = s_i$$</p>
 <p>The Jacobian entries are:</p>
 <p>$$\frac{\partial s_i}{\partial x_j} = \begin{cases} s_i(1 - s_i) &amp; i = j \\ -s_i s_j &amp; i \neq j \end{cases}$$</p>
 <p>In matrix form: $J = \text{diag}(s) - s s^T$ (diagonal matrix of softmax outputs minus their outer product). This Jacobian is always singular: its columns sum to zero (because $\sum_i s_i = 1$ implies $\sum_i \frac{\partial s_i}{\partial x_j} = 0$). Softmax is not locally invertible - multiple inputs map to the same output direction (adding a constant to all $x_i$ does not change the softmax output).</p>
@@ -307,7 +307,7 @@
 <p>In machine learning, parameters are often organized as matrices. For a linear layer with weight matrix $W \in \mathbb{R}^{m \times n}$, the output is $y = Wx$. The loss $\ell$ depends on $y$ and hence on $W$.</p>
 <p>What is $\frac{\partial \ell}{\partial W}$? This means: how does the scalar loss change as we vary each entry $W_{ij}$?</p>
 <p>The answer is a matrix of the same shape as $W$: the $(i, j)$ entry of $\frac{\partial \ell}{\partial W}$ is $\frac{\partial \ell}{\partial W_{ij}}$.</p>
-<p><strong>Example: Linear regression loss.</strong> $\ell = |Wx - y|^2 = (Wx - y)^T(Wx - y)$.</p>
+<p><strong>Example: Linear regression loss.</strong> $\ell = \|Wx - y\|^2 = (Wx - y)^T(Wx - y)$.</p>
 <p>We want $\frac{\partial \ell}{\partial W}$.</p>
 <p>By the chain rule: $\frac{\partial \ell}{\partial W_{ij}} = \frac{\partial \ell}{\partial z_i} \cdot \frac{\partial z_i}{\partial W_{ij}}$, where $z = Wx - y$.</p>
 <p>$\frac{\partial \ell}{\partial z_i} = 2z_i$ (since $\ell = \sum_k z_k^2$).</p>
@@ -337,7 +337,7 @@
 <p>Functions with $\Delta f = 0$ everywhere are <strong>harmonic</strong> - they sit at exactly their local average everywhere. Harmonic functions model steady-state temperature distributions, electrostatic potentials in charge-free space, and probability currents.</p>
 <p><strong>The graph Laplacian.</strong> For discrete data on a graph $G = (V, E)$ with adjacency matrix $A$ and degree matrix $D$, the analogous object is $L = D - A$. For a signal $x \in \mathbb{R}^{|V|}$ (a value at each node):</p>
 <p>$$x^T L x = \sum_{(i,j) \in E} (x_i - x_j)^2$$</p>
-<p>This is the total variation of the signal: how much it varies between connected nodes. Minimizing $x^T L x$ encourages smooth signals (nearby nodes have similar values). This is the discrete analog of the continuous Dirichlet energy $\int |\nabla f|^2$.</p>
+<p>This is the total variation of the signal: how much it varies between connected nodes. Minimizing $x^T L x$ encourages smooth signals (nearby nodes have similar values). This is the discrete analog of the continuous Dirichlet energy $\int \|\nabla f\|^2$.</p>
 <p>Graph neural networks use $L$ to aggregate neighborhood information. Spectral graph convolutions multiply in the eigenbasis of $L$ - the &ldquo;graph Fourier transform&rdquo; - analogous to how classical convolution multiplies in the Fourier basis (eigenbasis of the continuous Laplacian).</p>
 <hr>
 <h2 id="section-10-the-inverse-function-theorem">Section 10: The Inverse Function Theorem</h2>
@@ -440,12 +440,12 @@
 <p>$$x(t + \alpha) \approx x(t) + \alpha \frac{dx}{dt}\bigg|_{t} = x(t) - \alpha \nabla f(x(t))$$</p>
 <p>Smaller step sizes give better approximations to the continuous flow.</p>
 <p><strong>Why continuous-time is useful for analysis.</strong> The gradient flow satisfies:</p>
-<p>$$\frac{d}{dt} f(x(t)) = \nabla f(x(t)) \cdot \frac{dx}{dt} = \nabla f \cdot (-\nabla f) = -|\nabla f|^2 \leq 0$$</p>
+<p>$$\frac{d}{dt} f(x(t)) = \nabla f(x(t)) \cdot \frac{dx}{dt} = \nabla f \cdot (-\nabla f) = -\|\nabla f\|^2 \leq 0$$</p>
 <p>The loss decreases monotonically along the gradient flow. (This uses the chain rule for partial derivatives from Section 9 of the Gradients post.) For gradient descent with a finite step size, the loss can temporarily increase if the step size is too large.</p>
-<p><strong>The Polyak-Lojasiewicz condition.</strong> If the function satisfies $|\nabla f(x)|^2 \geq \mu (f(x) - f^\ast)$ for some $\mu &gt; 0$ and global minimum $f^\ast$, then the gradient flow converges exponentially:</p>
+<p><strong>The Polyak-Lojasiewicz condition.</strong> If the function satisfies $\|\nabla f(x)\|^2 \geq \mu (f(x) - f^\ast)$ for some $\mu &gt; 0$ and global minimum $f^\ast$, then the gradient flow converges exponentially:</p>
 <p>$$f(x(t)) - f^\ast \leq (f(x(0)) - f^\ast) e^{-2\mu t}$$</p>
 <p>This is proved by applying the chain rule to $f(x(t)) - f^\ast$:</p>
-<p>$$\frac{d}{dt}[f(x(t)) - f^\ast] = -|\nabla f|^2 \leq -\mu(f(x(t)) - f^\ast)$$</p>
+<p>$$\frac{d}{dt}[f(x(t)) - f^\ast] = -\|\nabla f\|^2 \leq -\mu(f(x(t)) - f^\ast)$$</p>
 <p>Then Gronwall&rsquo;s inequality gives the exponential bound.</p>
 <p>This framework connects optimization theory to dynamical systems. The behavior of gradient descent - convergence rates, oscillations, sensitivity to learning rate - can be analyzed using tools from ODEs and control theory applied to the gradient flow.</p>
 <hr>
@@ -541,7 +541,8 @@
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '$', right: '$', display: false}
-        ]
+        ],
+        ignoredClasses: ['nomath']
       });"></script>
     <script>
       (function() {
