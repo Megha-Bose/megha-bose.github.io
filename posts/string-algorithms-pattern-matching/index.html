@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795372985" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795373180" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -174,7 +177,8 @@
     for i = 0 to n - m:
         if T[i..i+m-1] == P:
             report match at i
-</code></pre><p>In the worst case this is $O(nm)$. Consider searching for pattern <code>aaab</code> in text <code>aaaaaaaaaa</code>. At every position you match 3 characters before failing on the 4th, then shift by just 1. You do nearly $nm$ comparisons and find nothing. For adversarial inputs - like scanning source code for a pattern with repeated characters - this is genuinely slow.</p>
+</code></pre><p>In the worst case this is $O(nm)$. Search for <code>aaab</code> in a long run of a&rsquo;s: at every position you match 3 characters, fail on the 4th, and shift by just 1, re-reading characters you&rsquo;ve already seen. Watch it, and then watch KMP:</p>
+<div class="sf" data-sf="player" data-src="/data/string-algorithms-pattern-matching/kmp.json">This is an interactive animation. It needs JavaScript to run.</div>
 <hr>
 <h2 id="kmp-dont-throw-away-what-you-already-know">KMP: Don&rsquo;t Throw Away What You Already Know</h2>
 <p>When you match $j$ characters of $P$ against $T$ and then fail, you know exactly what those $j$ characters were - they equal $P[0..j-1]$. That knowledge tells you where you can safely restart without rechecking characters.</p>
@@ -249,13 +253,13 @@
 <p>Expected time: $O(n + m)$. Worst case: $O(nm)$ if every window produces a hash collision. In practice this is rare, and using two independent hash functions (double hashing) reduces the collision probability to near zero.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> Rabin-Karp can have $O(nm)$ worst case due to hash collisions. But we still use it - why?</p>
-<p>Because it generalizes beautifully to problems that KMP doesn&rsquo;t handle cleanly. Multi-pattern search: hash all $k$ patterns into a hash set, slide one window, check membership. Time $O(n + m_\text{total})$ expected. Two-dimensional pattern matching: compute rolling hashes on rows, then column-hash the row-hashes. KMP doesn&rsquo;t extend to 2D at all. Rabin-Karp is the right tool when the pattern structure is rich or when you&rsquo;re searching for many patterns at once.</p>
+<p>Because it generalizes beautifully to problems that KMP doesn&rsquo;t handle as simply. Multi-pattern search: hash all $k$ patterns, as long as they share one length, into a hash set, slide one window, and check membership, in $O(n + m_\text{total})$ expected time. Two-dimensional pattern matching: roll hashes along the rows, then hash the row hashes down the columns. (KMP-style matching <em>can</em> be extended to 2D, in the Baker–Bird algorithm, but it takes Aho–Corasick as well.) Rabin-Karp is the right tool when the pattern structure is rich or when you&rsquo;re searching for many patterns at once.</p>
 </blockquote>
 <hr>
 <h2 id="suffix-arrays-preprocess-the-text-once">Suffix Arrays: Preprocess the Text Once</h2>
 <p>The previous algorithms answer &ldquo;does $P$ appear in $T$?&rdquo; freshly each time. If you&rsquo;ll run many queries on the same text $T$, preprocess it.</p>
 <p>A suffix array $SA$ lists all $n$ suffixes of $T$ in sorted lexicographic order (by storing their starting indices). Combined with the LCP array (longest common prefix between adjacent entries in $SA$), you can answer any substring query in $O(m + \log n)$ time via binary search.</p>
-<p>Construction costs $O(n \log n)$ with the prefix-doubling algorithm, or $O(n)$ with more sophisticated constructions. The payoff: a genomics database built once on the human reference genome can answer thousands of short-read alignment queries per second, each in $O(m \log n)$ time.</p>
+<p>Construction costs $O(n \log n)$ with prefix doubling, or $O(n)$ with more sophisticated constructions. Index a text once and it answers query after query. Genome aligners take this further with the <strong>FM-index</strong>, a compressed cousin of the suffix array built on the Burrows–Wheeler transform, which lets the human genome be searched for millions of short DNA reads in memory.</p>
 <hr>
 <h2 id="aho-corasick-many-patterns-at-once">Aho-Corasick: Many Patterns at Once</h2>
 <p>KMP handles one pattern. What if you have $k$ patterns $P_1, \ldots, P_k$ and want to find all occurrences of any of them in $T$?</p>
@@ -304,10 +308,10 @@
 </tr>
 <tr>
 <td>Aho-Corasick</td>
-<td>$O(m_\text{total} \cdot</td>
-<td>\Sigma</td>
-<td>)$</td>
+<td>$O(m_\text{total} \cdot \lvert\Sigma\rvert)$</td>
 <td>$O(n + \text{hits})$</td>
+<td>$O(m_\text{total})$</td>
+<td>Many patterns simultaneously</td>
 </tr>
 </tbody>
 </table>
