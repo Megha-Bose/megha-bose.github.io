@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795411986" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795373180" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -207,44 +210,15 @@
 <hr>
 <h2 id="a-concrete-walk-through">A Concrete Walk-Through</h2>
 <p>Three states: Rainy (R), Cloudy (C), Sunny (S). Two observations: umbrella (U), no umbrella (N).</p>
-<p>Say the model is:</p>
+<p>The model, with Rainy, Cloudy and Sunny in that order:</p>
 <ul>
-<li>Initial: $\pi = [0.5, 0.3, 0.2]$ for R, C, S</li>
-<li>Transitions: rainy days tend to follow rainy days, etc.</li>
-<li>Emissions: you bring an umbrella on rainy and cloudy days</li>
+<li><strong>Start</strong>: $\pi = (0.5, 0.3, 0.2)$.</li>
+<li><strong>Transitions</strong>: weather tends to persist. Rainy stays rainy with probability 0.6 and becomes cloudy 0.3 or sunny 0.1; cloudy goes to each of the three with 0.3, 0.4, 0.3; sunny mirrors rainy: 0.1, 0.3, 0.6.</li>
+<li><strong>Emissions</strong>: the chance of seeing an umbrella is 0.9 on rainy days, 0.5 on cloudy days and 0.1 on sunny ones.</li>
 </ul>
-<p>You observe the sequence U, U, N over three days. Build the trellis:</p>
-<table>
-<thead>
-<tr>
-<th>Time</th>
-<th>Rainy $\delta$</th>
-<th>Cloudy $\delta$</th>
-<th>Sunny $\delta$</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>$0.5 \cdot P(U \mid R)$</td>
-<td>$0.3 \cdot P(U \mid C)$</td>
-<td>$0.2 \cdot P(U \mid S)$</td>
-</tr>
-<tr>
-<td>2</td>
-<td>$\max(\ldots) \cdot P(U \mid R)$</td>
-<td>$\max(\ldots) \cdot P(U \mid C)$</td>
-<td>$\max(\ldots) \cdot P(U \mid S)$</td>
-</tr>
-<tr>
-<td>3</td>
-<td>$\max(\ldots) \cdot P(N \mid R)$</td>
-<td>$\max(\ldots) \cdot P(N \mid C)$</td>
-<td>$\max(\ldots) \cdot P(N \mid S)$</td>
-</tr>
-</tbody>
-</table>
-<p>At each cell you record both the value and the backpointer. After filling the table, follow backpointers from the max value at $t=3$ to recover the most likely weather sequence.</p>
+<p>Over four days you see umbrella, umbrella, no umbrella, no umbrella. Fill the trellis column by column:</p>
+<div class="sf" data-sf="player" data-src="/data/the-viterbi-algorithm/trellis.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>Each cell keeps just one number and one back-pointer, so the work is 3 × 3 per day instead of enumerating all $3^4 = 81$ weather sequences. (The animation&rsquo;s answer matches that brute force.)</p>
 <p>In practice: never do this in regular floating point. Products of many small probabilities underflow to zero quickly. Work in log space instead:</p>
 <p>$$\log \delta_t(j) = \max_{i} \left[\log \delta_{t-1}(i) + \log A_{ij}\right] + \log B_{j, x_t}$$</p>
 <p>Additions replace multiplications. The $\max$ operation is unchanged. Underflow is eliminated.</p>
@@ -262,7 +236,7 @@
 <h2 id="applications">Applications</h2>
 <p><strong>Speech recognition.</strong> In classical GMM-HMM systems, states represent phoneme subunits. Viterbi decodes the most probable phoneme sequence from the acoustic observations. For decades this was the core of every production speech recognizer.</p>
 <p><strong>Gene prediction.</strong> Tools like GENSCAN model genomic DNA with an HMM whose states encode biological regions: exons, introns, promoters, splice sites. Viterbi decoding over a chromosome recovers the most probable gene structure. A single chromosome contains millions of base pairs - the $O(K^2 T)$ algorithm makes this tractable.</p>
-<p><strong>Error-correcting codes.</strong> The Viterbi decoder is the standard decoder for convolutional codes used in satellite communication, cellular networks, and deep-space probes. Every smartphone transmission uses Viterbi decoding.</p>
+<p><strong>Error-correcting codes.</strong> Viterbi invented the algorithm in 1967 to decode <strong>convolutional codes</strong>, and it&rsquo;s still their standard decoder: in deep-space links, satellite broadcasting, Wi-Fi, GSM, and some LTE control channels. (Most modern cellular data channels use turbo, LDPC or polar codes instead.)</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
