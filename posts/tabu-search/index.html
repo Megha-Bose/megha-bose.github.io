@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412931" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          6 min read
+          7 min read
         </div>
       </div>
     </header>
@@ -165,7 +168,7 @@
 </ul>
 <hr>
 <p>Local search gets stuck at local optima. Simulated annealing escapes via randomness - accept worse solutions with some probability, then cool. Tabu search escapes via memory. Keep a list of recently visited solutions and forbid revisiting them. This forces exploration beyond local optima - and the memory itself becomes a sophisticated guide for where to search next.</p>
-<p>Fred Glover introduced tabu search in 1986. For Job Shop Scheduling, a specific tabu search algorithm held the world record for benchmark instances for decades. Memory, it turns out, is a powerful optimization tool.</p>
+<p>Fred Glover introduced tabu search in 1986 (Pierre Hansen proposed a closely related method the same year). For job shop scheduling, tabu search algorithms were the state of the art for well over a decade. Memory, it turns out, is a powerful optimization tool.</p>
 <hr>
 <h2 id="the-tabu-list">The Tabu List</h2>
 <p>The core idea: at each step, we&rsquo;re willing to move to a worse neighbor, as long as we haven&rsquo;t been there recently. We maintain a <strong>tabu list</strong> of recently performed moves (not full solutions - storing full solutions would be too expensive), and we forbid reversing those moves for the next $k$ iterations.</p>
@@ -177,8 +180,9 @@
 <li>Move to the <strong>best non-tabu neighbor</strong> - even if it&rsquo;s worse than the current solution.</li>
 <li>Add the just-executed move to the tabu list (as a FIFO queue of length $k$). Remove the oldest entry if the list is full.</li>
 </ol>
+<div class="sf" data-sf="player" data-src="/data/tabu-search/tabu.json"></div>
 <p>The critical difference from hill climbing: we always move, even to worse neighbors. And we can&rsquo;t immediately undo the move we just made (it&rsquo;s on the tabu list). This forces the algorithm to keep moving, cycling through different parts of the solution space rather than oscillating between two neighbors.</p>
-<p><strong>Tabu tenure.</strong> If $k$ is too small (say $k = 1$), the algorithm can cycle among a small set of solutions. If $k$ is too large, too many moves are forbidden and the algorithm can&rsquo;t move at all. Typical values are $k \in [5, 20]$, often set to roughly $\sqrt{n}$ where $n$ is the problem size.</p>
+<p><strong>Tabu tenure.</strong> If $k$ is too small, the algorithm can cycle among a small set of solutions, exactly as the tenure-3 run above does. If $k$ is too large, too many moves are forbidden and the algorithm can&rsquo;t move at all. Typical values are $k \in [5, 20]$, often set to roughly $\sqrt{n}$ where $n$ is the problem size.</p>
 <hr>
 <h2 id="the-aspiration-criterion">The Aspiration Criterion</h2>
 <p>A tabu move might lead somewhere great - better than anything seen before. It would be counterproductive to forbid such a move. The <strong>aspiration criterion</strong> overrides tabu status: a tabu move is allowed if it produces a solution better than the best known solution so far.</p>
@@ -247,15 +251,15 @@
 </tr>
 <tr>
 <td>Best for</td>
-<td>Smooth landscapes, continuous problems</td>
-<td>Structured combinatorial problems</td>
+<td>Problems with a natural random move and cheap evaluations</td>
+<td>Structured problems where the best neighbour can be found quickly</td>
 </tr>
 </tbody>
 </table>
 <p>Tabu search is preferred when reproducibility matters (it&rsquo;s deterministic), when the neighborhood can be evaluated efficiently with incremental updates, or when domain knowledge can be embedded in the memory structures. SA is preferred when the problem has a natural energy analogy and the landscape is smooth.</p>
 <hr>
 <h2 id="applications">Applications</h2>
-<p><strong>Job Shop Scheduling.</strong> Assign $n$ jobs to $m$ machines, each job requiring operations in a fixed order on specific machines, minimizing makespan. The TSAB algorithm (Nowicki and Smutnicki, 1996) uses tabu search on a neighborhood of swapping two adjacent operations on the critical path. It held the record for the classic Ft10 benchmark for many years and remains competitive with the best known algorithms.</p>
+<p><strong>Job Shop Scheduling.</strong> Assign $n$ jobs to $m$ machines, each job requiring operations in a fixed order on specific machines, minimizing makespan. The TSAB algorithm (Nowicki and Smutnicki, 1996) uses tabu search on a neighborhood of swapping two adjacent operations on the critical path. It solved the notorious ft10 instance (optimum proven in 1989, after resisting attack for over 20 years) in seconds, and its successor i-TSAB set many best-known solutions on larger benchmarks.</p>
 <p><strong>Vehicle Routing Problem.</strong> Find minimum-cost delivery routes for a fleet of vehicles with capacity constraints. Tabu search moves that relocate a customer from one route to another, or swap customers between routes, are consistently near-optimal and appear in commercial logistics software.</p>
 <p><strong>Network Design.</strong> Decide which network links to build to minimize cost while satisfying connectivity requirements. Long-term diversification memory is especially important here - the search needs to explore radically different network topologies.</p>
 <hr>
