@@ -162,7 +162,7 @@
     };
   };
 
-  // Graph: fixed layout, nodes and edges recoloured per frame.
+  // Graph: nodes and edges recoloured per frame; nodes may also move (frame.pos).
   views.graph = function (stage, spec) {
     var g = spec.graph;
     var W = g.w || 600, H = g.h || 320;
@@ -185,21 +185,18 @@
     var arrow = svg('marker', { id: 'sf-arrow-' + Math.random().toString(36).slice(2), viewBox: '0 0 10 10', refX: 10, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, [svg('path', { d: 'M0 0L10 5L0 10z', style: 'fill: var(--sf-muted)' })]);
     defs.appendChild(arrow);
     plot.appendChild(defs);
-    var pos = {};
-    g.nodes.forEach(function (nd) { pos[nd.id] = nd; });
-    var edgeEls = {}, nodeEls = {};
+    // Node positions can change per frame (frame.pos = { id: [x, y] }); nodes glide between them.
+    var base = {}, cur = {};
+    g.nodes.forEach(function (nd) { base[nd.id] = [nd.x, nd.y]; cur[nd.id] = [nd.x, nd.y]; });
+    var edgeEls = {}, nodeEls = {}, edgeList = [];
     var edgeLayer = svg('g'), nodeLayer = svg('g');
     g.edges.forEach(function (e) {
-      var a = pos[e.u], b = pos[e.v];
-      var dx = b.x - a.x, dy = b.y - a.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
-      var ux = dx / len, uy = dy / len;
-      var line = svg('line', { x1: a.x + ux * R, y1: a.y + uy * R, x2: b.x - ux * (R + (e.dir ? 3 : 0)), y2: b.y - uy * (R + (e.dir ? 3 : 0)), class: 'sf-edge', style: 'stroke-width:' + (2.5 * k) });
+      var line = svg('line', { class: 'sf-edge', style: 'stroke-width:' + (2.5 * k) });
       if (e.dir) line.setAttribute('marker-end', 'url(#' + arrow.id + ')');
       var grp = svg('g', { class: 'sf-edge-g' }, [line]);
       var wText = null;
       if (e.w !== undefined && e.w !== null) {
-        var mx = (a.x + b.x) / 2 - uy * 11 * k, my = (a.y + b.y) / 2 + ux * 11 * k;
-        wText = svg('text', { x: mx, y: my + 4 * k, class: 'sf-edge-w', 'text-anchor': 'middle', style: 'font-size:' + (12 * k) + 'px', text: String(e.w) });
+        wText = svg('text', { class: 'sf-edge-w', 'text-anchor': 'middle', style: 'font-size:' + (12 * k) + 'px', text: String(e.w) });
         grp.appendChild(wText);
       }
       edgeLayer.appendChild(grp);
@@ -207,22 +204,69 @@
       if (!e.dir) edgeEls[e.v + '-' + e.u] = line;
       line._w = wText;
       line._base = e.w;
+      edgeList.push({ e: e, line: line, w: wText });
     });
     g.nodes.forEach(function (nd) {
-      var circle = svg('circle', { cx: nd.x, cy: nd.y, r: R, class: 'sf-node' });
-      var label = svg('text', { x: nd.x, y: nd.y + 5 * k, class: 'sf-node-label', 'text-anchor': 'middle', style: 'font-size:' + (14 * k) + 'px', text: nd.label !== undefined ? nd.label : nd.id });
+      var circle = svg('circle', { r: R, class: 'sf-node' });
+      var label = svg('text', { class: 'sf-node-label', 'text-anchor': 'middle', style: 'font-size:' + (14 * k) + 'px', text: nd.label !== undefined ? nd.label : nd.id });
       // Sub-labels (distances, values) sit to the right of the node, clear of edges going down.
-      var sub = nd.sub === 'below'
-        ? svg('text', { x: nd.x, y: nd.y + R + 15 * k, class: 'sf-node-sub', 'text-anchor': 'middle', style: 'font-size:' + (12.5 * k) + 'px' })
-        : svg('text', { x: nd.x + R + 4 * k, y: nd.y + 4.5 * k, class: 'sf-node-sub', 'text-anchor': 'start', style: 'font-size:' + (12.5 * k) + 'px' });
+      var below = nd.sub === 'below';
+      var sub = svg('text', { class: 'sf-node-sub', 'text-anchor': below ? 'middle' : 'start', style: 'font-size:' + (12.5 * k) + 'px' });
       var grp = svg('g', { class: 'sf-node-g' }, [circle, label, sub]);
       nodeLayer.appendChild(grp);
-      nodeEls[nd.id] = { g: grp, circle: circle, label: label, sub: sub, base: nd.label !== undefined ? nd.label : nd.id };
+      nodeEls[nd.id] = { g: grp, circle: circle, label: label, sub: sub, below: below, base: nd.label !== undefined ? nd.label : nd.id };
     });
+    function place() {
+      edgeList.forEach(function (o) {
+        var a = cur[o.e.u], b = cur[o.e.v];
+        var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
+        var ux = dx / len, uy = dy / len, tip = R + (o.e.dir ? 3 : 0);
+        o.line.setAttribute('x1', a[0] + ux * R); o.line.setAttribute('y1', a[1] + uy * R);
+        o.line.setAttribute('x2', b[0] - ux * tip); o.line.setAttribute('y2', b[1] - uy * tip);
+        if (o.w) {
+          o.w.setAttribute('x', (a[0] + b[0]) / 2 - uy * 11 * k);
+          o.w.setAttribute('y', (a[1] + b[1]) / 2 + ux * 11 * k + 4 * k);
+        }
+      });
+      Object.keys(nodeEls).forEach(function (id) {
+        var el = nodeEls[id], p = cur[id];
+        el.circle.setAttribute('cx', p[0]); el.circle.setAttribute('cy', p[1]);
+        el.label.setAttribute('x', p[0]); el.label.setAttribute('y', p[1] + 5 * k);
+        el.sub.setAttribute('x', el.below ? p[0] : p[0] + R + 4 * k);
+        el.sub.setAttribute('y', el.below ? p[1] + R + 15 * k : p[1] + 4.5 * k);
+      });
+    }
+    place();
+    var anim = null;
+    function moveTo(target) {
+      var from = {}, moved = false;
+      Object.keys(cur).forEach(function (id) {
+        from[id] = cur[id].slice();
+        if (from[id][0] !== target[id][0] || from[id][1] !== target[id][1]) moved = true;
+      });
+      if (!moved) return;
+      if (anim) cancelAnimationFrame(anim);
+      var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var t0 = null, D = still ? 0 : 600;
+      function step(now) {
+        if (t0 === null) t0 = now;
+        var t = D ? Math.min(1, (now - t0) / D) : 1;
+        var ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        Object.keys(cur).forEach(function (id) {
+          cur[id] = [from[id][0] + (target[id][0] - from[id][0]) * ease, from[id][1] + (target[id][1] - from[id][1]) * ease];
+        });
+        place();
+        anim = t < 1 ? requestAnimationFrame(step) : null;
+      }
+      anim = requestAnimationFrame(step);
+    }
     plot.appendChild(edgeLayer);
     plot.appendChild(nodeLayer);
     stage.appendChild(h('div', { class: 'sf-graph-wrap' }, [plot]));
     return function (fr) {
+      var target = {};
+      Object.keys(base).forEach(function (id) { target[id] = (fr.pos && fr.pos[id]) || base[id]; });
+      moveTo(target);
       Object.keys(nodeEls).forEach(function (id) {
         var info = (fr.nodes && fr.nodes[id]) || {};
         var el = nodeEls[id];
