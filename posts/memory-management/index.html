@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          12 min read
+          13 min read
         </div>
       </div>
     </header>
@@ -173,11 +176,12 @@
 <p>This mechanism provides three things:</p>
 <p><strong>Isolation:</strong> Process A&rsquo;s virtual address <code>0x400000</code> maps to a different physical frame than Process B&rsquo;s <code>0x400000</code>. The MMU enforces this separation in hardware. No matter how buggy Process A is, it cannot corrupt Process B&rsquo;s memory without a kernel vulnerability.</p>
 <p><strong>Overcommit:</strong> You can allocate 16 GB of virtual address space on a machine with 8 GB of RAM. The kernel only maps physical pages on first access. Many allocations that are reserved but never touched cost nothing real.</p>
-<p><strong>Swap:</strong> When physical RAM is exhausted, the kernel can evict a page to disk (swap), freeing the physical frame for something else. When that virtual address is accessed again, a page fault fires, the kernel reads the page from disk, and execution resumes. Major page faults - requiring disk I/O - cost ~10 ms. That is six orders of magnitude slower than an L1 cache hit.</p>
+<p><strong>Swap:</strong> When physical RAM is exhausted, the kernel can evict a page to disk (swap), freeing the physical frame for something else. When that virtual address is accessed again, a page fault fires, the kernel reads the page from disk, and execution resumes. Major page faults - requiring disk I/O - cost around 100 µs on an SSD and ~10 ms on a spinning disk: five to seven orders of magnitude slower than an L1 cache hit.</p>
 <h3 id="the-tlb-caching-translations">The TLB: Caching Translations</h3>
 <p>Translating every memory access through a multi-level page table would be catastrophically slow. The <strong>Translation Lookaside Buffer</strong> (TLB) is a small hardware cache of recent virtual-to-physical translations, sitting inside the CPU core. A TLB hit costs ~1 cycle. A TLB miss - requiring a page table walk - costs ~10 - 100 cycles.</p>
 <p>This is why <strong>huge pages</strong> (2 MB or 1 GB instead of 4 KB) exist. One TLB entry covers 2 MB instead of 4 KB, so a 2 GB working set needs 1000 entries vs 500,000. Databases (PostgreSQL, MySQL) configure huge pages to reduce TLB pressure. Kubernetes workloads can configure <code>hugepages-2Mi</code> resource limits for the same reason.</p>
 <p>A context switch flushes the TLB (on CPUs without ASID support), which is one reason context switches have hidden costs beyond the register save/restore.</p>
+<div class="sf" data-sf="player" data-src="/data/memory-management/translate.json"></div>
 <h2 id="memory-layout-the-map-of-a-process">Memory Layout: The Map of a Process</h2>
 <p>A process&rsquo;s virtual address space follows a standard layout:</p>
 <table>
@@ -247,6 +251,7 @@ b<span style="color:#f92672">.</span>partner <span style="color:#f92672">=</span
 </code></pre></div><p>CPython solves this with a supplementary <strong>cycle detector</strong> that runs periodically and collects unreachable cyclic structures. It is opt-out (<code>gc.disable()</code>) but rarely worth disabling in practice.</p>
 <h3 id="mark-and-sweep">Mark-and-Sweep</h3>
 <p>The GC pauses the program, marks all objects reachable from roots (global variables, stack frames, registers), then sweeps through the heap freeing everything unmarked.</p>
+<div class="sf" data-sf="player" data-src="/data/memory-management/gc.json"></div>
 <p>This handles cycles cleanly. The downside is <strong>stop-the-world pauses</strong> proportional to heap size - genuinely problematic for latency-sensitive applications. Early Java GC was notorious for multi-second pauses on large heaps.</p>
 <h3 id="generational-garbage-collection">Generational Garbage Collection</h3>
 <p>The key empirical insight: <strong>most objects die young</strong>. In typical programs, the vast majority of heap objects are short-lived temporaries - intermediate results, request objects, string buffers. A small fraction survive long enough to be considered &ldquo;old.&rdquo;</p>
@@ -255,7 +260,7 @@ b<span style="color:#f92672">.</span>partner <span style="color:#f92672">=</span
 <li>The <strong>nursery</strong> (young generation) is small and collected frequently. Collection is fast because most objects are dead.</li>
 <li>Long-lived objects are <strong>promoted</strong> to the old generation, which is collected infrequently.</li>
 </ul>
-<p>JVM&rsquo;s G1 collector divides memory into regions and prioritizes collecting regions with the most garbage - hence &ldquo;Garbage First.&rdquo; Go&rsquo;s GC is concurrent (runs alongside your code) with sub-millisecond pauses. CPython&rsquo;s cycle detector is a simple mark-and-sweep layered on top of reference counting, not a full generational system.</p>
+<p>JVM&rsquo;s G1 collector divides memory into regions and prioritizes collecting regions with the most garbage - hence &ldquo;Garbage First.&rdquo; Go&rsquo;s GC is concurrent (runs alongside your code) with sub-millisecond pauses. CPython&rsquo;s cycle collector, layered on top of reference counting, is itself generational: objects that survive a collection move to an older generation that is scanned less often.</p>
 <h2 id="why-python-objects-are-slow-the-pyobject-tax">Why Python Objects Are Slow: The PyObject Tax</h2>
 <p>Every Python value - integer, string, list, <code>True</code>, <code>None</code> - is a <code>PyObject</code> on the heap. The <code>PyObject</code> header alone consumes 16 bytes on 64-bit systems: 8 bytes for the reference count and 8 bytes for a pointer to the type object.</p>
 <p>A Python integer like <code>42</code> is not just four bytes. It is a heap-allocated <code>PyObject</code> with a refcount, a type pointer, and then the actual integer value - roughly 28 bytes for something that fits in a register in C.</p>
