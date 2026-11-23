@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ This is the moment every successful data-intensive system eventually faces: the 
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          13 min read
+          14 min read
         </div>
       </div>
     </header>
@@ -208,13 +211,11 @@ This is the moment every successful data-intensive system eventually faces: the 
 <h2 id="consistent-hashing-the-resharding-solution">Consistent Hashing: The Resharding Solution</h2>
 <p>The fundamental problem with <code>hash(key) % N</code>: when you add a shard (change N from 4 to 5), almost every key maps to a different shard. Virtually all data must migrate simultaneously. This is catastrophic for a live system.</p>
 <p>Consistent hashing solves this. Arrange all possible hash output values on a circle (the &ldquo;ring&rdquo;). Place each shard at one or more points on the ring. A key maps to the first shard clockwise from the key&rsquo;s hash position.</p>
-<p>When you add a new shard, it takes over only the keys between it and its predecessor on the ring - roughly 1/n of the data, distributed from adjacent shards. When a shard is removed, its keys go to the next shard clockwise. Only adjacent shards are affected.</p>
-<p><strong>Virtual nodes</strong> improve load balance. Instead of placing each shard at one point, place it at many points (virtual nodes, often 100 - 300 per physical shard). Virtual nodes make the distribution more uniform: each physical shard has many small arcs of the ring rather than one large arc. They also improve fault tolerance: when a shard fails, its virtual nodes' keys are distributed across many other shards rather than all piling onto one successor.</p>
-<pre tabindex="0"><code>Ring with virtual nodes (simplified):
-[shard-A-v0, shard-C-v2, shard-B-v1, shard-A-v1, shard-B-v2, shard-C-v0, shard-A-v2, ...]
-
-Key hashes to position 0.45 → next clockwise: shard-B-v1 → routes to Shard B
-</code></pre><p>This is how DynamoDB and Cassandra route requests. DynamoDB&rsquo;s partition key is hashed, and the result determines which storage partition owns the data. Cassandra uses a similar ring with configurable virtual node count.</p>
+<p>When you add a new shard, it takes over only the keys between its predecessor and itself on the ring - roughly 1/n of the data on average, all of it taken from the one shard that used to own that arc. When a shard is removed, its keys go to the next shard clockwise. Only adjacent shards are affected.</p>
+<p><strong>Virtual nodes</strong> improve load balance. Instead of placing each shard at one point, place it at many points (virtual nodes, or &ldquo;tokens&rdquo;: Cassandra used 256 per node by default until version 4.0, which lowered the default to 16). Virtual nodes make the distribution more uniform: each physical shard has many small arcs of the ring rather than one large arc. They also improve fault tolerance: when a shard fails, its virtual nodes' keys are distributed across many other shards rather than all piling onto one successor.</p>
+<p>Switch between the two schemes to compare what happens when a shard is added:</p>
+<div class="sf" data-sf="player" data-src="/data/sharding-data-replication/ring.json"></div>
+<p>This is how Amazon&rsquo;s original Dynamo system (described in a 2007 paper) and Cassandra route requests, and Cassandra&rsquo;s virtual node count is configurable. DynamoDB, the managed service, also hashes the partition key to decide which storage partition owns the data.</p>
 <h3 id="dynamodb-partition-keys-and-hot-partitions">DynamoDB Partition Keys and Hot Partitions</h3>
 <p>DynamoDB is essentially a managed hash-sharded database. The partition key determines which physical partition receives the write. DynamoDB allocates read and write capacity uniformly across partitions.</p>
 <p>The critical design rule: choose a partition key with high cardinality and uniform access frequency. If you use <code>user_id</code> as the partition key and user 12345 is a celebrity with 10 million followers who all load their feed simultaneously, all those reads hit the same partition - a hot partition. DynamoDB throttles the partition when it exceeds its allocated capacity.</p>
