@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412931" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -167,7 +170,7 @@
 </ul>
 <hr>
 <p>When you cool molten steel too fast, it becomes brittle. The atoms don&rsquo;t have time to find low-energy configurations - they freeze into whatever disordered arrangement they happen to be in. When you cool it slowly (the process called annealing), the atoms can keep rearranging as the temperature drops, settling eventually into a crystal structure with minimal energy. The slow cooling gives the system time to find its ground state.</p>
-<p>In 1983, Kirkpatrick, Gelatt, and Vecchi realized this is exactly what happens when you try to escape local optima in combinatorial optimization. Cool the &ldquo;temperature&rdquo; slowly - accept worse solutions less and less often as time goes on - and you can escape local traps. The slower you cool, the better the solution you find.</p>
+<p>In 1983, Kirkpatrick, Gelatt, and Vecchi (and, independently, Vlado Černý in 1985) realized this is exactly what happens when you try to escape local optima in combinatorial optimization. Cool the &ldquo;temperature&rdquo; slowly - accept worse solutions less and less often as time goes on - and you can escape local traps. The slower you cool, the better the solution you find.</p>
 <p>This is simulated annealing.</p>
 <hr>
 <h2 id="the-boltzmann-acceptance-criterion">The Boltzmann Acceptance Criterion</h2>
@@ -181,7 +184,9 @@
 <p>$$P(\text{accept}) = e^{-\Delta E / T}$$</p>
 <p>where $T &gt; 0$ is the current <strong>temperature</strong>.</p>
 <p>This is the <strong>Metropolis criterion</strong>, from statistical physics. At high temperature, $e^{-\Delta E/T} \approx 1$ for moderate $\Delta E$ - almost any move is accepted, enabling broad exploration. At low temperature, $e^{-\Delta E/T} \approx 0$ for any $\Delta E &gt; 0$ - only improvements are accepted, just like hill climbing.</p>
-<p>The temperature schedule interpolates between these: early in the algorithm, we explore broadly; late in the algorithm, we exploit the best region found so far.</p>
+<p>The temperature schedule interpolates between these: early in the algorithm, we explore broadly; late in the algorithm, we exploit the best region found so far. Here is the whole idea on a landscape with four valleys, starting stuck in a shallow one:</p>
+<div class="sf" data-sf="player" data-src="/data/simulated-annealing/anneal.json"></div>
+<p>Switch to <strong>Quench</strong> to see the same algorithm with the temperature dropped too quickly. It has the same steps and the same rule, but it freezes before it has found the right valley.</p>
 <hr>
 <h2 id="the-acceptance-probability-in-practice">The Acceptance Probability in Practice</h2>
 <p>Let&rsquo;s make this concrete. Suppose we&rsquo;re minimizing a cost function and a candidate move worsens the cost by $\Delta E$. At temperature $T = 5$:</p>
@@ -218,7 +223,7 @@
 <h2 id="simulated-annealing-for-tsp">Simulated Annealing for TSP</h2>
 <p>The same 2-opt neighborhood as pure local search, but now we accept worse tours with probability $e^{-\Delta L / T}$, where $\Delta L &gt; 0$ is the increase in tour length.</p>
 <p>What this buys you: when 2-opt gets stuck at a local optimum, SA can accept a slightly longer tour to escape. From that new (slightly worse) position, a different sequence of improving 2-opt moves may lead to a much better local optimum.</p>
-<p>In practice, SA with 2-opt moves finds tours dramatically better than pure 2-opt hill climbing on hard TSP instances - often within 1 - 2% of optimal on benchmark instances. The key parameter is the cooling schedule: too fast and the algorithm gets stuck; too slow and you waste computation.</p>
+<p>In practice, given a long enough schedule, SA with 2-opt moves finds clearly better tours than 2-opt hill climbing, and can even beat 3-opt. It is rarely the fastest route, though: Lin-Kernighan-style local search usually gets equally good tours in far less time. The key parameter is the cooling schedule: too fast and the algorithm gets stuck; too slow and you waste computation.</p>
 <hr>
 <blockquote>
 <p><strong>Discomfort check.</strong> Simulated annealing is guaranteed to find the global optimum if you cool slowly enough. So why not always cool slowly?</p>
@@ -279,7 +284,7 @@
 </tr>
 </tbody>
 </table>
-<p>Simulated annealing turns local search&rsquo;s fatal flaw - getting stuck at local optima - into a feature: you accept worse solutions strategically, with a probability that decreases as the algorithm matures. The physics analogy is not just poetic; it is exact. SA is running a physical cooling process on the combinatorial optimization landscape, and the theory of statistical mechanics tells you exactly what happens as the temperature goes to zero.</p>
+<p>Simulated annealing turns local search&rsquo;s fatal flaw - getting stuck at local optima - into a feature: you accept worse solutions strategically, with a probability that decreases as the algorithm matures. The physics analogy is more than poetic: at each fixed temperature, SA really is sampling the Boltzmann distribution a physicist would write down, and as the temperature falls that distribution piles up on the lowest-energy solutions.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
