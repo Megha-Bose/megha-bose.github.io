@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.093429fd1374f28ee4a12b6bf869446b7cac3b83646211606129b03f9a827953.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795421546" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ There are three natural approaches. Two of them have subtle bugs." />
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          5 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -178,7 +181,7 @@ There are three natural approaches. Two of them have subtle bugs." />
 </ul>
 <p><strong>Problem 1: Two zeros.</strong> $0\ 0000000$ is $+0$ and $1\ 0000000$ is $-0$. These represent the same value but have different bit patterns. Any comparison with zero requires checking both patterns. Software and hardware both get more complicated.</p>
 <p><strong>Problem 2: Addition breaks.</strong> Try $5 + (-3)$ hoping for $2$:</p>
-<p>$0\ 0000101 + 1\ 0000011 = 1\ 1000000$ which sign-magnitude reads as $-64$. Wrong. Signed addition requires completely different circuitry from unsigned addition. You cannot reuse your adder hardware.</p>
+<p>$0\ 0000101 + 1\ 0000011 = 1\ 0001000$ (plain binary addition of 5 and 131 gives 136), which sign-magnitude reads as $-8$. Wrong. Signed addition requires completely different circuitry from unsigned addition. You cannot reuse your adder hardware.</p>
 <hr>
 <h2 id="better-ones-complement">Better: One&rsquo;s Complement</h2>
 <p>One&rsquo;s complement negates a number by flipping every bit. $+5 = 0000\ 0101$, so $-5 = 1111\ 1010$.</p>
@@ -195,9 +198,12 @@ Add 1: $1111\ 1011 = -5$ in two&rsquo;s complement</p>
 <p><strong>Addition requires no special cases.</strong> Try $5 + (-3)$:</p>
 <p>$$0000\ 0101 + 1111\ 1101 = 1\ 0000\ 0010$$</p>
 <p>Discard the carry out, read the result: $0000\ 0010 = 2$. Correct - and the carry was discarded automatically by the fixed bit-width. No end-around carry, no sign logic. The same adder circuit works for all integers.</p>
+<div class="sf" data-sf="player" data-src="/data/negative-numbers-binary/add.json"></div>
 <blockquote>
 <p><strong>Why does it work?</strong> In 8-bit arithmetic, $256 \equiv 0$. Two&rsquo;s complement represents $-x$ as $256 - x$. So $5 + (-3) = 5 + (256 - 3) = 258 = 256 + 2 \equiv 2 \pmod{256}$. The &ldquo;negative&rdquo; numbers are just large positive numbers that, when added to positive numbers, produce results in the right range. The hardware does not know or care about signs - it just adds and discards overflow.</p>
+<p>The clearest picture is a clock. With 4 bits there are 16 patterns arranged in a circle, and adding is walking clockwise:</p>
 </blockquote>
+<div class="sf" data-sf="player" data-src="/data/negative-numbers-binary/wheel.json"></div>
 <hr>
 <h2 id="reading-twos-complement">Reading Two&rsquo;s Complement</h2>
 <p>The MSB still acts as a sign indicator: 0 means non-negative, 1 means negative. But the magnitude is not simply the remaining bits.</p>
@@ -243,13 +249,13 @@ Add 1: $1111\ 1011 = -5$ in two&rsquo;s complement</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Overflow</strong> happens when a result exceeds this range. Adding $127 + 1$ in 8-bit two&rsquo;s complement gives $-128$ - the value wraps around. This is not a hardware error; it is the defined behavior of fixed-width arithmetic. C and many languages leave signed overflow undefined precisely because detecting it requires extra hardware or instructions.</p>
+<p><strong>Overflow</strong> happens when a result exceeds this range. Adding $127 + 1$ in 8-bit two&rsquo;s complement gives $-128$ - the value wraps around. This is not a hardware error; it is the defined behavior of fixed-width arithmetic. C leaves signed overflow undefined - originally because C had to run on machines that were not two&rsquo;s complement, and today largely because it lets compilers optimize (for example, assuming <code>x + 1 &gt; x</code> always holds). Unsigned overflow in C is defined: it wraps.</p>
 <hr>
 <h2 id="subtraction-for-free">Subtraction for Free</h2>
 <p>Two&rsquo;s complement makes subtraction identical to addition: to compute $a - b$, compute $a + (-b)$ where $-b$ is the two&rsquo;s complement of $b$.</p>
 <p>This is enormously valuable. It means a processor needs only one addition circuit to handle both addition and subtraction. No separate subtraction logic. The <strong>ALU</strong> (Arithmetic Logic Unit - the part of the processor responsible for all arithmetic and bitwise operations) computes $a + \text{NOT}(b) + 1$ (NOT flips all bits; adding 1 completes the two&rsquo;s complement negation) with a single unified path.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> If two&rsquo;s complement is just modular arithmetic, how does the CPU know whether $1111\ 1011$ is $-5$ or $251$? It does not. The bit pattern is the same either way. The <em>interpretation</em> - signed or unsigned - is a matter of which instruction you use. <code>ADD</code> and <code>ADDS</code> (signed add) on ARM, <code>imul</code> vs <code>mul</code> on x86: these produce identical bit patterns but set different overflow flags and are used in different contexts. The hardware manipulates bits; your code decides what they mean.</p>
+<p><strong>Discomfort check.</strong> If two&rsquo;s complement is just modular arithmetic, how does the CPU know whether $1111\ 1011$ is $-5$ or $251$? It does not. The bit pattern is the same either way. The <em>interpretation</em> - signed or unsigned - is a matter of which instruction you use. Addition is literally the same instruction for both: x86&rsquo;s <code>ADD</code> sets the carry flag (unsigned overflow) <em>and</em> the overflow flag (signed overflow) at once, and the program checks whichever matches its interpretation. Where the readings genuinely differ, there are separate instructions: signed comparisons and jumps (<code>JL</code>, <code>JG</code>) versus unsigned ones (<code>JB</code>, <code>JA</code>), and <code>imul</code> versus <code>mul</code>, whose low halves agree but whose high halves do not. The hardware manipulates bits; your code decides what they mean.</p>
 </blockquote>
 <hr>
 <h2 id="summary">Summary</h2>
