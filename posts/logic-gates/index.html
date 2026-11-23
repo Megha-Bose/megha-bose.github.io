@@ -11,8 +11,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
-    <link rel="stylesheet" href="/css/main.min.093429fd1374f28ee4a12b6bf869446b7cac3b83646211606129b03f9a827953.css" />
+    <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795421546" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -168,11 +171,11 @@
 <hr>
 <h2 id="from-transistors-to-gates">From Transistors to Gates</h2>
 <p>A transistor is a switch. Apply a voltage to its control terminal and current flows through; remove it and current stops. That is it - on or off. Modern CPUs contain tens of billions of them.</p>
-<p>Wire two transistors in series (both must be on for current to flow) and you have an AND gate. Wire them in parallel (either one allows current to flow) and you have an OR gate. Wire one so it inverts its input and you have a NOT gate.</p>
+<p>Wire two switches in series (both must be on for current to flow) and you have AND; in parallel (either one will do) and you have OR. Real chips use CMOS, where each gate pairs transistors that pull the output up with ones that pull it down. That arrangement naturally inverts, so the cheapest CMOS gates are NOT, NAND and NOR; an AND is a NAND followed by a NOT.</p>
 <p>We do not think about transistors directly. We think about gates - the logical abstractions one level up.</p>
 <hr>
 <h2 id="the-six-fundamental-gates">The Six Fundamental Gates</h2>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 620" width="580" height="620" style="display:block;margin:1.5em auto;font-family:inherit">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 620" width="580" height="620" style="display:block;margin:1.5em auto;font-family:inherit" class="fig-light">
   <text x="20" y="30" font-size="13" font-weight="bold" fill="#111">AND</text>
   <line x1="30" y1="50" x2="60" y2="50" stroke="#555" stroke-width="1.5"/>
   <line x1="30" y1="65" x2="60" y2="65" stroke="#555" stroke-width="1.5"/>
@@ -258,7 +261,7 @@
 <p>NOT from NAND: connect both NAND inputs together. $\text{NAND}(A, A) = \overline{A \cdot A} = \overline{A}$.</p>
 <p>AND from NAND: NAND followed by NOT (which is itself a NAND with tied inputs).</p>
 <p>OR from NAND: by De Morgan&rsquo;s law, $A + B = \overline{\overline{A} \cdot \overline{B}}$ - NOT both inputs, then NAND.</p>
-<p>This is called <strong>universality</strong>. NOR is also universal by the same reasoning. Chip manufacturers often fabricate only NAND or NOR gates and build everything else from them, since it is cheaper to produce one type of transistor structure at scale.</p>
+<p>This is called <strong>universality</strong>. NOR is also universal by the same reasoning. Early gate-array chips really were built from a sea of identical NAND (or NOR) gates, customized only by the wiring. Modern chips use libraries with hundreds of cell types, but NAND and NOR remain the smallest and fastest, so synthesis tools lean on them heavily.</p>
 <hr>
 <h2 id="boolean-algebra">Boolean Algebra</h2>
 <p>Logic gates implement Boolean algebra - the algebra of true and false, 1 and 0.</p>
@@ -306,30 +309,9 @@ $$\overline{A + B} = \overline{A} \cdot \overline{B}$$</p>
 <p>A single gate is not very useful. Power comes from connecting gates: the output of one feeds the input of another. The output at any point depends only on the current inputs - there is no memory, no state. This is called <strong>combinational logic</strong>.</p>
 <p>For example: the expression $A \cdot B + C$ (A AND B, then OR with C) is implemented as an AND gate whose output feeds one input of an OR gate. The output is 1 if either both A and B are 1, or C is 1.</p>
 <p>The number of possible outputs for $n$ inputs is $2^{2^n}$ - there are $2^n$ input combinations and each could independently be 0 or 1. For just 2 inputs there are 16 possible functions; for 3 inputs, 256. Gates let you implement any of them.</p>
-<p>The simplest real example is a <strong>half adder</strong> - a circuit that adds two single bits. It produces two outputs: a sum bit ($A \oplus B$, which is XOR) and a carry bit ($A \cdot B$, which is AND, indicating whether the addition overflowed into the next bit position). The entire chip is two gates:
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 190" width="500" height="190" style="display:block;margin:1.2em auto;font-family:inherit">
-<rect x="90" y="12" width="310" height="166" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
-<text x="245" y="28" text-anchor="middle" font-size="10" fill="#94a3b8" font-style="italic">half adder chip</text>
-<line x1="20" y1="75" x2="195" y2="75" stroke="#555" stroke-width="1.5"/>
-<line x1="145" y1="75" x2="145" y2="125" stroke="#555" stroke-width="1.5"/>
-<line x1="145" y1="125" x2="195" y2="125" stroke="#555" stroke-width="1.5"/>
-<circle cx="145" cy="75" r="3" fill="#555"/>
-<line x1="20" y1="150" x2="195" y2="150" stroke="#555" stroke-width="1.5"/>
-<line x1="155" y1="88" x2="155" y2="150" stroke="#555" stroke-width="1.5"/>
-<line x1="155" y1="88" x2="195" y2="88" stroke="#555" stroke-width="1.5"/>
-<circle cx="155" cy="150" r="3" fill="#555"/>
-<rect x="195" y="58" width="70" height="50" rx="4" fill="#fce7f3" stroke="#555" stroke-width="1.5"/>
-<text x="230" y="87" text-anchor="middle" font-size="13" font-weight="bold" fill="#111">XOR</text>
-<rect x="195" y="118" width="70" height="50" rx="4" fill="#dbeafe" stroke="#555" stroke-width="1.5"/>
-<text x="230" y="147" text-anchor="middle" font-size="13" font-weight="bold" fill="#111">AND</text>
-<line x1="265" y1="83" x2="400" y2="83" stroke="#555" stroke-width="1.5"/>
-<line x1="265" y1="143" x2="400" y2="143" stroke="#555" stroke-width="1.5"/>
-<text x="8" y="79" font-size="13" font-weight="bold" fill="#111">A</text>
-<text x="8" y="154" font-size="13" font-weight="bold" fill="#111">B</text>
-<text x="405" y="87" font-size="12" fill="#374151">Sum</text>
-<text x="405" y="147" font-size="12" fill="#374151">Carry</text>
-</svg></p>
-<p>Both inputs (A and B) fan out to both gates. The filled dots mark where a wire branches - a crossing without a dot is just wires passing over each other with no connection. The XOR gate produces the sum bit; the AND gate produces the carry. If A=1 and B=1: sum = $1 \oplus 1 = 0$, carry = $1 \cdot 1 = 1$, meaning $1 + 1 = 10$ in binary (decimal 2). This is what the inside of a chip looks like - gates wired together, each doing one small thing, the combination doing something useful.</p>
+<p>The simplest real example is a <strong>half adder</strong> - a circuit that adds two single bits. It produces two outputs: a sum bit ($A \oplus B$, which is XOR) and a carry bit ($A \cdot B$, which is AND, indicating whether the addition overflowed into the next bit position). The entire chip is two gates:</p>
+<div class="sf" data-sf="player" data-src="/data/logic-gates/circuits.json"></div>
+<p>Both inputs (A and B) fan out to both gates. The XOR gate produces the sum bit; the AND gate produces the carry. The other two circuits show universality in action: OR and XOR built from nothing but NANDs. If A=1 and B=1: sum = $1 \oplus 1 = 0$, carry = $1 \cdot 1 = 1$, meaning $1 + 1 = 10$ in binary (decimal 2). This is what the inside of a chip looks like - gates wired together, each doing one small thing, the combination doing something useful.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> Are these gates physically separate components? In modern CPUs, no. Individual gates are formed directly from groups of transistors on silicon - there is no distinct physical &ldquo;AND gate&rdquo; you could point to. But the logical abstraction holds precisely: the transistors are arranged so that the input-output relationship matches the gate&rsquo;s truth table. We reason about gates; the hardware implements the truth tables.</p>
 </blockquote>
