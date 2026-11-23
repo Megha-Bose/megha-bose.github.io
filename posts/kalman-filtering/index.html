@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412226" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412623" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Kalman Filtering - Optimal Estimation When Sensors Lie"/>
 <meta name="twitter:description" content="Helpful context:
- Probability Distributions - The Shapes That Randomness Takes  Vectors, Matrices &amp; Linear Systems - The Language of Simultaneous Equations    In 1960, Rudolf Kálmán published a paper that enabled the Apollo moon landing. The Apollo navigation computer used Kálmán&rsquo;s filter to track the spacecraft&rsquo;s position from noisy sensor data. It works by fusing a prediction (from physics) with a measurement (from sensors), weighting each by its uncertainty."/>
+ Probability Distributions - The Shapes That Randomness Takes  Vectors, Matrices &amp; Linear Systems - The Language of Simultaneous Equations    In 1960 Rudolf Kálmán published the filter that bears his name. Within a few years Stanley Schmidt&rsquo;s team at NASA Ames had adapted it for Apollo, whose navigation computer used it to track the spacecraft from noisy measurements. It works by fusing a prediction (from physics) with a measurement (from sensors), weighting each by its uncertainty."/>
 
     <meta property="og:title" content="Kalman Filtering - Optimal Estimation When Sensors Lie" />
 <meta property="og:description" content="Helpful context:
- Probability Distributions - The Shapes That Randomness Takes  Vectors, Matrices &amp; Linear Systems - The Language of Simultaneous Equations    In 1960, Rudolf Kálmán published a paper that enabled the Apollo moon landing. The Apollo navigation computer used Kálmán&rsquo;s filter to track the spacecraft&rsquo;s position from noisy sensor data. It works by fusing a prediction (from physics) with a measurement (from sensors), weighting each by its uncertainty." />
+ Probability Distributions - The Shapes That Randomness Takes  Vectors, Matrices &amp; Linear Systems - The Language of Simultaneous Equations    In 1960 Rudolf Kálmán published the filter that bears his name. Within a few years Stanley Schmidt&rsquo;s team at NASA Ames had adapted it for Apollo, whose navigation computer used it to track the spacecraft from noisy measurements. It works by fusing a prediction (from physics) with a measurement (from sensors), weighting each by its uncertainty." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/kalman-filtering/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -166,8 +169,9 @@
 </li>
 </ul>
 <hr>
-<p>In 1960, Rudolf Kálmán published a paper that enabled the Apollo moon landing. The Apollo navigation computer used Kálmán&rsquo;s filter to track the spacecraft&rsquo;s position from noisy sensor data. It works by fusing a prediction (from physics) with a measurement (from sensors), weighting each by its uncertainty. The result is always better than either alone.</p>
+<p>In 1960 Rudolf Kálmán published the filter that bears his name. Within a few years Stanley Schmidt&rsquo;s team at NASA Ames had adapted it for Apollo, whose navigation computer used it to track the spacecraft from noisy measurements. It works by fusing a prediction (from physics) with a measurement (from sensors), weighting each by its uncertainty. The result is always better than either alone.</p>
 <p>That&rsquo;s the whole idea: you have two imperfect sources of information. Physics tells you where you should be. Sensors tell you where you appear to be. The Kalman filter takes the weighted average, assigning more trust to whichever is more reliable.</p>
+<div class="sf" data-sf="player" data-src="/data/kalman-filtering/tracking.json">This is an interactive animation. It needs JavaScript to run.</div>
 <hr>
 <h2 id="the-setup">The Setup</h2>
 <p>A system evolves over time. You can&rsquo;t observe the state directly - only noisy measurements of it.</p>
@@ -196,19 +200,21 @@
 <p>$$P_{t \mid t} = (I - K_t H) P_{t \mid t-1}$$</p>
 <hr>
 <h2 id="the-kalman-gain-how-much-to-trust-the-measurement">The Kalman Gain: How Much to Trust the Measurement</h2>
-<p>The Kalman gain $K_t = P_{t \mid t-1} H^T (H P_{t \mid t-1} H^T + R)^{-1}$ looks complex but has a clean interpretation.</p>
+<p>The Kalman gain formula looks complex but has a clean interpretation.</p>
 <p>The numerator $P_{t \mid t-1} H^T$ captures the predicted state uncertainty projected into measurement space. The denominator $H P_{t \mid t-1} H^T + R$ is the total measurement uncertainty: prediction uncertainty plus sensor noise.</p>
 <ul>
 <li>If measurement noise $R$ is large (unreliable sensors): $K_t$ is small. The filter trusts the prediction more.</li>
 <li>If process noise $Q$ is large (unreliable physics): $P_{t \mid t-1}$ is large, so $K_t$ is large. The filter trusts the measurement more.</li>
-<li>If $R \to 0$ (perfect sensors): $K_t \to H^{-1}$ - the filter ignores the prediction and takes the measurement as truth.</li>
+<li>If $R \to 0$ (perfect sensors): the filter takes the measured quantities as truth and the prediction stops mattering for them. (When $H$ is invertible, $K_t \to H^{-1}$.)</li>
 <li>If $P \to 0$ (prediction is certain): $K_t \to 0$ - the filter ignores the measurement.</li>
 </ul>
 <p>The gain is exactly the weight that minimizes the posterior variance. You&rsquo;re always doing the optimal fusion of two uncertain sources.</p>
 <hr>
 <h2 id="why-this-is-exact-bayesian-inference">Why This Is Exact Bayesian Inference</h2>
 <p>If the prior and the likelihood are both Gaussian, the posterior is Gaussian - and its mean and covariance are exactly what the Kalman update computes.</p>
-<p>The predicted state distribution $p(x_t \mid y_1, \ldots, y_{t-1}) = \mathcal{N}(\hat{x}<em>{t \mid t-1}, P</em>{t \mid t-1})$ is the prior. The measurement likelihood is $p(y_t \mid x_t) = \mathcal{N}(Hx_t, R)$. Bayes' theorem gives:</p>
+<p>The predicted state distribution is the prior:</p>
+<p>$$p(x_t \mid y_1, \ldots, y_{t-1}) = \mathcal{N}(\hat{x}<em>{t \mid t-1}, P</em>{t \mid t-1})$$</p>
+<p>The measurement likelihood is $p(y_t \mid x_t) = \mathcal{N}(Hx_t, R)$. Bayes' theorem gives:</p>
 <p>$$p(x_t \mid y_1, \ldots, y_t) \propto p(y_t \mid x_t) \cdot p(x_t \mid y_1, \ldots, y_{t-1})$$</p>
 <p>Both factors are Gaussian, so the posterior is Gaussian. Computing its mean and covariance by completing the square in the exponent gives exactly the Kalman update equations. The filter is not an approximation - it&rsquo;s the exact Bayesian posterior.</p>
 <blockquote>

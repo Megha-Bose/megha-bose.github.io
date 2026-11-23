@@ -258,13 +258,16 @@
   //   mix in [0, 1] blends series a (0) into series b (1).
   views.plot = function (stage, spec) {
     var p = spec.plot;
-    var W = 600, H = p.h || 260, L = 40, R = 14, T = 14, B = 30;
+    // match the drawing width to the screen so text and dots keep their size on phones
+    var W = Math.max(320, Math.min(600, stage.clientWidth || 600)), H = (p.h || 260) * (W < 600 ? 0.85 : 1), L = 40, R = 14, T = 14, B = 30;
     var x = function (v) { return L + (v - p.xmin) / (p.xmax - p.xmin) * (W - L - R); };
     var y = function (v) { return T + (1 - (v - (p.ymin || 0)) / (p.ymax - (p.ymin || 0))) * (H - T - B); };
     var plot = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'sf-plot', role: 'img', 'aria-label': spec.title });
     var grid = svg('g', { class: 'sf-plot-grid' });
     grid.appendChild(svg('line', { x1: L, x2: W - R, y1: H - B, y2: H - B }));
+    var labelLeft = W - R - (p.xlabel ? p.xlabel.length * 6.5 + 14 : 0);
     (p.ticks || []).forEach(function (t) {
+      if (x(t) > labelLeft) return;   // keep clear of the axis label
       grid.appendChild(svg('text', { x: x(t), y: H - B + 18, 'text-anchor': 'middle', text: String(t) }));
     });
     if (p.xlabel) grid.appendChild(svg('text', { x: W - R, y: H - 4, 'text-anchor': 'end', text: p.xlabel }));
