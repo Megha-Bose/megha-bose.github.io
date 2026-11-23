@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -174,12 +177,13 @@
 <p>The core operation in a CNN is the <strong>discrete convolution</strong>. Given an input feature map $f$ (e.g., a single-channel image) and a filter $g$ (e.g., a 3x3 matrix of learnable weights), the output at position $(i, j)$ is:</p>
 <p>$$(f * g)[i, j] = \sum_{m} \sum_{n} f[i+m, j+n] \cdot g[m, n]$$</p>
 <p>Here $m$ and $n$ range over the spatial extent of the filter. The filter $g$ is applied at every position $(i, j)$ in the input, and the same weights are used at every position. This is <strong>weight sharing</strong>. A network with a 3x3 filter has 9 parameters (plus a bias) for that filter, regardless of the size of the input image. Compare this to a fully connected layer over a 256x256 image, which has 65,536 parameters per output unit.</p>
+<div class="sf" data-sf="player" data-src="/data/convolutional-neural-networks/conv.json"></div>
 <p>Note: the operation above is technically cross-correlation (no flipping of the filter). In signal processing, true convolution flips the filter before sliding it. For neural networks the distinction is irrelevant because the filter weights are learned and a flipped filter is equivalent to an unflipped filter with reordered weights. Both are called convolution in the ML literature.</p>
 <p><strong>Valid vs. same padding.</strong> When a 3x3 filter is applied at the edges of an image, it would extend beyond the image boundary. There are two standard conventions. In &ldquo;valid&rdquo; padding, the filter is only applied where it fits entirely within the input. A 256x256 input convolved with a 3x3 filter in valid mode produces a 254x254 output, shrinking by one pixel on each edge. In &ldquo;same&rdquo; padding, the input is padded with zeros around the border so that the output has the same spatial dimensions as the input. Same padding is the default in most modern architectures because it preserves spatial dimensions across layers and avoids the progressive shrinkage that would otherwise require tracking exact output sizes.</p>
 <hr>
 <h2 id="stride-and-pooling">Stride and Pooling</h2>
 <p>Two mechanisms for reducing spatial resolution are <strong>stride</strong> and <strong>pooling</strong>.</p>
-<p>A stride of $s$ means the filter advances $s$ pixels at a time instead of one. A 3x3 filter with stride 2 on a 256x256 input produces a 128x128 output, halving the spatial dimensions. Strided convolutions are computationally cheaper and reduce the number of activations that downstream layers must process.</p>
+<p>A stride of $s$ means the filter advances $s$ pixels at a time instead of one. A 3x3 filter with stride 2 on a 256x256 input produces a 128x128 output with same padding (127x127 with valid), halving the spatial dimensions. Strided convolutions are computationally cheaper and reduce the number of activations that downstream layers must process.</p>
 <p><strong>Max pooling</strong> is a separate non-parametric downsampling operation. A 2x2 max pool over a feature map replaces each 2x2 non-overlapping block of activations with the maximum value in that block. This halves spatial resolution while retaining the strongest activation in each region. The intuition is that exact position matters less than whether a feature is present somewhere in a neighborhood. Average pooling takes the mean instead, but max pooling is more common because it better preserves strong local detections.</p>
 <p>Both operations reduce spatial resolution deliberately. Early CNN architectures used aggressive pooling (2x2 stride-2 after every layer); modern architectures often prefer strided convolutions, which are learnable, over fixed pooling operations.</p>
 <hr>
