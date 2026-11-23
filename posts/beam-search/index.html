@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795413952" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Beam Search - The Best Path You Can Afford to Search For"/>
 <meta name="twitter:description" content="Helpful context:
- Dynamic Programming - Never Solve the Same Problem Twice  Greedy Algorithms - The Art of Never Looking Back    GPT-4 generates text one token at a time. At each step it could choose from 50,000 possible tokens. If you greedily pick the most likely token, you often get repetitive, low-quality text - the model commits to an early choice and can&rsquo;t recover. If you explore all paths (breadth-first search), the tree grows exponentially - 50,000 possibilities at step 1, $50,000^2$ at step 2, completely impractical."/>
+ Dynamic Programming - Never Solve the Same Problem Twice  Greedy Algorithms - The Art of Never Looking Back    A language model generates text one token at a time. At each step it chooses from a vocabulary of 50,000 to over 100,000 tokens. If you greedily pick the most likely token, you often get repetitive, low-quality text - the model commits to an early choice and can&rsquo;t recover."/>
 
     <meta property="og:title" content="Beam Search - The Best Path You Can Afford to Search For" />
 <meta property="og:description" content="Helpful context:
- Dynamic Programming - Never Solve the Same Problem Twice  Greedy Algorithms - The Art of Never Looking Back    GPT-4 generates text one token at a time. At each step it could choose from 50,000 possible tokens. If you greedily pick the most likely token, you often get repetitive, low-quality text - the model commits to an early choice and can&rsquo;t recover. If you explore all paths (breadth-first search), the tree grows exponentially - 50,000 possibilities at step 1, $50,000^2$ at step 2, completely impractical." />
+ Dynamic Programming - Never Solve the Same Problem Twice  Greedy Algorithms - The Art of Never Looking Back    A language model generates text one token at a time. At each step it chooses from a vocabulary of 50,000 to over 100,000 tokens. If you greedily pick the most likely token, you often get repetitive, low-quality text - the model commits to an early choice and can&rsquo;t recover." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/beam-search/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -166,8 +169,8 @@
 </li>
 </ul>
 <hr>
-<p>GPT-4 generates text one token at a time. At each step it could choose from 50,000 possible tokens. If you greedily pick the most likely token, you often get repetitive, low-quality text - the model commits to an early choice and can&rsquo;t recover. If you explore all paths (breadth-first search), the tree grows exponentially - 50,000 possibilities at step 1, $50,000^2$ at step 2, completely impractical.</p>
-<p>Beam search is the compromise used in virtually every language model, machine translation system, and speech recognizer: keep the $k$ best partial sequences at each step, discard the rest. $k$ is called the <strong>beam width</strong>. It&rsquo;s a heuristic - there&rsquo;s no optimality guarantee - but it works empirically, and understanding why requires thinking carefully about what &ldquo;best&rdquo; means in sequential search.</p>
+<p>A language model generates text one token at a time. At each step it chooses from a vocabulary of 50,000 to over 100,000 tokens. If you greedily pick the most likely token, you often get repetitive, low-quality text - the model commits to an early choice and can&rsquo;t recover. If you explore all paths (breadth-first search), the tree grows exponentially - 50,000 possibilities at step 1, $50{,}000^2$ at step 2, completely impractical.</p>
+<p>Beam search is the compromise used in nearly every machine translation system and speech recognizer (chat-style language models mostly sample instead, for reasons covered below): keep the $k$ best partial sequences at each step, discard the rest. $k$ is called the <strong>beam width</strong>. It&rsquo;s a heuristic - there&rsquo;s no optimality guarantee - but it works empirically, and understanding why requires thinking carefully about what &ldquo;best&rdquo; means in sequential search.</p>
 <hr>
 <h2 id="three-strategies-for-sequential-search">Three Strategies for Sequential Search</h2>
 <p>To make the tradeoffs concrete, consider building a sequence of length $T$ from a vocabulary of size $V$.</p>
@@ -182,6 +185,9 @@
 <li>Repeat.</li>
 </ol>
 <p>Total computation: $O(k \cdot T \cdot V)$ - linear in $k$ instead of exponential.</p>
+<p>Here is the difference on a toy model with three steps and two choices per step:</p>
+<div class="sf" data-sf="player" data-src="/data/beam-search/beam.json"></div>
+<p>Greedy loses because the best first word is not the start of the best phrase. A beam of just two keeps the runner-up alive long enough for its strong continuation to show.</p>
 <hr>
 <h2 id="the-tradeoff">The Tradeoff</h2>
 <p><strong>Beam width 1</strong> = greedy decoding. Fast, myopic.</p>
@@ -194,7 +200,7 @@
 <p><strong>Length normalization</strong> adjusts the score of a hypothesis $y = (y_1, \ldots, y_T)$ as:</p>
 <p>$$\text{score}(y) = \frac{\log P(y \mid x)}{T^\alpha},$$</p>
 <p>where $\alpha \in [0, 1]$ controls normalization strength. With $\alpha = 0$ there&rsquo;s no correction. With $\alpha = 1$ you normalize fully by length. Values around $\alpha = 0.6$ - $0.7$ work well empirically for neural machine translation.</p>
-<p>The intuition: dividing by $T^\alpha$ penalizes very short sequences (small denominator, but short sequences had fewer penalty terms) and rewards longer sequences by making each additional token &ldquo;cheaper&rdquo; in the score. You&rsquo;re trading off length against probability in a calibrated way.</p>
+<p>The intuition: log-probabilities are negative, and a longer sequence has more of them, so its raw score is more negative. Dividing by $T^\alpha$ shrinks long sequences' scores more than short ones', which offsets that built-in bias. With $\alpha = 1$ you compare average log-probability per token; smaller $\alpha$ corrects only partway.</p>
 <hr>
 <h2 id="diverse-beam-search">Diverse Beam Search</h2>
 <p>Standard beam search produces $k$ hypotheses that are usually very similar - they often share a long common prefix, since the top $k$ sequences at step 1 all started with the same top token or two. You get $k$ nearly-identical outputs instead of $k$ diverse alternatives.</p>
@@ -215,9 +221,9 @@
 <p>Beam search maximizes probability - it finds the most likely sequence. Sampling draws from the distribution - it finds a typical sequence. For tasks with a definite correct answer (translation, transcription, structured prediction), beam search consistently wins. For open-ended creative generation (stories, dialogue, brainstorming), sampling wins - beam search produces repetitive, safe outputs.</p>
 <hr>
 <h2 id="applications">Applications</h2>
-<p><strong>Neural machine translation.</strong> Every major NMT system - Google Translate, DeepL, Meta&rsquo;s NLLB - uses beam search at inference time with beam width 4 - 5. The computation cost $O(k \cdot T \cdot V)$ is easily parallelized on GPU with batched matrix multiplications.</p>
+<p><strong>Neural machine translation.</strong> NMT systems, from Google&rsquo;s GNMT to Meta&rsquo;s NLLB, decode with beam search, typically with beam widths around 4 - 5. The computation cost $O(k \cdot T \cdot V)$ is easily parallelized on GPU with batched matrix multiplications.</p>
 <p><strong>Speech recognition.</strong> Acoustic models produce per-frame phone probabilities; beam search over word lattices combines acoustic model scores with language model scores. Both constrain the search jointly, and beam search allows this combination to operate efficiently.</p>
-<p><strong>Theorem proving.</strong> Neural theorem provers (like AlphaCode for competition math, or systems based on Lean) use beam search over proof step sequences, keeping multiple partial proofs alive simultaneously to avoid committing to one proof strategy too early.</p>
+<p><strong>Theorem proving.</strong> Neural theorem provers for Lean and Metamath (OpenAI&rsquo;s GPT-f, for example) use beam search to propose candidate proof steps, keeping several alive at once rather than committing to one proof strategy too early.</p>
 <p><strong>Robot motion planning.</strong> Beam search over discretized action sequences finds near-optimal plans in structured environments faster than exhaustive search.</p>
 <hr>
 <h2 id="summary">Summary</h2>
