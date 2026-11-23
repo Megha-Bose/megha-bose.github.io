@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795411986" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795373180" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -168,6 +171,7 @@ The algorithm is surprisingly counterintuitive: it reads the pattern backwards a
 <hr>
 <p>Most string search algorithms scan left to right. Boyer-Moore scans right to left within the pattern, which lets it skip large chunks of text. For English text searching typical English patterns, Boyer-Moore does far fewer than $n$ character comparisons - it&rsquo;s sublinear in practice. When <code>grep</code> is fast, Boyer-Moore is often why.</p>
 <p>The algorithm is surprisingly counterintuitive: it reads the pattern backwards against the text, and a mismatch is information to be exploited, not just a failure to recover from.</p>
+<div class="sf" data-sf="player" data-src="/data/boyer-moore/horspool.json">This is an interactive animation. It needs JavaScript to run.</div>
 <hr>
 <h2 id="two-heuristics-take-the-maximum">Two Heuristics, Take the Maximum</h2>
 <p>Boyer-Moore uses two independent rules for deciding how far to shift the pattern on each mismatch. It takes whichever shift is larger.</p>
@@ -186,15 +190,14 @@ The algorithm is surprisingly counterintuitive: it reads the pattern backwards a
     for k = 0 to m - 1:
         last[P[k]] = k
     return last
-</code></pre><p>Cost: $O(m + |\Sigma|)$ time and $O(|\Sigma|)$ space. For ASCII text, $|\Sigma| = 256$, so this is small.</p>
+</code></pre><p>Cost: $O(m + \lvert\Sigma\rvert)$ time and $O(|\Sigma|)$ space. For ASCII text, $|\Sigma| = 256$, so this is small.</p>
 <h3 id="good-suffix-rule">Good Suffix Rule</h3>
 <p>Suppose we matched a suffix of the pattern - positions $P[j+1..m-1]$ all matched the text - but then $P[j]$ failed. Call the matched portion $t = P[j+1..m-1]$.</p>
 <p>We want to shift the pattern so a previous occurrence of $t$ aligns with what we just matched in the text. There are two sub-cases:</p>
 <p><strong>Sub-case 1:</strong> The string $t$ appears elsewhere in $P$, preceded by a character different from $P[j]$ (so we won&rsquo;t immediately fail again at the same position). Shift to align that occurrence.</p>
 <p><strong>Sub-case 2:</strong> No complete copy of $t$ appears earlier in $P$. But some suffix of $t$ might match a prefix of $P$. Find the longest such suffix-prefix overlap and shift accordingly.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> The good suffix rule is notoriously tricky. The original 1977 Boyer-Moore paper contained a bug in the good suffix table construction. This is one of the most carefully tested pieces of code in algorithms: correctness proofs, published errata, multiple independent implementations. The two sub-cases above are genuinely distinct and both matter for correctness. If you&rsquo;re implementing Boyer-Moore, test it on patterns like <code>abab</code> and <code>aab</code> where the sub-cases interact.</p>
-<p>The fix for the bug, and the standard correct implementation, was published by Knuth, Morris, and Pratt in their own 1977 paper responding to Boyer and Moore.</p>
+<p><strong>Discomfort check.</strong> The good suffix rule is notoriously easy to get wrong. Knuth&rsquo;s analysis in the 1977 Knuth-Morris-Pratt paper included a corrected way to compute the table, and Wojciech Rytter found and fixed a remaining error in 1980. The two sub-cases above are genuinely distinct and both matter. If you implement it, test it against brute force on small alphabets and patterns like <code>abab</code> and <code>aab</code>, where the cases interact. (The table below was checked that way, against 20,000 random inputs.)</p>
 </blockquote>
 <p><strong>Preprocessing the good suffix table in $O(m)$:</strong></p>
 <pre tabindex="0"><code>GoodSuffixTable(P):
@@ -227,11 +230,8 @@ The algorithm is surprisingly counterintuitive: it reads the pattern backwards a
 </code></pre><p>The inner loop compares right-to-left. A mismatch at $j$ gives information about both the mismatching character (bad character rule) and the already-matched suffix (good suffix rule). Take the larger shift.</p>
 <hr>
 <h2 id="why-sublinear">Why Sublinear?</h2>
-<p>On English text with a large alphabet, consider a random character $c$ from the text. For a pattern of length $m$ over an alphabet of size $|\Sigma|$, the probability that $c$ doesn&rsquo;t appear in $P$ at all is roughly $(1 - 1/|\Sigma|)^m$. When it doesn&rsquo;t appear, we shift by $m$ - skipping the whole pattern.</p>
-<p>The average shift from the bad character rule alone is approximately:</p>
-<p>$$\text{avg shift} \approx m \cdot \left(1 - \frac{1}{|\Sigma|}\right)$$</p>
-<p>For English ($|\Sigma| \approx 26$) and a 10-character pattern, that&rsquo;s about 9.6 positions per step. We examine roughly $n/9.6 \approx 0.1 \cdot n$ characters - genuinely sublinear.</p>
-<p>For long patterns on large alphabets, this effect is dramatic. Searching a 100-character pattern through English text, Boyer-Moore examines far less than 1% of the characters.</p>
+<p>Every alignment is checked from its right end. If the text character there doesn&rsquo;t occur in the pattern at all, no alignment overlapping it can match, so the pattern jumps its whole length, $m$, after a single comparison. When the alphabet is large and the pattern uses only a few of its characters, that happens most of the time, so only about $n/m$ text characters get examined: <strong>sublinear</strong>.</p>
+<p>The longer the pattern, the bigger the jumps. On a small alphabet like DNA, almost every character appears in the pattern, so the bad-character jumps stay short, and that&rsquo;s where the good suffix rule earns its keep.</p>
 <hr>
 <h2 id="boyer-moore-horspool-the-simplified-version">Boyer-Moore-Horspool: The Simplified Version</h2>
 <p>Horspool (1980) noticed that nearly all the practical speed of Boyer-Moore comes from the bad character rule applied to just one character: the text character aligned with the rightmost position of the pattern.</p>
@@ -283,24 +283,24 @@ The algorithm is surprisingly counterintuitive: it reads the pattern backwards a
 </tr>
 <tr>
 <td>Boyer-Moore</td>
-<td>$O(m +</td>
-<td>\Sigma</td>
-<td>)$</td>
+<td>$O(m + \lvert\Sigma\rvert)$</td>
 <td>$O(nm)$</td>
+<td>$O(n/m)$</td>
+<td>Best for long patterns, large alphabet</td>
 </tr>
 <tr>
 <td>Boyer-Moore-Horspool</td>
-<td>$O(m +</td>
-<td>\Sigma</td>
-<td>)$</td>
+<td>$O(m + \lvert\Sigma\rvert)$</td>
 <td>$O(nm)$</td>
+<td>$O(n/m)$</td>
+<td>Simpler, nearly as fast</td>
 </tr>
 <tr>
 <td>Aho-Corasick</td>
-<td>$O(m_\text{total} \cdot</td>
-<td>\Sigma</td>
-<td>)$</td>
+<td>$O(m_\text{total} \cdot \lvert\Sigma\rvert)$</td>
 <td>$O(n + \text{hits})$</td>
+<td>$O(n + \text{hits})$</td>
+<td>Many patterns simultaneously</td>
 </tr>
 </tbody>
 </table>
