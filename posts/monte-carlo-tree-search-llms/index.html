@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795461342" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -180,6 +183,8 @@
 <p><strong>Backpropagation.</strong> Traverse the path from the new node back to the root, updating statistics at each node:</p>
 <p>$$N(v) \leftarrow N(v) + 1, \qquad Q(v) \leftarrow Q(v) + \frac{R - Q(v)}{N(v)}.$$</p>
 <p>After many iterations, the visit count $N(v)$ at the root&rsquo;s children reflects the algorithm&rsquo;s confidence in each action. The final decision is typically the action with the highest visit count (not the highest $Q$) - visit count is more robust to noisy rollouts.</p>
+<p>Here are all four phases on a game small enough to see whole:</p>
+<div class="sf" data-sf="player" data-src="/data/monte-carlo-tree-search-llms/mcts.json"></div>
 <hr>
 <h2 id="the-ucb1-formula-and-exploration-exploitation">The UCB1 Formula and Exploration-Exploitation</h2>
 <p>The UCT formula adapts the Upper Confidence Bound 1 (UCB1) algorithm from the multi-armed bandit literature. UCB1 is a strategy for allocating trials among multiple options to balance learning and reward accumulation.</p>
@@ -190,7 +195,7 @@
 <hr>
 <h2 id="alphago-and-alphazero-neural-augmented-mcts">AlphaGo and AlphaZero: Neural-Augmented MCTS</h2>
 <p>The breakthrough that took MCTS from competitive amateur play to superhuman performance was replacing the random rollout with a learned value function.</p>
-<p>AlphaGo (Silver et al., 2016) trained two networks on human expert games: a policy network $p_\sigma(a \mid s)$ that predicts which moves human experts play, and a value network $V_\theta(s)$ that estimates the probability of winning from position $s$. MCTS was modified to use both:</p>
+<p>AlphaGo (Silver et al., 2016) trained two kinds of network: a policy network $p_\sigma(a \mid s)$, trained on human expert games to predict which moves experts play (then improved by self-play), and a value network $V_\theta(s)$, trained on positions from self-play games to estimate the probability of winning from position $s$. MCTS was modified to use both:</p>
 <ul>
 <li><strong>Selection:</strong> use a modified UCT that mixes the value network and visit statistics, weighted by the policy network&rsquo;s prior $p_\sigma(a \mid s)$ instead of uniform priors.</li>
 <li><strong>Simulation:</strong> replace random rollout with an evaluation that blends a fast rollout policy and the value network: $V = \lambda V_\theta(s) + (1-\lambda) z$ where $z$ is the fast rollout outcome.</li>
@@ -202,7 +207,7 @@
 <li>Train the value network to match the game outcome.</li>
 <li>Repeat.</li>
 </ul>
-<p>The MCTS visit distribution is a richer training signal than a single action: it encodes how confident the search was in each move, essentially distilling the result of thousands of rollouts into a soft target. This self-reinforcing loop - better networks improve search; better search generates better training targets - produces superhuman play in Chess, Go, and Shogi from scratch within hours.</p>
+<p>The MCTS visit distribution is a richer training signal than a single action: it encodes how confident the search was in each move, essentially distilling the result of thousands of rollouts into a soft target. This self-reinforcing loop - better networks improve search; better search generates better training targets - produced superhuman play in chess, shogi and Go from scratch, in hours to days of self-play training on thousands of TPUs.</p>
 <p>The key insight is that the value network eliminates the need for long rollouts. Random rollouts are noisy because early mistakes compound over many moves. A well-trained value network evaluates any position directly, giving a low-variance estimate of the outcome without any simulation at all.</p>
 <hr>
 <h2 id="llms-as-sequential-decision-processes">LLMs as Sequential Decision Processes</h2>
@@ -220,7 +225,7 @@
 <h2 id="process-reward-models-as-value-functions">Process Reward Models as Value Functions</h2>
 <p>In the AlphaZero framework, the value network $V(s)$ estimates the probability of winning from position $s$. The analogue for LLM reasoning is a Process Reward Model (PRM): a model that estimates, given the problem and the reasoning steps generated so far, the probability that the current partial solution will eventually lead to a correct final answer.</p>
 <p>PRMs are distinct from Outcome Reward Models (ORMs), which only evaluate the final answer. A PRM evaluates intermediate steps, which is essential for MCTS: you need a value estimate at every node in the search tree, not just at terminal leaves.</p>
-<p>Training a PRM requires step-level annotations. For mathematical reasoning, this means labeling each reasoning step as correct or incorrect. OpenAI&rsquo;s PRM800K dataset (Lightman et al., 2023) provides human step-level annotations for 800K math solutions. With a well-trained PRM, MCTS can identify that a particular reasoning path went wrong at step 3 - not just that the final answer was wrong - and prune that branch early.</p>
+<p>Training a PRM requires step-level annotations. For mathematical reasoning, this means labeling each reasoning step as correct or incorrect. OpenAI&rsquo;s PRM800K dataset (Lightman et al., 2023) provides about 800K human step-level labels, covering roughly 75K model-generated solutions to math problems. With a well-trained PRM, MCTS can identify that a particular reasoning path went wrong at step 3 - not just that the final answer was wrong - and prune that branch early.</p>
 <p>The quality of MCTS with LLMs is bounded by the quality of the PRM. If the PRM incorrectly scores a wrong reasoning step as promising, the search will waste compute exploring that branch. This is the central challenge: PRMs are trained on human or synthetic data and can be fooled by fluent but incorrect reasoning.</p>
 <hr>
 <h2 id="tree-of-thought-and-related-methods">Tree-of-Thought and Related Methods</h2>
@@ -232,7 +237,7 @@
 <h2 id="inference-time-compute-scaling">Inference-Time Compute Scaling</h2>
 <p>A recurring theme in recent LLM research is that increasing compute at inference time - rather than just at training time - can substantially improve performance on hard problems. MCTS and related search methods are one mechanism for this.</p>
 <p>Greedy decoding uses $O(1)$ model evaluations per token. Best-of-N sampling runs the model $N$ times and takes the best result according to a verifier, using $O(N)$ evaluations but no structured search. Beam search maintains $k$ candidate sequences at each step. MCTS with a PRM performs structured search, spending more evaluations on promising paths and fewer on dead ends.</p>
-<p>The key insight of systems like OpenAI o1 (2024) and related work: at test time, the model has a compute budget, and that budget should be spent on structured reasoning search rather than a single forward pass. The scaling law for test-time compute suggests that with enough search budget, smaller models with good value functions can match or exceed larger models that generate single responses.</p>
+<p>The key observation from systems like OpenAI o1 (2024) and related work: accuracy on hard problems keeps improving as more compute is spent at test time. o1 spends it on long chains of reasoning; OpenAI has not said whether it uses explicit tree search, but MCTS with a value model is one of the main research approaches to spending that budget well. The scaling law for test-time compute suggests that with enough search budget, smaller models with good value functions can match or exceed larger models that generate single responses.</p>
 <p>$$\underbrace{\text{Greedy}}_{\text{1 call}} \to \underbrace{\text{Best-of-N}}_{\text{N parallel calls}} \to \underbrace{\text{Beam Search}}_{\text{N calls, breadth-first}} \to \underbrace{\text{MCTS}}_{\text{N calls, structured}}$$</p>
 <p>Each step in this hierarchy uses the same total compute budget more efficiently by incorporating value estimates into the search.</p>
 <hr>
