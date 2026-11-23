@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.b92b2097880ffcd6f72c9563efdc680881724ed5f5e17af8a0a29c62280001e7.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795414753" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,13 +23,13 @@
 
 <meta name="twitter:title" content="Shor&#39;s Algorithm - Quantum Factoring That Threatens Modern Cryptography"/>
 <meta name="twitter:description" content="Helpful context:
- Grover&rsquo;s Algorithm - Quantum Search in Square-Root Time    RSA encryption secures the internet. When your browser negotiates an HTTPS connection, it uses RSA or a related scheme to establish a shared secret. The security of RSA rests on a single assumption: that factoring large numbers is computationally hard.
-A 2048-bit RSA number has roughly 620 decimal digits. The best known classical algorithm for factoring it - the General Number Field Sieve - would take longer than the age of the universe on any computer we could build or imagine."/>
+ Grover&rsquo;s Algorithm - Quantum Search in Square-Root Time    Public-key cryptography secures the internet. When your browser opens an HTTPS connection, it agrees on a shared secret with elliptic-curve Diffie-Hellman and checks the server&rsquo;s identity with RSA or elliptic-curve signatures. RSA&rsquo;s security rests on factoring large numbers being hard; the elliptic-curve schemes rest on the closely related discrete logarithm problem. Shor&rsquo;s algorithm breaks both.
+A 2048-bit RSA number has roughly 620 decimal digits."/>
 
     <meta property="og:title" content="Shor&#39;s Algorithm - Quantum Factoring That Threatens Modern Cryptography" />
 <meta property="og:description" content="Helpful context:
- Grover&rsquo;s Algorithm - Quantum Search in Square-Root Time    RSA encryption secures the internet. When your browser negotiates an HTTPS connection, it uses RSA or a related scheme to establish a shared secret. The security of RSA rests on a single assumption: that factoring large numbers is computationally hard.
-A 2048-bit RSA number has roughly 620 decimal digits. The best known classical algorithm for factoring it - the General Number Field Sieve - would take longer than the age of the universe on any computer we could build or imagine." />
+ Grover&rsquo;s Algorithm - Quantum Search in Square-Root Time    Public-key cryptography secures the internet. When your browser opens an HTTPS connection, it agrees on a shared secret with elliptic-curve Diffie-Hellman and checks the server&rsquo;s identity with RSA or elliptic-curve signatures. RSA&rsquo;s security rests on factoring large numbers being hard; the elliptic-curve schemes rest on the closely related discrete logarithm problem. Shor&rsquo;s algorithm breaks both.
+A 2048-bit RSA number has roughly 620 decimal digits." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/shors-algorithm/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -155,7 +158,7 @@ A 2048-bit RSA number has roughly 620 decimal digits. The best known classical a
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          7 min read
+          8 min read
         </div>
       </div>
     </header>
@@ -166,9 +169,9 @@ A 2048-bit RSA number has roughly 620 decimal digits. The best known classical a
 </li>
 </ul>
 <hr>
-<p>RSA encryption secures the internet. When your browser negotiates an HTTPS connection, it uses RSA or a related scheme to establish a shared secret. The security of RSA rests on a single assumption: that factoring large numbers is computationally hard.</p>
+<p>Public-key cryptography secures the internet. When your browser opens an HTTPS connection, it agrees on a shared secret with elliptic-curve Diffie-Hellman and checks the server&rsquo;s identity with RSA or elliptic-curve signatures. RSA&rsquo;s security rests on factoring large numbers being hard; the elliptic-curve schemes rest on the closely related discrete logarithm problem. Shor&rsquo;s algorithm breaks both.</p>
 <p>A 2048-bit RSA number has roughly 620 decimal digits. The best known classical algorithm for factoring it - the General Number Field Sieve - would take longer than the age of the universe on any computer we could build or imagine. This is not a practical limitation; it is an astronomical gap.</p>
-<p>In 1994, Peter Shor showed that a quantum computer could factor a 2048-bit number in hours. Every time you make a secure connection online, you are trusting that large-scale quantum computers do not yet exist.</p>
+<p>In 1994, Peter Shor showed that a quantum computer could factor in polynomial time. The most recent engineering estimate (Craig Gidney, 2025) puts a 2048-bit RSA key at under a week on a machine with fewer than a million noisy qubits. Every time you make a secure connection online, you are trusting that such machines do not yet exist.</p>
 <hr>
 <h2 id="why-factoring-is-hard-classically">Why Factoring Is Hard (Classically)</h2>
 <p>Given $N = p \cdot q$ where $p$ and $q$ are large primes, the multiplication is trivial - a few microseconds. Finding $p$ and $q$ from $N$ is a different matter entirely.</p>
@@ -186,7 +189,7 @@ A 2048-bit RSA number has roughly 620 decimal digits. The best known classical a
 <p>$$(a^{r/2} - 1)(a^{r/2} + 1) \equiv 0 \pmod{N}$$</p>
 <p>This means $N$ divides the product $(a^{r/2}-1)(a^{r/2}+1)$. If $r$ is even and $a^{r/2} \not\equiv -1 \pmod N$, then $\gcd(a^{r/2} - 1, N)$ and $\gcd(a^{r/2} + 1, N)$ each give a non-trivial factor of $N$.</p>
 <p>Number theory guarantees this works for a random $a$ with probability at least $1/2$. Try a few random values of $a$, and you&rsquo;ll factor $N$ with high probability.</p>
-<p>The bottleneck: finding $r$. Classically, computing the order of $a$ modulo $N$ takes exponential time - it&rsquo;s essentially as hard as factoring. This is where quantum computation enters.</p>
+<p>The bottleneck: finding $r$. No efficient classical algorithm for computing the order of $a$ modulo $N$ is known - it is essentially as hard as factoring itself. This is where quantum computation enters.</p>
 <hr>
 <h2 id="the-quantum-part-finding-the-period">The Quantum Part: Finding the Period</h2>
 <p>Define a function $f(x) = a^x \bmod N$. This function is periodic with period $r$ - the order of $a$ we want to find. Classically, to find $r$ you&rsquo;d evaluate $f$ at many points and look for repetitions. With period $r$ potentially as large as $N$, this takes $O(N)$ time.</p>
@@ -203,6 +206,8 @@ A 2048-bit RSA number has roughly 620 decimal digits. The best known classical a
 <p>$$\text{QFT}|j\rangle = \frac{1}{\sqrt{M}} \sum_{k=0}^{M-1} e^{2\pi i jk/M}|k\rangle$$</p>
 <p>The key property: the QFT of a periodic state peaks sharply at frequencies that are multiples of $M/r$. This is quantum interference at work - the amplitudes at non-multiples cancel out; the amplitudes at multiples reinforce.</p>
 <p>After the QFT, measure the first register. You get a value close to $jM/r$ for a random integer $j$. Divide by $M$ to get a rational number close to $j/r$. Apply the <strong>continued fraction algorithm</strong> - a classical procedure - to find the fraction $j/r$ in lowest terms. The denominator gives $r$ (or a divisor of $r$, which you can extend with a few more measurements).</p>
+<p>Here is the whole quantum part, simulated exactly for $N = 21$, $a = 2$:</p>
+<div class="sf" data-sf="player" data-src="/data/shors-algorithm/period.json"></div>
 <p>The entire QFT on $n$ qubits uses $O(n^2)$ gates - vastly more efficient than the classical FFT&rsquo;s $O(n \cdot 2^n)$ operations. The classical FFT is polynomial in the number of elements $2^n$; the QFT is polynomial in $n$, the number of qubits.</p>
 <hr>
 <h2 id="the-full-algorithm">The Full Algorithm</h2>
@@ -225,11 +230,11 @@ A 2048-bit RSA number has roughly 620 decimal digits. The best known classical a
 <p>The order of $7 \bmod 15$: $7^1 = 7$, $7^2 = 49 \equiv 4$, $7^3 \equiv 28 \equiv 13$, $7^4 \equiv 91 \equiv 1 \pmod{15}$. So $r = 4$.</p>
 <p>Since $r = 4$ is even and $7^2 = 49 \equiv 4 \not\equiv -1 \pmod{15}$, we compute:</p>
 <p>$$\gcd(4 - 1, 15) = \gcd(3, 15) = 3, \qquad \gcd(4 + 1, 15) = \gcd(5, 15) = 5.$$</p>
-<p>Factors: $15 = 3 \times 5$. This small instance was demonstrated on a 5-qubit IBM Quantum device in 2016.</p>
+<p>Factors: $15 = 3 \times 5$. Factoring 15 with Shor&rsquo;s algorithm was first demonstrated in 2001 at IBM Almaden, on a 7-qubit NMR machine, and again on trapped ions in 2016. These demonstrations simplified the circuit using knowledge of the answer, so they show the algorithm working, not quantum computers factoring anything hard.</p>
 <hr>
 <blockquote>
-<p><strong>Discomfort check.</strong> Shor&rsquo;s algorithm requires a large, error-corrected quantum computer. The biggest quantum computers today have around 1,000 noisy physical qubits. Factoring 2048-bit RSA needs about 4,000 logical qubits - each logical qubit requiring roughly 1,000 physical qubits for error correction. That&rsquo;s 4 million physical qubits with error rates far below what current hardware achieves. So when is this actually a threat?</p>
-<p>Best current estimates: 10 to 20 years before cryptographically relevant quantum computers exist. The uncertainty is large - it could be sooner if hardware progress accelerates, or later if engineering challenges prove harder than expected. For this reason, NIST finalized post-quantum cryptographic standards in 2024 (CRYSTALS-Kyber for key exchange, CRYSTALS-Dilithium for signatures). Migration is happening now, not because the threat is imminent, but because &ldquo;harvest now, decrypt later&rdquo; attacks - storing encrypted traffic today to decrypt when quantum computers arrive - mean migration can&rsquo;t wait until the hardware exists.</p>
+<p><strong>Discomfort check.</strong> Shor&rsquo;s algorithm requires a large, error-corrected quantum computer. The biggest quantum computers today have around a thousand noisy physical qubits. Estimates for factoring 2048-bit RSA have dropped from about 20 million physical qubits (Gidney and Ekerå, 2019) to just under a million (Gidney, 2025), all running with error rates current hardware is only starting to reach. So when is this actually a threat?</p>
+<p>Best current estimates: 10 to 20 years before cryptographically relevant quantum computers exist. The uncertainty is large - it could be sooner if hardware progress accelerates, or later if engineering challenges prove harder than expected. For this reason, NIST finalized post-quantum standards in 2024: ML-KEM (from CRYSTALS-Kyber) for key exchange, and ML-DSA (from CRYSTALS-Dilithium) and SLH-DSA (from SPHINCS+) for signatures. Migration is happening now, not because the threat is imminent, but because &ldquo;harvest now, decrypt later&rdquo; attacks - storing encrypted traffic today to decrypt when quantum computers arrive - mean migration can&rsquo;t wait until the hardware exists.</p>
 </blockquote>
 <hr>
 <h2 id="post-quantum-cryptography">Post-Quantum Cryptography</h2>
@@ -237,7 +242,7 @@ A 2048-bit RSA number has roughly 620 decimal digits. The best known classical a
 <ul>
 <li><strong>Lattice-based</strong> (CRYSTALS-Kyber, CRYSTALS-Dilithium): security rests on the Shortest Vector Problem and related lattice problems. No known quantum algorithm achieves a superpolynomial speedup.</li>
 <li><strong>Hash-based</strong> (SPHINCS+): security reduces to properties of the hash function. Grover&rsquo;s algorithm provides a quadratic speedup on hash preimage search, so key sizes are doubled to compensate.</li>
-<li><strong>Code-based</strong>: security based on decoding random linear codes (no known quantum shortcut).</li>
+<li><strong>Code-based</strong> (Classic McEliece; HQC, chosen by NIST in 2025 as a backup key exchange): security based on decoding random linear codes (no known quantum shortcut).</li>
 </ul>
 <p>These schemes are harder to work with than RSA - larger key sizes, more computation - but the security foundations don&rsquo;t rely on the hardness of factoring or discrete logarithm.</p>
 <hr>
@@ -259,7 +264,7 @@ A 2048-bit RSA number has roughly 620 decimal digits. The best known classical a
 <tr>
 <td>Modular exponentiation</td>
 <td>Encodes $f(x) = a^x \bmod N$ in superposition</td>
-<td>Exponential</td>
+<td>None by itself - it is the most expensive step</td>
 </tr>
 <tr>
 <td>Quantum Fourier Transform</td>
@@ -284,7 +289,7 @@ A 2048-bit RSA number has roughly 620 decimal digits. The best known classical a
 </tbody>
 </table>
 <p>Shor&rsquo;s algorithm is a beautiful decomposition: a classical number-theoretic reduction makes factoring equivalent to period-finding; the quantum computer performs the period-finding using interference; classical post-processing extracts the answer. The quantum part is contained to one subroutine, but it&rsquo;s the subroutine that makes the whole thing work.</p>
-<p>The implications are not theoretical. RSA, Diffie-Hellman, and elliptic-curve cryptography - the cryptographic infrastructure of the internet - are all vulnerable to Shor&rsquo;s algorithm. Migration to post-quantum standards is underway. The window is likely measured in decades, not years, but the clock is running.</p>
+<p>The implications are not theoretical. RSA, Diffie-Hellman, and elliptic-curve cryptography - the cryptographic infrastructure of the internet - are all vulnerable to Shor&rsquo;s algorithm. Migration to post-quantum standards is underway. The window is probably a decade or more, but nobody knows exactly, and the clock is running.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
