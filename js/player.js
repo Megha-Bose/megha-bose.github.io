@@ -336,7 +336,7 @@
         curves[i].setAttribute('d', c.pts.map(function (pt, j) { return (j ? 'L' : 'M') + x(pt[0]).toFixed(1) + ' ' + y(pt[1]).toFixed(1); }).join(''));
         curves[i].style.stroke = color(c.tok);
         curves[i].style.strokeDasharray = c.dash ? '5 4' : '';
-        curves[i].style.strokeWidth = c.w || '';
+        curves[i].style.strokeWidth = c.w !== undefined ? c.w : '';
         curves[i].style.fill = c.fill ? color(c.tok) : '';
         curves[i].style.fillOpacity = c.fill || '';
         curves[i].style.strokeLinecap = c.cap || '';
