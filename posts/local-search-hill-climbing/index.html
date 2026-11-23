@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412931" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Local Search - Improving One Step at a Time Until You Can&#39;t"/>
 <meta name="twitter:description" content="Helpful context:
- Approximation Algorithms - Close Enough, Fast Enough    Evolution doesn&rsquo;t plan ahead. Each mutation is accepted if it improves fitness; rejected if it doesn&rsquo;t. A million iterations of &ldquo;take a small step in a good direction&rdquo; produced the eye, the heart, the brain. Local search is this idea applied to optimization: start somewhere, repeatedly move to a better neighbor, stop when no better neighbor exists."/>
+ Approximation Algorithms - Close Enough, Fast Enough    Evolution doesn&rsquo;t plan ahead. Variants that do a little better tend to stick around; ones that do worse tend to vanish. Billions of small steps in good directions produced the eye, the heart, the brain. Local search is this idea applied to optimization: start somewhere, repeatedly move to a better neighbor, stop when no better neighbor exists."/>
 
     <meta property="og:title" content="Local Search - Improving One Step at a Time Until You Can&#39;t" />
 <meta property="og:description" content="Helpful context:
- Approximation Algorithms - Close Enough, Fast Enough    Evolution doesn&rsquo;t plan ahead. Each mutation is accepted if it improves fitness; rejected if it doesn&rsquo;t. A million iterations of &ldquo;take a small step in a good direction&rdquo; produced the eye, the heart, the brain. Local search is this idea applied to optimization: start somewhere, repeatedly move to a better neighbor, stop when no better neighbor exists." />
+ Approximation Algorithms - Close Enough, Fast Enough    Evolution doesn&rsquo;t plan ahead. Variants that do a little better tend to stick around; ones that do worse tend to vanish. Billions of small steps in good directions produced the eye, the heart, the brain. Local search is this idea applied to optimization: start somewhere, repeatedly move to a better neighbor, stop when no better neighbor exists." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/local-search-hill-climbing/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -164,7 +167,7 @@
 </li>
 </ul>
 <hr>
-<p>Evolution doesn&rsquo;t plan ahead. Each mutation is accepted if it improves fitness; rejected if it doesn&rsquo;t. A million iterations of &ldquo;take a small step in a good direction&rdquo; produced the eye, the heart, the brain. Local search is this idea applied to optimization: start somewhere, repeatedly move to a better neighbor, stop when no better neighbor exists.</p>
+<p>Evolution doesn&rsquo;t plan ahead. Variants that do a little better tend to stick around; ones that do worse tend to vanish. Billions of small steps in good directions produced the eye, the heart, the brain. Local search is this idea applied to optimization: start somewhere, repeatedly move to a better neighbor, stop when no better neighbor exists.</p>
 <p>It sounds almost too simple. And yet, tuned carefully, it solves some of the hardest combinatorial problems we know of - often to within a percent or two of optimal.</p>
 <hr>
 <h2 id="the-local-search-template">The Local Search Template</h2>
@@ -189,7 +192,8 @@
 <p>The gain from a 2-opt move is:</p>
 <p>$$\Delta = d(a, b) + d(c, d) - d(a, c) - d(b, d).$$</p>
 <p>Accept the move if $\Delta &gt; 0$ (the tour gets shorter). There are $O(n^2)$ candidate 2-opt swaps at each step. Repeat until no improving swap exists - you&rsquo;ve reached a <strong>2-opt local optimum</strong>.</p>
-<p>In practice on Euclidean instances, 2-opt finds tours within 2 - 5% of optimal. Not bad for an algorithm that doesn&rsquo;t know anything about the global structure.</p>
+<div class="sf" data-sf="player" data-src="/data/local-search-hill-climbing/twoopt.json"></div>
+<p>On random Euclidean instances, 2-opt typically ends about 5% above optimal. That&rsquo;s not bad for an algorithm that knows nothing about the global structure, but as the last frame shows, &ldquo;no move helps&rdquo; is not the same as &ldquo;optimal&rdquo;.</p>
 <p><strong>3-opt</strong> considers removing 3 edges and reconnecting in any of the valid ways - $O(n^3)$ neighbors per step, better quality, more expensive. The <strong>Lin-Kernighan</strong> algorithm takes this further with variable-depth moves and clever candidate lists. For decades, Lin-Kernighan held the practical record on TSP benchmarks.</p>
 <hr>
 <h2 id="k-opt-improvements">k-Opt Improvements</h2>
@@ -217,6 +221,7 @@
 <hr>
 <h2 id="random-restarts">Random Restarts</h2>
 <p>The simplest fix for local optima: run the algorithm many times from different random starting points, and keep the best result.</p>
+<div class="sf" data-sf="player" data-src="/data/local-search-hill-climbing/restarts.json"></div>
 <p>If a single run finds the global optimum with probability $p$, then after $t$ independent runs you miss it with probability $(1 - p)^t$, which decays exponentially. With $t = 1/p$ runs, you find the global optimum with probability at least $1 - 1/e \approx 63%$.</p>
 <p>Random restarts work well when:</p>
 <ul>
@@ -241,7 +246,7 @@
 <li>Repeat.</li>
 </ol>
 <p>The key is calibrating the perturbation. Too small, and local search returns to the same local optimum. Too large, and you&rsquo;re essentially starting from scratch - equivalent to a random restart.</p>
-<p>ILS for TSP: apply a random &ldquo;double-bridge&rdquo; move (a specific 4-opt move that can&rsquo;t be undone by any sequence of 2-opt moves), then re-run 2-opt. This produces dramatically better results than either random restarts or 2-opt alone.</p>
+<p>ILS for TSP: apply a random &ldquo;double-bridge&rdquo; move (a specific 4-opt move that 2-opt and 3-opt local search can&rsquo;t easily undo), then re-run local search. This produces dramatically better results than either random restarts or 2-opt alone.</p>
 <hr>
 <blockquote>
 <p><strong>Discomfort check.</strong> With random restarts, aren&rsquo;t we just doing random search plus post-processing?</p>
@@ -251,7 +256,7 @@
 <h2 id="quality-of-local-optima">Quality of Local Optima</h2>
 <p>For some problems, any local optimum approximates the global optimum:</p>
 <p><strong>MAX-CUT.</strong> Assign each vertex to one side of a cut. Neighborhood move: flip one vertex to the other side. A local optimum for this neighborhood satisfies: at least half of all edges cross the cut. Proof: if any vertex had more neighbors on the same side as itself, flipping it would improve the cut - so at a local optimum, every vertex has at least as many neighbors on the opposite side, meaning at least half of all edges cross. This is a 2-approximation to the MAX-CUT optimum.</p>
-<p><strong>2-opt TSP.</strong> Any 2-opt local optimum on a Euclidean instance satisfies $\text{ALG} \leq O(\log n) \cdot \text{OPT}$ in the worst case, and is typically within a few percent of optimal empirically. The $O(\log n)$ bound is somewhat pessimistic.</p>
+<p><strong>2-opt TSP.</strong> Any 2-opt local optimum on a 2D Euclidean instance satisfies $\text{ALG} \leq O(\log n) \cdot \text{OPT}$ in the worst case (Chandra, Karloff and Tovey), and is typically about 5% above optimal in practice. The worst case is real but rare.</p>
 <hr>
 <h2 id="applications">Applications</h2>
 <p><strong>VLSI placement.</strong> Assign circuit components to chip locations to minimize wire length. Neighborhood: swap two component positions. Local search converges quickly and produces competitive placements.</p>
