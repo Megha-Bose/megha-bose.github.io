@@ -61,7 +61,7 @@
       var sc = scenarios[st.s];
       stage.textContent = '';
       view = views[spec.kind](stage, {
-        kind: spec.kind, title: spec.title, max: spec.max, cols: spec.cols, noMarks: spec.noMarks, grid: sc.grid || spec.grid,
+        kind: spec.kind, title: spec.title, max: spec.max, cols: spec.cols, noMarks: spec.noMarks, grid: sc.grid || spec.grid, plot: sc.plot || spec.plot,
         graph: sc.graph || spec.graph, frames: sc.frames,
         allFrames: scenarios.map(function (x) { return x.frames; })
       });
@@ -249,6 +249,53 @@
           line._w.textContent = String(lbl !== undefined ? lbl : line._base);
         }
       });
+    };
+  };
+
+  // Plot: curves and points on shared axes.
+  // spec.plot = { xmin, xmax, ymin, ymax, xlabel, ticks: [..] }
+  // frame.curves = [{ tok, pts: [[x, y], ...], dash, label }]; frame.points = [{ x, y, mix, tok, r }]
+  //   mix in [0, 1] blends series a (0) into series b (1).
+  views.plot = function (stage, spec) {
+    var p = spec.plot;
+    var W = 600, H = p.h || 260, L = 40, R = 14, T = 14, B = 30;
+    var x = function (v) { return L + (v - p.xmin) / (p.xmax - p.xmin) * (W - L - R); };
+    var y = function (v) { return T + (1 - (v - (p.ymin || 0)) / (p.ymax - (p.ymin || 0))) * (H - T - B); };
+    var plot = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'sf-plot', role: 'img', 'aria-label': spec.title });
+    var grid = svg('g', { class: 'sf-plot-grid' });
+    grid.appendChild(svg('line', { x1: L, x2: W - R, y1: H - B, y2: H - B }));
+    (p.ticks || []).forEach(function (t) {
+      grid.appendChild(svg('text', { x: x(t), y: H - B + 18, 'text-anchor': 'middle', text: String(t) }));
+    });
+    if (p.xlabel) grid.appendChild(svg('text', { x: W - R, y: H - 4, 'text-anchor': 'end', text: p.xlabel }));
+    plot.appendChild(grid);
+    var curveLayer = svg('g'), pointLayer = svg('g');
+    plot.appendChild(curveLayer);
+    plot.appendChild(pointLayer);
+    stage.appendChild(h('div', { class: 'sf-plot-wrap' }, [plot]));
+    var curves = [], points = [];
+    function color(t) { return TOKENS[t] || t; }
+    return function (fr) {
+      (fr.curves || []).forEach(function (c, i) {
+        if (!curves[i]) { curves[i] = svg('path', { class: 'sf-plot-line' }); curveLayer.appendChild(curves[i]); }
+        curves[i].setAttribute('d', c.pts.map(function (pt, j) { return (j ? 'L' : 'M') + x(pt[0]).toFixed(1) + ' ' + y(pt[1]).toFixed(1); }).join(''));
+        curves[i].style.stroke = color(c.tok);
+        curves[i].style.strokeDasharray = c.dash ? '5 4' : '';
+        curves[i].style.display = '';
+      });
+      for (var i = (fr.curves || []).length; i < curves.length; i++) curves[i].style.display = 'none';
+      (fr.points || []).forEach(function (pt, k) {
+        if (!points[k]) { points[k] = svg('circle', { class: 'sf-plot-pt' }); pointLayer.appendChild(points[k]); }
+        var el = points[k];
+        el.setAttribute('cx', x(pt.x).toFixed(1));
+        el.setAttribute('cy', y(pt.y === undefined ? 0 : pt.y).toFixed(1));
+        el.setAttribute('r', pt.r || 5);
+        el.style.fill = pt.mix !== undefined
+          ? 'color-mix(in oklab, var(--sf-b) ' + Math.round(pt.mix * 100) + '%, var(--sf-a))'
+          : color(pt.tok || 'muted');
+        el.style.display = '';
+      });
+      for (var j = (fr.points || []).length; j < points.length; j++) points[j].style.display = 'none';
     };
   };
 

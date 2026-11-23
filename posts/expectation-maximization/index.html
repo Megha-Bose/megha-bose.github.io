@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412226" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412226" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ You can&rsquo;t - unless you guess." />
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          5 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -171,6 +174,7 @@ You can&rsquo;t - unless you guess." />
 <p>Imagine you have height measurements of 1000 people, but you don&rsquo;t know their genders. You suspect the data comes from two Gaussians - one for each gender. How do you fit both Gaussians when you don&rsquo;t know which person belongs to which?</p>
 <p>You can&rsquo;t - unless you guess. Use your guess to improve your estimate. Use the better estimate to improve your guess. Repeat until it stops changing.</p>
 <p>This is EM: the Expectation-Maximization algorithm. It&rsquo;s how you fit models with hidden structure.</p>
+<div class="sf" data-sf="player" data-src="/data/expectation-maximization/gmm.json">This is an interactive animation. It needs JavaScript to run.</div>
 <hr>
 <h2 id="the-incomplete-data-problem">The Incomplete Data Problem</h2>
 <p>When fitting a single Gaussian to data, maximum likelihood gives you exact formulas: the mean is the sample mean, the variance is the sample variance. Clean and closed-form.</p>
@@ -214,17 +218,19 @@ You can&rsquo;t - unless you guess." />
 </blockquote>
 <hr>
 <h2 id="k-means-as-hard-assignment-em">K-Means as Hard-Assignment EM</h2>
-<p>K-means is EM with two restrictions:</p>
+<p>K-means is EM with three restrictions:</p>
 <ol>
 <li>Hard assignments: $r_{nk} \in \{0, 1\}$ - each point belongs to exactly one cluster.</li>
 <li>Spherical covariance: $\Sigma_k = \sigma^2 I$ - all clusters have the same radius.</li>
+<li>Equal mixing weights: every cluster is assumed equally likely.</li>
 </ol>
+<p>(Formally, it&rsquo;s the limit of GMM-EM as the shared variance $\sigma^2$ shrinks to zero.)</p>
 <p>The E-step becomes: assign each point to its nearest centroid. The M-step becomes: move each centroid to the mean of its assigned points. Everything is exact and cheap, which is why K-means scales to large datasets. But it misses elongated or overlapping clusters that GMM handles naturally.</p>
 <hr>
 <h2 id="applications">Applications</h2>
 <p><strong>Speech recognition.</strong> Training an HMM-based speech recognizer: the observation model parameters (Gaussian means, covariances) are learned by Baum-Welch, which is EM for HMMs. The E-step computes state occupation probabilities via the forward-backward algorithm. The M-step re-estimates emission and transition parameters.</p>
 <p><strong>Topic modeling.</strong> In probabilistic Latent Semantic Analysis (PLSA), documents are mixtures of topics and words are emissions from topics. The E-step assigns words to topics (soft assignments). The M-step re-estimates topic-word and document-topic distributions. Latent Dirichlet Allocation (LDA) extends this with a Bayesian prior.</p>
-<p><strong>Medical imaging.</strong> PET scan reconstruction: the observed data is photon counts (incomplete, noisy), the hidden data is the true activity distribution in the patient&rsquo;s body. EM alternates between estimating the activity distribution and updating the reconstruction. The ML-EM algorithm is the standard reconstruction method for PET.</p>
+<p><strong>Medical imaging.</strong> PET scan reconstruction: the observed data is photon counts (incomplete, noisy), the hidden data is the true activity distribution in the patient&rsquo;s body. EM alternates between estimating the activity distribution and updating the reconstruction. ML-EM and its accelerated variant OSEM (ordered-subsets EM) are the standard reconstruction methods for PET.</p>
 <p><strong>Astronomy.</strong> Fitting star cluster membership: given photometric measurements of stars, determine which belong to a cluster and which are background stars. EM fits a mixture of cluster and background distributions, assigning soft membership probabilities.</p>
 <hr>
 <h2 id="summary">Summary</h2>
