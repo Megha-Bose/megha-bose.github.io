@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -195,6 +198,7 @@
 <p>In the worst case, you read every SSTable on disk before concluding a key does not exist. This is the fundamental read tradeoff of LSM trees: reads are more expensive than writes. Two mechanisms mitigate this.</p>
 <p><strong>Bloom filters</strong>: each SSTable has an associated bloom filter - a compact probabilistic data structure that answers &ldquo;is key $k$ definitely not in this SSTable?&rdquo; in $O(1)$ with no disk access. If the bloom filter says the key is absent, you skip the SSTable entirely. Bloom filters eliminate most unnecessary SSTable reads, making not-found lookups cheap.</p>
 <p><strong>Index blocks</strong>: within each SSTable, a sparse index maps keys to byte offsets. Instead of scanning the entire file, you binary search the index to jump to the right region.</p>
+<div class="sf" data-sf="player" data-src="/data/lsm-trees/lsm.json"></div>
 <h2 id="compaction-strategies">Compaction Strategies</h2>
 <p>Compaction determines how SSTables are organized and merged. The strategy matters enormously for the balance between read performance, write performance, and space usage.</p>
 <p><strong>Leveled compaction</strong> (used by RocksDB, LevelDB, and optionally Cassandra) organizes SSTables into levels. Level 0 is where fresh flushes land. Each level $L$ has a size limit roughly 10x that of level $L-1$. When level $L$ exceeds its limit, a compaction merges some of its SSTables with overlapping SSTables in level $L+1$. The key property: except at level 0, SSTables within a level have non-overlapping key ranges. A read therefore touches at most one SSTable per level, bounding read amplification logarithmically. The cost is higher write amplification - a key may be rewritten many times as it migrates through levels.</p>
