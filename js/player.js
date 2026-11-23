@@ -298,7 +298,7 @@
 
   // Plot: curves and points on shared axes.
   // spec.plot = { xmin, xmax, ymin, ymax, xlabel, ticks: [..] }
-  // frame.curves = [{ tok, pts: [[x, y], ...], dash, w, fill (opacity, for closed shapes) }]; frame.points = [{ x, y, mix, tok, r }]
+  // frame.curves = [{ tok, pts: [[x, y], ...], dash, w, cap, fill (opacity, for closed shapes) }]; frame.points = [{ x, y, mix, tok, r }]
   //   mix in [0, 1] blends series a (0) into series b (1).
   views.plot = function (stage, spec) {
     var p = spec.plot;
@@ -338,6 +338,7 @@
         curves[i].style.strokeWidth = c.w || '';
         curves[i].style.fill = c.fill ? color(c.tok) : '';
         curves[i].style.fillOpacity = c.fill || '';
+        curves[i].style.strokeLinecap = c.cap || '';
         curves[i].style.display = '';
       });
       for (var i = (fr.curves || []).length; i < curves.length; i++) curves[i].style.display = 'none';

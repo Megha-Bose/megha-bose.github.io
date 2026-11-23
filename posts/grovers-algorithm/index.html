@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.b92b2097880ffcd6f72c9563efdc680881724ed5f5e17af8a0a29c62280001e7.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795414753" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -167,7 +170,7 @@
 </ul>
 <hr>
 <p>Searching a sorted list of $n$ items takes $O(\log n)$ - binary search is one of the first algorithms you learn. Searching an <em>unsorted</em> list takes $O(n)$ - you have to look at each item in turn. No classical algorithm can do better; the lower bound is tight.</p>
-<p>In 1996, Lov Grover proved that a quantum computer can search an unsorted list of $n$ items in $O(\sqrt{n})$ time. This is a provably quadratic speedup - the first quantum algorithm shown to be faster than the best <em>possible</em> classical algorithm. It won&rsquo;t break public-key encryption the way Shor&rsquo;s algorithm will, but it does halve the effective security of symmetric ciphers. That&rsquo;s why AES-256, not AES-128, is the post-quantum recommendation.</p>
+<p>In 1996, Lov Grover showed that a quantum computer can search an unsorted list of $n$ items with only $O(\sqrt{n})$ queries. That is a provable quadratic speedup over every possible classical algorithm, for one of the most general problems there is. It won&rsquo;t break public-key encryption the way Shor&rsquo;s algorithm would on a large enough quantum computer, but it does halve the effective key length of symmetric ciphers on paper.</p>
 <hr>
 <h2 id="the-quantum-setting">The Quantum Setting</h2>
 <p>A quantum computer works with <strong>qubits</strong> - bits that can exist in a superposition of 0 and 1. An $n$-qubit register can be in a superposition of all $N = 2^n$ possible bit strings simultaneously. The state is a vector in a $2^n$-dimensional space, where each component is a complex amplitude.</p>
@@ -195,7 +198,9 @@
 <li><strong>Phase oracle $\mathcal{O}$</strong>: reflect the state about $|\bar{t}\rangle$. This flips the component along $|t\rangle$.</li>
 <li><strong>Diffusion operator</strong> $D = 2|s\rangle\langle s| - I$: reflect about $|s\rangle$.</li>
 </ol>
-<p>The composition of two reflections in a plane is a rotation. Each application of $G$ rotates the state vector by angle $2\theta$ toward $|t\rangle$:</p>
+<p>The composition of two reflections in a plane is a rotation. In terms of amplitudes, the diffusion step is &ldquo;inversion about the mean&rdquo;: every amplitude $a$ becomes $2\bar{a} - a$. Watch both steps on 16 items:</p>
+<div class="sf" data-sf="player" data-src="/data/grovers-algorithm/amplitudes.json"></div>
+<p>Each application of $G$ rotates the state vector by angle $2\theta$ toward $|t\rangle$:</p>
 <p>$$G^k|s\rangle = \cos\big((2k+1)\theta\big)|\bar{t}\rangle + \sin\big((2k+1)\theta\big)|t\rangle$$</p>
 <p>The amplitude of $|t\rangle$ grows with each iteration. After $k$ steps, the probability of measuring the target is $\sin^2((2k+1)\theta)$.</p>
 <hr>
@@ -212,14 +217,14 @@
 </blockquote>
 <hr>
 <h2 id="why-osqrtn-is-optimal">Why $O(\sqrt{N})$ Is Optimal</h2>
-<p>Grover&rsquo;s algorithm isn&rsquo;t just fast - it&rsquo;s optimal. The <strong>polynomial method</strong> proves that any quantum algorithm for unstructured search requires $\Omega(\sqrt{N})$ oracle queries. No quantum algorithm can do better than Grover&rsquo;s.</p>
+<p>Grover&rsquo;s algorithm isn&rsquo;t just fast - it&rsquo;s optimal. Bennett, Bernstein, Brassard and Vazirani proved in 1997 that any quantum algorithm for unstructured search needs $\Omega(\sqrt{N})$ oracle queries; the <strong>polynomial method</strong> gives a second, elegant proof. No quantum algorithm can do better than Grover&rsquo;s.</p>
 <p>The argument: any $T$-query quantum algorithm computes, for each output bit, a polynomial of degree at most $2T$ in the input bits. The OR function on $N$ bits (which solves search) requires degree $\Omega(\sqrt{N})$ to approximate over $\{0,1\}^N$. Therefore $T = \Omega(\sqrt{N})$.</p>
 <p>This lower bound is as important as the algorithm itself. It tells you: if you need to search, Grover&rsquo;s is the best quantum algorithm possible.</p>
 <hr>
 <h2 id="the-post-quantum-implication">The Post-Quantum Implication</h2>
 <p>Grover&rsquo;s algorithm directly attacks exhaustive key search for symmetric ciphers. AES-128 has a key space of $2^{128}$. Classically, brute-force search takes $2^{128}$ operations. With Grover&rsquo;s, it takes $\sqrt{2^{128}} = 2^{64}$ quantum operations.</p>
-<p>$2^{64}$ operations is within the range of a powerful attacker with quantum hardware. This isn&rsquo;t breaking AES-128 like Shor&rsquo;s breaks RSA - there&rsquo;s no algebraic shortcut - but it halves the effective security level.</p>
-<p>The fix is simple: use AES-256. Grover&rsquo;s reduces $2^{256}$ to $2^{128}$, which remains out of reach even for a quantum adversary. NIST&rsquo;s post-quantum guidance recommends 256-bit symmetric keys for exactly this reason.</p>
+<p>On paper that halves the security level. In practice it is far less alarming than it sounds. Grover&rsquo;s iterations must run one after another: $2^{64}$ sequential quantum operations at a million per second would take over half a million years. Splitting the search across $M$ machines only cuts each one&rsquo;s work by $\sqrt{M}$, not $M$. And every iteration runs the whole of AES as a reversible quantum circuit.</p>
+<p>So the guidance differs. NIST considers AES-128 adequate for the foreseeable future, and uses &ldquo;as hard as breaking AES-128&rdquo; as its baseline post-quantum security level. More cautious standards, such as the NSA&rsquo;s CNSA 2.0 suite, require AES-256, which leaves $2^{128}$ Grover steps: out of reach by any measure.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -254,7 +259,7 @@
 <tr>
 <td>Post-quantum impact</td>
 <td>-</td>
-<td>Halves symmetric key strength</td>
+<td>Halves symmetric key strength (on paper)</td>
 </tr>
 <tr>
 <td>AES-128 security</td>
