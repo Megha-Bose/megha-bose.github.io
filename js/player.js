@@ -245,8 +245,9 @@
         from[id] = cur[id].slice();
         if (from[id][0] !== target[id][0] || from[id][1] !== target[id][1]) moved = true;
       });
+      // A glide still pending from an earlier frame must not carry on towards stale targets.
+      if (anim) { cancelAnimationFrame(anim); anim = null; }
       if (!moved) return;
-      if (anim) cancelAnimationFrame(anim);
       var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var t0 = null, D = still ? 0 : 600;
       function step(now) {
