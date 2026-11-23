@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -183,7 +186,8 @@
 </code></pre><p>This establishes initial sequence numbers on both sides and confirms that both can send and receive. Only after the handshake does the HTTP request go out - which means every new TCP connection costs at least one round-trip time (RTT) before a byte of useful data is exchanged. On a 100ms RTT connection (think US to Europe), that&rsquo;s 100ms of pure overhead before your request even starts.</p>
 <p><strong>Sequence numbers</strong> give every byte a unique ID. The receiver can detect gaps, reorder out-of-order segments, and discard duplicates. <strong>Acknowledgements</strong> tell the sender which bytes have been received. If an ACK isn&rsquo;t received within a timeout, the sender retransmits.</p>
 <p><strong>Flow control</strong> prevents a fast sender from drowning a slow receiver. The receiver advertises a window size in each ACK - the number of bytes it&rsquo;s prepared to buffer. The sender cannot have more than that many unacknowledged bytes in flight at once.</p>
-<p><strong>Congestion control</strong> is more subtle. The receiver&rsquo;s buffer is one bottleneck; the network itself is another. TCP slow start begins every new connection with a tiny congestion window (initially one segment, roughly 14KB today) and doubles it each RTT. This probing continues until a packet is dropped - the signal that the network is saturated. Then TCP backs off. The algorithm is called AIMD: additive increase, multiplicative decrease.</p>
+<p><strong>Congestion control</strong> is more subtle. The receiver&rsquo;s buffer is one bottleneck; the network itself is another. TCP slow start begins every new connection with a small congestion window (10 segments, roughly 14 KB, since RFC 6928 in 2013; it used to be 1 to 4) and doubles it each RTT. This probing continues until a packet is dropped - the signal that the network is saturated. Then TCP backs off. The algorithm is called AIMD: additive increase, multiplicative decrease.</p>
+<div class="sf" data-sf="player" data-src="/data/networking-ip-tcp-http/cwnd.json"></div>
 <h3 id="the-slow-start-problem-and-why-it-killed-http11">The Slow Start Problem (and Why It Killed HTTP/1.1)</h3>
 <p>Slow start was designed for long-lived connections - bulk data transfers where the ramp-up period is a small fraction of the total. But web pages are different. Each HTTP/1.1 request fetches a small resource (a script, an image, a CSS file) over a new connection, or at best a keep-alive connection that may have gone idle. A connection that goes idle resets its congestion window. A new request must ramp up from scratch.</p>
 <p>For short connections - 20 packets or fewer - TCP often never leaves slow start. You&rsquo;re paying the ramp-up cost for every single resource. This is the fundamental inefficiency HTTP/2 was designed to fix.</p>
