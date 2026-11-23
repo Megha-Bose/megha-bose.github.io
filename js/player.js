@@ -314,8 +314,10 @@
     grid.appendChild(svg('line', { x1: L, x2: W - R, y1: H - B, y2: H - B }));
     var labelLeft = W - R - (p.xlabel ? p.xlabel.length * 6.5 + 14 : 0);
     (p.ticks || []).forEach(function (t) {
-      if (x(t) > labelLeft) return;   // keep clear of the axis label
-      grid.appendChild(svg('text', { x: x(t), y: H - B + 18, 'text-anchor': 'middle', text: String(t) }));
+      // a tick is a number, or [position, label]
+      var tv = Array.isArray(t) ? t[0] : t, tl = Array.isArray(t) ? t[1] : String(t);
+      if (x(tv) > labelLeft) return;   // keep clear of the axis label
+      grid.appendChild(svg('text', { x: x(tv), y: H - B + 18, 'text-anchor': 'middle', text: tl }));
     });
     // spec.plot.yticks = [[value, label]]: faint horizontal guides, labelled inside the plot
     (p.yticks || []).forEach(function (t) {
