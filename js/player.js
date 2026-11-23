@@ -305,13 +305,16 @@
     var p = spec.plot;
     // match the drawing width to the screen so text and dots keep their size on phones
     var W = Math.max(320, Math.min(600, stage.clientWidth || 600)), H = p.h || 260, L = 40, R = 14, T = 14, B = 30;
+    if (p.bare) { L = 8; B = 8; T = 8; }            // no axes: a pure drawing area (geometry demos)
     var gutter = Math.max.apply(null, [0].concat((p.yticks || []).map(function (t) { return t[1].length * 6.5 + 10; })));
     R += gutter;   // y-guide labels sit to the right of the plot
+    // equal: one unit is the same length on both axes, so circles stay round and rotations look like rotations
+    if (p.equal) H = (W - L - R) * (p.ymax - (p.ymin || 0)) / (p.xmax - p.xmin) + T + B;
     var x = function (v) { return L + (v - p.xmin) / (p.xmax - p.xmin) * (W - L - R); };
     var y = function (v) { return T + (1 - (v - (p.ymin || 0)) / (p.ymax - (p.ymin || 0))) * (H - T - B); };
     var plot = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'sf-plot', role: 'img', 'aria-label': spec.title });
     var grid = svg('g', { class: 'sf-plot-grid' });
-    grid.appendChild(svg('line', { x1: L, x2: W - R, y1: H - B, y2: H - B }));
+    if (!p.bare) grid.appendChild(svg('line', { x1: L, x2: W - R, y1: H - B, y2: H - B }));
     var labelLeft = W - R - (p.xlabel ? p.xlabel.length * 6.5 + 14 : 0);
     (p.ticks || []).forEach(function (t) {
       // a tick is a number, or [position, label]
