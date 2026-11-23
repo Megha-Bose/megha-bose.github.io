@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          12 min read
+          13 min read
         </div>
       </div>
     </header>
@@ -189,8 +192,10 @@ t1<span style="color:#f92672">.</span>join();  t2<span style="color:#f92672">.</
 
 print(counter)
 <span style="color:#75715e"># Expected: 200,000</span>
-<span style="color:#75715e"># Actual: anywhere between 100,001 and 200,000</span>
+<span style="color:#75715e"># Actual: often less, and different every run</span>
 </code></pre></div><p>What happens: Thread 1 loads <code>counter = 42</code>. Thread 2 loads <code>counter = 42</code> before Thread 1 has stored. Thread 1 stores <code>43</code>. Thread 2 stores <code>43</code>. Two increments, one result. One increment is lost.</p>
+<div class="sf" data-sf="player" data-src="/data/concurrency-race-conditions/race.json"></div>
+<p>(On CPython 3.10+ with the GIL, this exact loop happens to lose updates rarely, because the interpreter only switches threads at certain points. That is luck, not a guarantee: the same code loses updates readily in the free-threaded build, and the pattern in C, Java or Go fails constantly.)</p>
 <p>This is a <strong>lost update</strong> - the classic race condition pattern. It is non-deterministic; it may not appear under light load, only manifesting under specific timing and CPU scheduling conditions. Production load surfaces it.</p>
 <p>The bank balance scenario is the same structure: read, compute, write, with an adversarial context switch between read and write.</p>
 <h2 id="mutual-exclusion-the-lock-solution">Mutual Exclusion: The Lock Solution</h2>
@@ -264,7 +269,7 @@ threads <span style="color:#f92672">=</span> [threading<span style="color:#f9267
 <ul>
 <li>CPU-bound Python threads can now run truly in parallel on multiple cores</li>
 <li><code>threading</code> becomes genuinely useful for CPU-bound work</li>
-<li>The reference counting mechanism is replaced with thread-safe atomic operations</li>
+<li>Reference counting becomes thread-safe through <em>biased reference counting</em>: the thread that owns an object updates its count cheaply, other threads use atomic operations</li>
 </ul>
 <p>What does not change immediately:</p>
 <ul>
@@ -272,7 +277,7 @@ threads <span style="color:#f92672">=</span> [threading<span style="color:#f9267
 <li>Performance of single-threaded Python may be slightly slower (atomic operations have overhead)</li>
 <li>The ecosystem needs time to audit and update C extensions</li>
 </ul>
-<p>The transition is deliberately cautious. Python 3.13 ships with both GIL and no-GIL builds. Python 3.14 will make no-GIL the default only after the ecosystem has had time to adapt. This is the right call - breaking the scientific Python ecosystem would be a catastrophe.</p>
+<p>The transition is deliberately cautious. Python 3.13 ships with both GIL and no-GIL builds. Python 3.14 (2025) promoted the free-threaded build to officially supported, but it is still not the default; that switch is planned only once the ecosystem has caught up. This is the right call - breaking the scientific Python ecosystem would be a catastrophe.</p>
 <h2 id="asyncawait-concurrency-without-threads">Async/Await: Concurrency Without Threads</h2>
 <p>Here is the thing about threads: they are expensive. Each thread needs a stack (typically 1 - 8 MB), a kernel thread structure, and scheduler metadata. 10,000 simultaneous HTTP connections → 10,000 threads → 10 - 80 GB of stack space. This is the <strong>C10K problem</strong>, documented in 1999, that broke the Apache model of &ldquo;one thread per connection.&rdquo;</p>
 <p><code>asyncio</code> solves this with a single-threaded event loop model. There are no threads - just coroutines that voluntarily yield when waiting for I/O:</p>
