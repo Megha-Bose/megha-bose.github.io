@@ -169,11 +169,11 @@
     // On narrow screens the SVG shrinks, so grow nodes and text to stay readable.
     var avail = Math.min(stage.clientWidth || W, 640);
     var k = Math.max(1, Math.min(2.2, W / avail * 0.85));
-    // ...but never so large that neighbouring nodes on the same row collide.
+    // ...but never so large that neighbouring nodes collide.
     var r0 = g.r || 18, minGap = Infinity;
     g.nodes.forEach(function (a, i) {
       g.nodes.forEach(function (b, j) {
-        if (j > i && Math.abs(a.y - b.y) < r0 * 2) minGap = Math.min(minGap, Math.abs(a.x - b.x));
+        if (j > i) minGap = Math.min(minGap, Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)));
       });
     });
     if (minGap < Infinity) k = Math.max(1, Math.min(k, minGap * 0.4 / r0));

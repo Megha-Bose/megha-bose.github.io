@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795411986" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412172" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Fast Fourier Transform - Quadratic to Log-Linear by Symmetry"/>
 <meta name="twitter:description" content="Helpful context:
- Divide &amp; Conquer - Small Savings That Compound    In 1965, James Cooley and John Tukey published the FFT. It was later discovered that Gauss had the same algorithm in 1805 but never published it. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$. A factor of fifty thousand."/>
+ Divide &amp; Conquer - Small Savings That Compound    In 1965 James Cooley and John Tukey published the FFT. It was later discovered that Gauss had used the same idea around 1805, in work that only appeared after his death. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$."/>
 
     <meta property="og:title" content="Fast Fourier Transform - Quadratic to Log-Linear by Symmetry" />
 <meta property="og:description" content="Helpful context:
- Divide &amp; Conquer - Small Savings That Compound    In 1965, James Cooley and John Tukey published the FFT. It was later discovered that Gauss had the same algorithm in 1805 but never published it. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$. A factor of fifty thousand." />
+ Divide &amp; Conquer - Small Savings That Compound    In 1965 James Cooley and John Tukey published the FFT. It was later discovered that Gauss had used the same idea around 1805, in work that only appeared after his death. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/fast-fourier-transform-fft/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -164,8 +167,8 @@
 </li>
 </ul>
 <hr>
-<p>In 1965, James Cooley and John Tukey published the FFT. It was later discovered that Gauss had the same algorithm in 1805 but never published it. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$. A factor of fifty thousand.</p>
-<p>It enabled modern telecommunications, image compression (JPEG uses it), audio processing (MP3), and radar. It has been called &ldquo;the most important algorithm of the 20th century.&rdquo;</p>
+<p>In 1965 James Cooley and John Tukey published the FFT. It was later discovered that Gauss had used the same idea around 1805, in work that only appeared after his death. The FFT reduced a computation from $O(n^2)$ to $O(n \log n)$ - for audio processing of $n = 10^6$ samples, that&rsquo;s from $10^{12}$ operations to $2 \times 10^7$. A factor of fifty thousand.</p>
+<p>It enabled modern telecommunications, image and audio compression, and radar. Gilbert Strang called it &ldquo;the most important numerical algorithm of our lifetime&rdquo;.</p>
 <hr>
 <h2 id="the-discrete-fourier-transform">The Discrete Fourier Transform</h2>
 <p>Given a sequence of $n$ numbers $x[0], x[1], \ldots, x[n-1]$ (say, audio samples over time), the DFT computes $n$ frequency components:</p>
@@ -200,7 +203,9 @@ $$X[k + n/2] = E[k] - \omega_n^k \cdot O[k]$$</p>
         X[k]     = even[k] + t
         X[k+n/2] = even[k] - t
     return X
-</code></pre><p>The butterfly network: $\log_2 n$ stages, each doing $n/2$ butterfly operations. The total structure is a complete binary tree of DFT computations.</p>
+</code></pre><p>Unroll the recursion and you get the <strong>butterfly network</strong>: $\log_2 n$ stages, each doing $n/2$ butterflies.</p>
+<div class="sf" data-sf="player" data-src="/data/fast-fourier-transform-fft/butterfly.json">This is an interactive animation. It needs JavaScript to run.</div>
+<p>(The network in the animation was checked against the direct DFT formula on a sample input.)</p>
 <hr>
 <h2 id="polynomial-multiplication">Polynomial Multiplication</h2>
 <p>Here is the application that makes FFT indispensable beyond signal processing.</p>
@@ -210,14 +215,14 @@ $$B(x) = b_0 + b_1 x + \cdots + b_n x^n$$</p>
 <p>Their product $C = A \cdot B$ has degree $2n$. Computing the $2n+1$ coefficients of $C$ by the schoolbook method takes $O(n^2)$ multiplications.</p>
 <p>FFT does it in $O(n \log n)$ via the evaluation-interpolation strategy:</p>
 <ol>
-<li>Evaluate $A$ and $B$ at $2n+1$ points simultaneously (using FFT): $O(n \log n)$.</li>
+<li>Evaluate $A$ and $B$ at $N \geq 2n + 1$ points, with $N$ a power of 2 so the FFT applies, using the $N$-th roots of unity: $O(n \log n)$.</li>
 <li>Pointwise multiply: $A(x_i) \cdot B(x_i) = C(x_i)$ for each point. $O(n)$.</li>
 <li>Interpolate to recover the coefficients of $C$ (using inverse FFT): $O(n \log n)$.</li>
 </ol>
-<p>The natural evaluation points are the $n$-th roots of unity - exactly what the DFT computes. That&rsquo;s why FFT and polynomial multiplication are so tightly linked.</p>
+<p>The natural evaluation points are roots of unity, because evaluating a polynomial at all $N$ of them is exactly a DFT. That&rsquo;s why FFT and polynomial multiplication are so tightly linked.</p>
 <p>This isn&rsquo;t just theoretical. Multiplying two large integers is polynomial multiplication over base 10 (or base $2^{32}$). Computer algebra systems, cryptographic libraries, and competitive programming all use FFT-based multiplication for large numbers.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> The FFT only works for $n$ a power of 2. What if your signal has a different length?</p>
+<p><strong>Discomfort check.</strong> The version above only works for $n$ a power of 2. What if your signal has a different length?</p>
 <p>Zero-pad to the next power of 2. An audio frame of 1000 samples becomes 1024. The extra zeros don&rsquo;t affect the signal; they just make the algorithm applicable. For sizes that are highly composite (products of small primes), there are analogous &ldquo;mixed-radix&rdquo; FFT algorithms. For prime $n$, Bluestein&rsquo;s algorithm or Rader&rsquo;s algorithm handle the case, though they&rsquo;re rarely needed in practice because designers choose power-of-2 sizes.</p>
 </blockquote>
 <hr>
