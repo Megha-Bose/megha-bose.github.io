@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -175,7 +178,7 @@
 <h2 id="the-mechanism">The Mechanism</h2>
 <p>The write-ahead log is an append-only file on disk. Before the database applies any change to its primary data structures (the B-tree, the memtable, anything), it first appends a record describing that change to the WAL. Only after the WAL record is durably on disk does the database proceed.</p>
 <p>The term &ldquo;write-ahead&rdquo; means exactly this: write to the log ahead of making the actual change.</p>
-<p>The record in the WAL contains everything needed to reproduce the change: what table, what record, what the old value was, what the new value is, and which transaction it belongs to. In PostgreSQL this is called a WAL record; in MySQL InnoDB it is part of the redo log; in SQLite it is the journal.</p>
+<p>The record in the WAL contains everything needed to reproduce the change: what table, what record, what the old value was, what the new value is, and which transaction it belongs to. In PostgreSQL this is called a WAL record; in MySQL InnoDB it is part of the redo log; in SQLite (in WAL mode) it is the <code>-wal</code> file.</p>
 <p>A transaction commit works like this:</p>
 <ol>
 <li>Accumulate changes in memory (the buffer pool / memtable).</li>
@@ -188,7 +191,8 @@
 <p>When a database restarts after a crash, it cannot know which in-memory changes made it to the main data file and which did not. The answer: it does not matter. The WAL is the authoritative record.</p>
 <p>The recovery process reads the WAL from the last known good point and replays every committed transaction that appears in it. This is called <strong>redo recovery</strong>: redo the work that was logged but may not have been applied.</p>
 <p>For uncommitted transactions (transactions that had WAL records but never had a commit record), the database performs <strong>undo recovery</strong>: roll back the partial changes. The WAL contains enough information to reverse them.</p>
-<p>This combination - redo committed transactions, undo uncommitted ones - restores the database to a consistent state regardless of when the crash happened. The algorithm that formalizes this is ARIES (Algorithm for Recovery and Isolation Exploiting Semantics), developed at IBM in the 1990s and still the foundation of most relational database recovery systems.</p>
+<div class="sf" data-sf="player" data-src="/data/write-ahead-log/wal.json"></div>
+<p>This combination - redo committed transactions, undo uncommitted ones - restores the database to a consistent state regardless of when the crash happened. The algorithm that formalizes this is ARIES (Algorithm for Recovery and Isolation Exploiting Semantics), published by C. Mohan and colleagues at IBM in 1992 and still the foundation of most relational database recovery systems.</p>
 <h2 id="checkpointing-keeping-the-log-from-growing-forever">Checkpointing: Keeping the Log from Growing Forever</h2>
 <p>If the WAL is never truncated, crash recovery would require replaying the entire history of the database from the beginning. That would take hours. The solution is checkpointing.</p>
 <p>A checkpoint is a moment when the database guarantees that all changes up to a certain WAL position have been written to the main data file. Once a checkpoint is established, the WAL before that checkpoint is no longer needed for recovery and can be truncated (or the space reused).</p>
@@ -196,7 +200,7 @@
 <h2 id="wal-and-group-commit">WAL and Group Commit</h2>
 <p>The dominant cost of WAL writes is not the bytes written but the <strong>fsync</strong>: the call that forces the OS to flush its write buffers to stable storage. An fsync on modern hardware takes roughly 1-10ms. If you fsync per transaction, you cap throughput at 100-1000 transactions per second. For a high-traffic web service, this is nowhere near enough.</p>
 <p><strong>Group commit</strong> is the solution. Instead of fsyncing after every transaction, the database accumulates multiple transactions' WAL records and issues a single fsync for the batch. All transactions in the batch receive their commit confirmation after that one fsync. This amortizes the fsync latency across many transactions, allowing thousands of transactions per second with the same disk hardware.</p>
-<p>PostgreSQL has had group commit since version 8.3. MySQL InnoDB&rsquo;s <code>innodb_flush_log_at_trx_commit</code> setting controls this tradeoff: at <code>1</code>, fsync per commit (full durability, lower throughput); at <code>2</code>, write to OS buffer per commit but fsync only every second (risk up to one second of data loss); at <code>0</code>, fsync only every second (faster, but data loss on OS crash too).</p>
+<p>PostgreSQL batches the WAL flushes of concurrent commits, a mechanism substantially reworked in version 9.2. MySQL InnoDB&rsquo;s <code>innodb_flush_log_at_trx_commit</code> setting controls the related durability tradeoff: at <code>1</code>, write and fsync on every commit (full durability, lower throughput); at <code>2</code>, write to the OS cache on every commit but fsync about once per second (a MySQL crash loses nothing, but an OS crash or power cut can lose about a second); at <code>0</code>, write and fsync about once per second (even a MySQL crash can lose about a second).</p>
 <h2 id="the-wal-is-not-just-for-relational-databases">The WAL Is Not Just for Relational Databases</h2>
 <p>The concept is not specific to SQL databases. Any system that needs durability with high write throughput uses the same pattern.</p>
 <p><strong>RocksDB/LSM trees</strong>: the memtable is in memory. Before inserting into the memtable, RocksDB appends to a WAL. If the process crashes, the WAL is replayed on startup to reconstruct the memtable.</p>
@@ -207,7 +211,7 @@
 <p>In PostgreSQL, the WAL is also the mechanism for replication. Standby servers receive WAL records from the primary and replay them in real time, maintaining an identical copy of the data. The standby is always some small number of WAL records behind the primary. When the primary fails, the standby can be promoted - it is in a consistent state and the WAL records it has replayed are durable.</p>
 <p>This means the WAL serves triple duty in a replicated database: crash recovery, streaming replication, and point-in-time recovery (restoring the database to any historical state by replaying the WAL from a base backup up to a specific timestamp).</p>
 <h2 id="what-happens-without-it">What Happens Without It</h2>
-<p>Omitting the WAL - or relaxing durability as a configuration option - is a choice some systems make for performance. Redis, by default, does not fsync the AOF (Append Only File, its WAL equivalent) on every write. It fsyncs every second. The consequence: up to one second of data loss on crash. For a cache, this is acceptable. For a bank, it is not.</p>
+<p>Omitting the WAL - or relaxing durability as a configuration option - is a choice some systems make for performance. Redis does not even enable its AOF (Append Only File, its WAL equivalent) by default; it relies on periodic snapshots. With the AOF turned on, the default is to fsync once per second rather than on every write. The consequence: up to about one second of data loss if the machine crashes. For a cache, this is acceptable. For a bank, it is not.</p>
 <p>SQLite&rsquo;s WAL mode is actually an inversion of the default journal mode: instead of writing the old page to a rollback journal before modifying the main file, WAL mode appends new versions of pages to the WAL and reads redirect to the WAL when needed. Readers can proceed without locking even during concurrent writes - a significant concurrency improvement.</p>
 <p>The write-ahead log is invisible during normal operation and makes itself known only when something goes wrong. That invisibility is the point. A database that correctly implements WAL-based recovery is one where crashes are a nuisance (a few seconds of recovery) rather than a disaster.</p>
 <p><strong>Read next:</strong></p>
