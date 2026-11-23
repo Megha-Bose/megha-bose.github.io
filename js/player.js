@@ -259,7 +259,9 @@
   views.plot = function (stage, spec) {
     var p = spec.plot;
     // match the drawing width to the screen so text and dots keep their size on phones
-    var W = Math.max(320, Math.min(600, stage.clientWidth || 600)), H = (p.h || 260) * (W < 600 ? 0.85 : 1), L = 40, R = 14, T = 14, B = 30;
+    var W = Math.max(320, Math.min(600, stage.clientWidth || 600)), H = p.h || 260, L = 40, R = 14, T = 14, B = 30;
+    var gutter = Math.max.apply(null, [0].concat((p.yticks || []).map(function (t) { return t[1].length * 6.5 + 10; })));
+    R += gutter;   // y-guide labels sit to the right of the plot
     var x = function (v) { return L + (v - p.xmin) / (p.xmax - p.xmin) * (W - L - R); };
     var y = function (v) { return T + (1 - (v - (p.ymin || 0)) / (p.ymax - (p.ymin || 0))) * (H - T - B); };
     var plot = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'sf-plot', role: 'img', 'aria-label': spec.title });
@@ -269,6 +271,11 @@
     (p.ticks || []).forEach(function (t) {
       if (x(t) > labelLeft) return;   // keep clear of the axis label
       grid.appendChild(svg('text', { x: x(t), y: H - B + 18, 'text-anchor': 'middle', text: String(t) }));
+    });
+    // spec.plot.yticks = [[value, label]]: faint horizontal guides, labelled inside the plot
+    (p.yticks || []).forEach(function (t) {
+      grid.appendChild(svg('line', { x1: L, x2: W - R, y1: y(t[0]), y2: y(t[0]), class: 'sf-plot-guide' }));
+      grid.appendChild(svg('text', { x: W - R + 6, y: y(t[0]) + 4, text: t[1] }));
     });
     if (p.xlabel) grid.appendChild(svg('text', { x: W - R, y: H - 4, 'text-anchor': 'end', text: p.xlabel }));
     plot.appendChild(grid);
@@ -284,6 +291,7 @@
         curves[i].setAttribute('d', c.pts.map(function (pt, j) { return (j ? 'L' : 'M') + x(pt[0]).toFixed(1) + ' ' + y(pt[1]).toFixed(1); }).join(''));
         curves[i].style.stroke = color(c.tok);
         curves[i].style.strokeDasharray = c.dash ? '5 4' : '';
+        curves[i].style.strokeWidth = c.w || '';
         curves[i].style.display = '';
       });
       for (var i = (fr.curves || []).length; i < curves.length; i++) curves[i].style.display = 'none';

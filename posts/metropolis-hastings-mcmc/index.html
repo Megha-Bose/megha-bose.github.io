@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795412841" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -20,11 +23,11 @@
 
 <meta name="twitter:title" content="Metropolis-Hastings - Sampling From Distributions You Can&#39;t Integrate"/>
 <meta name="twitter:description" content="Helpful context:
- Probability Distributions - The Shapes That Randomness Takes  Markov Chains - Where You&rsquo;re Going Depends Only on Where You Are    In 1953, scientists at Los Alamos needed to compute multidimensional integrals that appear in statistical mechanics - integrals over spaces with billions of dimensions. Standard numerical integration was hopeless: a grid over 100 dimensions with just 2 points per axis requires $2^{100}$ evaluations. Nicholas Metropolis and colleagues invented a different approach: walk randomly through the space, but bias the walk toward high-probability regions."/>
+ Probability Distributions - The Shapes That Randomness Takes  Markov Chains - Where You&rsquo;re Going Depends Only on Where You Are    In 1953, Nicholas Metropolis, Arianna and Marshall Rosenbluth, and Augusta and Edward Teller at Los Alamos wanted the average properties of a simulated fluid: 224 hard disks in a box, an integral over 448 dimensions. Numerical integration was hopeless: a grid over 100 dimensions with just 2 points per axis needs $2^{100}$ evaluations."/>
 
     <meta property="og:title" content="Metropolis-Hastings - Sampling From Distributions You Can&#39;t Integrate" />
 <meta property="og:description" content="Helpful context:
- Probability Distributions - The Shapes That Randomness Takes  Markov Chains - Where You&rsquo;re Going Depends Only on Where You Are    In 1953, scientists at Los Alamos needed to compute multidimensional integrals that appear in statistical mechanics - integrals over spaces with billions of dimensions. Standard numerical integration was hopeless: a grid over 100 dimensions with just 2 points per axis requires $2^{100}$ evaluations. Nicholas Metropolis and colleagues invented a different approach: walk randomly through the space, but bias the walk toward high-probability regions." />
+ Probability Distributions - The Shapes That Randomness Takes  Markov Chains - Where You&rsquo;re Going Depends Only on Where You Are    In 1953, Nicholas Metropolis, Arianna and Marshall Rosenbluth, and Augusta and Edward Teller at Los Alamos wanted the average properties of a simulated fluid: 224 hard disks in a box, an integral over 448 dimensions. Numerical integration was hopeless: a grid over 100 dimensions with just 2 points per axis needs $2^{100}$ evaluations." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://megha-bose.github.io/posts/metropolis-hastings-mcmc/" /><meta property="og:image" content="https://megha-bose.github.io/avatar.jpg"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-08-03T00:00:00+00:00" />
@@ -166,8 +169,8 @@
 </li>
 </ul>
 <hr>
-<p>In 1953, scientists at Los Alamos needed to compute multidimensional integrals that appear in statistical mechanics - integrals over spaces with billions of dimensions. Standard numerical integration was hopeless: a grid over 100 dimensions with just 2 points per axis requires $2^{100}$ evaluations. Nicholas Metropolis and colleagues invented a different approach: walk randomly through the space, but bias the walk toward high-probability regions. Sample from the walk. The integral becomes an average over your samples.</p>
-<p>It worked. And it now powers Bayesian inference, protein structure prediction, and training modern neural networks.</p>
+<p>In 1953, Nicholas Metropolis, Arianna and Marshall Rosenbluth, and Augusta and Edward Teller at Los Alamos wanted the average properties of a simulated fluid: 224 hard disks in a box, an integral over 448 dimensions. Numerical integration was hopeless: a grid over 100 dimensions with just 2 points per axis needs $2^{100}$ evaluations. Their trick: walk randomly through the space, but bias the walk toward high-probability regions. Sample from the walk. The integral becomes an average over your samples.</p>
+<p>It worked, and it now powers Bayesian statistics, computational physics, and molecular simulation.</p>
 <hr>
 <h2 id="the-problem">The Problem</h2>
 <p>You have a target distribution $\pi(x)$ that you want to sample from. You can evaluate $\pi(x)$ up to a normalizing constant - that is, you know $\tilde{\pi}(x) \propto \pi(x)$ but not the constant $Z = \int \tilde{\pi}(x)  dx$.</p>
@@ -195,6 +198,9 @@
 <li>Accept: move to $x'$ with probability $\alpha$. Otherwise, stay at $x$.</li>
 <li>Record the current state as a sample. Go to step 2.</li>
 </ol>
+<p>Watch it run on a target with two bumps. The walker only ever compares two heights:</p>
+<div class="sf" data-sf="player" data-src="/data/metropolis-hastings-mcmc/walk.json"></div>
+<p>Note the rejected steps: staying put and recording the same point again is not wasted work. It is how the sampler spends more time in taller regions.</p>
 <p><strong>Why the normalizing constant cancels:</strong> The ratio $\tilde{\pi}(x')/\tilde{\pi}(x) = \pi(x')/\pi(x)$ regardless of $Z$. You never need to compute it.</p>
 <p><strong>Why this works:</strong> For $x' \neq x$, the probability of moving from $x$ to $x'$ is $q(x' \mid x) \cdot \alpha(x, x')$. You can verify:</p>
 <p>$$\pi(x)  q(x' \mid x)  \alpha(x, x') = \min\left(\pi(x) q(x' \mid x),; \pi(x') q(x \mid x')\right) = \pi(x')  q(x \mid x')  \alpha(x', x)$$</p>
@@ -206,16 +212,18 @@
 <p>Symmetry means $q(x \mid x') = q(x' \mid x)$, so the ratio $q(x \mid x')/q(x' \mid x) = 1$. The acceptance probability simplifies to:</p>
 <p>$$\alpha(x, x') = \min\left(1, \frac{\tilde{\pi}(x')}{\tilde{\pi}(x)}\right)$$</p>
 <p>If the proposal is in a higher-probability region, always accept. If it&rsquo;s in a lower-probability region, accept with probability $\pi(x')/\pi(x)$. This biases the walk toward high-probability regions without trapping it there.</p>
-<p>The step size $\sigma$ matters enormously. Too small: the chain shuffles around slowly, consecutive samples are nearly identical, you need many steps to explore. Too large: most proposals land in low-probability regions and are rejected, the chain barely moves. For a $d$-dimensional Gaussian target, the optimal acceptance rate is approximately $23.4%$, achieved by setting $\sigma \propto d^{-1/2}$.</p>
+<p>The step size $\sigma$ matters enormously. Too small: the chain shuffles around slowly, consecutive samples are nearly identical, you need many steps to explore. Too large: most proposals land in low-probability regions and are rejected, the chain barely moves. For a $d$-dimensional Gaussian target, the optimal acceptance rate is approximately $23.4%$ (in 1D it&rsquo;s closer to 44%), achieved by scaling $\sigma \propto d^{-1/2}$.</p>
+<div class="sf" data-sf="player" data-src="/data/metropolis-hastings-mcmc/stepsize.json"></div>
+<p>The tiny step size is the dangerous one: its acceptance rate looks great and its trace looks calm, yet it is confidently wrong about a whole region of the distribution.</p>
 <hr>
 <h2 id="gibbs-sampling">Gibbs Sampling</h2>
 <p>If your distribution is over multiple variables $(x_1, \ldots, x_d)$, and you can sample from each conditional distribution $p(x_i \mid x_{-i})$ (all others fixed), use Gibbs sampling: cycle through variables, drawing each from its full conditional.</p>
-<p>Gibbs is Metropolis-Hastings with a special proposal: propose $x_i' \sim p(x_i \mid x_{-i})$. The acceptance probability is always 1 - the chain always moves. No rejections.</p>
+<p>Gibbs is Metropolis-Hastings with a special proposal: propose $x_i' \sim p(x_i \mid x_{-i})$. The acceptance probability is always 1. No rejections (though a variable can be redrawn to its old value).</p>
 <p>This works beautifully for Bayesian models with conjugate priors (where conditionals have closed form) and graphical models with local structure.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> The Markov chain needs to mix well - meaning it needs to explore the full space efficiently. How do you know when it has mixed?</p>
-<p>Honestly, you don&rsquo;t know definitively. Mixing is hard to prove. Diagnostics help:</p>
-<p><strong>Trace plots:</strong> plot the sampled values over time. A well-mixed chain looks like white noise, jumping around the space. A poorly-mixed chain shows long runs in one region before moving.</p>
+<p>Honestly, you can&rsquo;t know for certain. Mixing is hard to prove. Diagnostics help:</p>
+<p><strong>Trace plots:</strong> plot the sampled values over time, as in the step-size demo above. A well-mixed chain looks like noise. A poorly-mixed chain shows long flat runs or stays in one region.</p>
 <p><strong>Gelman-Rubin statistic $\hat{R}$:</strong> run multiple chains from different starting points. If they&rsquo;ve converged to the same distribution, the between-chain variance should equal the within-chain variance. $\hat{R}$ measures this ratio; values below 1.01 indicate convergence.</p>
 <p><strong>Effective sample size (ESS):</strong> adjacent samples from a Markov chain are correlated, so $N$ samples aren&rsquo;t as informative as $N$ independent samples. ESS estimates how many independent samples your $N$ correlated samples are worth. Low ESS means poor mixing.</p>
 <p>Non-mixing is the central practical challenge of MCMC. There&rsquo;s no substitute for diagnostic checking.</p>
@@ -226,14 +234,14 @@
 <p>Hamiltonian Monte Carlo (HMC) uses gradient information $\nabla \log \pi(x)$ to make directed proposals. Augment the state with a momentum variable $p \sim \mathcal{N}(0, M)$. Define the Hamiltonian:</p>
 <p>$$\mathcal{H}(x, p) = -\log \pi(x) + \frac{1}{2} p^T M^{-1} p$$</p>
 <p>Simulate Hamiltonian dynamics using leapfrog integration: the state travels along a trajectory that approximately conserves $\mathcal{H}$. At the end of the trajectory, apply a Metropolis correction for the discretization error.</p>
-<p>The result: the chain proposes states far from the current position, with high acceptance probability. Mixing time scales as $O(d^{1/4})$ instead of $O(d)$.</p>
+<p>The result: the chain proposes states far from the current position, with high acceptance probability. The cost per independent sample grows roughly as $O(d^{1/4})$ in dimension, versus $O(d)$ for random walk MH.</p>
 <p>Stan and PyMC use NUTS (No-U-Turn Sampler), which adapts the trajectory length automatically to avoid wasting steps going in circles.</p>
 <hr>
 <h2 id="applications">Applications</h2>
 <p><strong>Bayesian regression.</strong> In a hierarchical regression model, the joint posterior over coefficients and variance components has no closed form. HMC/NUTS samples it efficiently. Used in epidemiology to estimate reproduction numbers from case counts with proper uncertainty quantification.</p>
-<p><strong>Astrophysics.</strong> Inferring black hole parameters from gravitational wave data (LIGO): the likelihood of the observed strain given a black hole merger model is known, but the posterior over mass, spin, and distance needs MCMC. The posteriors reported in black hole detection papers are MCMC samples.</p>
+<p><strong>Astrophysics.</strong> Inferring black hole parameters from gravitational wave data (LIGO): the likelihood of the observed strain given a black hole merger model is known, but the posterior over mass, spin, and distance needs MCMC. The posteriors in black hole detection papers come from stochastic samplers: MCMC and its cousin, nested sampling.</p>
 <p><strong>Protein folding.</strong> Sampling low-energy configurations of a protein: the energy function is known, but the integral over all configurations is intractable. MCMC (particularly replica exchange MCMC, which runs chains at different temperatures) explores the energy landscape.</p>
-<p><strong>Statistical physics.</strong> The Ising model of magnetic materials defines a distribution over spin configurations $\sigma \in \{-1, +1\}^n$. The partition function is intractable. Metropolis sampling with single spin-flip proposals has studied phase transitions since the original 1953 paper - the very problem the algorithm was invented to solve.</p>
+<p><strong>Statistical physics.</strong> The Ising model of magnetic materials defines a distribution over spin configurations $\sigma \in \{-1, +1\}^n$. The partition function is intractable. Metropolis sampling with single spin-flip proposals is the textbook way to study its phase transition, a direct descendant of the 1953 fluid simulation.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
