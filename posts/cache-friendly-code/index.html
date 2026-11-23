@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -254,7 +257,8 @@ Here is the concrete version. A square matrix of floats, 4096 × 4096 elements."
 </span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; j <span style="color:#f92672">&lt;</span> N; j<span style="color:#f92672">++</span>)
     <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> N; i<span style="color:#f92672">++</span>)
         a[i][j] <span style="color:#f92672">*=</span> <span style="color:#ae81ff">2.0f</span>;
-</code></pre></div><p>The inner loop of the column-major version touches a new cache line on every iteration. For N=4096, that is 4096 × 4096 = 16 million cache misses in the inner loop alone. Each one costs ~200 cycles, turning a simple multiply into a memory-latency benchmark.</p>
+</code></pre></div><p>The inner loop of the column-major version touches a new cache line on every iteration. For N=4096, that is 4096 × 4096 = 16 million L1 misses. Many are caught by L2 (the 4,096 lines one column touches, 256 KB, fit there) rather than going all the way to DRAM, but even L2 is several times slower than L1, and that is the several-fold slowdown you measure.</p>
+<div class="sf" data-sf="player" data-src="/data/cache-friendly-code/walk.json"></div>
 <p>NumPy arrays are C-contiguous (row-major) by default. Iterating over rows is fast; iterating over columns is slow. Fortran-order arrays (column-major) are available via <code>np.asfortranarray</code> for cases where column access dominates.</p>
 <h2 id="temporal-locality-reuse-what-you-loaded">Temporal Locality: Reuse What You Loaded</h2>
 <p><strong>Temporal locality</strong> means accessing the same data multiple times in a short window, before it gets evicted from cache. An algorithm with good temporal locality does heavy computation on a small dataset that fits in L1 before moving on.</p>
