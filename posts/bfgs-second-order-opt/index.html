@@ -11,8 +11,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
-    <link rel="stylesheet" href="/css/main.min.4a4fe44de053a08a209860f0a0b6e1fa7f1dccd9f5d0baf871f07d7f50306fea.css" />
+    <link rel="stylesheet" href="/css/main.min.b92b2097880ffcd6f72c9563efdc680881724ed5f5e17af8a0a29c62280001e7.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795412782" />
+    <script src="/js/algo-demos.js?v=1795370553" defer></script>
+    <script src="/js/player.js?v=1795413952" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -167,7 +170,8 @@
 </ul>
 <hr>
 <p>Gradient descent is like descending a mountain with your eyes closed - you feel the slope beneath your feet and step in the steepest downhill direction. Newton&rsquo;s method opens your eyes: it sees not just the slope but the curvature - whether the valley ahead narrows sharply or widens gradually - and adjusts its step accordingly. In a quadratic bowl, Newton&rsquo;s method reaches the bottom in exactly one step.</p>
-<p>BFGS is gradient descent for people who want Newton&rsquo;s intelligence but can&rsquo;t afford to compute the Hessian. It approximates Newton&rsquo;s method using only gradient information, building up a picture of the curvature incrementally over many steps. It is the workhorse optimizer behind almost all serious non-linear optimization in scientific computing - and L-BFGS, its memory-efficient variant, is what <code>scipy.optimize</code>, PyTorch&rsquo;s LBFGS, and most large-scale numerical solvers use in practice.</p>
+<p>BFGS is gradient descent for people who want Newton&rsquo;s intelligence but can&rsquo;t afford to compute the Hessian. It approximates Newton&rsquo;s method using only gradient information, building up a picture of the curvature incrementally over many steps. It is the workhorse optimizer behind a huge share of smooth non-linear optimization in scientific computing - and L-BFGS, its memory-efficient variant, is what most large-scale numerical solvers use in practice.</p>
+<div class="sf" data-sf="player" data-src="/data/bfgs-second-order-opt/race.json"></div>
 <hr>
 <h2 id="newtons-method-for-optimization">Newton&rsquo;s Method for Optimization</h2>
 <p>Newton&rsquo;s method approximates $f$ near the current point $x_k$ with a quadratic:</p>
@@ -176,7 +180,7 @@
 <p>$$x_{k+1} = x_k - \left[\nabla^2 f(x_k)\right]^{-1} \nabla f(x_k).$$</p>
 <p>The step direction $d_k = -H^{-1} \nabla f(x_k)$ (where $H = \nabla^2 f$) rescales the gradient by the inverse Hessian, accounting for the curvature. In a long narrow valley - where gradient descent zigzags inefficiently - Newton&rsquo;s method steps across the narrow direction, not along it.</p>
 <p><strong>Convergence.</strong> Newton&rsquo;s method has <strong>quadratic convergence</strong> near the optimum: if $|x_k - x^<em>| \leq \varepsilon$, then $|x_{k+1} - x^</em>| \leq C \varepsilon^2$ for some constant $C$. The number of correct digits doubles at each iteration. A handful of Newton steps near the solution beats thousands of gradient descent steps.</p>
-<p><strong>The problem.</strong> Computing the Hessian requires $O(n^2)$ storage and $O(n^2)$ gradient evaluations. Inverting it (or solving the linear system $H d = -\nabla f$) costs $O(n^3)$. For $n = 10^4$ parameters, that&rsquo;s already borderline. For $n = 10^6$, it&rsquo;s completely infeasible.</p>
+<p><strong>The problem.</strong> The Hessian has $n^2$ entries: storing it takes $O(n^2)$ memory, and estimating it from gradients takes $n$ extra gradient evaluations per step. Inverting it (or solving the linear system $H d = -\nabla f$) costs $O(n^3)$. For $n = 10^4$ parameters, that&rsquo;s already borderline. For $n = 10^6$, it&rsquo;s completely infeasible.</p>
 <hr>
 <h2 id="quasi-newton-and-the-secant-condition">Quasi-Newton and the Secant Condition</h2>
 <p>Quasi-Newton methods replace the exact Hessian with an approximation $B_k$ (or its inverse $H_k = B_k^{-1}$), updated cheaply at each step from gradient information alone.</p>
@@ -200,10 +204,10 @@
 <blockquote>
 <p><strong>Discomfort check.</strong> The BFGS update maintains positive definiteness via the Wolfe line search. But isn&rsquo;t an approximation to $H^{-1}$ from rank-2 updates necessarily crude?</p>
 </blockquote>
-<p>Surprisingly, no. BFGS accumulates curvature information across many steps. Each update incorporates information about the Hessian in the direction $s_k$ and $y_k$. After $n$ steps in an $n$-dimensional space, the approximation has absorbed information from $n$ independent directions and can represent the full Hessian accurately. For quadratic functions, BFGS converges in exactly $n$ steps (like conjugate gradient). For smooth nonlinear functions, BFGS achieves <strong>superlinear convergence</strong> near the optimum - faster than linear, slower than quadratic Newton.</p>
+<p>Surprisingly, no. BFGS accumulates curvature information across many steps. Each update incorporates information about the Hessian in the direction $s_k$ and $y_k$. After $n$ steps in an $n$-dimensional space, the approximation has absorbed information from $n$ independent directions and can represent the full Hessian accurately. For quadratic functions with exact line searches, BFGS converges in at most $n$ steps (like conjugate gradient) - the narrow-bowl demo above is $n = 2$. For smooth nonlinear functions, BFGS achieves <strong>superlinear convergence</strong> near the optimum - faster than linear, slower than quadratic Newton.</p>
 <hr>
 <h2 id="l-bfgs-the-practical-algorithm">L-BFGS: The Practical Algorithm</h2>
-<p>Full BFGS stores the $n \times n$ matrix $H_k$. For $n = 10^6$ parameters, this requires $4 \times 10^{12}$ bytes - completely infeasible. <strong>L-BFGS</strong> (Limited-memory BFGS) avoids storing $H_k$ explicitly.</p>
+<p>Full BFGS stores the $n \times n$ matrix $H_k$. For $n = 10^6$ parameters, that&rsquo;s $10^{12}$ numbers, 8 terabytes in double precision - completely infeasible. <strong>L-BFGS</strong> (Limited-memory BFGS) avoids storing $H_k$ explicitly.</p>
 <p>Instead, L-BFGS stores only the last $m$ curvature pairs $\{(s_i, y_i)\}_{i=k-m}^{k-1}$, using $O(mn)$ memory with $m$ typically 5 - 20. It never forms $H_k$ explicitly - instead, it computes the product $H_k \nabla f(x_k)$ implicitly using a <strong>two-loop recursion</strong>:</p>
 <pre tabindex="0"><code>q ← ∇f(x_k)
 for i = k-1, ..., k-m:
@@ -227,18 +231,19 @@ return r        (this is H_k ∇f(x_k))
 <p>Near a strongly convex minimum with Lipschitz-continuous Hessian:</p>
 <ul>
 <li><strong>Gradient descent</strong>: linear convergence, rate $(1 - 1/\kappa)$ per step, where $\kappa = \lambda_{\max}/\lambda_{\min}$ is the condition number. Slow on ill-conditioned problems.</li>
-<li><strong>BFGS/L-BFGS</strong>: superlinear convergence (faster than any geometric rate). Effectively condition-number-independent near the optimum.</li>
+<li><strong>BFGS</strong>: superlinear convergence (faster than any geometric rate). Effectively condition-number-independent near the optimum.</li>
+<li><strong>L-BFGS</strong>: only linear convergence is guaranteed in theory, since it forgets old curvature, but in practice it is usually nearly as fast as BFGS.</li>
 <li><strong>Newton</strong>: quadratic convergence. Error in digits doubles each iteration.</li>
 </ul>
 <p>Farther from the optimum:</p>
 <ul>
 <li>Newton can diverge if the Hessian is indefinite (non-convex regions).</li>
-<li>BFGS with Wolfe line search is globally convergent for smooth functions.</li>
+<li>BFGS with a Wolfe line search is provably globally convergent on smooth convex functions. On non-convex ones it almost always works in practice, though contrived counterexamples exist.</li>
 <li>Gradient descent is the most robust - converges from anywhere with appropriate step size.</li>
 </ul>
 <hr>
 <h2 id="applications">Applications</h2>
-<p><strong>Scientific computing.</strong> L-BFGS is the default optimizer in SciPy, MATLAB&rsquo;s <code>fminunc</code>, and most physics simulation packages. Problems like fitting the parameters of a physical model to experimental data are typically smooth, convex or mildly non-convex, and small enough for full-batch gradients - exactly where L-BFGS excels.</p>
+<p><strong>Scientific computing.</strong> BFGS or L-BFGS is the default in SciPy&rsquo;s <code>minimize</code> (BFGS without bounds, L-BFGS-B with them), in MATLAB&rsquo;s <code>fminunc</code>, and in many physics simulation packages. Problems like fitting the parameters of a physical model to experimental data are typically smooth, convex or mildly non-convex, and small enough for full-batch gradients - exactly where L-BFGS excels.</p>
 <p><strong>Quantum chemistry.</strong> Geometry optimization of molecular structures (finding the arrangement of atoms minimizing total energy) is a standard L-BFGS application. The energy function is smooth and the gradients (atomic forces) can be computed exactly.</p>
 <p><strong>Image reconstruction.</strong> Denoising, super-resolution, and tomographic reconstruction often involve minimizing a smooth regularized loss over pixel values - a large but well-structured problem for L-BFGS-B.</p>
 <p><strong>Statistical model fitting.</strong> Logistic regression, CRFs, Gaussian process hyperparameter optimization - any smooth log-likelihood maximization problem with exact gradient computation. <code>sklearn</code>&rsquo;s <code>LogisticRegression(solver='lbfgs')</code> uses L-BFGS as the default.</p>
@@ -266,7 +271,7 @@ return r        (this is H_k ∇f(x_k))
 <td>L-BFGS</td>
 <td>$O(mn)$</td>
 <td>$O(mn)$</td>
-<td>Superlinear (near optimum)</td>
+<td>Linear in theory, fast in practice</td>
 <td>Full-batch, smooth, $n \leq 10^7$</td>
 </tr>
 <tr>
@@ -287,7 +292,11 @@ return r        (this is H_k ∇f(x_k))
 </table>
 <p>BFGS is Newton&rsquo;s method for the real world: you don&rsquo;t have the Hessian, but you can build a good approximation from the gradients you&rsquo;ve already computed, at a cost of $O(n^2)$ per step. L-BFGS extends this to large-scale problems by dropping the full matrix and keeping only the last $m$ curvature pairs. The result is an optimizer that converges dramatically faster than gradient descent on smooth problems, with only a modest overhead per step, and is robust enough to be the default in most scientific computing stacks.</p>
 <hr>
-<p><strong>Read Next:</strong></p>
+<p><strong>Read next:</strong></p>
+<ul>
+<li><a href="/posts/grovers-algorithm/" target="_blank" rel="noopener noreferrer">Grover&rsquo;s Algorithm - Quantum Search in Square-Root Time</a>
+</li>
+</ul>
 
     </div>
     <div class="post-footer">
