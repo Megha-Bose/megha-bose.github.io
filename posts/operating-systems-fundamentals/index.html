@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795433293" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ That someone is the operating system, and its job is harder than it looks." />
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          16 min read
+          17 min read
         </div>
       </div>
     </header>
@@ -212,7 +215,8 @@ That someone is the operating system, and its job is harder than it looks." />
 <p>The scheduler answers one question continuously: which process runs next?</p>
 <p>This seems simple but has deep tradeoffs. Interactive processes need low latency - your keypress should appear on screen within milliseconds. Background jobs need throughput - compile your code as fast as possible without blocking the user. Real-time processes (audio, video) need guaranteed time slots. A good scheduler handles all three simultaneously.</p>
 <p><strong>Round-robin:</strong> Each process gets a fixed <strong>time quantum</strong> (typically 1 - 10 ms). When the quantum expires, a timer interrupt fires, the kernel preempts the current process, and the scheduler picks the next one from the queue. Simple, fair, bounded worst-case latency ($n \times \text{quantum}$ for $n$ processes), but not great for mixed interactive/batch workloads.</p>
-<p><strong>Completely Fair Scheduler (CFS):</strong> Linux&rsquo;s default since kernel 2.6.23. Each process accumulates &ldquo;virtual runtime&rdquo; - time it has actually run, weighted inversely by its priority (<code>nice</code> value). The scheduler always picks the process with the smallest virtual runtime. CFS maintains these processes in a red-black tree ordered by virtual runtime, making scheduling decisions O(log n).</p>
+<div class="sf" data-sf="player" data-src="/data/operating-systems-fundamentals/scheduler.json"></div>
+<p><strong>Completely Fair Scheduler (CFS):</strong> Linux&rsquo;s default from kernel 2.6.23 until 6.6 (2023), when it was replaced by EEVDF, which keeps the same fair-share idea and adds latency deadlines. Each process accumulates &ldquo;virtual runtime&rdquo; - time it has actually run, weighted inversely by its priority (<code>nice</code> value). The scheduler always picks the process with the smallest virtual runtime. CFS maintains these processes in a red-black tree ordered by virtual runtime, making scheduling decisions O(log n).</p>
 <p>The key insight of CFS: rather than trying to predict whether a process is &ldquo;interactive&rdquo; or &ldquo;batch&rdquo; (which is hard), give every process exactly its fair share of CPU time, weighted by priority. Interactive processes voluntarily block (waiting for keyboard input, network data) and accumulate little virtual runtime, so when they wake up, they jump to the front of the queue. Batch processes that run continuously accumulate virtual runtime and get preempted more often, automatically stepping aside for interactive work.</p>
 <h2 id="context-switches-the-hidden-tax">Context Switches: The Hidden Tax</h2>
 <p>A <strong>context switch</strong> occurs when the CPU stops running one process and starts running another. The kernel must:</p>
