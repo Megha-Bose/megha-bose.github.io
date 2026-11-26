@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -314,7 +317,7 @@ But some equations have functions as solutions." />
 <ul>
 <li><strong>Asymptotically stable</strong> if all eigenvalues of $A$ have negative real part: every solution decays to $\mathbf{0}$.</li>
 <li><strong>Unstable</strong> if any eigenvalue has positive real part: some solutions grow without bound.</li>
-<li><strong>Neutrally stable</strong> if eigenvalues lie on the imaginary axis (no positive real parts): solutions oscillate without decaying.</li>
+<li><strong>Neutrally stable</strong> if no eigenvalue has positive real part and those on the imaginary axis are not repeated (more precisely, have no Jordan blocks): solutions oscillate, or stay put, without decaying or growing. A repeated eigenvalue at zero, as in $x'' = 0$, gives $x = a + bt$, which grows.</li>
 </ul>
 <p>This eigenvalue criterion is the foundation of linear stability analysis throughout engineering and applied mathematics.</p>
 <p><strong>Example.</strong> The predator-prey system linearized near an equilibrium. Two populations $x_1$ (prey) and $x_2$ (predators), with coupling matrix:</p>
@@ -335,8 +338,9 @@ $$k_3 = f\left(t_n + \tfrac{h}{2}, y_n + \tfrac{h}{2}k_2\right)$$
 $$k_4 = f(t_n + h, y_n + h k_3)$$
 $$y_{n+1} = y_n + \frac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4)$$</p>
 <p>The global error of RK4 is $O(h^4)$: halving $h$ reduces the error by a factor of 16. This makes RK4 dramatically more efficient than Euler for the same accuracy.</p>
-<p><strong>Adaptive step-size control.</strong> Real ODE solvers (scipy&rsquo;s <code>solve_ivp</code> with the DOPRI5 method, for instance) automatically adjust $h$ based on a local error estimate. Where the solution is smooth, they take large steps. Where it changes rapidly, they take small steps. The user specifies a tolerance, and the solver guarantees the error stays within it.</p>
-<p><strong>Stiff ODEs.</strong> An ODE is <strong>stiff</strong> when it has solution components evolving on vastly different timescales. The equation $y' = -1000y + 1$ has a fast transient (decaying with timescale $1/1000$) and a slow equilibrium at $y = 0.001$. Explicit methods like Euler and RK4 require step sizes $h &lt; 2/1000 = 0.002$ for numerical stability - even when the interesting behavior is at timescale $1$. This is enormously wasteful. Implicit methods, which solve for $y_{n+1}$ using $f(t_{n+1}, y_{n+1})$ on the right-hand side, are stable for much larger steps. The tradeoff: each implicit step requires solving a nonlinear equation.</p>
+<div class="sf" data-sf="player" data-src="/data/ordinary-differential-equations/ode.json"></div>
+<p><strong>Adaptive step-size control.</strong> Real ODE solvers (scipy&rsquo;s <code>solve_ivp</code> with the DOPRI5 method, for instance) automatically adjust $h$ based on a local error estimate. Where the solution is smooth, they take large steps. Where it changes rapidly, they take small steps. The user specifies a tolerance, and the solver keeps its estimate of the error made in each step within it. That controls the global error well in practice, but it is not a guarantee: local errors can still accumulate over a long integration.</p>
+<p><strong>Stiff ODEs.</strong> An ODE is <strong>stiff</strong> when it has solution components evolving on vastly different timescales. The equation $y' = -1000y + 1$ has a fast transient (decaying with timescale $1/1000$) and a slow equilibrium at $y = 0.001$. Explicit methods need tiny steps for numerical stability: Euler requires $h &lt; 2/1000 = 0.002$, and RK4 about $h &lt; 2.8/1000$ - even when the interesting behavior is at timescale $1$. This is enormously wasteful. Implicit methods, which solve for $y_{n+1}$ using $f(t_{n+1}, y_{n+1})$ on the right-hand side, are stable for much larger steps. The tradeoff: each implicit step requires solving a nonlinear equation.</p>
 <hr>
 <h2 id="section-7-existence-and-uniqueness">Section 7: Existence and Uniqueness</h2>
 <p>Before solving an ODE, it is worth knowing: does a solution exist? Is it unique?</p>
