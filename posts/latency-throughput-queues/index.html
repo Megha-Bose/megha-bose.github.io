@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795461342" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -174,7 +177,7 @@
 <p>The uncomfortable tradeoff emerges with batching. Suppose a producer accumulates messages and sends them in groups of 100 instead of one at a time. Throughput increases dramatically - fewer network round trips, each carrying more payload. But the first message in each batch must wait for 99 others before it&rsquo;s sent. Latency rises. Kafka producers expose this directly with the <code>linger.ms</code> configuration parameter: set it to zero for minimum latency, set it higher for maximum throughput. There is no free lunch.</p>
 <p>Optimizing for throughput can destroy latency. This is not an edge case - it&rsquo;s a fundamental property of batching systems, and it&rsquo;s why API-serving infrastructure and batch processing pipelines require separate design thinking.</p>
 <h2 id="median-latency-is-a-lie">Median Latency Is a Lie</h2>
-<p>Average latency hides the tail. If 99% of your requests complete in 10ms and 1% complete in 2,000ms, your average might be 29ms - which sounds perfectly acceptable. But at 10,000 requests per second, that 1% is 100 requests <em>every second</em> experiencing two-second delays. Those are real users. They are not in your average.</p>
+<p>Average latency hides the tail. If 99% of your requests complete in 10ms and 1% complete in 2,000ms, your average is about 30ms - which sounds perfectly acceptable. But at 10,000 requests per second, that 1% is 100 requests <em>every second</em> experiencing two-second delays. Those are real users. They are not in your average.</p>
 <p>The correct way to report latency:</p>
 <p><strong>P50 (median):</strong> Half of requests are faster, half slower. The typical case. Useful for understanding the common experience.</p>
 <p><strong>P95:</strong> 95% of requests are faster than this. Catches the common slow cases - overloaded database queries, occasional cache misses.</p>
@@ -187,7 +190,7 @@
 <p>$$L = \lambda W$$</p>
 <p>Where $L$ is the average number of items in the system (queued <em>plus</em> being processed), $\lambda$ is the arrival rate (items per second), and $W$ is the average time an item spends in the system (seconds, including queue wait time plus service time).</p>
 <p>This equation is a sizing tool. If your request processing time is 50ms and you&rsquo;re receiving 1,000 requests per second, Little&rsquo;s Law says you need the system to support $L = 1000 \times 0.05 = 50$ concurrent requests in flight at any time. If your application thread pool has 20 threads, requests start queuing - and queued requests add to $W$, which increases $L$, which creates more queuing. The feedback loop tightens.</p>
-<p>Little&rsquo;s Law also explains why latency spikes when throughput is sustained near capacity. If $\lambda$ stays constant but service time $W$ increases (say, the database gets slower under load), $L$ must grow - more requests pile up. Those queued requests then experience additional wait time, further increasing $W$. This is not a metaphor. It is arithmetic.</p>
+<p>Little&rsquo;s Law also explains why latency spikes when throughput is sustained near capacity. If $\lambda$ stays constant but the time in system $W$ increases (say, the database gets slower under load), $L$ must grow - more requests pile up. Those queued requests then experience additional wait time, further increasing $W$. This is not a metaphor. It is arithmetic.</p>
 <h2 id="the-hockey-stick-why-85-utilization-is-the-danger-zone">The Hockey Stick: Why 85% Utilization Is the Danger Zone</h2>
 <p>The M/M/1 queue is the simplest queuing theory model - Poisson arrivals, exponential service times, one server. Its closed-form result for mean queue length as a function of utilization $\rho = \lambda / \mu$ (arrival rate divided by service rate):</p>
 <p>$$L_q = \frac{\rho^2}{1 - \rho}$$</p>
@@ -230,6 +233,7 @@
 </tr>
 </tbody>
 </table>
+<div class="sf" data-sf="player" data-src="/data/latency-throughput-queues/queue.json"></div>
 <p>The hockey stick shape is unmistakable. From 50% to 80% utilization, queue length grows slowly and manageably. Then at around 85%, the curve bends sharply upward. A small additional load increase causes a dramatic increase in queue depth and, through Little&rsquo;s Law, in latency. This is the hockey stick - and it&rsquo;s why you never run a production system above 70-80% sustained utilization.</p>
 <p>Real systems violate M/M/1 assumptions constantly: traffic is bursty, not Poisson; service times are multimodal, not exponential; there are many servers, not one. But the qualitative shape holds universally. Near-100% utilization causes nonlinear latency growth in every queuing system, under every workload. The math is unambiguous.</p>
 <p>Cloud auto-scaling triggers should account for this. Scaling at 90% CPU utilization means you&rsquo;re already in the hockey stick region - latency has already spiked. Scaling at 60-70% gives headroom. AWS auto-scaling groups support custom metrics, including queue depth, as scaling triggers - and queue depth is often a better signal than CPU percentage because it directly reflects the user experience.</p>
@@ -249,7 +253,7 @@
 <p>Here is the thing that textbook treatments gloss over: for a given system capacity, you must choose between optimizing for latency or optimizing for throughput. You cannot fully maximize both simultaneously.</p>
 <p>To maximize throughput: batch work, fill queues, keep servers busy. Latency rises because requests wait.</p>
 <p>To minimize latency: process immediately, keep queues empty, accept underutilized servers. Throughput falls because resources sit idle between requests.</p>
-<p>The right answer is workload-dependent. For user-facing APIs, latency wins - a user does not care how efficient your batching is. For offline analytics pipelines, throughput wins - no one is watching the ETL job tick over. For message brokers like Kafka serving both types of consumers, you configure separately: low <code>linger.ms</code> for real-time consumer groups, high <code>linger.ms</code> for batch consumers reading the same topic.</p>
+<p>The right answer is workload-dependent. For user-facing APIs, latency wins - a user does not care how efficient your batching is. For offline analytics pipelines, throughput wins - no one is watching the ETL job tick over. Kafka exposes the same dial on both sides: producers trade latency for batching with <code>linger.ms</code> and <code>batch.size</code>, and each consumer group can do the same with <code>fetch.min.bytes</code> and <code>fetch.max.wait.ms</code>, so a real-time group and a batch group can read the same topic with different settings.</p>
 <p>The design decision is: who is your worst-affected user if you get this wrong? That tells you which metric to optimize.</p>
 <h2 id="summary">Summary</h2>
 <table>
