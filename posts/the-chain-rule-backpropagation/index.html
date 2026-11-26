@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -200,7 +203,7 @@ Now someone asks you to differentiate $\sin(x^2)$. You pause. The rules you know
 <p>$$\frac{f(g(x+h)) - f(g(x))}{h} = \frac{f(g(x+h)) - f(g(x))}{g(x+h) - g(x)} \cdot \frac{g(x+h) - g(x)}{h}.$$</p>
 <p>The right factor is the difference quotient for $g$ at $x$, which converges to $g'(x)$. The left factor looks like the difference quotient for $f$ at $g(x)$, which should converge to $f'(g(x))$. So the product should converge to $f'(g(x)) \cdot g'(x)$.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> What goes wrong with the naive proof? The problem is division by $g(x+h) - g(x)$. If $g$ is constant on some sequence of points near $x$ - if $g(x+h_n) = g(x)$ for some $h_n \to 0$ - then we are dividing by zero in the middle of the argument. This can happen even for smooth non-constant functions near points where $g' \neq 0$, due to the discrete nature of the limit process. The naive argument silently assumes $g(x+h) \neq g(x)$ for all small $h$, and this assumption can fail.</p>
+<p><strong>Discomfort check.</strong> What goes wrong with the naive proof? The problem is division by $g(x+h) - g(x)$. If $g$ is constant on some sequence of points near $x$ - if $g(x+h_n) = g(x)$ for some $h_n \to 0$ - then we are dividing by zero in the middle of the argument. If $g'(x) \neq 0$ this cannot happen for small enough $h$, but when $g'(x) = 0$ it can, even for a non-constant differentiable function: $g(x) = x^2 \sin(1/x)$ (with $g(0) = 0$) is differentiable at $0$ and equals $0$ at every point $x = 1/(n\pi)$, arbitrarily close to $0$. The naive argument silently assumes $g(x+h) \neq g(x)$ for all small $h$, and this assumption can fail.</p>
 </blockquote>
 <p><strong>The clean proof.</strong> Since $f$ is differentiable at $u_0 = g(x)$, we can write:</p>
 <p>$$f(u_0 + k) = f(u_0) + f'(u_0) \cdot k + \varepsilon(k) \cdot k,$$</p>
@@ -264,13 +267,14 @@ Now someone asks you to differentiate $\sin(x^2)$. You pause. The rules you know
 <p>For the path through $c$: $\frac{\partial y}{\partial c} = b = (x+1)^2$ and $\frac{dc}{dx} = \cos(x)$. This path contributes $(x+1)^2 \cdot \cos(x)$.</p>
 <p>Total: $\frac{dy}{dx} = 2(x+1)\sin(x) + (x+1)^2 \cos(x)$.</p>
 <p>(You can verify this is the product rule applied to $b \cdot c$.)</p>
+<div class="sf" data-sf="player" data-src="/data/the-chain-rule-backpropagation/chain.json"></div>
 <p>The general principle: <strong>the derivative of the output with respect to any input is the sum of products of derivatives along every path from input to output</strong>. Each path contributes the product of the edge derivatives along it. When paths merge (when multiple paths lead through a common node), their contributions add.</p>
 <p>This is the chain rule, stated as a graph theorem.</p>
 <p>For a chain - no branching, one path - there is only one path, and you get the product of derivatives along it. That is the familiar chain rule. For a tree or a general graph, you sum over all paths.</p>
 <hr>
 <h2 id="section-6-backpropagation-is-the-chain-rule">Section 6: Backpropagation Is the Chain Rule</h2>
 <p>Now let us be completely explicit about what backpropagation is.</p>
-<p>Consider a simple 3-layer neural network. The input is $x$. The network computes:</p>
+<p>Consider the smallest possible neural network: a single neuron with a loss attached. The input is $x$. The network computes:</p>
 <p>$$z = wx + b, \quad a = \sigma(z), \quad L = (a - y)^2.$$</p>
 <p>Here $w$ and $b$ are weights, $\sigma$ is an activation function (say the sigmoid), $a$ is the activation, $y$ is the target, and $L$ is the squared loss. We want $\frac{\partial L}{\partial w}$ and $\frac{\partial L}{\partial b}$ to know which direction to move the weights.</p>
 <p><strong>Forward pass.</strong> Compute each node&rsquo;s value:</p>
@@ -300,7 +304,7 @@ Now someone asks you to differentiate $\sin(x^2)$. You pause. The rules you know
 <li>Forward mode gives gradients with respect to one input. For $n$ inputs, you need $n$ passes.</li>
 <li>Backward mode gives gradients with respect to all inputs in one pass.</li>
 </ul>
-<p>For a network with $10^7$ weights and scalar loss: forward mode needs $10^7$ passes; backward mode needs $1$ pass. The backward pass costs roughly twice the forward pass (you traverse the same graph, but in reverse). This $2\times$ overhead, rather than $10^7 \times$ overhead, is why training is feasible.</p>
+<p>For a network with $10^7$ weights and scalar loss: forward mode needs $10^7$ passes; backward mode needs $1$ pass. The backward pass costs a small constant multiple of the forward pass - typically two to three times, since each layer needs gradients with respect to both its inputs and its weights. That constant overhead, rather than $10^7 \times$ overhead, is why training is feasible.</p>
 <p>The general rule: use backward mode when you have many inputs and few outputs. Use forward mode when you have few inputs and many outputs. Neural networks are firmly in the many-inputs, one-output regime.</p>
 <hr>
 <h2 id="section-8-the-geometry-of-the-chain-rule">Section 8: The Geometry of the Chain Rule</h2>
@@ -339,13 +343,13 @@ Now someone asks you to differentiate $\sin(x^2)$. You pause. The rules you know
 <p><strong>ReLU activations.</strong> The derivative of $\max(0, x)$ is $1$ when $x &gt; 0$. Gradients pass through active ReLU neurons unchanged (factor of $1$), so the vanishing gradient is avoided on those paths.</p>
 <p><strong>Skip connections (ResNets).</strong> By adding $x$ directly to the output of a block, the gradient can flow through the shortcut path without passing through the multiplicative chain. The gradient of a sum is the sum of the gradients, so the loss gradient always has a direct path back through the identity connection.</p>
 <p><strong>Batch normalization.</strong> Normalizing activations keeps them in a range where the derivatives of the activation functions are not close to zero.</p>
-<p>Each of these is a different solution to the same mathematical problem: preventing the chain of multiplications in the chain rule from driving the product to zero or infinity.</p>
+<p>Each of these is a different solution to the same mathematical problem: preventing the chain of multiplications in the chain rule from driving the product to zero or infinity. The second tab of the animation in Section 5 measures this in a real 30-layer network.</p>
 <hr>
 <h2 id="section-11-putting-it-all-together">Section 11: Putting It All Together</h2>
 <p>Here is the complete picture.</p>
 <p>Any expression you can write down - a function, a formula, a neural network - is a computational graph. Nodes are operations. Edges connect inputs to the operations that use them.</p>
 <p>The derivative of any output with respect to any input is computed by the chain rule applied to that graph. The rule is simple: the derivative along a single directed path is the product of derivatives at each node along the path. When multiple paths connect input to output, their contributions add.</p>
-<p>Backpropagation is an efficient implementation of this computation. By traversing the graph backward from output to inputs, and accumulating the &ldquo;error signal&rdquo; (the partial derivative of the loss with respect to each intermediate value), you compute the gradient with respect to all inputs in a single pass. The cost is proportional to the number of edges in the graph - the same as a single forward pass.</p>
+<p>Backpropagation is an efficient implementation of this computation. By traversing the graph backward from output to inputs, and accumulating the &ldquo;error signal&rdquo; (the partial derivative of the loss with respect to each intermediate value), you compute the gradient with respect to all inputs in a single pass. The cost is proportional to the number of edges in the graph - within a small constant factor of a single forward pass.</p>
 <p>This is why automatic differentiation (autodiff) systems like PyTorch and JAX can differentiate arbitrary programs. They build the computational graph during the forward pass, then traverse it backward during the backward pass. They do not manipulate symbolic formulas. They apply the chain rule numerically, at each node, using the stored intermediate values.</p>
 <p>The chain rule is not a calculus technique that you apply to textbook problems. It is the algorithm that makes deep learning work.</p>
 <hr>

@@ -66,8 +66,10 @@
       var sc = scenarios[st.s];
       stage.textContent = '';
       legend();
-      view = views[spec.kind](stage, {
-        kind: spec.kind, title: spec.title, max: spec.max, cols: spec.cols, noMarks: spec.noMarks, grid: sc.grid || spec.grid, plot: sc.plot || spec.plot,
+      // A scenario may also bring its own view kind, so one demo can mix a graph with a plot.
+      var kind = sc.kind || spec.kind;
+      view = views[kind](stage, {
+        kind: kind, title: spec.title, max: spec.max, cols: spec.cols, noMarks: spec.noMarks, grid: sc.grid || spec.grid, plot: sc.plot || spec.plot,
         graph: sc.graph || spec.graph, frames: sc.frames,
         allFrames: scenarios.map(function (x) { return x.frames; })
       });
