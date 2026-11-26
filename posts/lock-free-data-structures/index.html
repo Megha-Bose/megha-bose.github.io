@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          13 min read
+          14 min read
         </div>
       </div>
     </header>
@@ -174,7 +177,7 @@
 <p><strong>Obstruction-free</strong>: if a thread runs in isolation (no competing threads), it completes in finite steps. Under contention, it may be repeatedly blocked by others. Weakest non-blocking guarantee; rarely sufficient in practice.</p>
 <p><strong>Lock-free</strong>: the system as a whole always makes progress - at least one thread completes an operation in finite steps. Individual threads may retry indefinitely under adversarial scheduling, but the system never gets globally stuck. This is the standard goal for production lock-free code.</p>
 <p><strong>Wait-free</strong>: every individual thread completes its operation in a bounded number of steps, regardless of what other threads do. The strongest guarantee and the hardest to achieve. Wait-free queues exist in the literature but are considerably more complex than lock-free ones and rarely used in practice.</p>
-<p>Most &ldquo;lock-free&rdquo; data structures in production libraries (Java&rsquo;s <code>ConcurrentLinkedQueue</code>, C&rsquo;s Linux kernel lists, LMAX Disruptor) are lock-free, not wait-free.</p>
+<p>Most &ldquo;lock-free&rdquo; data structures in production libraries (Java&rsquo;s <code>ConcurrentLinkedQueue</code>, the LMAX Disruptor) are lock-free, not wait-free. (The Linux kernel&rsquo;s RCU-protected lists go further on the read side: RCU readers are wait-free.)</p>
 <h2 id="compare-and-swap-the-foundation">Compare-and-Swap: The Foundation</h2>
 <p>The hardware primitive that makes lock-free programming possible is <strong>Compare-and-Swap (CAS)</strong>:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// Atomically:
@@ -190,7 +193,7 @@
 <span style="color:#66d9ef">int</span> expected <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
 <span style="color:#66d9ef">bool</span> success <span style="color:#f92672">=</span> value.compare_exchange_strong(expected, <span style="color:#ae81ff">1</span>);
 <span style="color:#75715e">// expected is updated to the current value on failure
-</span></code></pre></div><p><code>compare_exchange_weak</code> may <strong>spuriously fail</strong> - return false even when the value matched - on architectures using Load-Linked/Store-Conditional (LL/SC) instead of a true CAS (most ARM implementations). It must be used in a loop. <code>compare_exchange_strong</code> never spuriously fails but may be slower on those architectures. The naming is counterintuitive: use <code>weak</code> in retry loops, <code>strong</code> for a single non-looping check.</p>
+</span></code></pre></div><p><code>compare_exchange_weak</code> may <strong>spuriously fail</strong> - return false even when the value matched - on architectures that implement it with Load-Linked/Store-Conditional (LL/SC) instead of a true CAS instruction - for example ARM before the ARMv8.1 atomics extension, and POWER and RISC-V. It must be used in a loop. <code>compare_exchange_strong</code> never spuriously fails but may be slower on those architectures. The naming is counterintuitive: use <code>weak</code> in retry loops, <code>strong</code> for a single non-looping check.</p>
 <p>The lock-free pattern: read the current value, compute a new value, CAS the new value in only if the old value has not changed. If the CAS fails, someone else modified the value first - retry from the new current value.</p>
 <h2 id="the-treiber-stack-lock-free-in-20-lines">The Treiber Stack: Lock-Free in 20 Lines</h2>
 <p>The simplest useful lock-free structure is the Treiber stack (1986). A singly-linked list with an atomic head pointer.</p>
@@ -234,10 +237,11 @@ std<span style="color:#f92672">::</span>optional<span style="color:#f92672">&lt;
 <p>Scenario with the Treiber stack:</p>
 <ol>
 <li>Stack: A (value=1) → B (value=2) → null. Thread T1 reads head = A. T1 is preempted.</li>
-<li>Thread T2 pops A. Pops B. Frees B. Pushes a new node that happens to be allocated at the same address as A (memory allocators reuse addresses). Stack: A (new, value=99) → null. But A the pointer is the same.</li>
+<li>Thread T2 pops A and pops B, and frees both. Then it pushes a new node that happens to be allocated at the same address A had (memory allocators reuse addresses). Stack: A (new, value=99) → null. The pointer value is the same as before.</li>
 <li>T1 resumes. CAS(head, A, B) succeeds - head is still A (same address). T1 sets head to B - which has been freed.</li>
 </ol>
 <p>The structure is now corrupt. T1&rsquo;s CAS cannot detect that A was replaced: pointer identity is the same, but the node&rsquo;s semantic identity changed. This is ABA.</p>
+<div class="sf" data-sf="player" data-src="/data/lock-free-data-structures/aba.json"></div>
 <p>ABA is not hypothetical. Any lock-free structure that recycles memory (which is all of them in practice, since allocators reuse freed addresses) is vulnerable.</p>
 <p><strong>Solution 1: Tagged pointers (versioned pointers)</strong></p>
 <p>On 64-bit systems with 48-bit user-space addressing, the upper 16 bits of a pointer are unused. Pack a monotonically increasing version counter into the upper bits. Now the CAS operates on a 64-bit word that contains both the pointer and the version:</p>
@@ -266,7 +270,7 @@ std<span style="color:#f92672">::</span>optional<span style="color:#f92672">&lt;
     }
     <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>nullopt;
 }
-</code></pre></div><p>Even if A is recycled at the same address, the version counter will have changed, and the CAS will correctly fail. The 16-bit counter wraps at 65536, but in practice this is enough.</p>
+</code></pre></div><p>Even if A is recycled at the same address, the version counter will have changed, and the CAS will correctly fail. The 16-bit counter wraps at 65536, so in principle a thread preempted for exactly 65,536 updates could still be fooled; in practice this is rare enough that it is widely accepted, and platforms with a double-width CAS can use a full 64-bit counter instead.</p>
 <p><strong>Solution 2: Hazard pointers</strong></p>
 <p>Before accessing a node, a thread publishes that pointer in a global <strong>hazard pointer</strong> slot - a globally visible declaration that &ldquo;I am currently reading this node; do not free it.&rdquo;</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#75715e">// Each thread has a hazard pointer slot
@@ -344,7 +348,7 @@ std<span style="color:#f92672">::</span>atomic<span style="color:#f92672">&lt;</
 <p>The LMAX Disruptor is a lock-free ring buffer originally developed for low-latency financial trading. The core insight: most concurrent queues need coordination between producers and consumers on every operation. The Disruptor decouples them.</p>
 <p>The Disruptor preallocates a fixed-size ring buffer, sized to a power of 2. Producers claim a sequence number with a CAS, write to the slot at that index, then publish the sequence. Consumers track which sequences have been published and read directly - no CAS on the consumer side at all.</p>
 <p>On a single-producer / single-consumer configuration, the Disruptor eliminates <em>all</em> atomic operations from the producer path (a single-producer does not need to CAS its sequence claim) and reduces the consumer path to a single-reader load. At this point the queue is effectively a memory barrier pattern rather than a CAS-based structure.</p>
-<p>Benchmarks show the Disruptor achieving 25-60 million operations per second per core, versus 1-5 million for <code>ConcurrentLinkedQueue</code>. The cost: fixed-size preallocated buffer; cannot grow; best for predictable, bounded throughput patterns. Folly&rsquo;s <code>MPMCQueue</code> and <code>ProducerConsumerQueue</code> apply similar ideas for C++ systems programming.</p>
+<p>LMAX&rsquo;s own published benchmarks showed the Disruptor passing roughly 25 million messages per second between one producer and one consumer, against about 5 million for Java&rsquo;s <code>ArrayBlockingQueue</code>, with far lower latency. The cost: fixed-size preallocated buffer; cannot grow; best for predictable, bounded throughput patterns. Folly&rsquo;s <code>MPMCQueue</code> and <code>ProducerConsumerQueue</code> apply similar ideas for C++ systems programming.</p>
 <h2 id="when-lock-free-is-not-the-answer">When Lock-Free Is Not the Answer</h2>
 <p>Lock-free data structures are not automatically faster than mutex-based ones. Under <strong>low contention</strong> - few threads, infrequent access - a well-implemented <code>std::mutex</code> is faster. A mutex acquisition on the uncontended fast path is a single atomic CAS (the <code>futex</code> fast path), which is exactly what a lock-free structure&rsquo;s retry loop also does. The lock-free structure additionally does register and memory management per operation that the mutex-protected structure does not.</p>
 <p>Lock-free structures shine under <strong>high contention on multi-socket systems</strong>: when many threads are constantly competing for the same structure, the ability to make progress without kernel intervention (no context switch, no cache thrash from lock handoff, no priority inversion) provides substantial wins.</p>
@@ -362,7 +366,7 @@ std<span style="color:#f92672">::</span>atomic<span style="color:#f92672">&lt;</
     stack[top<span style="color:#f92672">++</span>] <span style="color:#f92672">=</span> value;
 }
 <span style="color:#75715e">#endif
-</span></code></pre></div><p>Intel TSX had a troubled history - hardware bugs led to it being disabled via microcode updates on most Skylake CPUs - but IBM POWER TM has been more stable. The long-term trajectory of HTM is unclear; the industry has not yet converged on it as a standard tool.</p>
+</span></code></pre></div><p>HTM has had a troubled history. Intel disabled TSX by microcode on Haswell and early Broadwell CPUs after an erratum in 2014, and disabled it again on many later CPUs after the TSX Asynchronous Abort security vulnerability in 2019; recent Intel client CPUs ship without it. IBM, too, removed transactional memory from POWER10. The long-term trajectory of HTM is unclear; the industry has not converged on it as a standard tool.</p>
 <p><strong>Software Transactional Memory (STM)</strong> - Haskell&rsquo;s <code>STM</code> monad is the most successful implementation - provides transactional semantics in software, with conflict detection in the runtime. Haskell STM composes cleanly: you can combine transactions from separate data structures without worrying about lock ordering. The cost is higher than HTM and the write overhead is substantial. STM has found a comfortable niche in Haskell but has not crossed over to mainstream systems programming languages.</p>
 <h2 id="summary">Summary</h2>
 <table>
