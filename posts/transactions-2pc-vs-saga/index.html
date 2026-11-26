@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ Without any protection, you&rsquo;ve just destroyed $500. Account A is down $500
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          12 min read
+          13 min read
         </div>
       </div>
     </header>
@@ -166,8 +169,8 @@ Without any protection, you&rsquo;ve just destroyed $500. Account A is down $500
 </li>
 </ul>
 <hr>
-<p>A bank transfer sounds simple: debit $500 from Account A, credit $500 to Account B. Two operations. What if the server crashes between them?</p>
-<p>Without any protection, you&rsquo;ve just destroyed $500. Account A is down $500; Account B received nothing. The money vanished into an inconsistent state that no business rule anticipated and no error handler can easily fix.</p>
+<p>A bank transfer sounds simple: debit <span class="nomath">$</span>500 from Account A, credit <span class="nomath">$</span>500 to Account B. Two operations. What if the server crashes between them?</p>
+<p>Without any protection, you&rsquo;ve just destroyed <span class="nomath">$</span>500. Account A is down <span class="nomath">$</span>500; Account B received nothing. The money vanished into an inconsistent state that no business rule anticipated and no error handler can easily fix.</p>
 <p>This problem is not hypothetical. It&rsquo;s the first question anyone building a financial system confronts, and the answer - transactions - is one of the most consequential abstractions in computing. But what happens when Account A and Account B live in different databases, run by different services, in different data centers?</p>
 <h2 id="acid-not-just-an-acronym">ACID: Not Just an Acronym</h2>
 <p>ACID (Atomicity, Consistency, Isolation, Durability) is the set of guarantees a database transaction must provide. Each property addresses a specific failure mode:</p>
@@ -178,9 +181,9 @@ Without any protection, you&rsquo;ve just destroyed $500. Account A is down $500
 <h2 id="isolation-levels-the-correctness-performance-tradeoff">Isolation Levels: The Correctness-Performance Tradeoff</h2>
 <p>Full serializability is expensive because it requires locking or conflict detection across all concurrent transactions. Databases offer weaker levels that allow specific anomalies in exchange for higher throughput.</p>
 <p><strong>Read Committed</strong> (PostgreSQL default): a query sees only committed data at the moment each row is read. Two reads of the same row within one transaction may see different values if another transaction committed between them. This is called a non-repeatable read.</p>
-<p><strong>Repeatable Read</strong> (MySQL InnoDB default): a transaction sees a consistent snapshot of the database as of its start time. Reads within the transaction always return the same data, regardless of concurrent commits. However, the transaction may see new rows appearing that match a range query if another transaction inserts them - a phantom read.</p>
+<p><strong>Repeatable Read</strong> (MySQL InnoDB default): a transaction sees a consistent snapshot of the database as of its start time. Reads within the transaction always return the same data, regardless of concurrent commits. The SQL standard still allows <strong>phantom reads</strong> at this level - new rows appearing in a repeated range query because another transaction inserted them. In practice, snapshot-based implementations such as PostgreSQL&rsquo;s and InnoDB&rsquo;s don&rsquo;t show phantoms to plain reads, but they still allow other anomalies such as write skew, and InnoDB&rsquo;s locking reads and updates see the latest committed data rather than the snapshot.</p>
 <p><strong>Serializable</strong>: transactions execute as if they ran one at a time in some serial order. No anomalies. PostgreSQL implements this with Serializable Snapshot Isolation (SSI), which detects dangerous read-write conflicts between concurrent transactions and aborts one of them. Applications must retry aborted transactions.</p>
-<p>A concrete anomaly that bites real systems: <strong>lost update</strong>. Two sessions read an account balance (100), both compute new balance (100 + deposit), both write back. The first write is overwritten by the second. Both transactions committed, but one update was silently lost. Repeatable Read prevents this in PostgreSQL (it detects the write conflict). Read Committed does not.</p>
+<p>A concrete anomaly that bites real systems: <strong>lost update</strong>. Two sessions read an account balance (100), both compute new balance (100 + deposit), both write back. The first write is overwritten by the second. Both transactions committed, but one update was silently lost. Repeatable Read prevents this in PostgreSQL (it detects the write conflict). Read Committed does not - and neither does MySQL InnoDB&rsquo;s Repeatable Read, where the second UPDATE simply overwrites the first.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Session 1                    -- Session 2
 </span><span style="color:#75715e"></span><span style="color:#66d9ef">BEGIN</span>;                           <span style="color:#66d9ef">BEGIN</span>;
 <span style="color:#66d9ef">SELECT</span> balance <span style="color:#66d9ef">FROM</span> accounts     <span style="color:#66d9ef">SELECT</span> balance <span style="color:#66d9ef">FROM</span> accounts
@@ -214,14 +217,15 @@ Without any protection, you&rsquo;ve just destroyed $500. Account A is down $500
 <li>Payment Service: charge the credit card</li>
 </ol>
 <p>Each service has its own database. If payment fails after inventory is reserved and the order is created, who is responsible for undoing the reservation and cancelling the order? There&rsquo;s no single database to roll back.</p>
-<p>This is the distributed transaction problem, and there are exactly two serious solutions: Two-Phase Commit (strong consistency) and the Saga pattern (eventual consistency).</p>
+<p>This is the distributed transaction problem. The two classic answers are Two-Phase Commit (strong consistency) and the Saga pattern (eventual consistency). (Others exist - consensus-replicated commit as in Spanner, or the Try-Confirm-Cancel pattern - but they build on the same ideas.)</p>
 <h2 id="two-phase-commit-2pc">Two-Phase Commit (2PC)</h2>
 <p>2PC introduces a <strong>coordinator</strong> that orchestrates all participants through two phases:</p>
 <p><strong>Phase 1 - Prepare</strong>: The coordinator sends <code>PREPARE</code> to all participants. Each participant writes the transaction to its durable log (it can commit if asked) and replies <code>READY</code> or <code>ABORT</code>. This vote is durable - the participant is promising that it can commit.</p>
 <p><strong>Phase 2 - Commit or Abort</strong>: If all participants voted <code>READY</code>, the coordinator writes a commit record to its own durable log (this is the point of no return) and sends <code>COMMIT</code> to all participants. If any participant voted <code>ABORT</code>, the coordinator sends <code>ABORT</code> to all. Participants apply or discard their prepared changes accordingly.</p>
 <p>The appeal is strong: if 2PC completes, all participants either committed or all aborted. Global atomicity.</p>
 <p>The catastrophic problem: <strong>2PC is a blocking protocol</strong>. If the coordinator crashes after sending <code>PREPARE</code> but before sending <code>COMMIT</code>, participants are stuck. They voted <code>READY</code> - they promised to commit - but they can&rsquo;t unilaterally decide whether to commit or abort because they don&rsquo;t know how other participants voted. They must hold locks indefinitely, waiting for the coordinator to recover.</p>
-<p>This is not a theoretical edge case. In a distributed system with hundreds of services, coordinator crashes and network partitions happen regularly. The blocking failure mode - where a crashed coordinator freezes all participants - is why 2PC is described as &ldquo;the protocol that proves distributed transactions are fundamentally hard.&rdquo;</p>
+<p>This is not a theoretical edge case. In a distributed system with hundreds of services, coordinator crashes and network partitions happen regularly. The blocking failure mode - where a crashed coordinator freezes all participants - is the clearest demonstration of why distributed transactions are fundamentally hard.</p>
+<div class="sf" data-sf="player" data-src="/data/transactions-2pc-vs-saga/txn.json"></div>
 <p>2PC is implemented as XA transactions in most enterprise databases (PostgreSQL, MySQL, Oracle). It&rsquo;s appropriate when you control all participants, all are databases that support XA, the operation completes in milliseconds, and coordinator failure is truly rare. It&rsquo;s rarely the right choice for cross-service coordination over HTTP in microservices.</p>
 <h2 id="the-saga-pattern">The Saga Pattern</h2>
 <p>A Saga breaks a distributed transaction into a sequence of <strong>local transactions</strong>, each within a single service, each individually atomic using that service&rsquo;s local database. If a step fails, previously completed steps are reversed using <strong>compensating transactions</strong>.</p>
@@ -341,7 +345,7 @@ Cons: the orchestrator is a new service to build and operate; it becomes a parti
 </tr>
 <tr>
 <td>Repeatable Read</td>
-<td>Consistent snapshot for the transaction; prevents lost updates</td>
+<td>Consistent snapshot for the transaction; prevents lost updates in PostgreSQL (not in MySQL InnoDB)</td>
 </tr>
 <tr>
 <td>Serializable</td>
