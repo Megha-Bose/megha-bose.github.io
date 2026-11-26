@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          9 min read
+          10 min read
         </div>
       </div>
     </header>
@@ -181,11 +184,11 @@
 <p><strong>Offset</strong>: the position of a record within a partition. The offset is the consumer&rsquo;s bookmark. Unlike a queue (where the broker tracks what has been delivered to each consumer), in Kafka the <strong>consumer tracks its own offset</strong>. This is a fundamental design choice that has enormous implications.</p>
 <p><strong>Consumer group</strong>: a set of consumers that collectively consume a topic. Each partition is assigned to exactly one consumer within the group. If the topic has 12 partitions and there are 4 consumers in the group, each consumer gets 3 partitions. If there are 12 consumers, each gets 1. If there are 13 consumers, one sits idle (you cannot have more consumers than partitions in a group).</p>
 <p>Different consumer groups are completely independent. The analytics service&rsquo;s consumer group and the fraud detection service&rsquo;s consumer group each maintain their own offsets. When analytics reads partition 0 up to offset 5000, fraud detection can still be at offset 3000, and a third group replaying events can be at offset 0. Nobody interferes with anybody.</p>
-<p><strong>Producer</strong>: a client that writes records to a topic. The producer chooses which partition to write to. The default: round-robin. With a partition key: hash(key) mod N. Using a partition key means all records with the same key always go to the same partition, which guarantees ordering within a key (e.g., all events for a specific <code>user_id</code> are in order).</p>
+<p><strong>Producer</strong>: a client that writes records to a topic. The producer chooses which partition to write to. With a partition key: hash(key) mod N. Without one, older clients used round-robin; since Kafka 2.4 the default is a &ldquo;sticky&rdquo; partitioner that fills a batch for one partition before moving to the next, which makes batches larger and latency lower. Using a partition key means all records with the same key always go to the same partition, which guarantees ordering within a key (e.g., all events for a specific <code>user_id</code> are in order).</p>
 <h2 id="the-log-on-disk">The Log on Disk</h2>
 <p>Each partition is physically stored as a directory of files on the broker&rsquo;s disk. Within the directory, records are organized into <strong>segments</strong>: files of up to 1GB (configurable). The active segment is the one being written to. Older segments are immutable.</p>
 <p>The internal structure of a segment is simple: records are appended sequentially. Each record has its offset, timestamp, key, value, and headers. Reading record at offset $k$ is finding the right segment (binary search on the index file) and reading from the appropriate position.</p>
-<p>This sequential layout is why Kafka is fast. Writes are always appends to the active segment - sequential disk writes. Reads for a consumer maintaining sequential offsets are sequential reads. The OS page cache aggressively prefetches sequential reads, meaning hot partitions often serve consumers entirely from memory without touching disk. <strong>Kafka uses zero-copy I/O</strong>: <code>sendfile()</code> moves data from the page cache directly to the network socket without copying through user space, eliminating a CPU bottleneck that would otherwise limit throughput.</p>
+<p>This sequential layout is why Kafka is fast. Writes are always appends to the active segment - sequential disk writes. Reads for a consumer maintaining sequential offsets are sequential reads. The OS page cache aggressively prefetches sequential reads, meaning hot partitions often serve consumers entirely from memory without touching disk. <strong>Kafka uses zero-copy I/O</strong>: <code>sendfile()</code> moves data from the page cache directly to the network socket without copying through user space, eliminating a CPU bottleneck that would otherwise limit throughput. (With TLS enabled, the data must be encrypted in user space, so this path is lost - one reason TLS costs Kafka noticeable throughput.)</p>
 <p>A broker with spinning disks can sustain hundreds of MB/s of sequential I/O. A broker with SSDs can push gigabytes per second. At LinkedIn, individual brokers handle millions of writes per second.</p>
 <h2 id="retention-time-based-and-size-based">Retention: Time-Based and Size-Based</h2>
 <p>Unlike a queue, Kafka does not delete records when they are consumed. Records are retained based on time or size.</p>
@@ -196,13 +199,14 @@
 <h2 id="replication-leaders-and-followers">Replication: Leaders and Followers</h2>
 <p>Each partition has a configured replication factor (typically 3). One broker is the <strong>leader</strong> for that partition; the others are <strong>followers</strong> (also called replicas).</p>
 <p>Producers write to the leader. The leader appends to its log and immediately replicates to followers via the followers' fetch requests (followers poll the leader, not the other way). Consumers also read from the leader by default (Kafka 2.4+ supports reading from the nearest replica for latency optimization).</p>
-<p><strong>ISR (In-Sync Replicas)</strong> is the set of replicas that are &ldquo;caught up&rdquo; with the leader - not more than some configurable lag behind. The leader only considers an ISR member eligible to be a new leader if the current leader fails.</p>
+<p><strong>ISR (In-Sync Replicas)</strong> is the set of replicas that are &ldquo;caught up&rdquo; with the leader - not more than some configurable lag behind. If the leader fails, the controller picks the new leader from the ISR (unless &ldquo;unclean&rdquo; leader election is explicitly enabled, which trades possible data loss for availability).</p>
 <p><strong><code>acks</code> setting</strong>: producers configure how many replicas must acknowledge a write before it is considered successful.</p>
 <ul>
 <li><code>acks=0</code>: fire and forget. Fastest, no durability guarantee.</li>
 <li><code>acks=1</code>: the leader has received and written the record. Default in older Kafka. Risk: if the leader fails before followers replicate, the record is lost.</li>
-<li><code>acks=all</code> (or <code>acks=-1</code>): all ISR members have written the record. Highest durability. Combined with <code>min.insync.replicas=2</code>, guarantees the record survives the loss of any one broker.</li>
+<li><code>acks=all</code> (or <code>acks=-1</code>): all ISR members have written the record. Highest durability, and the default since Kafka 3.0. Combined with <code>min.insync.replicas=2</code>, guarantees the record survives the loss of any one broker.</li>
 </ul>
+<div class="sf" data-sf="player" data-src="/data/kafka-internals/acks.json"></div>
 <p>The throughput-durability tradeoff is explicit and configurable per producer.</p>
 <h2 id="offset-management-and-exactly-once-semantics">Offset Management and Exactly-Once Semantics</h2>
 <p>Consumers commit their offsets back to Kafka (to an internal topic called <code>__consumer_offsets</code>). This is how a consumer group remembers where it left off across restarts. On restart, the consumer fetches its last committed offset and resumes from there.</p>
@@ -274,7 +278,7 @@
 </tbody>
 </table>
 <p>Kafka is not always the right answer. For simple task queues where you do not need replay or multiple independent consumers, RabbitMQ or SQS are simpler to operate. For very low latency (sub-millisecond), neither is suitable - consider Redis or direct RPCs. Kafka&rsquo;s operational complexity (the cluster, ZooKeeper or KRaft, topic partitioning decisions, retention tuning) is justified when you need its specific properties: high throughput, persistence, replay, and multiple independent consumer groups.</p>
-<p><strong>KRaft mode</strong> (Kafka 2.8+): Kafka is replacing ZooKeeper with its own Raft-based metadata management, simplifying the operational model significantly. A KRaft cluster requires no external coordination service.</p>
+<p><strong>KRaft mode</strong>: Kafka has replaced ZooKeeper with its own Raft-based metadata management, simplifying the operational model significantly. KRaft appeared as a preview in 2.8, became production-ready in 3.3, and Kafka 4.0 (2025) removed ZooKeeper support entirely. A KRaft cluster requires no external coordination service.</p>
 <p><strong>Read next:</strong></p>
 <ul>
 <li><a href="/posts/consistency-cap-theorem/" target="_blank" rel="noopener noreferrer">Consistency &amp; CAP - The Tradeoff Distributed Systems Cannot Escape</a>
