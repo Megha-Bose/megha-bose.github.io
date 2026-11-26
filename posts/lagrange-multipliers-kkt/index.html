@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -182,6 +185,7 @@
 <p>$$\nabla f(x^\ast, y^\ast) = \lambda \nabla g(x^\ast, y^\ast)$$</p>
 <p>for some scalar $\lambda$.</p>
 <p>This is the Lagrange condition.</p>
+<div class="sf" data-sf="player" data-src="/data/lagrange-multipliers-kkt/lagrange.json"></div>
 <hr>
 <h2 id="section-2-the-lagrange-multiplier">Section 2: The Lagrange Multiplier</h2>
 <p>At the constrained optimum $(x^\ast, y^\ast)$, there exists a scalar $\lambda$ - the <strong>Lagrange multiplier</strong> - such that:</p>
@@ -254,7 +258,8 @@
 <p><strong>Setup.</strong> Minimize $f(x)$ subject to $g_i(x) \leq 0$ for $i = 1, \ldots, m$.</p>
 <p><strong>KKT conditions.</strong> At a local minimum $x^\ast$ (under a constraint qualification), the following must hold:</p>
 <p><strong>Stationarity:</strong></p>
-<p>$$\nabla f(x^\ast) = \sum_{i=1}^m \lambda_i \nabla g_i(x^\ast).$$</p>
+<p>$$\nabla f(x^\ast) + \sum_{i=1}^m \lambda_i \nabla g_i(x^\ast) = 0.$$</p>
+<p>This is $\nabla_x \mathcal{L} = 0$ for the Lagrangian $\mathcal{L}(x, \lambda) = f(x) + \sum_i \lambda_i g_i(x)$. The sign matters here, unlike in the equality case: with $\lambda_i \geq 0$, the plus sign is the right one for minimizing $f$ subject to $g_i \leq 0$.</p>
 <p><strong>Primal feasibility:</strong></p>
 <p>$$g_i(x^\ast) \leq 0 \quad \text{for all } i.$$</p>
 <p><strong>Dual feasibility:</strong></p>
@@ -262,9 +267,9 @@
 <p><strong>Complementary slackness:</strong></p>
 <p>$$\lambda_i g_i(x^\ast) = 0 \quad \text{for all } i.$$</p>
 <p>Let us examine each condition.</p>
-<p><strong>Stationarity</strong> is the generalized Lagrange condition: the objective gradient is a combination of constraint gradients. For inactive constraints, complementary slackness forces $\lambda_i = 0$, so inactive constraints drop out of the stationarity condition automatically.</p>
+<p><strong>Stationarity</strong> is the generalized Lagrange condition: the descent direction $-\nabla f$ is a combination of constraint gradients. For inactive constraints, complementary slackness forces $\lambda_i = 0$, so inactive constraints drop out of the stationarity condition automatically.</p>
 <p><strong>Primal feasibility</strong> simply says the point is feasible - it satisfies all constraints. Nothing new here.</p>
-<p><strong>Dual feasibility</strong> requires $\lambda_i \geq 0$ for inequality constraints. This is the key difference from equality constraints, where $\lambda$ can be any sign. For a minimization problem with $g_i \leq 0$ constraints: the constraint gradient $\nabla g_i$ points away from the feasible region (in the direction of increasing $g_i$, which is the infeasible direction). The stationarity condition says $\nabla f$ is a combination of these &ldquo;outward&rdquo; gradients. For this to make geometric sense at a minimum (where the feasible region is constraining $f$ from getting smaller), the multipliers must be non-negative.</p>
+<p><strong>Dual feasibility</strong> requires $\lambda_i \geq 0$ for inequality constraints. This is the key difference from equality constraints, where $\lambda$ can be any sign. For a minimization problem with $g_i \leq 0$ constraints: the constraint gradient $\nabla g_i$ points away from the feasible region (in the direction of increasing $g_i$, which is the infeasible direction). Stationarity with $\lambda_i \geq 0$ says the descent direction $-\nabla f$ is a non-negative combination of these outward gradients: every way of decreasing $f$ leads out of the feasible region. If some $\lambda_i$ were negative, part of $-\nabla f$ would point back into the region, and moving that way would lower $f$ while staying feasible.</p>
 <p><strong>Complementary slackness</strong> says $\lambda_i g_i(x^\ast) = 0$. Since $g_i(x^\ast) \leq 0$ (primal feasibility) and $\lambda_i \geq 0$ (dual feasibility), the product $\lambda_i g_i(x^\ast) \leq 0$. The condition that it equals zero means exactly one of two things holds for each $i$:</p>
 <ul>
 <li>$\lambda_i = 0$: the multiplier is zero. The constraint may be active or inactive, but it plays no role in the stationarity condition.</li>
@@ -285,17 +290,18 @@
 <p>At $(x^\ast, y^\ast) = (\sqrt{3}, 1)$, check stationarity:</p>
 <p>$$\nabla f = (2(x-3), 2(y-2)) = (2\sqrt{3}-6, -2).$$</p>
 <p>$$\nabla g_1 = (2x, 2y) = (2\sqrt{3}, 2), \quad \nabla g_2 = (0, 1).$$</p>
-<p>Stationarity: $(2\sqrt{3}-6, -2) = \lambda_1(2\sqrt{3}, 2) + \lambda_2(0, 1)$.</p>
-<p>From the first component: $2\sqrt{3} - 6 = 2\sqrt{3}\lambda_1$, giving $\lambda_1 = 1 - \sqrt{3} \approx -0.73$.</p>
-<p>But dual feasibility requires $\lambda_1 \geq 0$. Contradiction. So both constraints cannot simultaneously be active at the optimum.</p>
-<p>Try only $g_1$ active: $x^2 + y^2 = 4$, $g_2 &lt; 0$ (so $\lambda_2 = 0$). Stationarity becomes $\nabla f = \lambda_1 \nabla g_1$:</p>
-<p>$$(2(x-3), 2(y-2)) = \lambda_1 (2x, 2y).$$</p>
-<p>This gives $x - 3 = \lambda_1 x$ and $y - 2 = \lambda_1 y$, so $x(1-\lambda_1) = 3$ and $y(1-\lambda_1) = 2$. Thus $y/x = 2/3$. Combined with $x^2 + y^2 = 4$: $x^2(1 + 4/9) = 4$, so $x = \frac{6}{\sqrt{13}}$ and $y = \frac{4}{\sqrt{13}}$.</p>
-<p>Check $g_2$: $y = 4/\sqrt{13} \approx 1.11 &gt; 1$. This violates $y \leq 1$. So only $g_1$ active does not work either.</p>
-<p>Try only $g_2$ active: $y = 1$, and $g_1 &lt; 0$ (inside the disk, so $\lambda_1 = 0$). Minimize $(x-3)^2 + (1-2)^2 = (x-3)^2 + 1$ over $x$ with $x^2 + 1 \leq 4$, i.e., $|x| \leq \sqrt{3}$. The unconstrained minimum is $x = 3$, but $3 &gt; \sqrt{3}$, so the minimum on the constraint is $x = \sqrt{3}$.</p>
-<p>Check stationarity: $\nabla f = (2(\sqrt{3}-3), 2(1-2)) = (2\sqrt{3}-6, -2)$ must equal $\lambda_2(0, 1)$. The first component requires $2\sqrt{3} - 6 = 0$, which fails. So this case is also degenerate at $x = \sqrt{3}$ - the $g_1$ constraint is actually active here (since $(\sqrt{3})^2 + 1^2 = 4$). We are back to both constraints being active, which we showed requires $\lambda_1 &lt; 0$.</p>
-<p>The resolution: both constraints are active at the optimal point $(\sqrt{3}, 1)$, and $\lambda_1 &lt; 0$ is required. But we said $\lambda_1 \geq 0$ for inequality constraints in a minimization problem. The issue is the constraint $g_1 = x^2 + y^2 - 4 \leq 0$ is an &ldquo;inside the disk&rdquo; constraint, and the optimal point wants to be outside the disk but is being forced inside. The multiplier sign reflects this: the disk constraint is actively pulling the optimum away from where it &ldquo;wants&rdquo; to be.</p>
-<p>This example illustrates that KKT conditions require careful bookkeeping of signs and that degenerate cases (multiple active constraints, multiplier sign violations) require case analysis.</p>
+<p>Stationarity: $(2\sqrt{3}-6, -2) + \lambda_1(2\sqrt{3}, 2) + \lambda_2(0, 1) = (0, 0)$.</p>
+<p>From the first component: $2\sqrt{3}\lambda_1 = 6 - 2\sqrt{3}$, giving $\lambda_1 = \sqrt{3} - 1 \approx 0.73$.</p>
+<p>From the second component: $-2 + 2\lambda_1 + \lambda_2 = 0$, giving $\lambda_2 = 2 - 2\lambda_1 = 4 - 2\sqrt{3} \approx 0.54$.</p>
+<p>Both multipliers are positive, so dual feasibility holds. Both constraints are active, so complementary slackness holds. All four KKT conditions are satisfied at $(\sqrt{3}, 1)$.</p>
+<p>It is worth checking the other cases, to see why they fail.</p>
+<p><strong>Only $g_1$ active</strong> ($\lambda_2 = 0$). Stationarity becomes $\nabla f + \lambda_1 \nabla g_1 = 0$:</p>
+<p>$$(2(x-3), 2(y-2)) + \lambda_1 (2x, 2y) = (0, 0).$$</p>
+<p>This gives $x(1+\lambda_1) = 3$ and $y(1+\lambda_1) = 2$, so $y/x = 2/3$: the closest point of the circle to $(3, 2)$, on the ray towards it. Combined with $x^2 + y^2 = 4$: $x = \frac{6}{\sqrt{13}}$ and $y = \frac{4}{\sqrt{13}}$. But $y \approx 1.11 &gt; 1$ violates $g_2$, so this point is not feasible.</p>
+<p><strong>Only $g_2$ active</strong> ($\lambda_1 = 0$). On the line $y = 1$, $f = (x-3)^2 + 1$ is smallest at $x = 3$, which lies outside the disk. Stationarity would need $2(x - 3) = 0$, and no feasible point satisfies it.</p>
+<p><strong>Neither active.</strong> Then $\nabla f = 0$, which only happens at $(3, 2)$, and that is infeasible.</p>
+<p>So $(\sqrt{3}, 1)$ is the only KKT point. Since $f$, $g_1$ and $g_2$ are all convex, Section 10 shows that a KKT point is a global minimum. The minimum value is $f = (\sqrt{3}-3)^2 + 1 = 13 - 6\sqrt{3} \approx 2.61$.</p>
+<p>The multipliers also say something. $\lambda_1 \approx 0.73$ and $\lambda_2 \approx 0.54$ are the shadow prices (Section 9) of the two constraints: loosening the disk to $x^2 + y^2 \leq 4 + \delta$ lowers the optimal value by about $0.73\delta$, and loosening $y \leq 1$ to $y \leq 1 + \delta$ lowers it by about $0.54\delta$. The second tab of the animation above shows this corner.</p>
 <hr>
 <h2 id="section-8-connection-to-support-vector-machines">Section 8: Connection to Support Vector Machines</h2>
 <p>The SVM is one of the most elegant applications of KKT conditions.</p>
@@ -325,12 +331,13 @@
 <h2 id="section-10-kkt-sufficiency-for-convex-problems">Section 10: KKT Sufficiency for Convex Problems</h2>
 <p>The KKT conditions are always necessary for optimality (under a regularity condition). For convex problems, they are also sufficient.</p>
 <p><strong>Theorem.</strong> Suppose $f$ and $g_1, \ldots, g_m$ are all convex. If $x^\ast$ satisfies the KKT conditions (stationarity, primal feasibility, dual feasibility, complementary slackness), then $x^\ast$ is a global minimizer of $f$ subject to $g_i(x) \leq 0$.</p>
-<p><strong>Proof sketch.</strong> The stationarity condition gives $\nabla f(x^\ast) = \sum_i \lambda_i \nabla g_i(x^\ast)$ with $\lambda_i \geq 0$. For any feasible $x$:</p>
+<p><strong>Proof sketch.</strong> The stationarity condition gives $\nabla f(x^\ast) = -\sum_i \lambda_i \nabla g_i(x^\ast)$ with $\lambda_i \geq 0$. For any feasible $x$:</p>
 <p>$$f(x) \geq f(x^\ast) + \nabla f(x^\ast) \cdot (x - x^\ast) \quad \text{(convexity of } f\text{)}$$</p>
-<p>$$= f(x^\ast) + \sum_i \lambda_i \nabla g_i(x^\ast) \cdot (x - x^\ast) \quad \text{(stationarity)}$$</p>
-<p>$$\geq f(x^\ast) + \sum_i \lambda_i (g_i(x) - g_i(x^\ast)) \quad \text{(convexity of each } g_i\text{)}$$</p>
-<p>$$\geq f(x^\ast) + \sum_i \lambda_i (g_i(x) - 0) \quad \text{(complementary slackness: } g_i(x^\ast) = 0 \text{ or } \lambda_i = 0\text{)}$$</p>
+<p>$$= f(x^\ast) - \sum_i \lambda_i \nabla g_i(x^\ast) \cdot (x - x^\ast) \quad \text{(stationarity)}$$</p>
+<p>$$\geq f(x^\ast) - \sum_i \lambda_i (g_i(x) - g_i(x^\ast)) \quad \text{(convexity of each } g_i \text{, and } \lambda_i \geq 0\text{)}$$</p>
+<p>$$= f(x^\ast) - \sum_i \lambda_i g_i(x) \quad \text{(complementary slackness: } \lambda_i g_i(x^\ast) = 0\text{)}$$</p>
 <p>$$\geq f(x^\ast) \quad \text{(dual feasibility: } \lambda_i \geq 0\text{, primal feasibility: } g_i(x) \leq 0\text{)}. \quad \square$$</p>
+<p>The third line uses the first-order condition for convex $g_i$: $g_i(x) \geq g_i(x^\ast) + \nabla g_i(x^\ast) \cdot (x - x^\ast)$, multiplied by $-\lambda_i \leq 0$, which flips the inequality.</p>
 <p>This theorem transforms the computational problem. For convex constrained problems, instead of searching over all feasible points, you solve the KKT system. Any solution to the KKT system is a global optimum. The next post builds the full convex optimization machinery on this foundation.</p>
 <hr>
 <p><strong>Read Next:</strong></p>
