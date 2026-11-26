@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          9 min read
+          10 min read
         </div>
       </div>
     </header>
@@ -193,23 +196,24 @@
 <h2 id="code-generation-benchmarks">Code Generation Benchmarks</h2>
 <p><strong>HumanEval</strong> - 164 Python programming problems with unit tests. The model generates a function body given a docstring; the solution is executed against tests. The metric is <strong>pass@k</strong>: the probability that at least one of $k$ generated solutions passes all tests.</p>
 <p>$$\text{pass@}k = 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}}$$</p>
-<p>where $n$ is the number of samples generated and $c$ is the number that pass. pass@1 (single attempt) is the standard reported metric. GPT-4 achieves ~87% pass@1 on HumanEval; earlier GPT-3.5 achieved ~48%.</p>
-<p><strong>MBPP (Mostly Basic Python Programming)</strong> - 374 crowd-sourced Python problems, slightly harder distribution than HumanEval.</p>
-<p><strong>SWE-bench</strong> - a harder benchmark testing the ability to resolve real GitHub issues in large codebases. The model must read an issue description and generate a patch that passes the associated tests. Significantly harder than HumanEval: frontier models achieve 20-50% depending on scaffolding. More realistic measure of software engineering capability.</p>
+<p>where $n \geq k$ is the number of samples generated per problem and $c$ is the number that pass; the score is averaged over problems. pass@1 (single attempt) is the standard reported metric. The original GPT-4 report gave 67% pass@1 on HumanEval, later GPT-4 versions around 85-90%, against roughly 48% for the earlier Codex model behind GPT-3.5.</p>
+<div class="sf" data-sf="player" data-src="/data/llm-evaluation-benchmarks/passk.json"></div>
+<p><strong>MBPP (Mostly Basic Python Programming)</strong> - 974 crowd-sourced entry-level Python problems (500 in the test split), each with three test cases.</p>
+<p><strong>SWE-bench</strong> - a harder benchmark testing the ability to resolve real GitHub issues in large codebases. The model must read an issue description and generate a patch that passes the associated tests. Significantly harder than HumanEval: the best systems resolved only a few percent of issues when it was released in 2023; by 2025, frontier agents resolved well over half of SWE-bench Verified, a human-validated subset, depending heavily on scaffolding. More realistic measure of software engineering capability.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> HumanEval has only 164 problems. Isn&rsquo;t that too small for a reliable estimate? Yes, but the execution-based evaluation (unit tests) makes it much more reliable than human rating - you get a binary correct/incorrect signal with no ambiguity. The small size is a problem for sensitivity: the difference between 85% and 87% on 164 problems is 3 questions. This is why researchers report confidence intervals and use multiple seeds when generating samples.</p>
 </blockquote>
 <hr>
 <h2 id="mathematical-reasoning">Mathematical Reasoning</h2>
 <p><strong>GSM8K</strong> - 8,500 grade school math word problems requiring multi-step arithmetic reasoning. Solutions are typically 3-8 steps. GPT-4 achieves ~92%; GPT-3 achieved ~35%. Now saturated for frontier models.</p>
-<p><strong>MATH</strong> - 12,500 competition math problems across 5 difficulty levels, spanning algebra, geometry, number theory, and calculus. Significantly harder than GSM8K. Frontier models achieve 70-85%; earlier models achieved &lt;10%.</p>
+<p><strong>MATH</strong> - 12,500 competition math problems across 5 difficulty levels and seven subjects: prealgebra, algebra, intermediate algebra, number theory, counting and probability, geometry, and precalculus. Significantly harder than GSM8K. Models in 2021 scored under 10%; recent reasoning models score above 90%, so it too is approaching saturation.</p>
 <p><strong>AIME/AMC</strong> - recent models are being evaluated on American Mathematics Competition problems, which require olympiad-level reasoning. These are not yet saturated and are increasingly used to differentiate frontier models.</p>
 <p>Mathematical benchmarks are important because they require <em>reasoning chains</em>, not just recall. A model that solves MATH problems is demonstrating something qualitatively different from a model that pattern-matches to memorized solutions.</p>
 <hr>
 <h2 id="instruction-following-and-conversational-quality">Instruction Following and Conversational Quality</h2>
 <p><strong>MT-Bench</strong> - 80 multi-turn questions across eight categories (writing, roleplay, reasoning, math, coding, STEM, humanities, extraction). A strong LLM (GPT-4) is used as a judge, rating responses on a 1-10 scale. MT-Bench measures conversational quality and instruction adherence rather than factual knowledge.</p>
 <p><strong>AlpacaEval</strong> - head-to-head comparison against a reference model (text-davinci-003 originally). A judge model rates which response is preferred. Results are reported as win rate against the reference.</p>
-<p><strong>Chatbot Arena</strong> - human raters compare responses from two anonymized models and vote for the better one. Elo ratings are computed from these pairwise comparisons. This is the most realistic measure of human preference: real users, real conversations, blind evaluation. The limitation is cost and speed - accumulating enough votes takes weeks.</p>
+<p><strong>Chatbot Arena</strong> - human raters compare responses from two anonymized models and vote for the better one. Ratings are computed from these pairwise comparisons - originally with Elo, now with a Bradley-Terry model, which fits all the votes at once. This is the most realistic measure of human preference: real users, real conversations, blind evaluation. The limitation is cost and speed - accumulating enough votes takes weeks.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> Using a strong LLM as a judge seems circular - you&rsquo;re using GPT-4 to evaluate models, including GPT-4 itself. Doesn&rsquo;t GPT-4 have biases that favor its own output style? Yes, this is a real and documented problem called <strong>self-enhancement bias</strong>. GPT-4 tends to prefer responses written in its own style. Researchers address this by using multiple judges, comparing judge ratings against human ratings, and carefully designing prompts that ask for specific criteria rather than overall preference. Despite the limitation, LLM-as-judge is much faster and cheaper than human evaluation and correlates reasonably well with human preferences on most tasks.</p>
 </blockquote>
@@ -266,7 +270,7 @@
 <tr>
 <td>HumanEval</td>
 <td>Python function generation (164 problems)</td>
-<td>Pass@1 ~87% for GPT-4</td>
+<td>Pass@1 67% (original GPT-4) to ~90% (later models)</td>
 </tr>
 <tr>
 <td>GSM8K</td>
@@ -276,7 +280,7 @@
 <tr>
 <td>MATH</td>
 <td>Competition math</td>
-<td>Active headroom (70-85%)</td>
+<td>Approaching saturation (90%+ for reasoning models)</td>
 </tr>
 <tr>
 <td>MT-Bench</td>
@@ -296,7 +300,7 @@
 <tr>
 <td>SWE-bench</td>
 <td>Real GitHub issue resolution</td>
-<td>Hard; 20-50% for frontier models</td>
+<td>Hard; rising fast with agent scaffolding</td>
 </tr>
 </tbody>
 </table>
