@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795461342" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -188,6 +191,7 @@ Most people read it as: &ldquo;There is a 95% chance the true support is between
 <p>Here is the statement that produced this interval: the probability is 0.95, <em>before you collect data</em>, that the random interval $[\bar{x} - 1.96\sigma/\sqrt{n}, \bar{x} + 1.96\sigma/\sqrt{n}]$ will contain $\mu$.</p>
 <p>The randomness is in $\bar{x}$, not in $\mu$. The true mean $\mu$ is a fixed unknown constant. The interval is random because $\bar{x}$ varies from sample to sample.</p>
 <p><strong>The correct interpretation:</strong> If you repeated this experiment many times and computed a 95% CI each time, about 95% of those intervals would contain the true $\mu$.</p>
+<div class="sf" data-sf="player" data-src="/data/confidence-intervals/coverage.json"></div>
 <p><strong>The incorrect interpretation:</strong> There is a 95% probability that $\mu$ is in the specific interval $[49\%, 55\%]$.</p>
 <p>The distinction: once you compute the specific interval $[49\%, 55\%]$, the true proportion is either in that interval or not. There is no randomness left. The 95% is a statement about the method - the procedure that generates intervals - not about this particular interval.</p>
 <blockquote>
@@ -213,7 +217,7 @@ Most people read it as: &ldquo;There is a 95% chance the true support is between
 <h2 id="t-intervals-unknown-standard-deviation">t-intervals: Unknown Standard Deviation</h2>
 <p>In the construction above, we assumed $\sigma$ was known. In practice it almost never is. We replace $\sigma$ with $s = \sqrt{\frac{1}{n-1}\sum(x_i - \bar{x})^2}$:</p>
 <p>$$T = \frac{\bar{x} - \mu}{s/\sqrt{n}} \sim t_{n-1}$$</p>
-<p>under the null (see <a href="/posts/hypothesis-testing-p-values/" target="_blank" rel="noopener noreferrer">Hypothesis Testing &amp; p-values - The Formal Language of Probably Not a Coincidence</a>
+<p>exactly, when the data are normal (see <a href="/posts/hypothesis-testing-p-values/" target="_blank" rel="noopener noreferrer">Hypothesis Testing &amp; p-values - The Formal Language of Probably Not a Coincidence</a>
 ). The t-distribution has heavier tails than the normal, reflecting the extra uncertainty from estimating $\sigma$.</p>
 <p>The 95% t-interval is:</p>
 <p>$$\bar{x} \pm t_{n-1, 0.025} \cdot \frac{s}{\sqrt{n}},$$</p>
@@ -232,15 +236,15 @@ Most people read it as: &ldquo;There is a 95% chance the true support is between
 </tr>
 <tr>
 <td>10</td>
-<td>2.228</td>
+<td>2.262</td>
 </tr>
 <tr>
 <td>30</td>
-<td>2.042</td>
+<td>2.045</td>
 </tr>
 <tr>
 <td>60</td>
-<td>2.000</td>
+<td>2.001</td>
 </tr>
 <tr>
 <td>$\infty$</td>
@@ -248,14 +252,14 @@ Most people read it as: &ldquo;There is a 95% chance the true support is between
 </tr>
 </tbody>
 </table>
-<p>With only 5 observations, you need to extend the interval to $\pm 2.776$ standard errors to achieve 95% coverage - substantially wider than the asymptotic $\pm 1.96$. The t-distribution is quantifying your uncertainty not just about $\mu$ but also about $\sigma$.</p>
+<p>With only 5 observations, you need to extend the interval to $\pm 2.776$ standard errors to achieve 95% coverage - substantially wider than the asymptotic $\pm 1.96$. The second tab of the animation above shows what goes wrong if you skip this: at $n = 5$, an interval built with 1.96 and $s$ covers $\mu$ only about 88% of the time. The t-distribution is quantifying your uncertainty not just about $\mu$ but also about $\sigma$.</p>
 <hr>
 <h2 id="how-width-scales-with-sample-size">How Width Scales with Sample Size</h2>
 <p>The CI half-width is proportional to $\sigma/\sqrt{n}$ (or $s/\sqrt{n}$ in the t-case). This has a direct practical implication:</p>
 <p><strong>To halve the margin of error, you need four times as much data.</strong></p>
-<p>If $n = 100$ gives a margin of error of ±3%, then $n = 400$ gives ±1.5%, and $n = 1600$ gives ±0.75%.</p>
+<p>For a poll near 50%, $n = 1{,}000$ gives a margin of error of about ±3%; $n = 4{,}000$ gives ±1.5%, and $n = 16{,}000$ gives ±0.75%.</p>
 <p>This is the fundamental cost of precision. The $\sqrt{n}$ in the denominator comes directly from the CLT - averaging $n$ independent observations reduces variance by a factor of $n$, so standard deviation shrinks by $\sqrt{n}$.</p>
-<p>The implication for experiment design: getting from 90% precision to 95% precision is not twice the cost, it is four times the cost. Unreasonable precision requirements are expensive.</p>
+<p>The implication for experiment design: shrinking a margin of error from ±10% to ±5% is not twice the cost, it is four times the cost. Unreasonable precision requirements are expensive.</p>
 <hr>
 <h2 id="bootstrap-confidence-intervals">Bootstrap Confidence Intervals</h2>
 <p>Both the z-interval and t-interval rely on assumptions: approximate normality of $\bar{x}$ (via CLT), or exact normality of the data (for small-sample t). What if your statistic is not a sample mean? What if you want a CI for a median, a correlation coefficient, a model accuracy metric, or some other complex quantity?</p>
@@ -324,7 +328,7 @@ Most people read it as: &ldquo;There is a 95% chance the true support is between
 </tr>
 <tr>
 <td>Bootstrap CI</td>
-<td>Resample with replacement; use empirical quantiles; assumption-free</td>
+<td>Resample with replacement; use empirical quantiles; no normality assumption needed</td>
 </tr>
 <tr>
 <td>CI vs. hypothesis test</td>
