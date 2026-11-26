@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795461342" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -216,6 +219,8 @@
 </ul>
 <p><strong>Theorem.</strong> $a \to b \Leftrightarrow VC(a) &lt; VC(b)$.</p>
 <p>$VC_i[j]$ represents the number of events process $p_i$ knows process $p_j$ has executed. A vector timestamp thus encodes the &ldquo;knowledge frontier&rdquo; of a process at the time of an event.</p>
+<p>Here is one run timestamped both ways. Switch clocks to compare:</p>
+<div class="sf" data-sf="player" data-src="/data/logical-clocks-global-state/clocks.json"></div>
 <p><strong>Cost.</strong> Vector clocks require $O(n)$ space and $O(n)$ communication overhead per message. For large $n$, this is expensive.</p>
 <hr>
 <h2 id="matrix-clocks">Matrix Clocks</h2>
@@ -237,8 +242,8 @@
 <p>Different applications need different guarantees on message delivery order.</p>
 <p><strong>FIFO ordering.</strong> Messages from a single sender to a single receiver are delivered in the order sent. Easy to achieve with sequence numbers; TCP provides this automatically.</p>
 <p><strong>Causal ordering.</strong> If the sending of $m_1$ causally precedes the sending of $m_2$, then any process that delivers $m_2$ has already delivered $m_1$. Causally ordered delivery ensures that effects do not precede causes. Implemented by attaching vector clocks to messages and buffering messages until all causally prior messages have been delivered.</p>
-<p><strong>Total order broadcast (atomic broadcast).</strong> All processes deliver all messages in the same order (even messages from different senders). Much harder - requires consensus. Total order broadcast and consensus are computationally equivalent (each can be implemented using the other). ISIS&rsquo;s CBCAST and ABCAST, Zookeeper&rsquo;s Zab, and Kafka&rsquo;s replication all implement variants.</p>
-<p><strong>Formal hierarchy:</strong> Total order $\Rightarrow$ Causal order $\Rightarrow$ FIFO order $\Rightarrow$ No ordering guarantee.</p>
+<p><strong>Total order broadcast (atomic broadcast).</strong> All processes deliver all messages in the same order (even messages from different senders). Much harder - requires consensus. Total order broadcast and consensus are computationally equivalent (each can be implemented using the other). ISIS&rsquo;s ABCAST, ZooKeeper&rsquo;s Zab and Raft-style replicated logs all implement variants. (ISIS&rsquo;s CBCAST, by contrast, provides causal ordering.)</p>
+<p><strong>How they relate:</strong> causal order implies FIFO order, but total order is a separate guarantee: a total order can still deliver an effect before its cause. Systems that need both ask for <em>causal total order</em>, which implies the other two.</p>
 <hr>
 <h2 id="consistent-cuts-and-global-state">Consistent Cuts and Global State</h2>
 <p>A <strong>global state</strong> is a tuple $(LS_1, \ldots, LS_n, SC_{12}, SC_{13}, \ldots)$ where $LS_i$ is the local state of process $p_i$ and $SC_{ij}$ is the set of messages in transit from $p_i$ to $p_j$.</p>
