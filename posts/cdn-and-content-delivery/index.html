@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -166,7 +169,7 @@
 </li>
 </ul>
 <hr>
-<p>A user in Mumbai opens Instagram and their feed appears in under a second. The engineers who built Instagram are in California. The servers that stored those photos are in us-east-1, physically 13,000 kilometers away. At the speed of light in fiber (roughly 200,000 km/s), the round-trip signal alone from Mumbai to Virginia takes about 130ms - before the server has done any work. A page that makes 20 asset requests would spend over 2.5 seconds just on physics.</p>
+<p>A user in Mumbai opens Instagram and their feed appears in under a second. The engineers who built Instagram are in California. The servers that stored those photos are in us-east-1, physically 13,000 kilometers away. At the speed of light in fiber (roughly 200,000 km/s), the round-trip signal alone from Mumbai to Virginia takes about 130ms - before the server has done any work. A page that fetched 20 assets one after another would spend over 2.5 seconds just on physics; even with requests running in parallel, every new connection still pays several round trips before the first byte arrives.</p>
 <p>Instagram does not solve this with faster servers. It solves it by moving the data physically closer to the user before the user asks for it.</p>
 <p>That is what a CDN does.</p>
 <h2 id="the-latency-ceiling">The Latency Ceiling</h2>
@@ -175,12 +178,13 @@
 <p>This is not a new insight. Amazon figured out that customers in Germany were experiencing slow loads from US servers. The solution was not to buy better hardware in the US. It was to build a datacenter in Germany. A CDN is the automated, cached version of this: instead of building full datacenters with application logic everywhere, you put lightweight caching servers everywhere and let them absorb the bulk of the traffic.</p>
 <h2 id="what-a-cdn-is">What a CDN Is</h2>
 <p>A CDN is a globally distributed network of servers called <strong>Points of Presence</strong> (PoPs) or edge nodes, located in cities around the world. Instead of every user fetching content from your origin server (your application server in one datacenter), they fetch from the nearest PoP. A user in Mumbai gets content from the PoP in Mumbai or Singapore. A user in Frankfurt gets it from Frankfurt.</p>
-<p>Cloudflare operates roughly 300 PoPs in over 100 countries. AWS CloudFront has over 400 edge locations. A request from almost anywhere in the world hits a PoP within 20-50ms instead of 150-300ms for a far origin.</p>
+<p>Cloudflare operates in over 300 cities in more than 100 countries. AWS CloudFront has more than 600 points of presence. A request from almost anywhere in the world hits a PoP within 20-50ms instead of 150-300ms for a far origin.</p>
 <p>The key mechanism: PoPs cache copies of content. The first time a user in Mumbai requests <code>profile-photo-42.jpg</code>, the PoP does not have it - it fetches the image from your origin server, caches it locally, and returns it to the user. Every subsequent request for that image from any user in Mumbai (or nearby) is served from the PoP&rsquo;s local cache. Your origin never sees those requests.</p>
 <h2 id="how-a-request-actually-travels">How a Request Actually Travels</h2>
 <p>Walk through what happens when a user requests <code>https://static.instagram.com/photo-abc.jpg</code>:</p>
-<p><strong>DNS resolves to the nearest PoP.</strong> CDNs use <strong>anycast routing</strong>: many PoPs share the same IP address range, and the internet&rsquo;s BGP routing protocol automatically steers each request toward the topologically closest PoP. The user does not choose; the network chooses for them.</p>
-<p><strong>TCP handshake happens over 20ms instead of 150ms.</strong> The TLS negotiation happens close by. This alone saves 200-400ms on the initial connection.</p>
+<p><strong>The request is steered to a nearby PoP.</strong> CDNs do this in one of two ways. With <strong>anycast routing</strong> (Cloudflare&rsquo;s approach), many PoPs announce the same IP addresses, and the internet&rsquo;s BGP routing protocol automatically steers each packet toward a topologically close PoP. With <strong>DNS-based routing</strong> (used heavily by Akamai and CloudFront), the CDN&rsquo;s DNS servers answer each lookup with the address of a PoP chosen for that user&rsquo;s location and current load. Either way, the user does not choose.</p>
+<p><strong>TCP handshake happens over 20ms instead of 150ms.</strong> The TLS negotiation happens close by. This alone saves hundreds of milliseconds on the initial connection.</p>
+<div class="sf" data-sf="player" data-src="/data/cdn-and-content-delivery/cdn.json"></div>
 <p><strong>The PoP checks its local cache.</strong> If the image is there and not expired: return it immediately. This is a cache hit. The origin server is not involved at all.</p>
 <p><strong>On a cache miss:</strong> the PoP makes a request upstream - either to a regional cache (a mid-tier PoP) or directly to your origin. The origin returns the image with cache headers. The PoP stores it and returns it to the user. All future requests to this PoP for this URL are cache hits.</p>
 <p>For popular content (a viral post, a celebrity&rsquo;s photo, a product on a sale page), the cache hit rate approaches 99%. Your origin server handles the remaining 1% - effectively 100x less traffic than without a CDN.</p>
@@ -223,13 +227,13 @@ Accept: image/avif,image/webp,image/apng,image/*,*/*;q=0.8
 
 # CDN serves AVIF to Chrome, WebP to older Safari, JPEG to IE11
 </code></pre><p>The origin stores one master image. The CDN encodes and caches the right format for each browser type on first request. Subsequent requests for the same format hit the cache.</p>
-<p><strong>Responsive sizing</strong>: a 4000x3000 photo served to a phone displaying it at 400x300 wastes 90% of the bandwidth. CDNs can resize on demand: <code>image.jpg?w=400&amp;h=300&amp;fit=crop</code>. The resized version is cached at the edge - the first request generates it, every subsequent request serves from cache.</p>
+<p><strong>Responsive sizing</strong>: a 4000x3000 photo served to a phone displaying it at 400x300 sends 100 times the pixels it needs - roughly 99% of the bandwidth wasted. CDNs can resize on demand: <code>image.jpg?w=400&amp;h=300&amp;fit=crop</code>. The resized version is cached at the edge - the first request generates it, every subsequent request serves from cache.</p>
 <p><strong>Progressive loading</strong>: JPEG supports progressive encoding. Instead of loading the image top-to-bottom as a stripe, a progressive JPEG loads as a blurry full image first, then sharpens in passes. Instagram uses low-quality image placeholders (LQIP): a tiny 20x20 blurred version is encoded directly into the HTML as a base64 data URI, displayed instantly while the full image loads in the background.</p>
 <p>This is why Netflix can show you a thousand thumbnails the moment you hover over the progress bar. Each thumbnail is tiny, aggressively compressed, and already cached at your nearest PoP - a server 20ms away, not 200ms.</p>
 <h2 id="cdn-invalidation-updating-cached-content">CDN Invalidation: Updating Cached Content</h2>
 <p>If you update a file and the CDN has a cached version with a long TTL, users see the old file until the cache expires. This is the CDN invalidation problem.</p>
 <p>The best solution is to make it impossible: <strong>content-addressed filenames</strong>. Include a hash of the file content in the filename: <code>styles-a3f9c1.css</code>. When the CSS changes, the hash changes, the filename changes, the CDN treats it as a new file and caches it fresh. The old file quietly expires without any cache purge needed. Every modern frontend build tool (Webpack, Vite, Next.js) does this by default.</p>
-<p>When you cannot use content-addressed names - for HTML pages, API responses, or canonical URLs - CDN providers expose an API to explicitly purge cached copies. CloudFront&rsquo;s CreateInvalidation API removes entries from all edge nodes globally. This takes 10-60 seconds to propagate. Use it for emergencies: a wrong price on a product page, a broken image at a stable URL.</p>
+<p>When you cannot use content-addressed names - for HTML pages, API responses, or canonical URLs - CDN providers expose an API to explicitly purge cached copies. CloudFront&rsquo;s CreateInvalidation API removes entries from all edge nodes globally; it typically completes within a minute or two. Some CDNs (Fastly, Cloudflare) purge globally within seconds. Use it for emergencies: a wrong price on a product page, a broken image at a stable URL.</p>
 <h2 id="why-the-api-latency-is-different-in-different-countries">Why the API Latency Is Different in Different Countries</h2>
 <p>When someone asks &ldquo;the API responds in 200ms in India but 1.5 seconds in the US,&rdquo; the diagnosis almost always involves geography and CDN placement.</p>
 <p>Dynamic API responses (personalized data, database-driven content) cannot be cached on a CDN - they are different for every user. Those requests must reach the origin server. If the origin is in us-east-1 and the user is in Singapore, every API call travels to Virginia and back: 180ms just for the signal, plus server processing time.</p>
@@ -256,7 +260,7 @@ Accept: image/avif,image/webp,image/apng,image/*,*/*;q=0.8
 </tr>
 <tr>
 <td>Anycast</td>
-<td>DNS routes users to the nearest PoP automatically using BGP</td>
+<td>Many PoPs share one IP address; BGP routes each user to a nearby one</td>
 </tr>
 <tr>
 <td>Cache hit</td>
