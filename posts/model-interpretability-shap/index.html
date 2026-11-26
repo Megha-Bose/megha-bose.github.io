@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -174,7 +177,7 @@
 <li>A linear regression with 5 features has coefficients that directly say &ldquo;increasing age by 1 unit changes the prediction by X.&rdquo;</li>
 <li>A decision tree of depth 3 can be drawn on a whiteboard and followed by a human.</li>
 </ul>
-<p>The problem is that these models are less accurate than complex alternatives on most real-world problems. The tension between accuracy and interpretability has driven a whole field of post-hoc explanation methods - techniques that look at a trained black-box model and explain its behavior after the fact.</p>
+<p>The problem is that these models are often less accurate than complex alternatives, especially on images, audio and text. (On tabular data the gap is sometimes small, and Cynthia Rudin (2019) argues that for high-stakes decisions an interpretable model is often accurate enough to be preferred.) The tension between accuracy and interpretability has driven a whole field of post-hoc explanation methods - techniques that look at a trained black-box model and explain its behavior after the fact.</p>
 <h2 id="feature-importance-the-global-picture">Feature Importance: The Global Picture</h2>
 <p>Before diving into per-prediction explanations, start with global feature importance. Which features does the model rely on most?</p>
 <p><strong>Permutation importance</strong>: for each feature, shuffle its values randomly across the dataset (breaking its correlation with the target), recompute predictions, and measure how much worse the model gets. A feature that matters causes a large accuracy drop when shuffled. A feature that is redundant or irrelevant causes little change.</p>
@@ -183,7 +186,7 @@
 result <span style="color:#f92672">=</span> permutation_importance(model, X_val, y_val, n_repeats<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>)
 <span style="color:#75715e"># result.importances_mean[i] = mean drop in score when feature i is shuffled</span>
 sorted_idx <span style="color:#f92672">=</span> result<span style="color:#f92672">.</span>importances_mean<span style="color:#f92672">.</span>argsort()[::<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]
-</code></pre></div><p>Permutation importance is model-agnostic and measures actual impact on held-out data, not training data. The main risk: if two features are correlated, shuffling one still leaves part of the information in the other, so correlated features can both appear unimportant even when the information they carry is critical.</p>
+</code></pre></div><p>Permutation importance is model-agnostic and measures actual impact on held-out data, not training data. The main risk: if two features are correlated, shuffling one still leaves part of the information in the other, so correlated features can both appear unimportant even when the information they carry is critical. Shuffling also creates unrealistic rows (a 20-year-old with 40 years of work history), so the model is scored on inputs it never saw.</p>
 <p><strong>Tree-based feature importance</strong>: tree models (random forests, XGBoost, LightGBM) compute built-in importance as the total gain from splits on each feature across all trees. This is fast but biased toward high-cardinality features (continuous features with many split points) and reflects training-set importance rather than generalization.</p>
 <h2 id="partial-dependence-plots-how-a-feature-affects-predictions">Partial Dependence Plots: How a Feature Affects Predictions</h2>
 <p>Permutation importance tells you which features matter. Partial Dependence Plots (PDPs) tell you how - the shape of the relationship between a feature and the model&rsquo;s output.</p>
@@ -203,7 +206,8 @@ PartialDependenceDisplay<span style="color:#f92672">.</span>from_estimator(
 <p>The mathematics comes from cooperative game theory. Imagine the features as players in a coalition game. The model&rsquo;s prediction is the &ldquo;payout.&rdquo; Each feature&rsquo;s <strong>Shapley value</strong> is its fair share of the payout, averaging its marginal contribution over all possible orderings in which features could join the prediction.</p>
 <p>Formally, the Shapley value of feature $j$ for prediction $f(x)$ is:</p>
 <p>$$\phi_j = \sum_{S \subseteq F \setminus \{j\}} \frac{|S|!(|F|-|S|-1)!}{|F|!} \left[ f(x_{S \cup \{j\}}) - f(x_S) \right]$$</p>
-<p>where $F$ is the full set of features, $S$ ranges over all subsets not containing $j$, and $f(x_S)$ is the model&rsquo;s prediction using only the features in $S$ (with remaining features averaged out). The factorials weight each subset by the probability that feature $j$ joins in that particular order.</p>
+<p>where $F$ is the full set of features, $S$ ranges over all subsets not containing $j$, and $f(x_S)$ is the model&rsquo;s prediction using only the features in $S$ (with remaining features averaged out). The factorial weight is the probability that, in a uniformly random ordering of all features, exactly the features in $S$ come before $j$. So the formula is the same as averaging $j$&rsquo;s marginal contribution over every ordering, which the animation below does by hand.</p>
+<div class="sf" data-sf="player" data-src="/data/model-interpretability-shap/shapley.json"></div>
 <p>This satisfies four properties that make it uniquely &ldquo;fair&rdquo;:</p>
 <ul>
 <li><strong>Efficiency</strong>: SHAP values sum to the difference between the prediction and the baseline (average prediction): $\sum_j \phi_j = f(x) - \mathbb{E}[f(X)]$.</li>
