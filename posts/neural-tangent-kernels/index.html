@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -202,6 +205,7 @@
 <p>Result 2 is the key. It says that in the infinite-width limit, the NTK does not evolve during training - even as the parameters $\theta(t)$ change continuously, the Gram matrix of Jacobians remains approximately constant. Training a neural network in this regime is exactly equivalent to kernel gradient descent with kernel $K^\infty$.</p>
 <p>Why does the NTK freeze? Intuitively: with $p \to \infty$ parameters and a fixed dataset of $N$ points, the gradient $\nabla_\theta f(x;\theta)$ is a vector in $\mathbb{R}^p$. The update $\dot{\theta} = -\nabla_\theta \mathcal{L}$ moves $\theta$ by $O(1/\sqrt{p})$ in each coordinate (the gradient is bounded and spread over $p$ directions). Each individual weight barely moves. Since the NTK is determined by the Jacobian, and the Jacobian at any point changes by $O(1/\sqrt{p})$ per step, the NTK changes by $O(1/\sqrt{p}) \to 0$ as $p \to \infty$. The function $f$ changes dramatically (it goes from random initialization to perfectly fitting the data), but individual parameters move imperceptibly.</p>
 <p>This is why the regime is called &ldquo;lazy training&rdquo; or the &ldquo;kernel regime&rdquo; - the weights are too numerous and too small for any individual weight change to matter, but the collective effect of all their tiny changes implements exactly the kernel regression update.</p>
+<div class="sf" data-sf="player" data-src="/data/neural-tangent-kernels/ntk.json"></div>
 <hr>
 <h2 id="the-ntk-for-common-architectures">The NTK for Common Architectures</h2>
 <p>The infinite-width NTK has a closed-form recursive structure. For a fully-connected network with $L$ layers, activation function $\phi$, and input normalization, the NTK is:</p>
@@ -214,7 +218,7 @@
 <h2 id="finite-width-corrections-and-feature-learning">Finite-Width Corrections and Feature Learning</h2>
 <p>The NTK analysis holds exactly only in the strict $n \to \infty$ limit. For finite $n$, two things change:</p>
 <p><strong>The NTK evolves.</strong> The NTK at training step $t$ differs from the initial NTK by $O(1/\sqrt{n})$ per step. For small networks, this deviation accumulates substantially over training. The network does not behave like fixed kernel regression; instead, the effective kernel changes as features are learned.</p>
-<p><strong>Feature learning.</strong> In the NTK regime, each neuron&rsquo;s weights change by $O(1/n)$ over all of training - imperceptibly. The neurons are not reorganized; they are simply computing slightly different linear combinations of the same fixed random features from initialization. In finite-width networks with large learning rates or when mean-field scaling is used instead of NTK scaling, neurons can change by $O(1)$ amounts - they genuinely reorganize their representations. This is called feature learning or the &ldquo;mean-field&rdquo; or &ldquo;muP&rdquo; regime (Maximal Update Parameterization, Yang et al., 2022).</p>
+<p><strong>Feature learning.</strong> In the NTK regime, the parameters move only slightly over all of training: the relative change $\|\theta - \theta_0\| / \|\theta_0\|$ shrinks like $1/\sqrt{n}$, and the change in each hidden neuron&rsquo;s incoming weights vanishes as the width grows. The neurons are not reorganized; they are simply computing slightly different linear combinations of the same fixed random features from initialization. In finite-width networks with large learning rates or when mean-field scaling is used instead of NTK scaling, neurons can change by $O(1)$ amounts - they genuinely reorganize their representations. This is called feature learning, studied through &ldquo;mean-field&rdquo; scaling for two-layer networks and, for deep networks, the Maximal Update Parameterization, $\mu$P (Yang and Hu, 2021).</p>
 <p>Feature learning is believed to be necessary for several practically important phenomena:</p>
 <ul>
 <li><strong>Transfer learning:</strong> fine-tuning a pretrained model on a new task works because the learned features from pretraining are useful for the new task. In the NTK regime, features cannot change, so fine-tuning is simply kernel regression with a fixed kernel - much less flexible.</li>
@@ -224,7 +228,7 @@
 <hr>
 <h2 id="what-ntk-explains-about-generalization">What NTK Explains About Generalization</h2>
 <p>Despite its limitations, NTK theory provides the first clean theoretical explanation for why overparameterized networks generalize.</p>
-<p>In the infinite-width NTK regime, the trained network is exactly the minimum-norm interpolant of the training data in the reproducing kernel Hilbert space (RKHS) of $K^\infty$. The minimum-norm interpolant minimizes $\|f\|_{\mathcal{H}}$ subject to $f(x_i) = y_i$ for all training points. For kernel regression, classical theory gives bounds on the generalization error:</p>
+<p>In the infinite-width NTK regime, the trained network equals the network at initialization plus the minimum-norm interpolant, in the reproducing kernel Hilbert space (RKHS) of $K^\infty$, of the residuals between the targets and the initial outputs. (The initial network is a random function; averaging over initializations, or starting from an output of zero, leaves just the minimum-norm interpolant.) The minimum-norm interpolant minimizes $\|f\|_{\mathcal{H}}$ subject to $f(x_i) = y_i$ for all training points. For kernel regression, classical theory gives bounds on the generalization error:</p>
 <p>$$\mathbb{E}\left[(f(x) - y)^2\right] \leq \frac{\|f^*\|_{\mathcal{H}}^2}{n} \cdot \text{(complexity term)}$$</p>
 <p>where $\|f^*\|_{\mathcal{H}}$ is the RKHS norm of the true function. If the true function has small RKHS norm under $K^\infty$ - if it is &ldquo;simple&rdquo; in the sense defined by the architecture&rsquo;s NTK - then the minimum-norm interpolant generalizes, even with more parameters than data points.</p>
 <p>This gives a concrete mechanism for implicit regularization: gradient descent on overparameterized networks converges to the minimum-norm solution in the NTK RKHS (or an approximation thereof for finite width). The implicit prior is that the target function should be simple relative to the network&rsquo;s NTK. For natural tasks (image classification, language), this is plausibly satisfied because the architecture&rsquo;s inductive biases align with the structure of the data.</p>
