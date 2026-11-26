@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -189,7 +192,7 @@
 <p>The foundational dataset for PRM research is <strong>PRM800K</strong> (Lightman et al., 2023, OpenAI). The dataset contains 800,000 step-level human feedback labels on GPT-4 solutions to problems from the MATH benchmark, a collection of competition mathematics problems across algebra, geometry, number theory, and combinatorics.</p>
 <p>Each label is one of three ratings: <strong>positive</strong> (the step is correct and helpful), <strong>negative</strong> (the step contains an error), or <strong>neutral</strong> (the step is correct but not useful, e.g., a restatement). Annotators reviewed each step in sequence and were instructed to rate based on correctness and relevance to the solution, not on the style or efficiency of the approach.</p>
 <p>Training a reward model on PRM800K labels produces a PRM that scores each step of a reasoning chain. Lightman et al. then used this PRM to improve <strong>best-of-N selection</strong>: generate $N$ candidate solutions to each problem (using the LLM with temperature sampling), score each step of each candidate with the PRM, and select the candidate with the best aggregate PRM score.</p>
-<p>The results were striking. For large $N$ (e.g., $N = 1860$), best-of-N selection using a PRM trained on PRM800K significantly outperformed best-of-N selection using an ORM trained on the same problems. The PRM correctly identified higher-quality solutions that the ORM rated similarly to lower-quality ones, because the PRM penalized solutions with errors in intermediate steps even when the final answer happened to be correct.</p>
+<p>The results were striking. For large $N$ (e.g., $N = 1860$), best-of-N selection using a PRM trained on PRM800K significantly outperformed best-of-N selection using an ORM trained on the same problems: on a representative subset of MATH, the PRM-selected answers were right 78.2% of the time, against 72.4% for the ORM and 69.6% for simple majority voting. The PRM correctly identified higher-quality solutions that the ORM rated similarly to lower-quality ones, because the PRM penalized solutions with errors in intermediate steps even when the final answer happened to be correct.</p>
 <hr>
 <h2 id="using-prms-at-inference-time">Using PRMs at Inference Time</h2>
 <p>Once trained, a PRM can be deployed in several ways at inference time to improve the quality of LLM outputs.</p>
@@ -208,7 +211,7 @@
 <p>It is important to distinguish PRMs from a related approach called <strong>RLVR</strong> (Reinforcement Learning from Verifiable Rewards).</p>
 <p>RLVR trains the generator LLM using RL with a reward signal that comes from a verifier (for math: symbolic checking of the final answer; for code: test suite execution). The generator&rsquo;s policy is directly updated to produce higher-reward outputs. RLVR changes the model weights.</p>
 <p>PRMs, by contrast, provide a scoring function used at <strong>inference time</strong> to select among candidate outputs. The generator&rsquo;s weights are not modified by the PRM. PRMs improve selection; RLVR improves the generator.</p>
-<p>The two are complementary. A model trained with RLVR produces better distributions of candidate solutions. A PRM then helps select the best candidate from that distribution. In practice, strong reasoning systems (like those used in OpenAI&rsquo;s o1/o3 series) likely combine both: RLVR training to shift the generator toward higher-quality reasoning, and PRM-guided search at inference time to select among candidates.</p>
+<p>The two are complementary. A model trained with RLVR produces better distributions of candidate solutions. A PRM then helps select the best candidate from that distribution. Many strong reasoning systems combine both: RLVR training to shift the generator toward higher-quality reasoning, and reward-model-guided selection or search at inference time to choose among candidates. (How OpenAI&rsquo;s o1/o3 models use process supervision, if at all, has not been publicly documented.)</p>
 <p>RLVR requires verifiable rewards (can automatically check if the answer is correct) and can only improve final-answer correctness directly. PRMs require step-level supervision but can improve intermediate reasoning quality. Neither approach alone is sufficient for domains where neither the final answer is easily verifiable nor intermediate steps can be automatically checked.</p>
 <hr>
 <h2 id="the-annotation-bottleneck-and-alternatives">The Annotation Bottleneck and Alternatives</h2>
@@ -217,7 +220,8 @@
 <p><strong>Monte Carlo estimation of step correctness.</strong> A step&rsquo;s quality can be estimated by sampling many completions from that step and checking how often they lead to a correct final answer. If continuing from step $k$ leads to a correct final answer in 80% of sampled completions, step $k$ is likely correct. If it leads to a correct answer in only 10% of completions, it is likely an error.</p>
 <p>Formally, define the <strong>step-level value</strong>:</p>
 <p>$$V(x, c_{1:k}) = \Pr(\text{correct final answer} \mid x, c_{1:k})$$</p>
-<p>where the probability is over completions sampled from the LLM conditioned on the partial chain. This value function can be estimated by Monte Carlo sampling and used directly as a process reward signal without human annotation. The cost is compute (many completions per step) rather than human labor.</p>
+<p>where the probability is over completions sampled from the LLM conditioned on the partial chain. This value function can be estimated by Monte Carlo sampling and used directly as a process reward signal without human annotation - the approach of Math-Shepherd (Wang et al., 2024). The cost is compute (many completions per step) rather than human labor. And it measures something subtly different from validity: whether a step can still lead to the right answer, not whether the step itself is correct.</p>
+<div class="sf" data-sf="player" data-src="/data/process-reward-models/prm.json"></div>
 <p><strong>Formal verification.</strong> For mathematics and programming, formal proof assistants (Lean, Isabelle, Coq) or type checkers can automatically verify whether an intermediate step is logically valid. A reasoning chain in a formal language can be checked step-by-step with zero human annotation. This approach is limited to problems that can be formalized, but for mathematics and code it represents a fully scalable and noise-free alternative to human annotation.</p>
 <p><strong>Weak supervision and transfer.</strong> A PRM trained on one domain (high-school math) may transfer partially to related domains (undergraduate math). Training on weaker supervision signals (e.g., soft labels from a model that predicts step correctness) can bootstrap a PRM when human labels are scarce.</p>
 <hr>
