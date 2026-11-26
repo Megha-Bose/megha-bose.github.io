@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -226,11 +229,12 @@ These are classification problems. The output you want isn&rsquo;t a continuous 
 <p>$$w \leftarrow w - \eta \cdot \nabla_w L = w - \frac{\eta}{m} X^T (\hat{p} - y)$$</p>
 <hr>
 <h2 id="no-closed-form">No Closed Form</h2>
-<p>Unlike linear regression, there is no formula like $(X^TX)^{-1}X^Ty$ that directly gives the optimal weights. The cross-entropy loss is convex - it has a unique global minimum - but the minimum cannot be found by simply setting the gradient to zero and solving. The equation $X^T(\hat{p} - y) = 0$ involves $\hat{p} = \sigma(Xw)$, which is nonlinear in $w$. There is no algebraic solution.</p>
+<p>Unlike linear regression, there is no formula like $(X^TX)^{-1}X^Ty$ that directly gives the optimal weights. The cross-entropy loss is convex, so any minimum is a global one (and it is unique when the features are not collinear) - but it cannot be found by simply setting the gradient to zero and solving. There is also a catch: if the classes are perfectly separable by a hyperplane, there is no minimum at all. The loss keeps decreasing as $\|w\| \to \infty$, so in practice you add regularization or stop early. The equation $X^T(\hat{p} - y) = 0$ involves $\hat{p} = \sigma(Xw)$, which is nonlinear in $w$. There is no algebraic solution.</p>
 <p>We must use iterative optimization. Gradient descent works and is simple. <strong>Newton&rsquo;s method</strong> works better (faster convergence) by also using second-order information (the Hessian), but each step is more expensive. The Hessian of the cross-entropy loss is:</p>
 <p>$$H = \frac{1}{m} X^T \text{diag}(\hat{p} \odot (1-\hat{p})) X$$</p>
 <p>where $\odot$ is elementwise multiplication. This is positive semidefinite (confirming convexity), and Newton&rsquo;s method with this Hessian is called <strong>IRLS</strong> (Iteratively Reweighted Least Squares). It typically converges in 10 - 20 iterations instead of thousands for gradient descent.</p>
 <hr>
+<div class="sf" data-sf="player" data-src="/data/logistic-regression/logreg.json"></div>
 <h2 id="the-decision-boundary">The Decision Boundary</h2>
 <p>When we use logistic regression as a classifier, we predict class 1 when $P(Y=1|x) &gt; 0.5$, which is exactly when $w^T x + b &gt; 0$.</p>
 <p>The <strong>decision boundary</strong> is the set of points where $w^T x + b = 0$. This is a hyperplane - a line in 2D, a plane in 3D, a hyperplane in $n$ dimensions.</p>
@@ -319,7 +323,7 @@ These are classification problems. The output you want isn&rsquo;t a continuous 
 </tr>
 </tbody>
 </table>
-<p>Logistic regression takes a linear model and applies the sigmoid to produce a probability. The log-odds is linear in the features. Training maximizes likelihood - equivalently, minimizes cross-entropy. The gradient has the same structure as linear regression. The decision boundary is a hyperplane, which is the fundamental limitation: logistic regression cannot learn non-linear class boundaries. That limitation is what motivates neural networks.</p>
+<p>Logistic regression takes a linear model and applies the sigmoid to produce a probability. The log-odds is linear in the features. Training maximizes likelihood - equivalently, minimizes cross-entropy. The gradient has the same structure as linear regression. The decision boundary is a hyperplane in the features it is given, which is the fundamental limitation: it cannot learn non-linear class boundaries unless you hand it non-linear features (squares, products, embeddings). That limitation is what motivates neural networks.</p>
 <hr>
 <p><strong>Read next:</strong></p>
 <ul>
