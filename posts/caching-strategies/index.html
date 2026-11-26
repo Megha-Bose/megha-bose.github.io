@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -194,23 +197,24 @@
     db<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;UPDATE users SET ... WHERE id = </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#34;</span>, user_id)
     redis<span style="color:#f92672">.</span>delete(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;user:</span><span style="color:#e6db74">{</span>user_id<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)  <span style="color:#75715e"># invalidate; next read gets fresh data</span>
 </code></pre></div><p>The appeal: only data that is actually requested gets cached. If a record is never read, it never occupies cache space. Cache restarts are graceful - the cache warms up organically as requests come in.</p>
-<p>The risk: the first request after a cache miss always hits the database. If many requests arrive simultaneously for a cold key, all of them see a miss and all go to the database at once. This is the <strong>thundering herd</strong> problem, discussed in detail below.</p>
+<p>One subtle race remains: a reader can miss, fetch the old row, and be slow to write it back; meanwhile a writer updates the row and deletes the key; then the slow reader stores the old value, which now sits in the cache until its TTL runs out. The window is small, and the TTL bounds the damage, which is one reason every cache-aside entry should have a TTL.</p>
+<p>The bigger risk: the first request after a cache miss always hits the database. If many requests arrive simultaneously for a cold key, all of them see a miss and all go to the database at once. This is the <strong>thundering herd</strong> problem, discussed in detail below.</p>
 <h3 id="write-through">Write-Through</h3>
-<p>On every write, update both the cache and the database atomically.</p>
+<p>On every write, update both the database and the cache, in the same code path.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">update_user</span>(user_id, data):
     db<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;UPDATE users SET ... WHERE id = </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#34;</span>, user_id)
     redis<span style="color:#f92672">.</span>set(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;user:</span><span style="color:#e6db74">{</span>user_id<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>, json<span style="color:#f92672">.</span>dumps(data))  <span style="color:#75715e"># update cache simultaneously</span>
-</code></pre></div><p>The appeal: the cache is always current. Reads after a write always find the new data. No stale reads, no cache invalidation logic needed.</p>
+</code></pre></div><p>The appeal: the cache is kept current by the write itself. A read after a write finds the new data, with no separate invalidation logic. The two writes are not atomic, though: if the cache write fails, or two concurrent writers update the database and the cache in different orders, the cache can still end up holding an older value. A TTL is the usual safety net.</p>
 <p>The cost: every write is two writes instead of one - the database write plus the cache write. Write performance is slightly slower. You also cache data that may never be read - if you write a record that nobody queries for the next hour, you spent cache space for nothing. A TTL on cached entries cleans up the cold data over time.</p>
 <p>Write-through is the right choice when you absolutely cannot serve stale data: a pricing service, a permission check, anything where showing the user outdated information causes a real problem.</p>
 <h3 id="write-back-write-behind">Write-Back (Write-Behind)</h3>
 <p>Write to the cache first. Return the response to the user immediately. Flush to the database asynchronously, in batches.</p>
-<p>This is how your laptop saves battery when writing files: writes go to an in-memory buffer and are periodically flushed to disk. The write feels instant; the actual disk write happens later in the background.</p>
+<p>This is how operating systems handle ordinary file writes: writes go to an in-memory page cache and are flushed to disk in the background. The write feels instant; the actual disk write happens later in the background.</p>
 <p>The appeal: dramatically faster writes. A counter that increments on every page view - if you wrote that to the database on every increment, you would be doing millions of database writes per day. Write-back accumulates the increments in Redis and flushes the total every few seconds. The database sees one write per flush interval, not one per page view.</p>
 <p>The risk: data in the cache that has not been flushed to the database is at risk. If the cache server crashes before the flush, those writes are lost. This is acceptable for like counters and analytics (losing a few events in a crash is fine), and completely unacceptable for financial transactions.</p>
 <h3 id="write-around">Write-Around</h3>
 <p>Skip the cache on writes entirely. Writes go directly to the database. The cache is only populated when data is subsequently read.</p>
-<p>This is the right pattern for data that is written once and rarely read, or for bulk data imports where caching every incoming record would evict useful data from the cache. Log ingestion pipelines, batch imports, archival operations - all are write-around candidates.</p>
+<p>If an older copy of the key may already be in the cache, the write must still delete it, or readers keep getting the old value. This is the right pattern for data that is written once and rarely read, or for bulk data imports where caching every incoming record would evict useful data from the cache. Log ingestion pipelines, batch imports, archival operations - all are write-around candidates.</p>
 <h2 id="cache-invalidation-the-hard-part">Cache Invalidation: The Hard Part</h2>
 <p>Phil Karlton&rsquo;s observation that &ldquo;there are only two hard things in computer science: cache invalidation and naming things&rdquo; is not a joke. It captures a genuine asymmetry: making a cache fast is easy; keeping it correct is hard.</p>
 <p>The fundamental problem: a cache is a copy of data. The original can change. The copy does not automatically know it has changed. Every strategy below is a different answer to the question of how to decide when the copy is no longer trustworthy.</p>
@@ -228,6 +232,7 @@
 <p>Picture a cached key with a 5-minute TTL: the homepage product list. At peak traffic, 5,000 users per second request this page. The cache is serving all of them from its stored copy.</p>
 <p>The TTL expires. In the next 50 milliseconds, thousands of requests all see a cache miss and all go to the database. The database that was handling zero queries for this key is now handling thousands simultaneously. This overwhelms the database connection pool. Queries time out. The application throws errors. The frontend retries. More queries. The database falls over.</p>
 <p>This is the thundering herd (also called cache stampede). It is not a hypothetical. High-traffic systems hit this regularly after cache invalidation events or after a cache restart warms up.</p>
+<div class="sf" data-sf="player" data-src="/data/caching-strategies/herd.json"></div>
 <p>Four practical solutions:</p>
 <p><strong>Mutex on first miss</strong>: when a cache miss occurs, the first request acquires a Redis lock (<code>SET lockkey 1 NX EX 10</code> - set if not exists, expire in 10 seconds). That request goes to the database and populates the cache. All other concurrent requests for the same key see the lock is held, wait briefly, then read from the freshly populated cache. Only one database query happens regardless of how many requests arrived simultaneously.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_with_lock</span>(key, fetch_fn, ttl<span style="color:#f92672">=</span><span style="color:#ae81ff">3600</span>):
@@ -247,20 +252,20 @@
         <span style="color:#f92672">import</span> time
         time<span style="color:#f92672">.</span>sleep(<span style="color:#ae81ff">0.05</span>)
         <span style="color:#66d9ef">return</span> get_with_lock(key, fetch_fn, ttl)
-</code></pre></div><p><strong>Probabilistic early expiration (XFetch)</strong>: instead of waiting for TTL to hit zero, start probabilistically refreshing the cache before it expires. The closer the key is to expiry, the higher the probability that any given request triggers a background refresh. Popular keys stay warm continuously; the cache is never actually empty when traffic is high.</p>
+</code></pre></div><p><strong>Probabilistic early expiration (XFetch)</strong>: instead of waiting for TTL to hit zero, start probabilistically refreshing the cache before it expires. The closer the key is to expiry, the higher the probability that any given request triggers a background refresh. Popular keys stay warm continuously; the cache is never actually empty when traffic is high. On its own it does not stop several requests from refreshing at once - at thousands of requests per second, many can roll a refresh within the same few milliseconds - so it is often combined with the lock above.</p>
 <p><strong>Stale-while-revalidate</strong>: serve the stale cached value immediately, while triggering a background refresh. The user gets a fast response (possibly 1-2 minutes stale). The cache refreshes asynchronously. The HTTP <code>Cache-Control: stale-while-revalidate=60</code> directive instructs CDNs to do exactly this. For application-level caching, the same idea applies: return the old value now, refresh the cache in a background thread.</p>
 <p><strong>Request coalescing</strong>: if a thousand requests arrive for a cold key simultaneously, funnel them into a single upstream database request. All pending requests wait for the one upstream call to complete, then share its result. The Dataloader library (used heavily in GraphQL resolvers) implements this as its core primitive.</p>
 <h2 id="redis-data-structures-for-practical-caching">Redis Data Structures for Practical Caching</h2>
 <p>Redis is more than a key-value store. Its data structures enable patterns that a plain hash map cannot support.</p>
-<p><strong>Atomic counters for high-write metrics</strong>: <code>INCR likes:post-42</code> is an atomic operation - no two concurrent increments interfere. Run a million likes per second through Redis INCR, then batch-flush the totals to the database periodically. The database sees writes per flush interval, not per like. This is how Instagram&rsquo;s like counter works at scale.</p>
-<p><strong>Sorted sets for leaderboards</strong>: <code>ZINCRBY leaderboard 1 user:42</code> atomically increments user 42&rsquo;s score and keeps the set ranked. <code>ZRANGE leaderboard 0 9 WITHSCORES REV</code> returns the top 10 players in a single O(log n + 10) operation. No GROUP BY, no ORDER BY, no database round-trip.</p>
+<p><strong>Atomic counters for high-write metrics</strong>: <code>INCR likes:post-42</code> is an atomic operation - no two concurrent increments interfere. Run a million likes per second through Redis INCR, then batch-flush the totals to the database periodically. The database sees writes per flush interval, not per like. This pattern is widely used for counters at scale.</p>
+<p><strong>Sorted sets for leaderboards</strong>: <code>ZINCRBY leaderboard 1 user:42</code> atomically increments user 42&rsquo;s score and keeps the set ranked. <code>ZRANGE leaderboard 0 9 REV WITHSCORES</code> returns the top 10 players in a single O(log n + 10) operation. No GROUP BY, no ORDER BY, no database round-trip.</p>
 <p><strong>SETNX for distributed locks</strong>: <code>SET lockkey value NX EX 30</code> sets the key only if it does not already exist, with a 30-second automatic expiry. This is the primitive for preventing thundering herd stampedes and for coordinating distributed systems. If two application servers both try to execute the same scheduled job, the SETNX lock ensures only one succeeds.</p>
 <p><strong>Hash for partial updates</strong>: instead of serializing a full user object as a JSON string, store individual fields: <code>HSET user:42 name &quot;Megha&quot; email &quot;meg@example.com&quot; subscription &quot;pro&quot;</code>. <code>HGET user:42 name</code> retrieves a single field without deserializing the entire object. <code>HINCRBY user:42 login_count 1</code> increments one field atomically. Useful when different parts of your application need to update different fields of the same cached entity.</p>
 <h2 id="when-caching-makes-things-worse">When Caching Makes Things Worse</h2>
 <p>The instinct to cache everything is a common mistake. Caching is not free.</p>
 <p><strong>Caching writes</strong> is usually wrong. Write-back requires infrastructure to guarantee eventual flush. Write-through doubles write latency. Cache-aside on the write path adds complexity without benefit. Unless writes are the bottleneck (they rarely are - reads dominate most applications), focus caching on reads.</p>
 <p><strong>Caching correctness-critical operations</strong> is dangerous. A booking system that reads seat availability from the cache and makes transactional decisions based on it will double-book seats. The rule: use the cache for display and for tolerable staleness; always read from the primary database for decisions that must be correct. &ldquo;Show the user how many seats are left&rdquo; can use cache. &ldquo;Deduct this seat from inventory when the user clicks Book&rdquo; must go to the database.</p>
-<p><strong>Too many cached keys with no TTL</strong> fills your cache and causes evictions of useful data. Every cached key should have a TTL, even if it is long. Redis&rsquo;s LRU eviction will manage space automatically, but intentional TTLs give you control.</p>
+<p><strong>Too many cached keys with no TTL</strong> fills your cache and causes evictions of useful data. Every cached key should have a TTL, even if it is long. Redis only evicts keys for you if <code>maxmemory-policy</code> is set to an eviction policy such as <code>allkeys-lru</code> or <code>allkeys-lfu</code>; the default, <code>noeviction</code>, rejects new writes with an error once memory is full. Intentional TTLs give you control either way.</p>
 <hr>
 <table>
 <thead>
@@ -283,7 +288,7 @@
 <tr>
 <td>Write-through</td>
 <td>Double (cache + DB)</td>
-<td>Strong (always current after write)</td>
+<td>Current after each write (barring races or failed cache writes)</td>
 <td>Wasted space for unread data</td>
 <td>Must never show stale data</td>
 </tr>
@@ -297,7 +302,7 @@
 <tr>
 <td>Write-around</td>
 <td>Normal (DB only, skip cache)</td>
-<td>Strong (always DB on first read)</td>
+<td>Fresh on first read, if the write also deletes any existing entry</td>
 <td>No cache benefit on recent writes</td>
 <td>Write-once data, bulk imports</td>
 </tr>
