@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -194,7 +197,7 @@ similarities <span style="color:#f92672">=</span> [cosine_similarity(query_vec, 
 </code></pre></div><p>This is semantic search: retrieval based on meaning rather than lexical overlap.</p>
 <hr>
 <h2 id="the-scale-problem-why-exact-search-fails">The Scale Problem: Why Exact Search Fails</h2>
-<p>Searching over thousands of documents with exact cosine similarity is fine. Over millions or billions, it is not. Computing the cosine similarity between a query vector and every document vector in a corpus of 100 million items, where each vector has 768 dimensions, requires around 150 billion floating-point operations per query. Even on fast hardware, this takes seconds. At high query volumes, this is untenable.</p>
+<p>Searching over thousands of documents with exact cosine similarity is fine. Over millions or billions, it is not. Computing the cosine similarity between a query vector and every document vector in a corpus of 100 million items, where each vector has 768 dimensions, requires around 150 billion floating-point operations per query, over roughly 300 GB of float32 vectors. On a CPU that is on the order of a second per query; a GPU can do it in tens of milliseconds, but only if the whole corpus fits in its memory. At high query volumes, either way is untenable.</p>
 <p>This is the approximate nearest neighbor (ANN) problem: find the vectors most similar to a query, not exactly, but fast enough to be practical. The approximation is a deliberate tradeoff - you will occasionally miss the single most similar vector, but you will get very good results in milliseconds rather than exact results in seconds.</p>
 <p>The most successful algorithm for this problem in practice is HNSW.</p>
 <hr>
@@ -205,30 +208,8 @@ similarities <span style="color:#f92672">=</span> [cosine_similarity(query_vec, 
 <p>HNSW constructs a proximity graph where each node is a vector, and nodes are connected to their nearest neighbors. Navigating this graph from an entry point to the query is a greedy local search: at each step, move to whichever neighbor is closest to the query. This finds very good approximate nearest neighbors very fast.</p>
 <h3 id="hierarchy">Hierarchy</h3>
 <p>The problem with a flat proximity graph is that greedy local search can get stuck in local optima - regions where every neighbor is farther from the query than the current node, but you are not actually near the global nearest neighbor. This is the coarse navigation problem: you need long-range connections to quickly cross large distances in the space before using short-range connections for fine-grained search.</p>
-<p>HNSW solves this by building a hierarchy of graphs. At the top layer, every node has long-range connections spanning the whole dataset - you can cross large distances quickly. At the bottom layer, every node has short-range connections to its closest neighbors for fine-grained precision. Intermediate layers have intermediate connection ranges.</p>
-<div class="mermaid">
-graph TB
-  subgraph L2["Layer 2 - sparse, long-range"]
-    direction LR
-    A2((A)) --- E2((E))
-  end
-  subgraph L1["Layer 1 - medium-range"]
-    direction LR
-    A1((A)) --- C1((C)) --- D1((D)) --- E1((E))
-  end
-  subgraph L0["Layer 0 - dense, short-range"]
-    direction LR
-    A0((A)) --- B0((B)) --- C0((C)) --- Cp(("C'")) --- D0((D)) --- Dp(("D'")) --- E0((E)) --- Ep(("E'"))
-  end
-  A2 -. search drops .-> A1
-  A1 -. search drops .-> A0
-
-</div>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
-
+<p>HNSW solves this by building a hierarchy of graphs. The top layer holds only a small random sample of the nodes, so its links are long-range, spanning the whole dataset - you can cross large distances quickly. At the bottom layer, every node has short-range connections to its closest neighbors for fine-grained precision. Intermediate layers have intermediate connection ranges.</p>
+<div class="sf" data-sf="player" data-src="/data/rag-vector-databases/hnsw.json"></div>
 <p>Search starts at the top layer, greedily navigates to the node closest to the query, then drops to the next layer and repeats. Each layer refines the result. The final search in layer 0 gives the approximate nearest neighbors.</p>
 <p>Construction: nodes are inserted one at a time. Each new node is assigned to a random maximum layer (exponential distribution, so most nodes appear only in layer 0). It is connected to its closest neighbors in every layer up to its maximum.</p>
 <h3 id="the-tradeoffs">The Tradeoffs</h3>
@@ -246,7 +227,7 @@ graph TB
 <li>Recall at ef=100: typically 95-99% for well-tuned parameters.</li>
 <li>Does not support deletion well (marks nodes as deleted but does not reclaim graph space).</li>
 </ul>
-<p>Other ANN algorithms exist - IVF (inverted file index) partitions the space into Voronoi cells, SCANN (Google) uses learned quantization, Annoy (Spotify) uses random projection trees - but HNSW dominates modern vector database implementations because of its strong recall-latency tradeoff and the fact that it works well across different data distributions without requiring a separate quantization step.</p>
+<p>Other ANN algorithms exist - IVF (inverted file index) partitions the space into Voronoi cells, ScaNN (Google) uses learned (anisotropic) quantization, Annoy (Spotify) uses random projection trees - but HNSW dominates modern vector database implementations because of its strong recall-latency tradeoff and the fact that it works well across different data distributions without requiring a separate quantization step.</p>
 <hr>
 <h2 id="vector-databases">Vector Databases</h2>
 <p>A vector database is a storage and retrieval system built around dense vector search. It handles the infrastructure problems you would otherwise have to solve yourself: indexing, persistence, updates, scaling, filtering, and the operationalization of ANN search at production load.</p>
@@ -287,7 +268,7 @@ results <span style="color:#f92672">=</span> client<span style="color:#f92672">.
 </code></pre></div><p>Qdrant is a strong choice when: you need full control over your infrastructure, you have selective filtering requirements, or you want to run everything on your own hardware.</p>
 <h3 id="pinecone">Pinecone</h3>
 <p>Pinecone is a fully managed, proprietary vector database offered as a cloud service. You never operate it - there is no server to configure, no index to tune. You get a namespace, a client library, and an API.</p>
-<p>Its design is oriented around operational simplicity: you send vectors in, query vectors out. The tradeoffs are the natural cloud tradeoffs - you give up control (no tuning of HNSW parameters, no access to internals) in exchange for not having to manage the infrastructure. It scales automatically, handles updates gracefully, and has a generous free tier for prototyping.</p>
+<p>Its design is oriented around operational simplicity: you send vectors in, query vectors out. The tradeoffs are the natural cloud tradeoffs - you give up control (its index is proprietary, and you cannot tune or inspect it) in exchange for not having to manage the infrastructure. It scales automatically, handles updates gracefully, and has a generous free tier for prototyping.</p>
 <p>Pinecone introduced <strong>namespaces</strong> for multi-tenancy (different users or datasets can share an index without seeing each other&rsquo;s data) and <strong>sparse-dense hybrid search</strong> (combining BM25 keyword scores with vector similarity in a single query). Hybrid search is important in practice because pure semantic search can miss exact matches - if a user asks for &ldquo;GPT-4&rdquo;, you want to find documents that mention &ldquo;GPT-4&rdquo; even if the semantic vector for &ldquo;GPT-4&rdquo; is not particularly close to documents about language models in general.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> pinecone
 
