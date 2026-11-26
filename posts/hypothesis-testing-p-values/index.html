@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -194,15 +197,20 @@
 <h3 id="one-sample-z-test">One-sample z-test</h3>
 <p>You observe a sample $x_1, \ldots, x_n$ and want to test whether the population mean $\mu$ equals some specific value $\mu_0$. If $\sigma$ (the population standard deviation) is known, the test statistic is:</p>
 <p>$$Z = \frac{\bar{x} - \mu_0}{\sigma / \sqrt{n}}.$$</p>
-<p>Under $H_0$, $Z \sim \mathcal{N}(0,1)$ exactly (by the Central Limit Theorem, for large $n$, or exactly if the data are Normal). A value of $Z = 2$ means the sample mean is 2 standard errors above $\mu_0$ - that happens with probability about 2.3% under $H_0$ (one-sided), or 4.6% (two-sided).</p>
+<p>Under $H_0$, $Z \sim \mathcal{N}(0,1)$ - exactly if the data are Normal, and approximately for large $n$ otherwise, by the Central Limit Theorem. A value of $Z = 2$ means the sample mean is 2 standard errors above $\mu_0$ - that happens with probability about 2.3% under $H_0$ (one-sided), or 4.6% (two-sided).</p>
 <h3 id="one-sample-t-test">One-sample t-test</h3>
 <p>In practice, $\sigma$ is usually unknown. You replace it with the sample standard deviation $s = \sqrt{\frac{1}{n-1}\sum(x_i - \bar{x})^2}$:</p>
 <p>$$T = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}.$$</p>
 <p>Under $H_0$, $T$ follows a <strong>t-distribution</strong> with $n-1$ degrees of freedom, written $t_{n-1}$. The t-distribution has heavier tails than the normal - it accounts for the additional uncertainty in estimating $\sigma$. As $n \to \infty$, $t_{n-1} \to \mathcal{N}(0,1)$.</p>
 <h3 id="worked-example-drug-trial">Worked example: drug trial</h3>
-<p>Suppose in our drug trial we observe $n = 100$ treated patients with sample mean improvement $\bar{x} = 2.3$, sample standard deviation $s = 4.0$, and the null hypothesis says the population mean is $\mu_0 = 0$ (no effect). The t-statistic is:</p>
-<p>$$T = \frac{2.3 - 0}{4.0 / \sqrt{100}} = \frac{2.3}{0.4} = 5.75.$$</p>
-<p>Under $H_0$, this follows $t_{99} \approx \mathcal{N}(0,1)$. A value of 5.75 is far out in the tail: the two-sided p-value is $P(|T| \geq 5.75) \approx 2 \times 10^{-8}$. That is extremely unlikely under the null. We reject $H_0$.</p>
+<p>The drug trial compares two groups, so the right test compares their means. Suppose each group has $n = 100$ patients, the treated group improves by $\bar{x}_T = 2.3$ points on average and the control group by $\bar{x}_C = 0.8$, and both have sample standard deviation $s = 4.0$. The null hypothesis is that the two population means are equal. The <strong>two-sample t-statistic</strong> divides the difference in means by its standard error:</p>
+<p>$$T = \frac{\bar{x}_T - \bar{x}_C}{s\sqrt{1/n_T + 1/n_C}} = \frac{2.3 - 0.8}{4.0 \sqrt{2/100}} = \frac{1.5}{0.566} \approx 2.65.$$</p>
+<p>Under $H_0$, this follows a t-distribution with $n_T + n_C - 2 = 198$ degrees of freedom, which is very close to $\mathcal{N}(0,1)$. The two-sided p-value is $P(|T| \geq 2.65) \approx 0.009$. If the drug did nothing, a difference this large would turn up in fewer than 1 in 100 trials. We reject $H_0$ at $\alpha = 0.05$.</p>
+<p>Note what would have gone wrong by testing only the treated group against zero: $T = 2.3 / 0.4 = 5.75$, a far more impressive-looking number. But it would have answered the wrong question, because patients on placebo improve too. The control group is what makes the comparison fair.</p>
+<hr>
+<h2 id="where-p-values-land">Where p-Values Land</h2>
+<p>It helps to see many p-values at once. When the null is true, a p-value from a continuous test statistic is uniformly distributed between 0 and 1, which is exactly why rejecting at $p &lt; 0.05$ gives a 5% false positive rate. When there is a real effect, p-values pile up near zero - how tightly depends on the effect size and the sample size.</p>
+<div class="sf" data-sf="player" data-src="/data/hypothesis-testing-p-values/pvals.json"></div>
 <hr>
 <h2 id="significance-level-and-the-decision-rule">Significance Level and the Decision Rule</h2>
 <p>Before seeing any data, you commit to a <strong>significance level</strong> $\alpha$: the threshold below which you will reject $H_0$. If $p &lt; \alpha$, reject; if $p \geq \alpha$, fail to reject.</p>
@@ -228,7 +236,7 @@
 <p>The significance threshold has become a cargo cult. Journals publish studies with $p &lt; 0.05$ and reject those with $p &gt; 0.05$, regardless of effect size, sample size, or scientific merit. This creates several serious problems.</p>
 <p><strong>Effect size is invisible.</strong> A study with $n = 1{,}000{,}000$ and a true effect of 0.001 units will have $p &lt; 0.05$. That effect may be too small to matter clinically or practically. Reporting $p &lt; 0.05$ without reporting the effect size and confidence interval is uninformative.</p>
 <p><strong>Publication bias.</strong> Studies with $p &lt; 0.05$ get published; studies with $p &gt; 0.05$ often do not. This means the published literature is a biased sample of all experiments run. A body of published studies with $p \approx 0.04$ provides weaker evidence than it appears, because the corresponding null results are invisible.</p>
-<p><strong>Optional stopping.</strong> If you keep collecting data until $p &lt; 0.05$, you are guaranteed to eventually cross the threshold even if $H_0$ is true - because any random walk eventually hits any threshold. Running a test until you get significance is called <strong>p-hacking</strong> and dramatically inflates the true Type I error rate.</p>
+<p><strong>Optional stopping.</strong> If you keep collecting data and checking until $p &lt; 0.05$, you will eventually cross the threshold even if $H_0$ is true. Under the null, the z-statistic keeps wandering, and the law of the iterated logarithm says it will exceed any fixed bound such as 1.96 sooner or later. Stopping as soon as you see significance is a form of <strong>p-hacking</strong>, and it inflates the true Type I error rate dramatically: checking after every observation up to 1,000 gives a false positive rate around 45%, not 5%.</p>
 <hr>
 <h2 id="the-multiple-comparisons-problem">The Multiple Comparisons Problem</h2>
 <p>Suppose you run 20 independent hypothesis tests, each at $\alpha = 0.05$, and all 20 null hypotheses are actually true. The probability of at least one false positive is:</p>
@@ -237,7 +245,7 @@
 <h3 id="bonferroni-correction">Bonferroni correction</h3>
 <p>The simplest fix: if you run $m$ tests and want the <strong>family-wise error rate</strong> (probability of any false positive) to be at most $\alpha$, use significance level $\alpha/m$ for each individual test.</p>
 <p>$$\alpha_\text{per test} = \frac{\alpha}{m}.$$</p>
-<p>For $m = 20$ and $\alpha = 0.05$: use $\alpha_\text{per test} = 0.0025$. This is conservative - it controls the worst-case probability - but it is a defensible correction when the tests are independent.</p>
+<p>For $m = 20$ and $\alpha = 0.05$: use $\alpha_\text{per test} = 0.0025$. This is conservative, but it is valid however the tests depend on each other: it follows from the union bound, $P(\text{any false positive}) \leq \sum_i P(\text{false positive}_i) = m \cdot \alpha/m = \alpha$.</p>
 <p>Other corrections (Benjamini-Hochberg, which controls the false discovery rate rather than the family-wise error rate) are less conservative and more appropriate when you expect some true effects among the many tests.</p>
 <hr>
 <h2 id="two-sided-vs-one-sided-tests">Two-sided vs. One-sided Tests</h2>
