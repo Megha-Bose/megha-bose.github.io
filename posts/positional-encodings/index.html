@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          12 min read
+          13 min read
         </div>
       </div>
     </header>
@@ -209,7 +212,7 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
 </ul>
 <p>What it does not provide: any learned adaptation to the specific task or data distribution.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> Why can&rsquo;t you just use one-hot position vectors - a different unit vector for each position? You could, in principle. A one-hot vector for position $t$ in a sequence of length 10,000 would be a 10,000-dimensional vector with a 1 in slot $t$. Three problems: (1) Size - these vectors would be 10,000-dimensional, needing to be projected down, adding parameters. (2) No inductive bias - the model learns, from scratch, that position 3 is &ldquo;close&rdquo; to position 4. Sinusoidal encodings build this in: nearby positions have similar encodings. (3) No length generalization - if you train with sequences up to length 512 and then see a sequence of length 1000, you encounter position vectors 513, 514, &hellip; that the model has never seen. The formula-based approach has no such failure mode.</p>
+<p><strong>Discomfort check.</strong> Why can&rsquo;t you just use one-hot position vectors - a different unit vector for each position? You could, in principle. A one-hot vector for position $t$ in a sequence of length 10,000 would be a 10,000-dimensional vector with a 1 in slot $t$. Three problems: (1) Size - these vectors would be 10,000-dimensional, needing to be projected down, adding parameters. (2) No inductive bias - the model learns, from scratch, that position 3 is &ldquo;close&rdquo; to position 4. Sinusoidal encodings build this in: nearby positions have similar encodings. (3) No length generalization - if you train with sequences up to length 512 and then see a sequence of length 1000, you encounter position vectors 513, 514, &hellip; that the model has never seen. A formula can at least produce a vector for any position - though, as later sections show, models still degrade at positions far beyond their training length.</p>
 </blockquote>
 <hr>
 <h2 id="learned-absolute-positional-encodings">Learned Absolute Positional Encodings</h2>
@@ -223,7 +226,7 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
 <p><strong>Shaw et al. (2018)</strong> introduced relative positional encodings for self-attention. Instead of adding position information to token embeddings, they add a position-dependent bias directly to the attention score:</p>
 <p>$$e_{ij} = \frac{(x_i W_Q)(x_j W_K + a_{i-j})^\top}{\sqrt{d}}$$</p>
 <p>where $a_{i-j} \in \mathbb{R}^d$ is a learned vector depending on the clipped relative distance $i - j$. The bias makes attention aware of relative position without requiring the model to decode absolute positions.</p>
-<p><strong>T5</strong> (Raffel et al. 2020) uses a simpler version: the attention score at relative distance $i - j$ receives an additive scalar bias $r(i - j)$ drawn from a learned small table. The table is shared across layers and heads.</p>
+<p><strong>T5</strong> (Raffel et al. 2020) uses a simpler version: the attention score at relative distance $i - j$ receives an additive scalar bias $r(i - j)$ drawn from a small learned table, with distances grouped into logarithmically sized buckets. Each head has its own table, shared across layers.</p>
 <p>Relative encodings generalize better to unseen lengths because relative distances within training range remain in-distribution even when absolute positions are new.</p>
 <hr>
 <h2 id="alibi-linear-attention-biases">ALiBi: Linear Attention Biases</h2>
@@ -243,6 +246,7 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
 <p>$$\tilde{q}_m \cdot \tilde{k}_n = q_m^\top R_\theta^{(m-n)} k_n$$</p>
 <p>where $R_\theta^{(m-n)}$ is a rotation by angle proportional to the relative offset $m - n$.</p>
 <p>This is the elegant property of RoPE: <strong>absolute positions are encoded in the rotations, but dot products naturally compute relative position</strong>. You encode absolute position, but attention automatically becomes relative. You get both.</p>
+<div class="sf" data-sf="player" data-src="/data/positional-encodings/rope.json"></div>
 <h3 id="why-rope-won">Why RoPE Won</h3>
 <p>Compared to sinusoidal: RoPE is applied to $Q$ and $K$ directly, not just added to embeddings. The rotation affects the dot-product computation itself, not just the input representations. This is a richer and more direct injection of positional information.</p>
 <p>Compared to learned absolute: RoPE generalizes to unseen lengths and requires no position embedding table.</p>
@@ -250,12 +254,12 @@ Give a self-attention layer the tokens of &ldquo;dog bites man&rdquo; or &ldquo;
 <h3 id="context-length-extension-with-rope">Context Length Extension With RoPE</h3>
 <p>One of the most practically important developments in LLM engineering is extending context windows. A model trained with RoPE at context length 4096 has learned rotation angles up to $4096 \cdot \theta_i$ for each frequency $\theta_i$. At positions beyond 4096, it encounters rotation angles it has never seen during training - degraded performance.</p>
 <p><strong>RoPE interpolation</strong> (Chen et al. 2023): instead of rotating by $m \cdot \theta_i$, rotate by $(m / s) \cdot \theta_i$ where $s$ is a scaling factor $s = L_{\text{new}} / L_{\text{train}}$. This compresses new positions into the range of trained positions. Combined with fine-tuning on longer sequences, this extends context from 4096 to 32768 tokens.</p>
-<p><strong>YaRN</strong> (Peng et al. 2023) and <strong>LongRoPE</strong> (Ding et al. 2024) refine this further, using different scaling for different frequency components - low-frequency dimensions extrapolate well; high-frequency dimensions need interpolation. These techniques have extended context windows from 4K to 128K or even 1M tokens in production models.</p>
+<p><strong>YaRN</strong> (Peng et al. 2023) and <strong>LongRoPE</strong> (Ding et al. 2024) refine this further, using different scaling for different frequency components. High-frequency dimensions complete many rotations within the training length, so they have already seen every angle and are left alone; low-frequency dimensions, whose wavelength exceeds the training length, are the ones that need interpolation (the second tab of the animation above shows the split). These techniques have extended context windows from 4K to 128K or even 1M tokens in production models.</p>
 <hr>
 <h2 id="extending-rope-to-long-contexts">Extending RoPE to Long Contexts</h2>
 <p>RoPE was designed for training lengths up to a few thousand tokens. At longer contexts, the rotation angles grow large and the model sees angle combinations it never encountered during training, causing degradation.</p>
-<p><strong>YaRN (Yet Another RoPE Extension)</strong> addresses this with three modifications. First, frequency interpolation: scale the position indices by $\text{scale} = L_{\text{train}} / L_{\text{target}}$ so the angles stay within the trained range. But interpolating all frequencies equally is suboptimal - low-frequency components (slow rotation, long-range information) need less scaling than high-frequency components (fast rotation, local information). YaRN applies different interpolation factors per frequency band. Second, dynamic scaling: the effective temperature of the softmax (controlled by $\sqrt{d_k}$) needs adjustment as context grows - YaRN multiplies attention logits by a length-dependent temperature factor. Third, NTK-aware interpolation: distribute the position information more evenly across dimensions using number-theoretic properties of the RoPE basis.</p>
-<p>In practice, YaRN can extend a model trained to 4k tokens to handle 128k tokens with fine-tuning on a small amount of long-context data. It is used in gpt-oss-120b (extending to 131k tokens), Kimi K2, and most other frontier long-context models.</p>
+<p><strong>YaRN (Yet Another RoPE extensioN method)</strong> builds on two earlier ideas. Plain position interpolation scales every position index by $L_{\text{train}} / L_{\text{target}}$ so all angles stay in the trained range, but that also squashes the high-frequency dimensions that carry fine local information. &ldquo;NTK-aware&rdquo; interpolation - named after the Neural Tangent Kernel analysis that motivated it - instead enlarges the RoPE base, which barely changes the high frequencies while stretching the low ones. YaRN goes one step further: it treats each frequency band separately (leaving high frequencies untouched, interpolating the low ones fully, and blending in between), and it multiplies the attention logits by a small length-dependent temperature factor to keep the softmax&rsquo;s sharpness stable at long context. A related trick, dynamic NTK scaling, adjusts the scaling factor at inference time according to the current sequence length.</p>
+<p>In practice, YaRN can extend a model trained to 4k tokens to handle 128k tokens with fine-tuning on a small amount of long-context data. It is used, for example, in gpt-oss (extending to 131k tokens) and in several other open long-context models.</p>
 <hr>
 <h2 id="nope-rnope-and-document-masking">NoPE, RNoPE, and Document Masking</h2>
 <p><strong>NoPE (No Positional Embedding).</strong> Some transformer layers can learn useful representations without any positional encoding - relying purely on causal masking and attention patterns to infer relative order. Tokens can still infer position from the causal attention mask (future tokens are masked, so attending to a specific number of past tokens implies a position). NoPE layers have no extrapolation problem because they never saw position-encoded input, but they underperform on short-context reasoning tasks where absolute position matters.</p>
