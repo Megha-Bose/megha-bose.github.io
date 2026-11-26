@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -178,7 +181,7 @@
 <p>The estimator $\hat{\mu}_{\text{IS}} = \frac{1}{n}\sum_{i=1}^n f(x_i) \frac{p(x_i)}{q(x_i)}$ with $x_i \sim q$ is unbiased: $\mathbb{E}[\hat{\mu}_{\text{IS}}] = \mathbb{E}_p[f(X)]$.</p>
 <p>The ratio $w(x) = p(x)/q(x)$ is the importance weight. The variance of the estimator is:</p>
 <p>$$\text{Var}(\hat{\mu}_{\text{IS}}) = \frac{1}{n}\text{Var}_q\left[f(X) w(X)\right] = \frac{1}{n}\left(\mathbb{E}_q[f(X)^2 w(X)^2] - \mu^2\right).$$</p>
-<p>This can be dramatically larger than the variance under $p$. If $q$ puts very little mass on a region where $p$ has high mass and $f$ is large, then the importance weight $w(x) = p(x)/q(x)$ in that region is enormous, causing a few samples to have extreme values. The variance of the IS estimator is finite only if $\mathbb{E}_q[w(X)^2] &lt; \infty$, i.e., if $\chi^2(p \| q) &lt; \infty$. When $p$ and $q$ have heavy tails in different places, this condition fails.</p>
+<p>This can be dramatically larger than the variance under $p$. If $q$ puts very little mass on a region where $p$ has high mass and $f$ is large, then the importance weight $w(x) = p(x)/q(x)$ in that region is enormous, causing a few samples to have extreme values. For bounded $f$, the variance of the IS estimator is finite exactly when $\mathbb{E}_q[w(X)^2] &lt; \infty$, i.e., when $\chi^2(p \| q) &lt; \infty$. When $p$ and $q$ have heavy tails in different places, this condition fails.</p>
 <p><strong>In off-policy RL</strong>, importance sampling is used to reuse experience collected under an old policy $\mu$ to estimate quantities under the current policy $\pi$:</p>
 <p>$$\mathbb{E}_\pi[G_t] = \mathbb{E}_\mu\left[G_t \cdot \prod_{k=t}^{T} \frac{\pi(a_k | s_k)}{\mu(a_k | s_k)}\right].$$</p>
 <p>The product of ratios along a trajectory can be exponentially large or small, making off-policy IS estimators extremely high-variance for long trajectories. Truncated IS (capping importance weights at some maximum value) introduces bias but controls variance.</p>
@@ -187,12 +190,14 @@
 <p>The control variate technique is the most widely applicable variance reduction method. Suppose you want to estimate $\mu = \mathbb{E}[f(X)]$. If you know a function $g(X)$ whose expectation $\mu_g = \mathbb{E}[g(X)]$ is known analytically, then for any constant $c$:</p>
 <p>$$\mathbb{E}[f(X) - c(g(X) - \mu_g)] = \mathbb{E}[f(X)] - c \cdot 0 = \mu.$$</p>
 <p>The estimator $\hat{\mu}_c = \frac{1}{n}\sum_i (f(x_i) - c(g(x_i) - \mu_g))$ is unbiased for any $c$. Its variance is:</p>
-<p>$$\text{Var}(\hat{\mu}_c) = \text{Var}(f) - 2c \text{Cov}(f, g) + c^2 \text{Var}(g).$$</p>
+<p>$$\text{Var}(\hat{\mu}_c) = \frac{1}{n}\left(\text{Var}(f) - 2c \text{Cov}(f, g) + c^2 \text{Var}(g)\right).$$</p>
 <p>This is minimized over $c$ by:</p>
 <p>$$c^* = \frac{\text{Cov}(f, g)}{\text{Var}(g)}.$$</p>
 <p>With optimal $c^*$, the variance reduction factor is:</p>
-<p>$$\frac{\text{Var}(\hat{\mu}_{c^*})}{\text{Var}(f/n)} = 1 - \rho_{fg}^2$$</p>
+<p>$$\frac{\text{Var}(\hat{\mu}_{c^*})}{\text{Var}(f)/n} = 1 - \rho_{fg}^2$$</p>
 <p>where $\rho_{fg} = \text{Corr}(f, g)$. A control variate with correlation $0.9$ reduces variance by $81\%$, equivalent to multiplying the sample size by $5.26$.</p>
+<p>The animation below makes this concrete on a toy integral, $\mathbb{E}[e^U]$ for $U$ uniform on $[0, 1]$. Using $g(U) = U$ as the control variate (correlation $0.99$) cuts the variance by a factor of about 60. The other tabs show antithetic pairs (from later in this post) and importance sampling on a rare event.</p>
+<div class="sf" data-sf="player" data-src="/data/variance-reduction/funnel.json"></div>
 <p>The art is finding a $g$ that is highly correlated with $f$ and has a known expectation. For Monte Carlo integration, common choices include simpler functions that approximate $f$, or exact analytic results for nearby problems. For policy gradient methods, the natural choice is the value function - which brings us to baselines.</p>
 <hr>
 <h2 id="the-policy-gradient-baseline">The Policy Gradient Baseline</h2>
@@ -210,8 +215,8 @@
 <p>The quantity $A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s)$ is the advantage function. It measures how much better action $a$ is compared to the average action in state $s$ under policy $\pi$.</p>
 <p>Using the advantage in policy gradient:</p>
 <p>$$\nabla_\theta J(\theta) = \mathbb{E}_\pi\left[A^\pi(s_t, a_t) \nabla_\theta \log \pi_\theta(a_t | s_t)\right].$$</p>
-<p>This is the control variate interpretation: $V^\pi(s_t)$ is the control variate $g$, the action-selection score $\nabla_\theta \log \pi$ is uncorrelated with the state baseline by the identity above, and $A^\pi = G_t - V^\pi(s_t)$ is the centered estimand.</p>
-<p>Intuitively: the advantage is zero-centered around the average. Positive advantage means &ldquo;this action was better than average, increase its probability.&rdquo; Negative advantage means &ldquo;this action was worse than average, decrease its probability.&rdquo; The gradient update is proportional to the deviation from average performance, not the absolute level of performance. This is why the baseline matters: if rewards are always large and positive (e.g., scores in the range 1000-1100), the gradient direction is the right, but the variance is enormous due to the scale. Subtracting the baseline centers the signal at zero, eliminating this scale-induced variance.</p>
+<p>This is the control variate interpretation: $V^\pi(s_t)$ is the control variate $g$, the correction term $V^\pi(s_t) \nabla_\theta \log \pi$ has mean zero by the identity above, and $G_t - V^\pi(s_t)$ is an unbiased single-sample estimate of $A^\pi(s_t, a_t)$.</p>
+<p>Intuitively: the advantage is zero-centered around the average. Positive advantage means &ldquo;this action was better than average, increase its probability.&rdquo; Negative advantage means &ldquo;this action was worse than average, decrease its probability.&rdquo; The gradient update is proportional to the deviation from average performance, not the absolute level of performance. This is why the baseline matters: if rewards are always large and positive (e.g., scores in the range 1000-1100), the gradient direction is right on average, but the variance is enormous due to the scale. Subtracting the baseline centers the signal at zero, eliminating this scale-induced variance.</p>
 <hr>
 <h2 id="gae-generalized-advantage-estimation">GAE: Generalized Advantage Estimation</h2>
 <p>How should we estimate $A^\pi(s_t, a_t)$ in practice? There is a fundamental bias-variance tradeoff.</p>
@@ -224,13 +229,13 @@
 <p><strong>GAE (Schulman et al., 2015)</strong> takes an exponential average over all $k$-step estimators:</p>
 <p>$$\hat{A}_t^{\text{GAE}(\gamma, \lambda)} = \sum_{k=0}^\infty (\gamma\lambda)^k \delta_{t+k} = \delta_t + (\gamma\lambda)\delta_{t+1} + (\gamma\lambda)^2 \delta_{t+2} + \cdots$$</p>
 <p>where $\lambda \in [0, 1]$ is the GAE parameter. When $\lambda = 0$: $\hat{A}_t = \delta_t$ (one-step TD, low variance, high bias). When $\lambda = 1$: $\hat{A}_t = G_t - V^\pi(s_t)$ (Monte Carlo, unbiased, high variance). Intermediate $\lambda$ interpolates between these extremes.</p>
-<p>In practice (PPO, A3C, etc.), $\lambda = 0.95$ and $\gamma = 0.99$ are common. The discounting by $(\gamma\lambda)^k$ naturally downweights distant TD errors, both reducing variance and giving recent rewards more influence. GAE is now a standard component of nearly all policy gradient methods.</p>
+<p>In practice (PPO and most other actor-critic methods), $\lambda = 0.95$ and $\gamma = 0.99$ are common. The discounting by $(\gamma\lambda)^k$ naturally downweights distant TD errors, both reducing variance and giving recent rewards more influence. GAE is now a standard component of nearly all policy gradient methods.</p>
 <hr>
 <h2 id="mini-batches-and-shuffling">Mini-Batches and Shuffling</h2>
 <p>The simplest variance reduction technique is averaging: if each sample has variance $\sigma^2$, the average of $B$ iid samples has variance $\sigma^2 / B$. Mini-batch SGD with batch size $B$ reduces gradient variance by a factor of $B$ relative to single-sample SGD.</p>
 <p>But samples in a mini-batch are not iid - they are drawn from the same dataset. If the dataset has structure (similar examples appear in adjacent rows), then samples within a mini-batch are correlated, and the variance reduction is less than $1/B$. This is why shuffling the dataset before each epoch is important: it breaks correlations between successive mini-batches and ensures that the batches are closer to iid samples from the data distribution.</p>
 <p>The relationship between batch size and variance also has implications for the effective learning rate. The optimal learning rate scales approximately as $\eta \propto \sqrt{B}$ (square root scaling) or $\eta \propto B$ (linear scaling) depending on the optimizer and the noise structure. Doubling the batch size roughly halves the variance, allowing the learning rate to increase proportionally to maintain the same signal-to-noise ratio.</p>
-<p>Large batch training faces a wall: beyond a critical batch size, the variance of the stochastic gradient is dominated by curvature (how much the gradient changes from point to point), not noise. Additional batch size no longer reduces effective variance, and the computational cost is wasted.</p>
+<p>Large batch training faces a wall. Beyond a critical batch size (McCandlish et al., 2018), the gradient noise is already small compared with the gradient itself, so the step is limited by curvature - how far you can move before the gradient changes - rather than by noise. Making the batch larger still reduces variance, but that no longer buys a proportionally larger step, so the extra computation is mostly wasted.</p>
 <hr>
 <h2 id="antithetic-variates-and-stratified-sampling">Antithetic Variates and Stratified Sampling</h2>
 <p>Two classical Monte Carlo techniques deserve mention for their elegance and their appearance in modern ML.</p>
@@ -238,15 +243,15 @@
 <p>$$\hat{\mu} = \frac{1}{n}\sum_{i=1}^{n/2}\left(f(U_i) + f(1 - U_i)\right).$$</p>
 <p>The variance is:</p>
 <p>$$\text{Var}(\hat{\mu}) = \frac{\text{Var}(f(U)) + \text{Cov}(f(U), f(1-U))}{n/2}.$$</p>
-<p>If $f$ is monotone, then $\text{Cov}(f(U), f(1-U)) &lt; 0$ (when $U$ is large, $1-U$ is small, and a monotone $f$ maps them to opposite ends of its range). Negative covariance reduces the variance below $\text{Var}(f)/n$ - better than iid sampling. In RL, this appears in paired rollouts: run two episodes with opposite random seeds to ensure that the variability in one is counterbalanced by the other.</p>
+<p>If $f$ is monotone, then $\text{Cov}(f(U), f(1-U)) &lt; 0$ (when $U$ is large, $1-U$ is small, and a monotone $f$ maps them to opposite ends of its range). Negative covariance reduces the variance below $\text{Var}(f)/n$ - better than iid sampling. In ML, the same idea appears as mirrored sampling in evolution strategies (Salimans et al., 2017): each random parameter perturbation $\epsilon$ is evaluated together with $-\epsilon$, which cancels much of the noise in the gradient estimate.</p>
 <p><strong>Stratified sampling.</strong> Divide the sample space into $K$ strata (non-overlapping regions). Draw $n_k$ samples from each stratum (with $\sum_k n_k = n$). The estimator is $\hat{\mu} = \sum_k w_k \hat{\mu}_k$ where $w_k$ is the probability of stratum $k$ and $\hat{\mu}_k$ is the stratum-level average.</p>
-<p>Stratified sampling always has variance at most as large as iid sampling, and strictly less if the stratum means differ. Optimal allocation (Neyman allocation) puts more samples in strata with higher variance: $n_k \propto w_k \sigma_k$. In practice, stratified sampling is used in importance-weighted experience replay and curriculum learning to ensure that different types of examples contribute proportionally to each gradient step.</p>
+<p>With proportional allocation ($n_k \propto w_k$), stratified sampling always has variance at most as large as iid sampling, and strictly less if the stratum means differ. Optimal allocation (Neyman allocation) puts more samples in strata with higher variance: $n_k \propto w_k \sigma_k$. In ML, stratified splits keep class proportions identical across cross-validation folds, and NeRF uses stratified sampling along each camera ray: one random point per depth bin rather than points scattered at random.</p>
 <hr>
 <h2 id="clipping-as-variance-control">Clipping as Variance Control</h2>
 <p>A practical variance reduction technique that appears throughout modern RL is clipping importance weights.</p>
 <p>In PPO (Proximal Policy Optimization), the policy gradient objective is:</p>
 <p>$$\mathcal{L}^{\text{CLIP}}(\theta) = \mathbb{E}_t\left[\min\left(r_t(\theta) \hat{A}_t,\; \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) \hat{A}_t\right)\right]$$</p>
-<p>where $r_t(\theta) = \pi_\theta(a_t|s_t) / \pi_{\theta_\text{old}}(a_t|s_t)$ is the importance ratio. The clip prevents the ratio from straying far from 1, which prevents large importance weights from causing catastrophic updates. The clipping introduces a small bias (the gradient is zeroed out when the ratio is outside $[1-\epsilon, 1+\epsilon]$) but dramatically reduces the variance of the policy gradient estimator when policies differ.</p>
+<p>where $r_t(\theta) = \pi_\theta(a_t|s_t) / \pi_{\theta_\text{old}}(a_t|s_t)$ is the importance ratio. The clip prevents the ratio from straying far from 1, which prevents large importance weights from causing catastrophic updates. The clipping introduces bias (the gradient of a sample is zeroed out when its ratio has left $[1-\epsilon, 1+\epsilon]$ in the direction its advantage favours, so the update stops pushing further) but keeps the policy close to the one that collected the data, which keeps the importance ratios, and the variance they cause, under control.</p>
 <p>In RLHF (Reinforcement Learning from Human Feedback), reward clipping is similarly used: cap the reward at some maximum value to prevent extreme rewards from dominating the gradient. This is a form of Huber-loss-style robustness, trading a small amount of bias for a large reduction in the influence of reward outliers.</p>
 <p>The tension in all clipping approaches is the bias-variance tradeoff made explicit: tighter clipping reduces variance but introduces more bias (the gradient estimator is no longer unbiased for the true objective). Choosing $\epsilon = 0.2$ in PPO is an empirical choice that works well across many tasks - not a theoretically derived optimum.</p>
 <hr>
@@ -293,7 +298,7 @@
 <tr>
 <td>Antithetic variates</td>
 <td>Negative correlation between paired samples</td>
-<td>Only works for monotone functions</td>
+<td>Guaranteed to help only for monotone $f$</td>
 </tr>
 <tr>
 <td>Clipping (PPO)</td>
