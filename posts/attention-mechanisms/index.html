@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -197,7 +200,7 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 <p>The result is an alignment table, learned automatically without any alignment labels. When generating &ldquo;cat&rdquo; in English, the model attends strongly to &ldquo;chat&rdquo; in French. When generating &ldquo;not&rdquo;, it attends to &ldquo;ne&rdquo; and &ldquo;pas&rdquo;. The model has discovered correspondence between source and target tokens purely from observing parallel text.</p>
 <hr>
 <h2 id="scaled-dot-product-attention">Scaled Dot-Product Attention</h2>
-<p>Bahdanau&rsquo;s attention used a learned neural network for the alignment score. A cleaner formulation - the one used in transformers - replaces this with a simple dot product. This version, introduced by Vaswani et al. in 2017, also introduces the now-standard <strong>Query, Key, Value</strong> framework.</p>
+<p>Bahdanau&rsquo;s attention used a learned neural network for the alignment score. A cleaner formulation - the one used in transformers - replaces this with a simple dot product. Luong, Pham and Manning used dot-product scores in 2015; Vaswani et al. (2017) added the $1/\sqrt{d}$ scaling and the now-standard <strong>Query, Key, Value</strong> framework.</p>
 <p>You have three matrices:</p>
 <ul>
 <li>$Q \in \mathbb{R}^{n \times d}$: <strong>Queries</strong> - $n$ row vectors, each asking &ldquo;what do I need?&rdquo;</li>
@@ -215,6 +218,7 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 <blockquote>
 <p><strong>Discomfort check.</strong> The scaling by $\sqrt{d}$ sounds arbitrary. Here is the calculation behind it. Suppose the entries of $Q$ and $K$ are independently sampled from $\mathcal{N}(0, 1)$. Then a single dot product $q \cdot k = \sum_{i=1}^d q_i k_i$ has mean 0 and variance $d$ (each of the $d$ terms $q_i k_i$ has variance 1, and they are independent). So the standard deviation is $\sqrt{d}$. When $d = 512$, a typical dot product has magnitude around 22 - not 1. Softmax of values this large is nearly one-hot: all probability mass goes to the maximum. Dividing by $\sqrt{d}$ brings the typical magnitude back to 1, and softmax stays spread out and informative.</p>
 </blockquote>
+<div class="sf" data-sf="player" data-src="/data/attention-mechanisms/scaling.json"></div>
 <hr>
 <h2 id="attention-as-a-differentiable-database">Attention as a Differentiable Database</h2>
 <p>There is a useful analogy that clarifies the Q, K, V design.</p>
@@ -251,14 +255,14 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 <p>When you have two sequences - a source and a target - you can use <strong>cross-attention</strong>:</p>
 <p>$$Q = X_{\text{target}} W_Q, \quad K = X_{\text{source}} W_K, \quad V = X_{\text{source}} W_V.$$</p>
 <p>The queries come from the target sequence (e.g., the decoder), but the keys and values come from the source sequence (e.g., the encoder). Each target position attends to source positions.</p>
-<p>This is exactly the Bahdanau attention described earlier, reformulated in the Q, K, V framework. It is how a transformer decoder &ldquo;reads&rdquo; the encoder when doing translation or summarization: the decoder queries the encoder&rsquo;s representations using cross-attention at every layer.</p>
+<p>This is the same idea as the Bahdanau attention described earlier - decoder positions querying encoder states - with dot-product scores in place of Bahdanau&rsquo;s small additive network. It is how a transformer decoder &ldquo;reads&rdquo; the encoder when doing translation or summarization: the decoder queries the encoder&rsquo;s representations using cross-attention at every layer.</p>
 <p>Cross-attention differs from self-attention only in the origin of the queries versus keys and values. The mechanics are identical.</p>
 <hr>
 <h2 id="the-quadratic-cost">The Quadratic Cost</h2>
 <p>Scaled dot-product attention has a cost: $O(n^2)$ in sequence length, where $n$ is the number of tokens.</p>
 <p>The attention matrix $\text{softmax}(QK^\top / \sqrt{d})$ is $n \times n$. Computing it requires $n^2$ dot products. Storing it requires $O(n^2)$ memory. For $n = 1000$, that&rsquo;s $10^6$ entries per head per layer - manageable. For $n = 100{,}000$, it&rsquo;s $10^{10}$ entries per head per layer - not manageable without specialized algorithms.</p>
-<p>This quadratic scaling is the central computational bottleneck of transformer models. It is why efficient attention - FlashAttention, sparse attention, linear attention - is an active research area. And it is why the context length of a language model is a meaningful constraint, not just an arbitrary limit.</p>
-<p>The quadratic cost is not merely a theoretical concern. At sequence length 512 (typical for BERT), the attention matrix has 262,144 entries per head per layer - manageable. At sequence length 32,768 (a long document), it has over 1 billion entries - not manageable with standard GPU memory. This is why document-length tasks require either chunking (attend within windows), sparse attention (attend to a fixed set of positions), or linearized attention (approximate the attention matrix with a lower-rank structure). None of these fully preserves the properties of full attention. The choice of approximation is the central engineering decision in deploying attention to long-context tasks.</p>
+<p>This quadratic scaling is the central computational bottleneck of transformer models. It is why efficient attention is an active research area. FlashAttention attacks the memory side exactly: it computes the same attention output in tiles that fit in fast on-chip memory, never materializing the $n \times n$ matrix, so memory grows linearly in $n$ even though the arithmetic is still quadratic. Sparse and linear attention attack the arithmetic itself, at the price of approximating. And it is why the context length of a language model is a meaningful constraint, not just an arbitrary limit.</p>
+<p>The quadratic cost is not merely a theoretical concern. At sequence length 512 (typical for BERT), the attention matrix has 262,144 entries per head per layer - manageable. At sequence length 32,768 (a long document), it has over 1 billion entries - too many to store naively for every head and layer, which is why FlashAttention-style kernels that never store the matrix are now standard. Even then the computation grows quadratically, so very long contexts also use chunking (attend within windows), sparse attention (attend to a fixed set of positions), or linearized attention (approximate the attention matrix with a lower-rank structure). Those approximations do not fully preserve the properties of full attention. The choice of approximation is the central engineering decision in deploying attention to long-context tasks.</p>
 <hr>
 <h2 id="hierarchical-attention">Hierarchical Attention</h2>
 <p>Flat attention attends over all tokens in a sequence simultaneously. But some structures are hierarchically organized: a document is made of paragraphs, each paragraph is made of sentences, each sentence is made of words. Attending over thousands of words at once is expensive and ignores this structure.</p>
@@ -320,7 +324,7 @@ You immediately know that &ldquo;it&rdquo; refers to the trophy - the trophy is 
 </tr>
 <tr>
 <td>Complexity</td>
-<td>$O(n^2 d)$ in time and $O(n^2)$ in memory</td>
+<td>$O(n^2 d)$ in time; $O(n^2)$ memory if the matrix is stored, $O(n)$ with FlashAttention</td>
 </tr>
 </tbody>
 </table>
