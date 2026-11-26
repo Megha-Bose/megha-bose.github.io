@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -216,6 +219,7 @@
 <p>The closest point in a subspace to a vector outside it is the <strong>orthogonal projection</strong>. The residual vector $y - \hat{y}$ must be perpendicular to every column of $X$:</p>
 <p>$$X^T (y - \hat{y}) = 0 \implies X^T y = X^T X w \implies w = (X^T X)^{-1} X^T y$$</p>
 <p>The normal equations literally say &ldquo;the residuals are normal (perpendicular) to the column space.&rdquo; This is where the name comes from. Ordinary least squares is the orthogonal projection of the label vector onto the column space of the feature matrix.</p>
+<div class="sf" data-sf="player" data-src="/data/linear-regression/linreg.json"></div>
 <p>This picture is useful beyond aesthetics. It immediately tells you: if you add a feature that is already in the column space of existing features, you gain nothing - the projection doesn&rsquo;t change. Feature redundancy is geometrically visible.</p>
 <hr>
 <h2 id="maximum-likelihood-same-solution-different-story">Maximum Likelihood: Same Solution, Different Story</h2>
@@ -236,7 +240,7 @@
 <p>Each step costs $O(mn)$ - one matrix-vector multiply to compute predictions, one to compute the gradient. For large $n$, this is far cheaper than forming and inverting $X^T X$.</p>
 <p>For <strong>very large datasets</strong>, even computing the gradient over all $m$ examples is expensive. <strong>Stochastic gradient descent</strong> (SGD) estimates the gradient using a single randomly-chosen example or a small mini-batch. Each step is cheap, and convergence still happens in expectation.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> Gradient descent converges to the same solution as the normal equation (since the MSE loss is convex with a unique global minimum), but it takes many iterations. How many? For MSE, the convergence rate depends on the learning rate $\eta$ and the condition number of $X^T X$ (the ratio of its largest to smallest eigenvalue). A poorly conditioned matrix - one with eigenvalues spanning many orders of magnitude - causes slow convergence and requires careful tuning of $\eta$. This is one reason preprocessing (feature normalization) matters: it keeps eigenvalues in a similar range and speeds up gradient descent.</p>
+<p><strong>Discomfort check.</strong> Gradient descent converges to the same solution as the normal equation (the MSE loss is convex, and when $X$ has linearly independent columns its minimum is unique), but it takes many iterations. How many? For MSE, the convergence rate depends on the learning rate $\eta$ and the condition number of $X^T X$ (the ratio of its largest to smallest eigenvalue). A poorly conditioned matrix - one with eigenvalues spanning many orders of magnitude - causes slow convergence and requires careful tuning of $\eta$. This is one reason preprocessing (feature normalization) matters: it keeps eigenvalues in a similar range and speeds up gradient descent.</p>
 </blockquote>
 <hr>
 <h2 id="measuring-fit-r">Measuring Fit: R²</h2>
@@ -257,7 +261,7 @@
 <p>$$w_{\text{ridge}} = (X^T X + \lambda I)^{-1} X^T y$$</p>
 <p>Two things to notice. First, $(X^T X + \lambda I)$ is always invertible for $\lambda &gt; 0$, even when $X^T X$ is singular. Adding $\lambda$ to the diagonal shifts all eigenvalues up by $\lambda$, so none are zero. Ridge regression solves the collinearity problem by construction.</p>
 <p>Second, as $\lambda$ increases, the weights are pulled toward zero. With very large $\lambda$, all weights are near zero and the model predicts close to the mean regardless of input. The $\lambda$ parameter controls the bias-variance trade-off: larger $\lambda$ introduces more bias (predictions closer to the mean) but reduces variance (less sensitivity to the particular training set).</p>
-<p><strong>Bayesian interpretation.</strong> Ridge regression is maximum a posteriori (MAP) estimation with a Gaussian prior $w \sim \mathcal{N}(0, \sigma^2/\lambda \cdot I)$. The prior says: before seeing data, we believe the weights are small. The posterior mode (MAP estimate) balances the likelihood (data fit) against the prior (weight size). Ridge is not just a regularization trick - it&rsquo;s exact Bayesian inference under a specific prior.</p>
+<p><strong>Bayesian interpretation.</strong> Ridge regression is maximum a posteriori (MAP) estimation with a Gaussian prior $w \sim \mathcal{N}(0, \sigma^2/\lambda \cdot I)$. The prior says: before seeing data, we believe the weights are small. The posterior mode (MAP estimate) balances the likelihood (data fit) against the prior (weight size). Ridge is not just a regularization trick - it has an exact Bayesian reading. With a Gaussian prior and Gaussian noise the posterior is itself Gaussian, so its mode (the ridge estimate) is also its mean. (In practice the intercept is usually left unpenalized.)</p>
 <hr>
 <h2 id="lasso-sparse-solutions">Lasso: Sparse Solutions</h2>
 <p><strong>Lasso</strong> (Least Absolute Shrinkage and Selection Operator) replaces the squared penalty with an absolute value:</p>
