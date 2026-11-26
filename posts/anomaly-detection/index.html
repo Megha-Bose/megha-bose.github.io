@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -172,7 +175,7 @@
 <p>Anomaly detection methods work by modeling normal. Once you have a model of what normal looks like, anything that deviates significantly from that model is flagged as anomalous.</p>
 <p>This sounds simple but has two deep complications. First, you need enough &ldquo;normal&rdquo; data to model it well. Second, you need to decide what &ldquo;significantly deviate&rdquo; means - that threshold is always a judgment call that trades off false positives (normal things flagged as anomalous) against false negatives (real anomalies missed).</p>
 <h2 id="isolation-forest-normal-is-hard-to-isolate">Isolation Forest: Normal Is Hard to Isolate</h2>
-<p>Isolation Forest (Liu et al., 2008) is the most widely used anomaly detection algorithm in industry, and its insight is beautiful in its simplicity.</p>
+<p>Isolation Forest (Liu et al., 2008) is one of the most widely used anomaly detection algorithms in industry, and its insight is beautiful in its simplicity.</p>
 <p>Anomalies are rare and different. Normal points cluster together in dense regions of feature space. Anomalies sit in sparse regions, far from everything else. The key observation: <strong>it takes fewer random splits to isolate an anomaly than to isolate a normal point</strong>.</p>
 <p>Imagine randomly selecting a feature and a split value within its range, repeatedly, until each point is alone. A normal point surrounded by similar neighbors requires many splits before it is isolated - each split separates it from only a few neighbors. An anomaly in sparse space is isolated after just a few splits - a single cut might separate it from the entire rest of the dataset.</p>
 <p>The algorithm builds $T$ random trees:</p>
@@ -181,7 +184,8 @@
 <li>Recursively split by randomly selecting a feature and a random split value within that feature&rsquo;s range, until every point is isolated or the tree reaches maximum depth.</li>
 <li>For a new point, the <strong>isolation depth</strong> is the number of splits required to isolate it in the tree.</li>
 </ol>
-<p>The anomaly score is computed from the average path length across all $T$ trees, normalized by the expected path length for a random binary tree. Points with shorter average path length (easier to isolate) get higher anomaly scores.</p>
+<p>The anomaly score is computed from the average path length across all $T$ trees, normalized by the expected path length for a random binary tree: $s = 2^{-\mathbb{E}[h(x)]/c(\psi)}$, where $c(\psi) \approx 2\ln(\psi - 1) + 1.15 - 2(\psi - 1)/\psi$. Points with shorter average path length (easier to isolate) get scores closer to 1; typical points score well below 0.5.</p>
+<div class="sf" data-sf="player" data-src="/data/anomaly-detection/iforest.json"></div>
 <p><strong>What works well</strong>: Isolation Forest is fast to train ($O(T \psi \log \psi)$, largely independent of $n$), requires no distance computations, handles high-dimensional data reasonably, and works unsupervised. The $\psi = 256$ default is remarkably robust - using a small subsample per tree speeds up training without harming performance, because isolated points are identified with few points anyway.</p>
 <p><strong>Where it struggles</strong>: anomalies that form their own dense cluster (a group of fraudsters using the same pattern) may not be isolated quickly because they are dense relative to each other. Points near the boundary of the normal distribution may score as anomalous even when they are not.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> sklearn.ensemble <span style="color:#f92672">import</span> IsolationForest
@@ -202,10 +206,10 @@ labels <span style="color:#f92672">=</span> clf<span style="color:#f92672">.</sp
 </ol>
 <p>A LOF score near 1 means $p$ has the same density as its neighbors - it is normal. A LOF score much greater than 1 means $p$ is in a sparser region than its neighbors - it is an outlier relative to its local context.</p>
 <p><strong>What works well</strong>: LOF detects local anomalies that global methods miss. In a dataset where fraud occurs in multiple different &ldquo;styles&rdquo; each with its own density, LOF can detect deviations within each style separately.</p>
-<p><strong>Where it struggles</strong>: LOF requires computing pairwise distances, making it $O(n^2)$ in the worst case - unusable for datasets above a few hundred thousand points. The choice of $k$ significantly affects results, and the right $k$ varies across different regions of the data.</p>
+<p><strong>Where it struggles</strong>: LOF needs the $k$ nearest neighbours of every point. Spatial indexes help in low dimensions, but in high dimensions this degrades towards $O(n^2)$ distance computations, which becomes impractical for large datasets. The choice of $k$ significantly affects results, and the right $k$ varies across different regions of the data.</p>
 <h2 id="statistical-baselines">Statistical Baselines</h2>
 <p>Before reaching for Isolation Forest, statistical baselines deserve consideration. They are transparent, fast, and surprisingly effective for low-dimensional data with known distributions.</p>
-<p><strong>Z-score</strong>: flag points where $\|x - \mu\| / \sigma &gt; 3$ (more than 3 standard deviations from the mean). Works well for univariate Gaussian data. Breaks down for skewed distributions or when the mean and standard deviation are themselves distorted by the anomalies you are trying to find.</p>
+<p><strong>Z-score</strong>: flag points where $|x - \mu| / \sigma &gt; 3$ (more than 3 standard deviations from the mean). Works well for univariate Gaussian data. Breaks down for skewed distributions or when the mean and standard deviation are themselves distorted by the anomalies you are trying to find.</p>
 <p><strong>IQR method</strong>: flag points below $Q1 - 1.5 \times IQR$ or above $Q3 + 1.5 \times IQR$. More robust than z-score because quartiles are not affected by extreme values.</p>
 <p><strong>Multivariate Gaussian</strong>: fit a Gaussian to the data (estimate $\mu$ and $\Sigma$), then compute the Mahalanobis distance of each new point. Points with high Mahalanobis distance are anomalous. The Mahalanobis distance accounts for correlations between features: a point can be normal on every individual feature but anomalous in their combination.</p>
 <p>Statistical methods require assuming a distribution. When the assumption holds, they are powerful and interpretable. When it does not, Isolation Forest or LOF are safer bets.</p>
