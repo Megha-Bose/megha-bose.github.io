@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -199,9 +202,8 @@ This question turns out to be the central design decision in social feed archite
 <h2 id="twitters-architecture-evolution">Twitter&rsquo;s Architecture Evolution</h2>
 <p>Twitter started with a push-based model. Fan-out workers - background processes whose job is to consume post events and distribute them to follower feeds - wrote each new tweet into every follower&rsquo;s precomputed timeline. Timelines were stored in a Redis cluster: multiple Redis nodes working together to hold more data than any single machine could hold in RAM, with the keyspace split across nodes.</p>
 <p>For most users this worked: reads were fast, timelines were fresh, the system was conceptually simple.</p>
-<p>Then Beyoncé announced her pregnancy at the 2013 Grammy Awards.</p>
-<p>The fan-out workers were designed to handle ordinary write amplification. A user with 100,000 followers posting a tweet was significant - 100,000 Redis writes - but manageable. Beyoncé had 58 million followers at the time, and the post happened in real-time during a live broadcast, meaning millions of users were actively refreshing Twitter simultaneously.</p>
-<p>The fan-out queue grew faster than the workers could drain it. Timelines fell behind. Users saw stale feeds. The system did not crash, but it visibly lagged.</p>
+<p>Then the celebrities arrived. Twitter&rsquo;s engineers described the problem in 2013 (Raffi Krikorian&rsquo;s talk &ldquo;Timelines at Scale&rdquo;): a single tweet from an account with tens of millions of followers meant tens of millions of Redis writes, and fanning it out could take minutes. During that time, some followers saw the tweet and others did not, and replies could appear before the tweet they replied to.</p>
+<p>Traffic spikes made it worse. When Beyoncé revealed her pregnancy at the 2011 MTV Video Music Awards, users sent a then-record 8,868 tweets per second - and every one of those tweets had to be fanned out too.</p>
 <p>The solution Twitter eventually shipped is the hybrid model, which is now the standard architecture across large social platforms.</p>
 <hr>
 <h2 id="the-hybrid-model">The Hybrid Model</h2>
@@ -213,7 +215,8 @@ This question turns out to be the central design decision in social feed archite
 <li>Merges the two streams, sorted by timestamp (or ranking score, for an algorithmic feed)</li>
 </ol>
 <p>This bounds both failure modes. Write amplification is bounded: no fan-out for high-follower accounts, regardless of follower count. Read latency is bounded: pull only applies to a small number of celebrity accounts, not to every followed account.</p>
-<p>The system must classify accounts dynamically. A user who gains a million followers becomes a celebrity in the system&rsquo;s view. Instagram uses a similar model, with the split point at roughly 100,000 followers and real-time adjustment based on actual traffic patterns.</p>
+<p>The system must classify accounts dynamically. A user who gains a million followers becomes a celebrity in the system&rsquo;s view. Other large platforms use variations of the same idea; the exact thresholds are rarely published, and they are tuned to each system&rsquo;s ratio of reads to writes.</p>
+<div class="sf" data-sf="player" data-src="/data/feed-design-push-vs-pull/hybrid.json"></div>
 <hr>
 <h2 id="kafka-as-the-fan-out-backbone">Kafka as the Fan-Out Backbone</h2>
 <p>The fan-out operation is naturally event-driven: something happens (a user posts), and that event needs to trigger downstream work (updating follower feeds). This is a good fit for a message queue.</p>
@@ -229,7 +232,7 @@ This question turns out to be the central design decision in social feed archite
 <h2 id="pagination-why-offset-based-is-wrong">Pagination: Why Offset-Based Is Wrong</h2>
 <p>Feeds are paginated - you load 20 posts, then 20 more as you scroll. There are two ways to implement this.</p>
 <p><strong>Offset-based pagination</strong> uses a numeric position: &ldquo;skip the first 400 results, then return the next 20.&rdquo; In SQL this looks like <code>LIMIT 20 OFFSET 400</code>. The problem is that the database still has to count through those 400 rows to know where to start - it is not a free operation. At offset 400 this is tolerable. At offset 10,000 on a large table, it is slow. Worse: if new posts arrive while you are paginating, all positions shift. The post that was at position 400 is now at position 401. Page 2 may contain items you already saw on page 1, or skip items entirely.</p>
-<p><strong>Cursor-based pagination</strong> replaces the position with a pointer to the last item you saw. Instead of &ldquo;skip 400 rows,&rdquo; the query says &ldquo;give me posts older than this specific timestamp&rdquo; - <code>WHERE post_timestamp &lt; cursor_timestamp LIMIT 20</code>. This is a direct index lookup: the database goes straight to that timestamp in the index and returns the next 20 entries. It is fast regardless of how deep into the feed you are. It is also stable: new posts arriving at the top do not affect where your cursor points. Both Redis (<code>ZREVRANGEBYSCORE</code> with the cursor timestamp as the upper bound) and Cassandra (<code>WHERE post_timestamp &lt; cursor LIMIT 20</code>) support cursor-based queries natively.</p>
+<p><strong>Cursor-based pagination</strong> replaces the position with a pointer to the last item you saw. Instead of &ldquo;skip 400 rows,&rdquo; the query says &ldquo;give me posts older than this specific timestamp&rdquo; - <code>WHERE post_timestamp &lt; cursor_timestamp LIMIT 20</code>. This is a direct index lookup: the database goes straight to that timestamp in the index and returns the next 20 entries. It is fast regardless of how deep into the feed you are. It is also stable: new posts arriving at the top do not affect where your cursor points. (Since two posts can share a timestamp, real cursors usually pair the timestamp with the post id as a tiebreaker.) Both Redis (<code>ZREVRANGEBYSCORE</code> with the cursor timestamp as the upper bound) and Cassandra (<code>WHERE post_timestamp &lt; cursor LIMIT 20</code>) support cursor-based queries natively.</p>
 <hr>
 <h2 id="the-decentralized-future">The Decentralized Future</h2>
 <p>Bluesky&rsquo;s AT Protocol and Mastodon&rsquo;s ActivityPub represent a different model: decentralized feeds where the feed algorithm is itself replaceable. In AT Protocol, feeds are computed by external feed generators - third-party services that define their own ranking and selection logic. A user can choose their feed algorithm the same way they choose their podcast app.</p>
