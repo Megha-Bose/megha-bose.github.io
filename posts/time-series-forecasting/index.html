@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -219,7 +222,7 @@ $$y_t = c + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \vare
 <p>Prophet models the time series as:
 $$y(t) = g(t) + s(t) + h(t) + \varepsilon_t$$</p>
 <p>where $g(t)$ is the trend (piecewise linear or logistic growth with automatic changepoint detection), $s(t)$ is seasonality (Fourier series allowing multiple periods simultaneously), and $h(t)$ is holiday/event effects (user-specified special dates with their own effect parameters).</p>
-<p>The model is fit with a regularized regression, making it robust. Uncertainty is quantified via MCMC or a Laplace approximation.</p>
+<p>The model is fit as a regularized regression (by default a fast maximum a posteriori fit using L-BFGS), making it robust. Its uncertainty intervals come mainly from simulating possible future trend changes; full Bayesian sampling with MCMC is available as an option.</p>
 <p><strong>Pros</strong>:</p>
 <ul>
 <li>Handles multiple seasonalities (daily, weekly, yearly) simultaneously.</li>
@@ -251,7 +254,7 @@ $$y(t) = g(t) + s(t) + h(t) + \varepsilon_t$$</p>
     df[<span style="color:#e6db74">&#34;month&#34;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#34;date&#34;</span>]<span style="color:#f92672">.</span>dt<span style="color:#f92672">.</span>month
     df[<span style="color:#e6db74">&#34;is_weekend&#34;</span>] <span style="color:#f92672">=</span> (df[<span style="color:#e6db74">&#34;day_of_week&#34;</span>] <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">5</span>)<span style="color:#f92672">.</span>astype(int)
     <span style="color:#66d9ef">return</span> df<span style="color:#f92672">.</span>dropna()
-</code></pre></div><p>The <code>.shift(1)</code> is critical: when predicting $y_t$, every feature must use only information available at time $t-1$ or earlier. Using same-period information is <strong>data leakage</strong> - the model appears to work but fails in production because the future information is unavailable when you actually need to predict.</p>
+</code></pre></div><p>The <code>.shift(1)</code> is critical: when predicting $y_t$, every feature must use only information available at time $t-1$ or earlier. Using same-period information is <strong>data leakage</strong> - the model appears to work but fails in production because the future information is unavailable when you actually need to predict. The shift must match the forecast horizon: to predict 7 days ahead, every feature must be shifted by at least 7.</p>
 <p><strong>Pros of ML approach</strong>:</p>
 <ul>
 <li>Can capture complex nonlinear interactions.</li>
@@ -276,7 +279,9 @@ tscv <span style="color:#f92672">=</span> TimeSeriesSplit(n_splits<span style="c
     X_train, X_val <span style="color:#f92672">=</span> X[train_idx], X[val_idx]
     y_train, y_val <span style="color:#f92672">=</span> y[train_idx], y[val_idx]
     <span style="color:#75715e"># train and evaluate</span>
-</code></pre></div><p>The validation split always uses later data than the training data. This mirrors the actual deployment condition: you always predict the future from the past.</p>
+</code></pre></div><p>The validation split always uses later data than the training data. This mirrors the actual deployment condition: you always predict the future from the past. The animation below compares the two schemes on the same series and the same simple model.</p>
+<div class="sf" data-sf="player" data-src="/data/time-series-forecasting/cv.json"></div>
+<p>(For purely autoregressive models whose errors are uncorrelated, Bergmeir et al. (2018) showed that ordinary k-fold can still be valid. Walk-forward is the safe default, and it is essential whenever features or the model can see across time.)</p>
 <h2 id="when-to-use-which">When to Use Which</h2>
 <table>
 <thead>
@@ -308,7 +313,7 @@ tscv <span style="color:#f92672">=</span> TimeSeriesSplit(n_splits<span style="c
 </tr>
 </tbody>
 </table>
-<p>The ML approach (LightGBM) wins most Kaggle forecasting competitions and performs best on most commercial forecasting tasks with enough data. Classical methods win when the series is short, the pattern is simple, or you need statistical confidence intervals. Prophet wins in business settings where the model needs to be maintained by domain experts who are not ML engineers.</p>
+<p>The ML approach (LightGBM) has won major forecasting competitions, including the M5 competition on Walmart sales, and often performs best on commercial tasks with many related series and enough data. Classical methods win when the series is short, the pattern is simple, or you need statistical confidence intervals. Prophet wins in business settings where the model needs to be maintained by domain experts who are not ML engineers.</p>
 <hr>
 <table>
 <thead>
@@ -344,7 +349,7 @@ tscv <span style="color:#f92672">=</span> TimeSeriesSplit(n_splits<span style="c
 </tr>
 <tr>
 <td>Walk-forward validation</td>
-<td>Only valid CV for time series; train on past, validate on future</td>
+<td>The safe default CV for time series; train on past, validate on future</td>
 </tr>
 <tr>
 <td>Multiplicative seasonality</td>
