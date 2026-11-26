@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -157,7 +160,7 @@ where $p(\cdot \mid \theta)$ denotes the probability mass function (discrete cas
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          4 min read
+          5 min read
         </div>
       </div>
     </header>
@@ -191,7 +194,7 @@ where $p(\cdot \mid \theta)$ denotes the probability mass function (discrete cas
 <p>$$\frac{\partial \ell}{\partial \mu} = \frac{1}{\sigma^2}\sum_{i=1}^n (x_i - \mu) = 0 \implies \hat{\mu} = \bar{x}.$$</p>
 <p><strong>Estimating $\sigma^2$:</strong> Setting $\partial \ell / \partial \sigma^2 = 0$ (substituting $\hat{\mu} = \bar{x}$):</p>
 <p>$$\frac{\partial \ell}{\partial \sigma^2} = -\frac{n}{2\sigma^2} + \frac{1}{2(\sigma^2)^2}\sum_{i=1}^n (x_i - \bar{x})^2 = 0 \implies \hat{\sigma}^2 = \frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^2.$$</p>
-<p>Note that $\hat{\sigma}^2$ divides by $n$, not $n-1$, so it is biased: $E[\hat{\sigma}^2] = \frac{n-1}{n}\sigma^2$. The MLE trades bias for minimum variance within the class of all estimators.</p>
+<p>Note that $\hat{\sigma}^2$ divides by $n$, not $n-1$, so it is biased: $E[\hat{\sigma}^2] = \frac{n-1}{n}\sigma^2$. The bias is small and shrinks as $n$ grows, and dividing by $n$ actually gives a lower mean squared error than the unbiased $n-1$ version (for Gaussian data, dividing by $n+1$ would be lower still). Maximum likelihood does not promise unbiasedness; its guarantees are asymptotic, as the next section shows.</p>
 <h2 id="properties-of-mles">Properties of MLEs</h2>
 <h3 id="consistency">Consistency</h3>
 <p>Under regularity conditions (differentiable log-likelihood, identifiable model), $\hat{\theta}_n \xrightarrow{P} \theta_0$ as $n \to \infty$, where $\theta_0$ is the true parameter. Intuitively, the log-likelihood $\ell(\theta)/n \to E_{\theta_0}[\log p(X \mid \theta)]$ by the law of large numbers, and this expectation is uniquely maximized at $\theta_0$ (a consequence of Gibbs' inequality: $E[\log p(X|\theta_0)] \geq E[\log p(X|\theta)]$).</p>
@@ -200,7 +203,8 @@ where $p(\cdot \mid \theta)$ denotes the probability mass function (discrete cas
 <p>$$I(\theta) = -E\left[\frac{\partial^2 \log p(X \mid \theta)}{\partial \theta^2}\right] = E\left[\left(\frac{\partial \log p(X \mid \theta)}{\partial \theta}\right)^{2}\right].$$</p>
 <p>The second equality holds under regularity. For $n$ i.i.d. observations, the total Fisher information is $nI(\theta)$. The MLE satisfies</p>
 <p>$$\sqrt{n}(\hat{\theta}_n - \theta_0) \xrightarrow{d} \mathcal{N}\left(0, \frac{1}{I(\theta_0)}\right).$$</p>
-<p>This follows from a Taylor expansion of the score equation $\ell'(\hat{\theta}) = 0$ around $\theta_0$, combined with the central limit theorem applied to $\ell'(\theta_0)/n$.</p>
+<p>This follows from a Taylor expansion of the score equation $\ell'(\hat{\theta}) = 0$ around $\theta_0$, combined with the central limit theorem applied to $\ell'(\theta_0)/\sqrt{n}$. Geometrically: as $n$ grows, the log-likelihood near its peak becomes a parabola, and its curvature - the observed Fisher information - sets the width of the estimator&rsquo;s distribution.</p>
+<div class="sf" data-sf="player" data-src="/data/maximum-likelihood-estimation/mle.json"></div>
 <h3 id="cramér-rao-bound-and-efficiency">Cramér-Rao Bound and Efficiency</h3>
 <p><strong>Theorem (Cramér-Rao).</strong> For any unbiased estimator $\hat{\theta}$ of $\theta$,</p>
 <p>$$\text{Var}(\hat{\theta}) \geq \frac{1}{nI(\theta)}.$$</p>
@@ -217,7 +221,7 @@ where $p(\cdot \mid \theta)$ denotes the probability mass function (discrete cas
 <h2 id="examples">Examples</h2>
 <p><strong>Logistic regression as MLE.</strong> In binary logistic regression, $p(y_i = 1 \mid x_i, \beta) = \sigma(\beta^\top x_i)$ where $\sigma(z) = 1/(1+e^{-z})$. The log-likelihood is</p>
 <p>$$\ell(\beta) = \sum_{i=1}^n \bigl[y_i \log \sigma(\beta^\top x_i) + (1-y_i)\log(1 - \sigma(\beta^\top x_i))\bigr],$$</p>
-<p>which is the negative binary cross-entropy. Gradient ascent on $\ell$ is the standard training procedure. The MLE is consistent and asymptotically normal under mild design conditions.</p>
+<p>which is the negative binary cross-entropy. There is no closed form, so it is maximized numerically, by gradient ascent or by Newton&rsquo;s method (iteratively reweighted least squares). The MLE is consistent and asymptotically normal under mild design conditions - but if the two classes are perfectly separable, it does not exist at all: the likelihood keeps increasing as $\|\beta\| \to \infty$, which is one practical reason to add regularization.</p>
 <p><strong>Gaussian MLE in linear regression.</strong> In the model $y_i = x_i^\top \beta + \varepsilon_i$ with $\varepsilon_i \sim \mathcal{N}(0, \sigma^2)$ i.i.d., the log-likelihood is</p>
 <p>$$\ell(\beta, \sigma^2) = -\frac{n}{2}\log(2\pi\sigma^2) - \frac{1}{2\sigma^2}\|y - X\beta\|^2.$$</p>
 <p>Maximizing over $\beta$ is equivalent to minimizing $\|y - X\beta\|^2$, which is ordinary least squares. The MLE $\hat{\beta} = (X^\top X)^{-1} X^\top y$ is the OLS estimator, establishing that least squares is maximum likelihood under Gaussian noise - a fundamental connection in statistics.</p>
