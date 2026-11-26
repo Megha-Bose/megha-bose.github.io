@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ Now consider a fraud detection system that processes thousands of transactions p
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          9 min read
+          10 min read
         </div>
       </div>
     </header>
@@ -183,11 +186,12 @@ Now consider a fraud detection system that processes thousands of transactions p
 <li>Receive example $(x_t, y_t)$ where $y_t \in \{+1, -1\}$.</li>
 <li>Predict $\hat{y}_t = \text{sign}(w_t \cdot x_t + b)$.</li>
 <li>If $\hat{y}_t = y_t$: do nothing. The model was right.</li>
-<li>If $\hat{y}_t \neq y_t$: update $w_{t+1} \leftarrow w_t + \eta \cdot y_t \cdot x_t$.</li>
+<li>If $\hat{y}_t \neq y_t$: update $w_{t+1} \leftarrow w_t + \eta \cdot y_t \cdot x_t$ and $b \leftarrow b + \eta \cdot y_t$.</li>
 </ul>
 <p>Here $\eta &gt; 0$ is the <strong>learning rate</strong> - a scalar controlling how large each update is. If the model predicted $-1$ but the true label was $+1$, then $y_t \cdot x_t$ points in the direction of $x_t$, pushing the weight vector toward classifying $x_t$ as $+1$ next time. If the model was right, the weights do not change at all. The perceptron is lazy - it only updates when it makes a mistake.</p>
 <p><strong>Worked example.</strong> Suppose $w = [0, 0]$, $\eta = 1$. We receive the example $x = [1, 2]$, $y = +1$. The prediction is $\text{sign}(0 \cdot 1 + 0 \cdot 2) = \text{sign}(0) = -1$ (treating ties as $-1$). We were wrong. The update is $w \leftarrow [0,0] + 1 \cdot (+1) \cdot [1,2] = [1, 2]$. On the next example with similar $x$, the model now predicts $\text{sign}(1 \cdot 1 + 2 \cdot 2) = \text{sign}(5) = +1$. Correct.</p>
-<p>The <strong>perceptron convergence theorem</strong> says that if the training data is linearly separable, the perceptron is guaranteed to converge to a separating hyperplane in a finite number of updates. If the data is not linearly separable, it never converges and cycles forever.</p>
+<p>The <strong>perceptron convergence theorem</strong> (Novikoff, 1962) says that if the data is linearly separable, the perceptron makes a finite number of mistakes - at most $(R/\gamma)^2$, where $R$ is the largest norm of any input and $\gamma$ is the margin by which the best separating hyperplane clears the closest point. The bound does not depend on the dimension or on the order in which examples arrive. If the data is not linearly separable, the weights never settle: the perceptron keeps making mistakes and updating forever.</p>
+<div class="sf" data-sf="player" data-src="/data/online-learning/online.json"></div>
 <h2 id="sgd-as-online-learning">SGD as Online Learning</h2>
 <p>Stochastic gradient descent (SGD) with batch size 1 is online learning. For each incoming example $(x_t, y_t)$, compute the gradient of the loss with respect to the parameters using only that single example, and take a gradient step. The parameters are updated after every single data point.</p>
 <p>$$\theta_{t+1} \leftarrow \theta_t - \eta \cdot \nabla_\theta \mathcal{L}(\theta_t; x_t, y_t)$$</p>
@@ -205,7 +209,7 @@ Now consider a fraud detection system that processes thousands of transactions p
 </ul>
 <p><strong>Algorithms that require all data at once:</strong></p>
 <ul>
-<li>Decision trees - the splitting criterion requires computing statistics over the entire dataset. Incremental variants exist but are complex and less efficient.</li>
+<li>Decision trees - the splitting criterion requires computing statistics over the entire dataset. Incremental variants exist, notably Hoeffding trees (VFDT), which decide each split once enough examples have arrived to be statistically confident, but they are less common in practice.</li>
 <li>Standard SVMs - the quadratic programming formulation requires access to all support vectors simultaneously.</li>
 <li>k-NN - not a parametric model at all; it stores all training examples and uses them at inference time. Every new example is simply added to the store, but inference cost grows linearly with the number of stored examples.</li>
 </ul>
@@ -223,7 +227,7 @@ predictions <span style="color:#f92672">=</span> clf<span style="color:#f92672">
 </code></pre></div><p>Algorithms in scikit-learn that support <code>partial_fit</code>: <code>SGDClassifier</code>, <code>SGDRegressor</code>, <code>Perceptron</code>, <code>MultinomialNB</code>, <code>BernoulliNB</code>, <code>PassiveAggressiveClassifier</code>, <code>PassiveAggressiveRegressor</code>, <code>MiniBatchKMeans</code>.</p>
 <h2 id="concept-drift---the-enemy-of-online-learning">Concept Drift - the Enemy of Online Learning</h2>
 <p>Online learning solves the problem of continuous data arrival. But it introduces a new problem: the world changes. The distribution of the data at time $t + 1000$ may be very different from the distribution at time $t$.</p>
-<p><strong>Concept drift</strong> is when the conditional distribution $p(y \mid x)$ changes over time. The same input $x$ now maps to a different output $y$ than it did before. A model trained on pre-pandemic shopping patterns fails in 2023 because consumer behavior shifted. A fraud detection model trained before a new attack vector is introduced will not catch the new fraud because the distribution of fraud has changed.</p>
+<p><strong>Concept drift</strong> is when the conditional distribution $p(y \mid x)$ changes over time. The same input $x$ now maps to a different output $y$ than it did before. A model trained on pre-pandemic shopping patterns failed in 2020 because consumer behavior shifted almost overnight. A fraud detection model trained before a new attack vector is introduced will not catch the new fraud because the distribution of fraud has changed.</p>
 <p>Types of drift:</p>
 <ul>
 <li><strong>Sudden drift</strong>: the distribution changes abruptly. A new product launches and user preferences shift overnight.</li>
@@ -235,9 +239,9 @@ predictions <span style="color:#f92672">=</span> clf<span style="color:#f92672">
 <li><strong>Page-Hinkley test</strong>: tracks the cumulative sum of deviations of a monitored statistic from its running mean. A large deviation signals drift.</li>
 <li><strong>ADWIN (ADaptive WINdowing)</strong>: maintains a sliding window of recent data and automatically shrinks the window when the distribution of the old portion differs significantly from the recent portion. The window size adapts to the rate of drift.</li>
 </ul>
-<p><strong>Handling drift.</strong> Plain online learning adapts slowly because all past examples contribute equally to the current weights. Better strategies:</p>
+<p><strong>Handling drift.</strong> Online learning with a learning rate that decays over time (like $1/t$, which convergence theory recommends for a fixed distribution) adapts slowly: by the time the world changes, each new example moves the weights very little, so the many old examples outvote the new ones. The second tab of the animation above shows this. Better strategies:</p>
 <ul>
-<li>Weight recent examples more heavily by using a decaying learning rate or explicit example weights.</li>
+<li>Weight recent examples more heavily, by keeping the learning rate constant (which forgets old examples exponentially) or with explicit example weights.</li>
 <li>Use a sliding window and discard examples older than $W$ steps. The model only reflects the last $W$ examples.</li>
 <li>Ensemble approaches: maintain a pool of models trained on different time windows, blending them or selecting the best-performing one on recent data.</li>
 </ul>
@@ -247,9 +251,9 @@ predictions <span style="color:#f92672">=</span> clf<span style="color:#f92672">
 <p>One principled solution is <strong>elastic weight consolidation (EWC)</strong>. The idea: identify which weights are most important for previously learned tasks (using the Fisher information matrix as a proxy), and add a regularization term that penalizes large changes to those important weights. The model can still adapt to new data but is constrained from moving away from its previous knowledge on the dimensions that mattered most.</p>
 <p>A simpler practical approach: keep a small replay buffer of old examples and mix them into each training batch. This way, the model is never trained only on new data; it always sees a mix of old and new.</p>
 <h2 id="real-deployments">Real Deployments</h2>
-<p><strong>Ad click-through rate prediction</strong> at scale (Google, Meta) is one of the highest-stakes applications of online learning. Hundreds of thousands of model updates per minute. The model must capture the fact that a newly viral topic at 2pm today is irrelevant by 6pm, and a completely new topic will dominate tomorrow. Batch retraining would always be stale. The models used are typically large logistic regression models or gradient-boosted trees with online variants, updated on every click event in real time.</p>
+<p><strong>Ad click-through rate prediction</strong> at scale is one of the highest-stakes applications of online learning. The model must capture the fact that a newly viral topic at 2pm today is irrelevant by 6pm, and a completely new topic will dominate tomorrow. Batch retraining alone would always be stale. Google&rsquo;s ad click prediction system (McMahan et al., 2013) trained a very large, sparse logistic regression online with the FTRL-Proximal algorithm. Facebook&rsquo;s (He et al., 2014) fed features from gradient-boosted trees, retrained periodically, into a logistic regression that was updated online.</p>
 <p><strong>Recommendation systems</strong> use implicit feedback (did the user click? did they watch the video to completion?) to update their models continuously. A recommendation made at 9am reflects user behavior through 8:59am. By noon, the model has already absorbed three hours of new signal.</p>
-<p><strong>Autonomous vehicle perception</strong> improves as the fleet encounters edge cases. When a specific driving scenario causes prediction errors, the model is updated incrementally with that scenario. The fleet effectively learns from its own mistakes in deployment.</p>
+<p><strong>Autonomous vehicle perception</strong> improves as the fleet encounters edge cases. Here the loop is slower and deliberately not fully online: scenarios that cause prediction errors are collected from the fleet, labelled, and added to the training set for the next model release, which is validated before it ships. The fleet still learns from its own mistakes, but in batches, because an unvalidated update to a safety-critical model is too risky.</p>
 <hr>
 <table>
 <thead>
@@ -269,7 +273,7 @@ predictions <span style="color:#f92672">=</span> clf<span style="color:#f92672">
 </tr>
 <tr>
 <td>Perceptron update</td>
-<td>$w \leftarrow w + \eta \cdot y \cdot x$ when wrong; no update when right</td>
+<td>$w \leftarrow w + \eta \cdot y \cdot x$ when wrong; no update when right; at most $(R/\gamma)^2$ mistakes on separable data</td>
 </tr>
 <tr>
 <td><code>partial_fit</code></td>
