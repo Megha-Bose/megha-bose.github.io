@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -184,7 +187,7 @@
 </li>
 </ol>
 <p><strong>Pooling</strong> (max or average over a local region) progressively reduces spatial resolution, building translation invariance (not just equivariance) and compressing the representation.</p>
-<p><strong>ResNets</strong> (He et al., 2016) solved the training instability of deep CNNs via residual connections: $\mathbf{h}_{l+1} = \mathbf{h}_l + F(\mathbf{h}_l)$. The gradient of the loss with respect to $\mathbf{h}_l$ always includes the identity term $I$, preventing vanishing gradients regardless of depth. ResNet-50 and ResNet-101 remain widely used as image backbones.</p>
+<p><strong>ResNets</strong> (He et al., 2016) solved the training instability of deep CNNs via residual connections: $\mathbf{h}_{l+1} = \mathbf{h}_l + F(\mathbf{h}_l)$. The gradient of the loss with respect to $\mathbf{h}_l$ always includes the identity term $I$, giving the gradient a direct path back through the network. That made networks of 100+ layers trainable, where plain deep networks had suffered from degradation (training error rising with depth). ResNet-50 and ResNet-101 remain widely used as image backbones.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> If CNNs have such useful inductive biases, why replace them with transformers? CNNs have a limited receptive field at each layer - a 3×3 filter only sees 9 pixels. To relate distant pixels you need many layers, and even then the effective receptive field grows slowly. Transformers have global attention: every patch can directly attend to every other patch in a single layer. For tasks requiring global context (counting objects, understanding scene composition, relating distant parts of an image), global attention is strictly more powerful. The tradeoff is that transformers need more data to learn spatial inductive biases from scratch.</p>
 </blockquote>
@@ -211,7 +214,7 @@
 <p>Segmentation goes further than detection: instead of bounding boxes, assign a class label to every pixel.</p>
 <p><strong>Semantic segmentation</strong>: every pixel gets a class label (sky, road, car, person). <strong>Instance segmentation</strong>: distinguish individual objects of the same class (car 1 vs car 2). <strong>Panoptic segmentation</strong>: unifies both.</p>
 <p><strong>U-Net</strong>: encoder-decoder with skip connections. The encoder (contracting path) downsamples and extracts features; the decoder (expanding path) upsamples back to full resolution. Skip connections concatenate encoder feature maps at each resolution to the decoder, preserving spatial detail that would otherwise be lost in the bottleneck. Dominant in medical image segmentation.</p>
-<p><strong>Segment Anything Model (SAM)</strong>: a foundation model for segmentation from Meta. Takes a prompt (point, box, or text) and segments the corresponding region. Trained on 1 billion masks. A ViT image encoder processes the image; a lightweight decoder generates masks conditioned on the prompt. SAM demonstrates that segmentation can be formulated as a promptable task, enabling zero-shot transfer to novel segmentation tasks.</p>
+<p><strong>Segment Anything Model (SAM)</strong>: a foundation model for segmentation from Meta. Takes a prompt (points, a box, or a rough mask; text prompts were explored in the paper but not released) and segments the corresponding region. Trained on SA-1B: 1.1 billion masks on 11 million images. A ViT image encoder processes the image; a lightweight decoder generates masks conditioned on the prompt. SAM demonstrates that segmentation can be formulated as a promptable task, enabling zero-shot transfer to novel segmentation tasks.</p>
 <hr>
 <h2 id="clip-learning-visual-representations-from-text">CLIP: Learning Visual Representations from Text</h2>
 <p><strong>CLIP (Contrastive Language-Image Pretraining)</strong> (Radford et al., 2021) learns aligned image and text representations by training on 400 million image-text pairs scraped from the web.</p>
@@ -219,10 +222,11 @@
 <p><strong>Contrastive loss</strong>: given a batch of $N$ (image, text) pairs, the loss maximizes the similarity between matched pairs and minimizes similarity between unmatched pairs:</p>
 <p>$$\mathcal{L} = -\frac{1}{2N}\sum_{i=1}^{N}\left[\log \frac{e^{s_{ii}/\tau}}{\sum_j e^{s_{ij}/\tau}} + \log \frac{e^{s_{ii}/\tau}}{\sum_j e^{s_{ji}/\tau}}\right]$$</p>
 <p>where $s_{ij} = \mathbf{v}_i^\top \mathbf{t}_j$ is the cosine similarity between image embedding $\mathbf{v}_i$ and text embedding $\mathbf{t}_j$, and $\tau$ is a learned temperature.</p>
-<p><strong>Why CLIP is powerful</strong>: by aligning image and text representations, CLIP enables <strong>zero-shot classification</strong>. To classify an image into $k$ categories, compute the similarity of the image embedding to each category&rsquo;s text embedding (&ldquo;a photo of a cat&rdquo;, &ldquo;a photo of a dog&rdquo;, &hellip;) and take the argmax. No task-specific fine-tuning required. CLIP achieves competitive ImageNet accuracy without seeing a single labeled ImageNet example during training.</p>
+<p><strong>Why CLIP is powerful</strong>: by aligning image and text representations, CLIP enables <strong>zero-shot classification</strong>. To classify an image into $k$ categories, compute the similarity of the image embedding to each category&rsquo;s text embedding (&ldquo;a photo of a cat&rdquo;, &ldquo;a photo of a dog&rdquo;, &hellip;) and take the argmax. No task-specific fine-tuning required. CLIP achieves 76.2% zero-shot top-1 accuracy on ImageNet - matching a supervised ResNet-50 - without seeing a single labeled ImageNet example during training.</p>
+<div class="sf" data-sf="player" data-src="/data/vision-and-multimodal-ml/clip.json"></div>
 <p>CLIP embeddings are used as image features in virtually every subsequent multimodal model. The text-image alignment makes them a universal connector between vision and language.</p>
 <blockquote>
-<p><strong>Discomfort check.</strong> What is the temperature $\tau$ doing? Without scaling, the dot product $s_{ij}$ can be arbitrarily large, making the softmax distribution extremely peaked (one item gets essentially all the probability). $\tau$ controls the sharpness: small $\tau$ → sharp, large $\tau$ → flat. Learnable $\tau$ allows the model to calibrate how &ldquo;confident&rdquo; to be in its similarities. In practice $\tau$ starts around 0.07 and is learned to be slightly above this. The logit scale $1/\tau$ is logged to prevent it from collapsing to 0.</p>
+<p><strong>Discomfort check.</strong> What is the temperature $\tau$ doing? Without scaling, the dot product $s_{ij}$ can be arbitrarily large, making the softmax distribution extremely peaked (one item gets essentially all the probability). $\tau$ controls the sharpness: small $\tau$ → sharp, large $\tau$ → flat. Learnable $\tau$ allows the model to calibrate how &ldquo;confident&rdquo; to be in its similarities. In CLIP, $\tau$ is initialized to 0.07 and learned as a log-parameterized logit scale $1/\tau$, clipped at 100 (so $\tau \geq 0.01$) to keep training stable; in practice training pushes it all the way to that limit.</p>
 </blockquote>
 <hr>
 <h2 id="generating-images-diffusion-models">Generating Images: Diffusion Models</h2>
@@ -252,7 +256,7 @@
 <ul>
 <li><strong>Early fusion</strong>: concatenate raw features before any processing. Simple but requires aligned feature spaces.</li>
 <li><strong>Late fusion</strong>: process each modality independently, combine predictions. Ignores cross-modal interactions.</li>
-<li><strong>Cross-attention fusion</strong> (most common): let one modality&rsquo;s features query another&rsquo;s via cross-attention. Used in Flamingo, LLaVA, Whisper (audio encoder → text decoder).</li>
+<li><strong>Cross-attention fusion</strong>: let one modality&rsquo;s features query another&rsquo;s via cross-attention. Used in Flamingo and Whisper (audio encoder → text decoder). LLaVA-style models instead project image features into token embeddings and put them directly in the LLM&rsquo;s input sequence (early fusion), which has become the most common design for open VLMs.</li>
 </ul>
 <p><strong>Tokenization of non-text modalities</strong>: VQ-VAE or similar discretization maps continuous signals (images, audio) to discrete tokens, allowing generative models to treat them like text tokens. Used in DALL-E 1, AudioLM, SoundStream.</p>
 <hr>
