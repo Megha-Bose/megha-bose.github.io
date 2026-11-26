@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -151,7 +154,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          17 min read
+          18 min read
         </div>
       </div>
     </header>
@@ -177,7 +180,7 @@
 <li>The first term $\mathbb{E}_{x \sim p_{\text{data}}}[\log D(x)]$ is maximized when $D(x) \approx 1$ on real data - the discriminator correctly identifies real samples.</li>
 <li>The second term $\mathbb{E}_{z \sim p_z}[\log(1 - D(G(z)))]$ is maximized when $D(G(z)) \approx 0$ on generated samples - the discriminator correctly identifies fakes.</li>
 </ul>
-<p>The <strong>generator</strong> $G$ wants to minimize $V$. It has no influence over the first term (it does not produce real data), so it focuses on the second: it wants $D(G(z)) \approx 1$, meaning the discriminator classifies generated samples as real. Minimizing $\mathbb{E}[\log(1 - D(G(z)))]$ is equivalent to maximizing $\mathbb{E}[D(G(z))]$.</p>
+<p>The <strong>generator</strong> $G$ wants to minimize $V$. It has no influence over the first term (it does not produce real data), so it focuses on the second: it wants $D(G(z)) \approx 1$, meaning the discriminator classifies generated samples as real. Minimizing $\mathbb{E}[\log(1 - D(G(z)))]$ pushes $D(G(z))$ towards 1.</p>
 <p>This is a zero-sum game: the payoff to $G$ is exactly $-V(D,G)$ and the payoff to $D$ is $+V(D,G)$. Every gain for one player is a loss for the other. Game theory tells us that such games have <strong>Nash equilibria</strong> - pairs $(D^*, G^*)$ from which neither player benefits by unilaterally deviating. The GAN framework bets that gradient descent finds this equilibrium, and that the equilibrium corresponds to $p_G = p_{\text{data}}$.</p>
 <p>Notice that the value function $V$ is also the cross-entropy loss for a binary classifier. The first term is the expected log-likelihood of labeling real data as real; the second is the expected log-likelihood of labeling generated data as fake. Training the discriminator to maximize $V$ is exactly training a binary classifier with cross-entropy loss on a balanced dataset of real and generated samples. This connection makes implementation straightforward: discriminator training is standard supervised learning.</p>
 <hr>
@@ -199,6 +202,8 @@
 <li>Where $p_{\text{data}}(x) = p_G(x)$: the discriminator is maximally uncertain, $D^*(x) = 1/2$.</li>
 </ul>
 <p>When the generator perfectly matches the data distribution, $D^* = 1/2$ everywhere - it cannot do better than random guessing. This is the generator &ldquo;winning&rdquo;: a perfect discriminator is indistinguishable from a coin flip.</p>
+<p>The animation below plays this out in one dimension. The discriminator is always the exact $D^*$ for the current generator, and the generator takes gradient steps on the objective derived in the next section.</p>
+<div class="sf" data-sf="player" data-src="/data/generative-adversarial-networks/gan.json"></div>
 <hr>
 <h2 id="optimal-generator-and-the-nash-equilibrium">Optimal Generator and the Nash Equilibrium</h2>
 <p>Now substitute $D^*$ back into $V$ to find the objective the generator effectively faces. This tells us what the generator is actually optimizing when the discriminator plays optimally.</p>
@@ -218,7 +223,7 @@
 <li>The minimax value is $V^* = -\log 4$</li>
 </ul>
 <p><strong>Why JSD and not KL?</strong> KL divergence is asymmetric and infinite when $p_G$ assigns zero probability to regions where $p_{\text{data}}$ is positive (mode dropping). JSD is symmetric and always finite, because it measures KL to the mixture $\frac{p_{\text{data}} + p_G}{2}$, which is positive wherever either component is. More importantly: the discriminator&rsquo;s job is to estimate $p_{\text{data}}(x) / (p_{\text{data}}(x) + p_G(x))$, which is exactly the ratio needed to compute the JSD - without ever computing the individual densities explicitly. The discriminator converts an intractable density estimation problem into a tractable classification problem.</p>
-<p><strong>Why can&rsquo;t we just minimize KL directly?</strong> $\text{KL}(p_G \| p_{\text{data}})$ (mode-seeking) penalizes heavily when $p_G$ puts mass where $p_{\text{data}}$ has none - leading to sharp but incomplete coverage. $\text{KL}(p_{\text{data}} \| p_G)$ (mode-covering) penalizes missing modes of $p_{\text{data}}$ - but requires computing the density ratio, which is intractable in high dimensions. JSD is estimated via classification accuracy: a tractable stand-in for an intractable density problem.</p>
+<p><strong>Why can&rsquo;t we just minimize KL directly?</strong> $\text{KL}(p_G \| p_{\text{data}})$ (mode-seeking) penalizes heavily when $p_G$ puts mass where $p_{\text{data}}$ has none - leading to sharp but incomplete coverage. $\text{KL}(p_{\text{data}} \| p_G)$ (mode-covering) penalizes missing modes of $p_{\text{data}}$ - but minimizing it is maximum likelihood, which requires evaluating $\log p_G(x)$, and an implicit generator cannot do that. JSD is estimated via classification accuracy: a tractable stand-in for an intractable density problem.</p>
 <hr>
 <h2 id="training-procedure">Training Procedure</h2>
 <p>The theory requires simultaneous minimax optimization. In practice, this is approximated by alternating gradient updates:</p>
@@ -245,20 +250,20 @@
 <p><strong>Why it happens.</strong> Suppose $G$ finds a region where $D$ currently outputs high values (classifies as real). $G$ has a strong incentive to concentrate all its probability mass in that region - placing all mass on one mode makes $\mathbb{E}_z[\log D(G(z))]$ large. Spreading mass across modes would trade probability on the discovered mode for probability on undiscovered modes, which $D$ may not yet reward. So $G$ collapses.</p>
 <p>$D$ then adapts: it learns to detect this specific repeated output. $G$ then shifts to a different mode. The cycle continues. This is a coordination failure: $G$ and $D$ are updated alternately with finite batches, not simultaneously at equilibrium. The optimal discriminator $D^*$ for a given $G$ is only optimal for that specific $G$ - it tells $G$ nothing about how it will be evaluated after $D$ updates.</p>
 <h3 id="vanishing-gradients">Vanishing Gradients</h3>
-<p>If the discriminator is trained to near-optimality before the generator has learned much, $D(G(z)) \approx 0$ for essentially all $z$. Even the non-saturating loss suffers: when $\log D(G(z))$ becomes very negative, floating-point representations lose precision. Training stalls.</p>
+<p>If the discriminator is trained to near-optimality before the generator has learned much, $D(G(z)) \approx 0$ for essentially all $z$. With the original loss the generator&rsquo;s gradient vanishes. The non-saturating loss avoids that, but Arjovsky and Bottou (2017) showed that against a near-perfect discriminator its gradients become large and high-variance instead, so updates are noisy and training is unstable.</p>
 <h3 id="non-convergence">Non-Convergence</h3>
 <p>Gradient descent on a minimax objective does not necessarily converge. The generator overshoots to beat the current discriminator; the discriminator updates to catch the new generator; neither settles. This oscillation is theoretically guaranteed to happen for some loss landscapes and learning rates. Standard minimization convergence guarantees do not apply to saddle-point problems.</p>
 <p><strong>Practical stabilization techniques:</strong></p>
 <ul>
 <li>Label smoothing: replace the real label &ldquo;1&rdquo; with 0.9 to prevent the discriminator from becoming overconfident.</li>
-<li>Spectral normalization of discriminator weights: clips the discriminator&rsquo;s Lipschitz constant, preventing it from becoming too powerful.</li>
+<li>Spectral normalization of discriminator weights: divides each layer&rsquo;s weights by their largest singular value, bounding the discriminator&rsquo;s Lipschitz constant so its gradients stay well-behaved.</li>
 <li>Dropout in the discriminator: adds noise that prevents overfitting to the current generator.</li>
-<li>Separate learning rates: often $\eta_D &lt; \eta_G$ to keep the discriminator from running too far ahead.</li>
+<li>Separate learning rates: the two time-scale update rule (TTUR, Heusel et al., 2017) gives the discriminator the larger one (for example $4 \times 10^{-4}$ vs $10^{-4}$), so it tracks the generator closely.</li>
 <li>Minibatch discrimination: the discriminator looks at multiple samples at once, making it harder for the generator to collapse to a single output.</li>
 </ul>
 <hr>
 <h2 id="wasserstein-gan">Wasserstein GAN</h2>
-<p>The instability of standard GAN training is intimately connected to the JSD as a distance measure. Early in training, $p_G$ and $p_{\text{data}}$ are almost certainly supported on non-overlapping regions of $\mathcal{X}$ - a random generator produces noise, not natural images. When supports are disjoint, the JSD equals the constant $\log 2$ regardless of how close the distributions are geometrically. The gradient of JSD with respect to generator parameters is exactly zero. The discriminator becomes a perfect classifier and provides no gradient to the generator at all. Training stalls.</p>
+<p>The instability of standard GAN training is intimately connected to the JSD as a distance measure. Early in training, $p_G$ and $p_{\text{data}}$ are almost certainly supported on non-overlapping regions of $\mathcal{X}$ - a random generator produces noise, not natural images. When supports are disjoint, the JSD equals the constant $\log 2$ regardless of how close the distributions are geometrically. The gradient of JSD with respect to generator parameters is exactly zero. The discriminator becomes a perfect classifier and provides no gradient to the generator at all. Training stalls. The second tab of the animation above shows this for two non-overlapping distributions on a line.</p>
 <p>To build intuition: the earth mover&rsquo;s distance (also called Wasserstein-1) measures the minimum &ldquo;work&rdquo; needed to reshape one distribution into another, where work is mass times distance. Imagine $p_{\text{data}}$ and $p_G$ as two piles of sand. JSD either says &ldquo;not the same pile&rdquo; or &ldquo;identical&rdquo; with no gradation when supports are disjoint. The earth mover&rsquo;s distance instead says: it would cost this much (in grams times meters) to move the sand from one pile to match the other. Even when the piles don&rsquo;t overlap, the distance is finite and varies smoothly as the generator pile moves. This smooth variation gives useful gradients throughout training.</p>
 <p>Formally, the <strong>Wasserstein-1 distance</strong> between distributions $P$ and $Q$ over metric space $(\mathcal{X}, d)$ is:</p>
 <p>$$W_1(P, Q) = \inf_{\gamma \in \Pi(P,Q)} \mathbb{E}_{(x,y) \sim \gamma}[d(x, y)]$$</p>
@@ -275,9 +280,9 @@
 <p>where $\hat{x} = \epsilon x + (1-\epsilon) G(z)$ with $\epsilon \sim \text{Uniform}[0,1]$.</p>
 <p><strong>WGAN practical advantages:</strong></p>
 <ul>
-<li>The critic loss $\mathbb{E}_{p_{\text{data}}}[f] - \mathbb{E}_{p_z}[f(G(z))]$ estimates $W_1(p_{\text{data}}, p_G)$ and decreases monotonically with sample quality - unlike the standard GAN discriminator loss, which oscillates and is uninterpretable.</li>
+<li>The critic loss $\mathbb{E}_{p_{\text{data}}}[f] - \mathbb{E}_{p_z}[f(G(z))]$ estimates $W_1(p_{\text{data}}, p_G)$ and tracks sample quality well in practice - unlike the standard GAN discriminator loss, which oscillates and says little about how good the samples are.</li>
 <li>Training is more stable, mode collapse is less frequent.</li>
-<li>No architectural constraints on the critic (batch normalization, etc.) beyond enforcing Lipschitz.</li>
+<li>One architectural caveat: with a gradient penalty the critic should not use batch normalization, because the penalty is defined per sample; layer normalization is the usual substitute.</li>
 <li>The cost: slower training (critics must be near-optimal before each generator update, so the original paper uses 5 critic updates per generator update) and sensitivity to the gradient penalty weight $\lambda$.</li>
 </ul>
 <hr>

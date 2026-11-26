@@ -52,14 +52,20 @@
     ui.body.appendChild(stage);
     ui.body.appendChild(auxBox);
     ui.body.appendChild(stats);
-    if (spec.legend) {
-      ui.body.appendChild(D.legend(spec.legend.map(function (item) { return [TOKENS[item[0]] || item[0], item[1]]; })));
+    // A scenario may bring its own legend; otherwise the spec-wide one stays put.
+    var legendBox = h('div');
+    ui.body.appendChild(legendBox);
+    function legend() {
+      var items = scenarios[st.s].legend || spec.legend;
+      legendBox.textContent = '';
+      if (items) legendBox.appendChild(D.legend(items.map(function (item) { return [TOKENS[item[0]] || item[0], item[1]]; })));
     }
 
     // A scenario may bring its own graph layout, so each one gets a fresh view.
     function mount() {
       var sc = scenarios[st.s];
       stage.textContent = '';
+      legend();
       view = views[spec.kind](stage, {
         kind: spec.kind, title: spec.title, max: spec.max, cols: spec.cols, noMarks: spec.noMarks, grid: sc.grid || spec.grid, plot: sc.plot || spec.plot,
         graph: sc.graph || spec.graph, frames: sc.frames,
