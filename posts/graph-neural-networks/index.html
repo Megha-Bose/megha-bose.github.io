@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -153,7 +156,7 @@
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          13 min read
+          14 min read
         </div>
       </div>
     </header>
@@ -188,9 +191,11 @@
 <p>$$h_i^{(l+1)} = \sigma\left(W^{(l)\top}\sum_{j \in \mathcal{N}(i) \cup \{i\}} \frac{h_j^{(l)}}{\sqrt{\tilde{d}_i \tilde{d}_j}}\right)$$</p>
 <p>where $\tilde{d}_i = 1 + \deg(i)$. Each neighbor&rsquo;s contribution is downweighted by the geometric mean of the two nodes' (augmented) degrees.</p>
 <p>The spectral motivation: $\hat{A}$ is a normalized Laplacian-adjacent operator whose eigenvalues lie in $[-1, 1]$. Applying $\hat{A}$ repeatedly performs a smoothing operation on node features, analogous to low-pass filtering on a graph signal. GCN can be understood as applying a fixed graph filter and then learning a linear map - a highly regularized spectral graph convolution.</p>
+<p>The smoothing has a cost. Apply $\hat{A}$ many times and every node&rsquo;s features converge to the same vector, up to a degree-dependent scale, whatever they started as. This <strong>over-smoothing</strong> (Li et al., 2018) is why most GNNs use only two to four layers. The first tab of the animation below shows both effects: a signal spreading one hop per layer, then flattening out.</p>
+<div class="sf" data-sf="player" data-src="/data/graph-neural-networks/gnn.json"></div>
 <hr>
 <h2 id="graphsage-inductive-learning">GraphSAGE: Inductive Learning</h2>
-<p>GCN is transductive: it operates on a fixed graph and cannot generalize to nodes or graphs not seen during training. If you train on a citation network and a new paper is added, you must retrain. GraphSAGE (Hamilton et al., 2017) makes GNNs inductive by learning an aggregation function that can be applied to any neighborhood.</p>
+<p>GCN, as Kipf and Welling used it, is transductive: it is trained full-batch on one fixed graph, and the normalization $\hat{A}$ is computed from that whole graph. If you train on a citation network and a new paper is added, the standard recipe is to retrain. GraphSAGE (Hamilton et al., 2017) makes GNNs inductive by learning an aggregation function that can be applied to any neighborhood.</p>
 <p>The key change: rather than using all neighbors, GraphSAGE samples a fixed-size subset $\mathcal{S}_i^{(l)} \subset \mathcal{N}(i)$ at each layer. The aggregation is:</p>
 <p>$$h_{\mathcal{N}(i)}^{(l)} = \text{AGG}\left(\left\{h_j^{(l)} : j \in \mathcal{S}_i^{(l)}\right\}\right)$$</p>
 <p>$$h_i^{(l+1)} = \sigma\left(W^{(l)} \cdot \left[h_i^{(l)} \;\|\; h_{\mathcal{N}(i)}^{(l)}\right]\right)$$</p>
@@ -222,15 +227,15 @@
 <p>The key theorem (Xu et al., 2019): any message-passing GNN is at most as powerful as the 1-WL test. A GNN can distinguish two graphs only if 1-WL can. Equality is achieved when the aggregation is injective on multisets - specifically, when AGG uses summation (not mean or max) and the UPDATE is also injective. This is the GIN (Graph Isomorphism Network) architecture:</p>
 <p>$$h_i^{(l+1)} = \text{MLP}^{(l)}\left((1 + \epsilon^{(l)}) h_i^{(l)} + \sum_{j \in \mathcal{N}(i)} h_j^{(l)}\right)$$</p>
 <p>where $\epsilon$ is learnable. Mean and max aggregators are strictly weaker than sum for distinguishing graph structures.</p>
-<p>1-WL fails on regular graphs: if two nodes have the same degree sequence in their neighborhoods at every hop, 1-WL cannot tell them apart. A classic example: two regular graphs with the same degree but different connectivity structure are indistinguishable by any standard message-passing GNN, no matter how many layers or how large the hidden dimension.</p>
+<p>1-WL fails on regular graphs: if two nodes have the same degree sequence in their neighborhoods at every hop, 1-WL cannot tell them apart. A classic example: two regular graphs with the same number of nodes and the same degree but different connectivity structure - a 6-cycle and two separate triangles, say - are indistinguishable by any standard message-passing GNN, no matter how many layers or how large the hidden dimension. The second tab of the animation above runs 1-WL on exactly this pair.</p>
 <hr>
 <h2 id="beyond-1-wl-more-expressive-gnns">Beyond 1-WL: More Expressive GNNs</h2>
-<p>The k-WL hierarchy provides more powerful tests. 2-WL colors pairs of nodes; k-WL colors $k$-tuples. $k$-WL is strictly more powerful than $(k-1)$-WL, but the cost is $O(n^k)$ in the number of nodes - exponential and impractical for large graphs.</p>
+<p>The k-WL hierarchy provides more powerful tests: k-WL colors $k$-tuples of nodes instead of single nodes. In the standard numbering, 2-WL turns out to be exactly as powerful as 1-WL, but from there on each step up is strictly more powerful: 3-WL beats 2-WL, 4-WL beats 3-WL, and so on. The cost is $O(n^k)$ in the number of nodes - polynomial, but impractical for large graphs beyond $k = 3$.</p>
 <p>Several practical approaches improve expressiveness without the full k-WL cost:</p>
 <p><strong>Random node features.</strong> Assign each node a unique random feature (e.g., a Gaussian vector) at the start of each forward pass. Two nodes that were structurally identical are now distinguishable because their random seeds differ. This breaks symmetry and provably exceeds 1-WL on structures where 1-WL fails, at the cost of non-determinism (different runs produce different embeddings for structurally equivalent nodes).</p>
 <p><strong>Distance encoding.</strong> Augment each node&rsquo;s input features with structural information: the distance from every node to a set of anchor nodes, or the shortest path distances between pairs. This injects global structural information that message passing cannot compute locally.</p>
 <p><strong>Subgraph GNNs.</strong> For each node $v$, run a GNN on the subgraph obtained by removing $v$ from the graph. The node&rsquo;s representation encodes how the graph changes when it is removed - this captures structural information invisible to 1-WL. This is more expensive ($O(n)$ GNN runs per graph) but more expressive.</p>
-<p><strong>Equivariant GNNs.</strong> For molecular graphs where 3D coordinates are available, architectures like SchNet and DimeNet use geometric invariances (distance, angle, torsion) as structural features.</p>
+<p><strong>Geometric GNNs.</strong> For molecular graphs where 3D coordinates are available, architectures like SchNet (interatomic distances) and DimeNet (distances and bond angles) build in invariance to rotations and translations; equivariant models such as EGNN and NequIP go further, carrying vector features that rotate with the molecule.</p>
 <hr>
 <h2 id="task-levels-node-edge-and-graph">Task Levels: Node, Edge, and Graph</h2>
 <p>GNNs are applied at three granularities.</p>
@@ -241,10 +246,10 @@
 <p>Simple choices: mean pooling $h_G = \frac{1}{n}\sum_i h_i^{(L)}$ or max pooling. These are permutation invariant by construction. Differentiable pooling (DiffPool, Ying et al., 2018) learns a soft clustering of nodes into a coarser graph at each pooling step, progressively reducing the number of nodes while preserving hierarchical structure. Sort pooling (SortPool) concatenates the top-$k$ node representations sorted by their last feature dimension.</p>
 <hr>
 <h2 id="applications">Applications</h2>
-<p><strong>AlphaFold2.</strong> DeepMind&rsquo;s protein structure prediction system uses a graph-structured representation of protein residues (the &ldquo;Evoformer&rdquo;). Residues within a threshold distance are connected by edges, and attention-augmented message passing propagates structural information. The result is a learned representation that captures both sequence and spatial context, enabling prediction of 3D structure from amino acid sequence alone.</p>
+<p><strong>AlphaFold2.</strong> DeepMind&rsquo;s protein structure prediction system is built around the Evoformer, which keeps a representation for every pair of residues - in effect a fully connected graph - alongside a multiple sequence alignment. Its &ldquo;triangle&rdquo; updates pass information between the edges $(i, j)$, $(j, k)$ and $(i, k)$, enforcing geometric consistency much like message passing on edges. The result captures both evolutionary and spatial context, enabling prediction of 3D structure from the amino acid sequence and its alignment.</p>
 <p><strong>Drug discovery.</strong> Molecules are naturally represented as graphs: atoms are nodes with features (element, charge, hybridization), bonds are edges with features (type, stereo). GNNs predict molecular properties (solubility, toxicity, binding affinity) directly from graph structure, replacing hand-engineered fingerprints like ECFP. Trained on databases of experimentally measured properties, GNNs enable virtual screening of billions of candidate molecules.</p>
 <p><strong>Traffic prediction.</strong> Road networks are graphs. DCRNN and related models represent intersections as nodes and road segments as edges, using GNNs with temporal sequence models to predict traffic speed and flow 30-60 minutes ahead. The graph structure allows the model to learn that congestion at one node propagates along connected roads.</p>
-<p><strong>Recommendation systems.</strong> PinSage (Pinterest, Hamilton et al., 2018) represents users and items as nodes in a bipartite graph with edges for user-item interactions. GraphSAGE on this graph produces item embeddings that capture collaborative filtering information, outperforming matrix factorization approaches.</p>
+<p><strong>Recommendation systems.</strong> PinSage (Pinterest, Ying et al., 2018) represents users and items as nodes in a bipartite graph with edges for user-item interactions. GraphSAGE on this graph produces item embeddings that capture collaborative filtering information, outperforming matrix factorization approaches.</p>
 <hr>
 <h2 id="scalability">Scalability</h2>
 <p>Naive GCN performs full-batch gradient descent: the entire graph must fit in memory, and computing $\hat{A} H W$ requires touching all $n$ nodes and $m$ edges. For billion-node graphs (social networks, web graphs), this is infeasible.</p>
