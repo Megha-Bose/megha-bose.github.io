@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ In a multi-agent system, this assumption collapses." />
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          11 min read
+          12 min read
         </div>
       </div>
     </header>
@@ -205,6 +208,8 @@ In a multi-agent system, this assumption collapses." />
 </ol>
 <p><strong>Convergence in MARL.</strong> Independent learners - agents each running their own RL algorithm while treating others as part of the environment - do not converge to Nash equilibria in general. Convergence is guaranteed in specific cases: two-player zero-sum games (where minimax-Q converges), and <strong>potential games</strong>, where the incentives of all agents are aligned with a single global potential function $\Phi: S \times A \to \mathbb{R}$ such that $R_i(s, \mathbf{a}) - R_i(s, \mathbf{a}') = \Phi(s, \mathbf{a}) - \Phi(s, \mathbf{a}')$ for any unilateral deviation by agent $i$.</p>
 <hr>
+<p>Even when an equilibrium exists and is unique, simple learning dynamics may never reach it. In matching pennies, two players each learning sensibly from their own payoffs chase each other around the equilibrium forever:</p>
+<div class="sf" data-sf="player" data-src="/data/multi-agent-systems/pennies.json"></div>
 <h2 id="credit-assignment">Credit Assignment</h2>
 <p>Credit assignment is the central challenge of cooperative multi-agent RL. When agents share a reward, that reward is a function of every agent&rsquo;s action; attributing it to individuals is non-trivial.</p>
 <p><strong>Global reward.</strong> Set $R_i = R_{\text{joint}}$ for all $i$. Simple to implement, but provides no signal differentiating useful actions from useless ones. In a team of $n$ agents, a single agent acting well cannot distinguish its contribution from the noise of others.</p>
@@ -242,11 +247,11 @@ In a multi-agent system, this assumption collapses." />
 <p>(Or the inverse ratio for maximization problems.) A PoA of 1 means selfish behavior is socially optimal. A PoA of 2 means the worst-case Nash equilibrium is twice as costly as the coordinated optimum.</p>
 <p><strong>Routing and Braess&rsquo;s paradox.</strong> Selfish routing is the canonical example. Consider a network where agents choose routes to minimize their own travel time, and congestion increases travel time. The social optimum may require some agents to take longer routes so others can go faster. Self-interest prevents this coordination.</p>
 <p>More striking: <strong>Braess&rsquo;s paradox</strong> shows that adding capacity to a network can make everyone worse off. Consider two routes (up-down) from S to T, each with one high-latency fixed-cost link and one low-latency load-dependent link. All agents use a mix of routes: 30 min each. Now add a zero-cost express link between the midpoints. Every agent now has a dominant strategy to deviate to the faster path through the new link - ending up with 40 min each. The new link made everyone worse off. Several cities have removed road links and seen traffic improve: Seoul&rsquo;s Cheonggyecheon highway removal, Stuttgart&rsquo;s B14 closure.</p>
-<p><strong>PoA for load balancing.</strong> Jobs are assigned to machines selfishly (each job picks the least-loaded machine). With $m$ machines and $n$ jobs, the Nash equilibrium makespan (max load on any machine) is at most $4/3 - 1/(3m)$ times optimal. The bound of $4/3$ is tight. This means selfish scheduling is nearly as efficient as optimal centralized scheduling for this problem.</p>
+<p><strong>PoA for load balancing.</strong> Jobs are assigned to identical machines selfishly: each job sits on a machine where it cannot lower its own completion time by moving. With $m$ machines, the makespan (max load on any machine) of a pure Nash equilibrium is at most $2 - 2/(m+1)$ times optimal, and this bound is tight. Selfishness costs less than a factor of 2 here. (With mixed strategies the picture is worse: the expected makespan can be a factor of order $\log m / \log \log m$ above optimal.)</p>
 <p><strong>Smoothness framework.</strong> A cost-minimization game is $(\lambda, \mu)$-smooth if for any strategy profiles $s$ and $s^*$:</p>
 <p>$$\sum_i C_i(s_i^*, s_{-i}) \leq \lambda \cdot OPT + \mu \cdot C(s)$$</p>
 <p>Then $\text{PoA} \leq \lambda / (1 - \mu)$ for all coarse correlated equilibria (a broad solution concept containing Nash). Smoothness is a powerful technique because it gives PoA bounds that hold under uncertainty and in dynamic settings.</p>
-<p><strong>Price of stability.</strong> The PoA considers the worst Nash equilibrium. The <strong>price of stability</strong> (PoS) considers the best Nash equilibrium - the one a benevolent coordinator would guide agents toward. For network formation games, PoS is often O(log n) while PoA is unbounded: there exist good Nash equilibria even when bad ones also exist.</p>
+<p><strong>Price of stability.</strong> The PoA considers the worst Nash equilibrium. The <strong>price of stability</strong> (PoS) considers the best Nash equilibrium - the one a benevolent coordinator would guide agents toward. For the network design games of Anshelevich et al. (2004), where players share the cost of the links they use, the price of stability is at most $H(n) = 1 + 1/2 + \cdots + 1/n = O(\log n)$ while the price of anarchy can be as large as $n$: good Nash equilibria exist even when bad ones also exist.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
