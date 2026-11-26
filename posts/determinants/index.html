@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -210,6 +213,7 @@ You have a matrix $A$. You want to know whether the system $Ax = b$ has a unique
 <p>$$R_\theta = \begin{pmatrix} \cos\theta &amp; -\sin\theta \\ \sin\theta &amp; \cos\theta \end{pmatrix}$$</p>
 <p>$$\det(R_\theta) = (\cos\theta)(\cos\theta) - (-\sin\theta)(\sin\theta) = \cos^2\theta + \sin^2\theta = 1$$</p>
 <p>Exactly 1, for every angle. Rotations preserve all areas and all orientations. No expansion, no contraction, no flipping.</p>
+<div class="sf" data-sf="player" data-src="/data/determinants/det.json"></div>
 <p>What about a reflection across the $x$-axis? That has matrix $\begin{pmatrix} 1 &amp; 0 \\ 0 &amp; -1 \end{pmatrix}$, determinant $= (1)(-1) - 0 = -1$. Area is preserved ($|{-1}| = 1$) but orientation is flipped. A right-handed frame becomes left-handed.</p>
 <p>A scaling by 2 in both directions: $\det\begin{pmatrix} 2 &amp; 0 \\ 0 &amp; 2 \end{pmatrix} = 4$. Areas are multiplied by 4, which makes sense: doubling each linear dimension quadruples areas.</p>
 <blockquote>
@@ -239,7 +243,7 @@ You have a matrix $A$. You want to know whether the system $Ax = b$ has a unique
 <p>$$C_{12} = (-1)\det\begin{pmatrix} 4 &amp; 6 \\ 7 &amp; 10 \end{pmatrix} = -(40 - 42) = -(-2) = 2$$</p>
 <p>$$C_{13} = (+1)\det\begin{pmatrix} 4 &amp; 5 \\ 7 &amp; 8 \end{pmatrix} = (32 - 35) = -3$$</p>
 <p>$$\det(A) = 1(2) + 2(2) + 3(-3) = 2 + 4 - 9 = -3$$</p>
-<p>The determinant is $-3$: the transformation contracts volumes by a factor of 3 and reverses orientation.</p>
+<p>The determinant is $-3$: the transformation expands volumes by a factor of 3 and reverses orientation.</p>
 <blockquote>
 <p><strong>Discomfort check.</strong> Why does cofactor expansion work? The deep reason is that the determinant is alternating and multilinear (properties we will formalize in Section 8). Expanding along a row is a consequence of multilinearity: write each entry in the chosen row as $a_{ij}$ times a basis vector, and the alternating property handles the signs. The fact that any row or column gives the same answer follows from $\det(A^T) = \det(A)$ (proved below).</p>
 </blockquote>
@@ -330,7 +334,7 @@ You have a matrix $A$. You want to know whether the system $Ax = b$ has a unique
 <p>$$x_j = \frac{\det(A_j)}{\det(A)}$$</p>
 <p>where $A_j$ is the matrix $A$ with column $j$ replaced by $b$.</p>
 <p><strong>Why it is true.</strong> This follows from the cofactor matrix formula for the inverse: $A^{-1} = \frac{1}{\det(A)} \text{adj}(A)$, where $\text{adj}(A)$ is the matrix of cofactors transposed. Then $x = A^{-1}b$ gives each component as a ratio of determinants.</p>
-<p><strong>Why no one uses it computationally.</strong> Computing each $\det(A_j)$ via LU decomposition costs $O(n^3)$, and you need $n$ such computations, giving $O(n^4)$ total. Gaussian elimination solves $Ax = b$ in $O(n^3)$. Cramer&rsquo;s rule is four times slower by order of magnitude. It has theoretical value - it gives a closed-form expression for the solution - but it is not used in practice for $n &gt; 3$ or 4.</p>
+<p><strong>Why no one uses it computationally.</strong> Computing each $\det(A_j)$ via LU decomposition costs $O(n^3)$, and you need $n$ such computations, giving $O(n^4)$ total. Gaussian elimination solves $Ax = b$ in $O(n^3)$. Cramer&rsquo;s rule is slower by a whole factor of $n$. It has theoretical value - it gives a closed-form expression for the solution - but it is not used in practice for $n &gt; 3$ or 4.</p>
 <h3 id="the-jacobian-determinant-in-integration">The Jacobian Determinant in Integration</h3>
 <p>When you change variables in a multiple integral, you need to account for how the change of variables stretches or compresses volume. If $\mathbf{x} = g(\mathbf{u})$ is a smooth, invertible change of variables, then:</p>
 <p>$$\int f(\mathbf{x}) d\mathbf{x} = \int f(g(\mathbf{u})) |\det J_g(\mathbf{u})| d\mathbf{u}$$</p>
@@ -448,12 +452,13 @@ You have a matrix $A$. You want to know whether the system $Ax = b$ has a unique
 <hr>
 <h2 id="a-note-on-history">A Note on History</h2>
 <p>The determinant was not invented in one place. It emerged independently, over nearly two centuries, as mathematicians kept bumping into the same quantity.</p>
-<p><strong>Leibniz (1693)</strong> was the first to write determinant-like expressions when studying systems of linear equations. Working out conditions for three equations in two unknowns to have a common solution, he wrote down expressions that are recognizably the $3 \times 3$ determinant, though he had no name for them and saw them only as algebraic conditions.</p>
+<p><strong>Seki Takakazu (1683)</strong>, in Japan, was first: he computed determinants of matrices up to $5 \times 5$ while eliminating variables from systems of polynomial equations.</p>
+<p><strong>Leibniz (1693)</strong>, independently, wrote determinant-like expressions in Europe when studying systems of linear equations. Working out conditions for three equations in two unknowns to have a common solution, he wrote down expressions that are recognizably the $3 \times 3$ determinant, though he had no name for them and saw them only as algebraic conditions.</p>
 <p><strong>Cramer (1750)</strong> published his rule for solving $n$ equations in $n$ unknowns - the formula expressing each variable as a ratio of determinants. This is the first systematic appearance of determinants as a computational tool. Cramer&rsquo;s rule is today known mainly as a theoretical result (it is too expensive to compute in practice), but in 1750 it was a significant advance.</p>
 <p><strong>Vandermonde (1771)</strong> was the first to treat the determinant as an independent function in its own right, not just as a side product of equation-solving. The Vandermonde determinant - a specific determinant built from powers of variables that arises in polynomial interpolation - bears his name.</p>
 <p><strong>Laplace (1772)</strong> proved the expansion theorem: a determinant can be computed by expanding along any row or column. This is the cofactor expansion you use today. He also clarified the alternating sign pattern.</p>
-<p><strong>Cauchy (1815)</strong> gave the modern treatment. He established the multiplicativity rule $\det(AB) = \det(A)\det(B)$, proved that the determinant is the unique alternating multilinear function of the columns normalized by $\det(I) = 1$, and wrote the Leibniz formula $\det(A) = \sum_\sigma \text{sgn}(\sigma) \prod_i a_{i,\sigma(i)}$ over all permutations.</p>
-<p><strong>Jacobi (1841)</strong> established the connection to eigenvalues and to the characteristic polynomial, and formalized the relationship between the determinant and the transformation&rsquo;s volume-scaling behavior.</p>
+<p><strong>Cauchy (1815)</strong> gave the modern treatment. He gave the word &ldquo;determinant&rdquo; its modern meaning, proved the multiplicativity rule $\det(AB) = \det(A)\det(B)$ (found at the same time by Binet), and organized the subject around the sum over permutations $\det(A) = \sum_\sigma \text{sgn}(\sigma) \prod_i a_{i,\sigma(i)}$. The characterization as the unique alternating multilinear function with $\det(I) = 1$ came later, from Weierstrass and Kronecker.</p>
+<p><strong>Jacobi (1841)</strong> studied functional determinants - the Jacobian determinant of a change of variables - which measure how a non-linear map scales volume locally, extending the volume-scaling idea far beyond linear maps.</p>
 <p>The geometric interpretation - determinant as signed volume - was clarified gradually through the 19th century as the modern concept of a linear transformation solidified. Mathematicians were computing determinants correctly a century before they could articulate precisely what a &ldquo;vector space&rdquo; or &ldquo;linear map&rdquo; was.</p>
 <p><strong>Read next:</strong></p>
 <ul>
