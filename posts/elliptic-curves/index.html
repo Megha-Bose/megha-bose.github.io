@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -169,7 +172,7 @@
 </ul>
 <hr>
 <p>In 2005, the NSA recommended that new cryptographic systems migrate from RSA to elliptic curve cryptography. The reason was key size: a 256-bit elliptic curve key provides roughly the same security as a 3072-bit RSA key. This is not a matter of implementation efficiency - it reflects a fundamental difference in the hardness of the underlying mathematical problems. RSA security rests on the difficulty of integer factorization. ECC security rests on the difficulty of the elliptic curve discrete logarithm problem, which appears to be significantly harder for the same parameter size. Understanding why requires understanding what an elliptic curve is and what algebraic structure it carries.</p>
-<p>An elliptic curve is not an ellipse. The name comes from their appearance in the computation of arc lengths of ellipses in the 19th century, but as mathematical objects they are quite different. An elliptic curve over a field $F$ is the set of solutions to a cubic equation $y^2 = x^3 + ax + b$ along with a formal point $O$ called the &ldquo;point at infinity.&rdquo; What makes these curves remarkable is that the points on the curve form a group under a geometrically defined addition law. This group structure, discovered in the 19th century, was purely a mathematical curiosity until 1985, when Neal Koblitz and Victor Miller independently proposed using it for public-key cryptography.</p>
+<p>An elliptic curve is not an ellipse. The name comes from their appearance in the computation of arc lengths of ellipses in the 19th century, but as mathematical objects they are quite different. An elliptic curve over a field $F$ is the set of solutions to a cubic equation $y^2 = x^3 + ax + b$ along with a formal point $O$ called the &ldquo;point at infinity.&rdquo; What makes these curves remarkable is that the points on the curve form a group under a geometrically defined addition law. This group structure - the chord-and-tangent construction goes back to Newton and Fermat, and Poincaré described it as a group around 1901 - was of purely mathematical interest until 1985, when Neal Koblitz and Victor Miller independently proposed using it for public-key cryptography.</p>
 <hr>
 <h2 id="the-equation-and-non-degeneracy">The Equation and Non-Degeneracy</h2>
 <p>An elliptic curve in Weierstrass form over a field $F$ is defined by</p>
@@ -193,6 +196,7 @@
 <p>For the doubling case $P = Q$ (tangent line):</p>
 <p>$$\lambda = \frac{3x_1^2 + a}{2y_1}, \quad x_3 = \lambda^2 - 2x_1, \quad y_3 = \lambda(x_1 - x_3) - y_1.$$</p>
 <p>If $P = (x, y)$, then $-P = (x, -y)$ (reflection over $x$-axis). And $P + (-P) = O$.</p>
+<div class="sf" data-sf="player" data-src="/data/elliptic-curves/ecc.json"></div>
 <h2 id="why-this-is-a-group">Why This Is a Group</h2>
 <p>Verifying the group axioms:</p>
 <p><strong>Identity.</strong> $O$ is the identity. Geometrically, the line through $P$ and $O$ (a vertical line in projective coordinates) is tangent to $E$ at $O$ and meets $E$ at $-P$; reflecting over the $x$-axis gives $P$. So $P + O = P$.</p>
@@ -283,7 +287,7 @@
 <p><strong>Small subgroup attacks (cofactor attacks).</strong> If $\#E(\mathbb{F}_p) = hn$ where $n$ is a large prime and $h &gt; 1$ (the &ldquo;cofactor&rdquo;), an adversary can send a point in the small subgroup of order $h$, learning information about the private key modulo $h$. Mitigation: use curves with $h = 1$ (prime-order curves) or always check that received points have order $n$.</p>
 <p><strong>MOV attack.</strong> Some curves admit an efficiently computable &ldquo;Weil pairing&rdquo; that maps the ECDLP on $E(\mathbb{F}_p)$ to a discrete logarithm problem in $\mathbb{F}_{p^k}^*$ for small $k$. If $k$ is small, this can be solved using index calculus. Curves are called &ldquo;supersingular&rdquo; when this embedding degree $k$ is small; they are excluded from cryptographic use.</p>
 <p><strong>Anomalous curves (SSSA attack).</strong> A curve is anomalous over $\mathbb{F}_p$ if $\#E(\mathbb{F}_p) = p$. Such curves admit a &ldquo;lift&rdquo; to $p$-adic numbers that reduces ECDLP to an easy computation. Anomalous curves over $\mathbb{F}_p$ can be attacked in polynomial time.</p>
-<p><strong>Curve25519 and P-256.</strong> Modern secure curves are designed to avoid all known attacks. Curve25519 (designed by Bernstein) has prime order $8p$ where $p$ is a large prime, uses a Montgomery form $y^2 = x^3 + 486662x^2 + x$ optimized for fast arithmetic, and is designed so that all constant-time implementations are naturally correct. NIST P-256 is a Weierstrass curve over a 256-bit prime and is the most widely deployed curve in TLS.</p>
+<p><strong>Curve25519 and P-256.</strong> Modern secure curves are designed to avoid all known attacks. Curve25519 (designed by Bernstein) has order $8\ell$ for a large prime $\ell$ - a cofactor of 8, handled by &ldquo;clamping&rdquo; private keys - and uses the Montgomery form $y^2 = x^3 + 486662x^2 + x$, whose Montgomery ladder is fast, naturally constant-time, and accepts any 32-byte string as a public key, removing whole classes of implementation mistakes. NIST P-256 is a Weierstrass curve over a 256-bit prime and is the most widely deployed curve in TLS.</p>
 <h2 id="projective-coordinates">Projective Coordinates</h2>
 <p>The formulas above require field divisions (computing $\lambda$). Over $\mathbb{F}_p$, division means computing a modular inverse, which is relatively expensive. Projective coordinates avoid this.</p>
 <p>In projective coordinates, a point is represented as a triple $(X : Y : Z)$ with $(X : Y : Z) \sim (\lambda X : \lambda Y : \lambda Z)$ for $\lambda \neq 0$, corresponding to the affine point $(X/Z, Y/Z)$ when $Z \neq 0$. The point at infinity is $(0 : 1 : 0)$.</p>
