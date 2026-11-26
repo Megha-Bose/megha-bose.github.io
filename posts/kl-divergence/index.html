@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795688726" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -155,7 +158,7 @@ Definition Definition. Let $P$ and $Q$ be probability distributions over the sam
   <title>clock</title>
   <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
 </svg>
-          5 min read
+          6 min read
         </div>
       </div>
     </header>
@@ -172,7 +175,7 @@ Definition Definition. Let $P$ and $Q$ be probability distributions over the sam
 <p>$$D_{KL}(P \| Q) = \sum_{x \in \mathcal{X}} P(x) \log \frac{P(x)}{Q(x)}$$</p>
 <p>for discrete distributions, and for continuous distributions with densities $p$, $q$:</p>
 <p>$$D_{KL}(P \| Q) = \int p(x) \log \frac{p(x)}{q(x)} dx$$</p>
-<p>By convention $0 \log (0/q) = 0$ and $p \log(p/0) = +\infty$ whenever $p &gt; 0$. Thus $D_{KL}(P \| Q) = +\infty$ whenever $Q$ assigns zero probability to an event that $P$ does not - $Q$ must be absolutely continuous with respect to $P$ for the divergence to be finite.</p>
+<p>By convention $0 \log (0/q) = 0$ and $p \log(p/0) = +\infty$ whenever $p &gt; 0$. Thus $D_{KL}(P \| Q) = +\infty$ whenever $Q$ assigns zero probability to an event that $P$ does not - $P$ must be absolutely continuous with respect to $Q$ (written $P \ll Q$: wherever $Q$ is zero, $P$ is too) for the divergence to be finite.</p>
 <h2 id="non-negativity-the-information-inequality">Non-negativity: The Information Inequality</h2>
 <p><strong>Theorem (Information Inequality).</strong> For all distributions $P$ and $Q$:</p>
 <p>$$D_{KL}(P \| Q) \geq 0$$</p>
@@ -183,11 +186,12 @@ Definition Definition. Let $P$ and $Q$ be probability distributions over the sam
 <p>$$\mathbb{E}_P\left[-\log \frac{Q(X)}{P(X)}\right] \geq -\log \mathbb{E}_P\left[\frac{Q(X)}{P(X)}\right] = -\log \sum_x P(x) \cdot \frac{Q(x)}{P(x)} = -\log 1 = 0$$</p>
 <p>Equality in Jensen holds iff $Q(x)/P(x)$ is constant $P$-almost everywhere, which forces $P = Q$. $\square$</p>
 <h2 id="asymmetry">Asymmetry</h2>
-<p>KL divergence is <strong>not</strong> symmetric: $D_{KL}(P \| Q) \neq D_{KL}(Q \| P)$ in general. Consider $P = \mathcal{N}(0, 1)$ and $Q = \mathcal{N}(0, 4)$. Then $D_{KL}(P \| Q) = \frac{1}{2}(\log 4 - 1 + 1/4) \approx 0.44$ while $D_{KL}(Q \| P) = \frac{1}{2}(\log(1/4) - 1 + 4) \approx 0.97$. Because $D_{KL}$ is not a metric it is often called a <strong>divergence</strong> rather than a distance.</p>
+<p>KL divergence is <strong>not</strong> symmetric: $D_{KL}(P \| Q) \neq D_{KL}(Q \| P)$ in general. Consider $P = \mathcal{N}(0, 1)$ and $Q = \mathcal{N}(0, 4)$. Then $D_{KL}(P \| Q) = \frac{1}{2}(\log 4 - 1 + 1/4) \approx 0.32$ while $D_{KL}(Q \| P) = \frac{1}{2}(\log(1/4) - 1 + 4) \approx 0.81$. Because $D_{KL}$ is not a metric it is often called a <strong>divergence</strong> rather than a distance.</p>
 <h2 id="forward-vs-reverse-kl">Forward vs. Reverse KL</h2>
 <p>The direction of KL divergence matters for approximation. In variational inference we approximate a target $P$ with a simpler $Q$.</p>
-<p><strong>Forward KL</strong> (moment-matching or mean-seeking): minimise $D_{KL}(P \| Q)$. This penalises $Q$ heavily whenever $Q(x) \approx 0$ but $P(x) &gt; 0$, forcing $Q$ to cover all modes of $P$. The optimal $Q$ satisfies $\mathbb{E}_P[\log Q(X)] = $ constant, which for exponential family $Q$ gives $Q$&rsquo;s sufficient statistics matching $P$&rsquo;s - hence &ldquo;moment-matching.&rdquo;</p>
+<p><strong>Forward KL</strong> (moment-matching or mean-seeking): minimise $D_{KL}(P \| Q)$. This penalises $Q$ heavily whenever $Q(x) \approx 0$ but $P(x) &gt; 0$, forcing $Q$ to cover all modes of $P$. Since $D_{KL}(P \| Q) = -H(P) - \mathbb{E}_P[\log Q(X)]$, the optimal $Q$ maximizes $\mathbb{E}_P[\log Q(X)]$. For an exponential family $Q$, the maximizer has the same expected sufficient statistics as $P$ - for a Gaussian, the same mean and variance - hence &ldquo;moment-matching.&rdquo;</p>
 <p><strong>Reverse KL</strong> (mode-seeking): minimise $D_{KL}(Q \| P)$. This penalises $Q$ wherever $Q(x) &gt; 0$ but $P(x) \approx 0$, encouraging $Q$ to concentrate on a single mode of $P$ rather than spreading across all modes. Variational inference in the standard ELBO sense minimises the reverse KL.</p>
+<div class="sf" data-sf="player" data-src="/data/kl-divergence/fit.json"></div>
 <h2 id="cross-entropy-and-its-relation-to-kl">Cross-Entropy and Its Relation to KL</h2>
 <p><strong>Definition.</strong> The <strong>cross-entropy</strong> of $Q$ relative to $P$ is:</p>
 <p>$$H(P, Q) = -\sum_x P(x) \log Q(x) = \mathbb{E}_P[-\log Q(X)]$$</p>
@@ -208,16 +212,16 @@ Definition Definition. Let $P$ and $Q$ be probability distributions over the sam
 <h2 id="rényi-divergence">Rényi Divergence</h2>
 <p>KL divergence is a special case of the broader <strong>Rényi divergence</strong> family, parametrised by order $\alpha \geq 0$:</p>
 <p>$$D_\alpha(P \| Q) = \frac{1}{\alpha - 1} \log \sum_x P(x)^\alpha Q(x)^{1-\alpha}$$</p>
-<p>At $\alpha \to 1$, $D_\alpha(P \| Q) \to D_{KL}(P \| Q)$ by L&rsquo;Hôpital&rsquo;s rule. At $\alpha = 2$, it is the $\chi^2$-divergence (up to a constant). Rényi divergences appear in differential privacy (where the privacy budget is often measured in Rényi divergence units) and in the analysis of Monte Carlo estimators.</p>
+<p>At $\alpha \to 1$, $D_\alpha(P \| Q) \to D_{KL}(P \| Q)$ by L&rsquo;Hôpital&rsquo;s rule. At $\alpha = 2$, it is a monotone function of the $\chi^2$-divergence: $D_2(P \| Q) = \log(1 + \chi^2(P \| Q))$. Rényi divergences appear in differential privacy (where the privacy budget is often measured in Rényi divergence units) and in the analysis of Monte Carlo estimators.</p>
 <h2 id="kl-in-variational-inference">KL in Variational Inference</h2>
 <p>In variational inference we want to approximate the posterior $p(z \mid x)$ with a tractable family $q_\phi(z)$. Bayes' rule gives $\log p(x) = \log \int p(x, z) dz$. Introducing $q_\phi$:</p>
 <p>$$\log p(x) = \mathbb{E}_{q_\phi}\left[\log \frac{p(x, z)}{q_\phi(z)}\right] + D_{KL}(q_\phi(z) \| p(z \mid x))$$</p>
 <p>Since $D_{KL} \geq 0$, the first term is a lower bound on $\log p(x)$, called the <strong>Evidence Lower BOund (ELBO)</strong>:</p>
 <p>$$\mathcal{L}(\phi) = \mathbb{E}_{q_\phi}[\log p(x \mid z)] - D_{KL}(q_\phi(z) \| p(z)) \leq \log p(x)$$</p>
-<p>Maximising the ELBO simultaneously maximises the data likelihood and minimises the KL divergence between the approximate and true posterior.</p>
+<p>For a fixed model, $\log p(x)$ does not depend on $\phi$, so maximising the ELBO over $\phi$ is exactly minimising the KL divergence between the approximate and true posterior. When the model&rsquo;s own parameters are trained too, as in a VAE, maximising the ELBO also pushes up a lower bound on the data likelihood.</p>
 <h2 id="examples">Examples</h2>
 <p><strong>VAE loss decomposition.</strong> A Variational Autoencoder maximises the ELBO over both encoder $q_\phi(z \mid x)$ and decoder $p_\theta(x \mid z)$. The loss is $-\mathcal{L} = -\mathbb{E}_{q_\phi}[\log p_\theta(x \mid z)] + D_{KL}(q_\phi(z \mid x) \| p(z))$. The first term is a reconstruction loss; the second is an explicit KL penalty that regularises the latent space toward the prior $p(z) = \mathcal{N}(0, I)$. For Gaussian encoder $q_\phi(z \mid x) = \mathcal{N}(\mu, \sigma^2 I)$, the KL term has a closed form: $\frac{1}{2}\sum_j (\mu_j^2 + \sigma_j^2 - \log\sigma_j^2 - 1)$.</p>
-<p><strong>PPO KL penalty.</strong> Proximal Policy Optimisation constrains policy updates using a KL penalty term $-\beta D_{KL}(\pi_{\theta_{\text{old}}} \| \pi_\theta)$ added to the reward objective. This prevents the updated policy $\pi_\theta$ from deviating too far from the reference policy $\pi_{\theta_{\text{old}}}$, avoiding destructive large updates in policy gradient methods. The coefficient $\beta$ is adapted over training to maintain the divergence near a target value. In RLHF pipelines, the same penalty prevents the fine-tuned language model from drifting too far from the pretrained reference, preserving fluency while aligning to human preferences.</p>
+<p><strong>PPO KL penalty.</strong> One variant of Proximal Policy Optimisation (the more common variant uses ratio clipping instead) constrains policy updates using a KL penalty term $-\beta D_{KL}(\pi_{\theta_{\text{old}}} \| \pi_\theta)$ added to the reward objective. This prevents the updated policy $\pi_\theta$ from deviating too far from the reference policy $\pi_{\theta_{\text{old}}}$, avoiding destructive large updates in policy gradient methods. The coefficient $\beta$ is adapted over training to maintain the divergence near a target value. In RLHF pipelines, a similar penalty, usually in the other direction, $\beta D_{KL}(\pi_\theta \| \pi_{\text{ref}})$ estimated per token, prevents the fine-tuned language model from drifting too far from the supervised reference model, preserving fluency while aligning to human preferences.</p>
 <hr>
 <p>With entropy and KL divergence in hand, the tools of information theory connect naturally to learning theory - where the question becomes not &ldquo;how much information?&rdquo; but &ldquo;how much data is needed to learn a concept class?&rdquo;</p>
 <p><strong>Read Next:</strong></p>
