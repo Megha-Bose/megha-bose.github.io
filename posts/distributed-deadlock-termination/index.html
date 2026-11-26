@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="/css/main.min.18a6cd1e68e7eb7049eb61f1ad5e047c50655481246a8308a953e48602e04e01.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/algo-demos.css?v=1795421180" />
+    <script src="/js/algo-demos.js?v=1795420903" defer></script>
+    <script src="/js/player.js?v=1795704078" defer></script>
 
     
     <meta name="twitter:card" content="summary_large_image"/>
@@ -193,7 +196,7 @@
 </ul>
 <p>Two-phase reduces phantoms (a transient deadlock resolves between phases), but increases detection latency and is still not always correct under all models.</p>
 <hr>
-<h2 id="centralized-deadlock-detection-chandy-misra">Centralized Deadlock Detection (Chandy-Misra)</h2>
+<h2 id="centralized-deadlock-detection">Centralized Deadlock Detection</h2>
 <p><strong>Setting.</strong> A central <strong>controller</strong> periodically (or on demand) collects local WFG information from all processes and checks for cycles globally.</p>
 <p><strong>Protocol:</strong></p>
 <ol>
@@ -209,49 +212,34 @@
 </ul>
 <p><strong>When to use.</strong> Acceptable for lightly loaded systems where the controller overhead is manageable and false positives can be tolerated (they trigger rollback/resolution, which is usually safe).</p>
 <hr>
-<h2 id="chandy-misra-haas-algorithm-1982---diffusion-computation">Chandy-Misra-Haas Algorithm (1982) - Diffusion Computation</h2>
-<p><strong>Setting.</strong> No central controller. Deadlock detection by <strong>diffusion computation</strong>: special probe messages propagate through the WFG, and a deadlock is confirmed if a probe returns to the initiator.</p>
-<p><strong>For AND-model (process waits for all in wait-set):</strong></p>
-<p><strong>Data structures.</strong> Each process $P_i$ has: <code>engaged[i]</code> (whether it is currently engaged in a detection initiated by some $P_k$), <code>num_replies_pending[i][k]</code> (how many replies $P_i$ is waiting for, in a detection for $P_k$).</p>
-<p><strong>Protocol initiated by $P_k$ suspecting deadlock:</strong></p>
+<h2 id="chandy-misra-haas-algorithm-1983---edge-chasing">Chandy-Misra-Haas Algorithm (1983) - Edge Chasing</h2>
+<p><strong>Setting.</strong> No central controller. Instead of collecting the wait-for graph anywhere, <strong>probe</strong> messages are sent along its edges, and a deadlock is confirmed if a probe returns to the process that started it.</p>
+<p><strong>For the AND model (a process waits for all of its wait-set):</strong></p>
 <ol>
-<li>$P_k$ sends <code>PROBE(k, k, k)</code> to all processes in its wait-set (format: <code>PROBE(initiator, sender, receiver)</code>).</li>
-<li>On receiving <code>PROBE(k, i, j)</code> at $P_j$:
-<ul>
-<li>If $P_j$ is actively waiting: if $P_j$ was not yet engaged in detection for $P_k$: mark <code>engaged[j][k]</code>, set <code>num_replies_pending[j][k]</code> = |wait-set of $P_j$|, send <code>PROBE(k, j, m)</code> to all $m$ in $P_j$&rsquo;s wait-set.</li>
-<li>If <code>PROBE(k, j, j)</code> arrives at $P_k$ (probe returned to initiator): $P_k$ is deadlocked.</li>
-</ul>
-</li>
+<li>A blocked process $P_i$ that suspects deadlock sends <code>PROBE(i, i, j)</code> to each process $P_j$ it is waiting for. The format is <code>PROBE(initiator, sender, receiver)</code>.</li>
+<li>When a process $P_k$ receives <code>PROBE(i, j, k)</code>, it ignores it unless $P_k$ is itself blocked. If it is blocked and has not already forwarded a probe for initiator $i$, it sends <code>PROBE(i, k, m)</code> to every process $P_m$ it is waiting for.</li>
+<li>If $P_i$ ever receives <code>PROBE(i, j, i)</code>, the probe has come back around a cycle, and $P_i$ declares itself deadlocked.</li>
 </ol>
-<p><strong>Correctness.</strong> A probe returning to $P_k$ means there is a sequence of waiting processes forming a cycle in the WFG at the time the probe traveled. All processes on the path were blocking when the probe passed through them. If the AND-model holds, the cycle is a deadlock.</p>
-<p><strong>Phantom deadlocks in CMH.</strong> A process on the probe&rsquo;s path may have been released between the time the probe passed through and the time it completes the cycle. This produces a phantom. The differential technique (below) addresses this.</p>
-<hr>
-<h2 id="singhal-kshemkalyani-differential-technique">Singhal-Kshemkalyani Differential Technique</h2>
-<p><strong>Problem with CMH.</strong> CMH sends information about all WFG edges whenever a process reports. Most of the time, only a few edges have changed. The full WFG transmission is wasteful.</p>
-<p><strong>Differential technique.</strong> Each process maintains:</p>
-<ul>
-<li><code>SV[i]</code>: the sequence vector - <code>SV[i][j]</code> is the sequence number of the last information process $P_i$ sent about process $P_j$.</li>
-<li><code>RV[i]</code>: the receive vector - <code>RV[i][j]</code> is the sequence number of the last information $P_i$ received about $P_j$.</li>
-</ul>
-<p>When $P_i$ sends information to the controller (or in a diffusion computation), it sends only the changes since last time - the edges where $SV[i][j] &gt; RV[\text{receiver}][j]$. The receiver updates $RV$ accordingly.</p>
-<p><strong>Why this was needed for CMH.</strong> CMH in its original form sends probes through the full WFG. In large systems with many processes and many WFG edges, each probe message carries excessive data. The differential technique reduces each message to carry only the edges that have changed since the last communication between those two processes - turning a $O(n)$-per-message overhead into an $O(\delta)$-per-message overhead where $\delta$ is the number of changed edges.</p>
+<p>Each probe is three integers, so messages are constant-size; detecting a cycle of length $d$ takes one probe per edge it chases.</p>
+<div class="sf" data-sf="player" data-src="/data/distributed-deadlock-termination/cmh.json"></div>
+<p><strong>Correctness.</strong> In the AND model, a blocked process stays blocked until the process it waits for releases a resource, and a process in a cycle can never do that. So a probe that returns has travelled around a cycle that really exists, and Chandy, Misra and Haas showed that the algorithm detects every deadlock and reports no false ones. Phantom deadlocks are a problem for approaches that assemble a global picture of the WFG from snapshots taken at different times, like the centralized scheme above - not for edge chasing.</p>
+<p><strong>For the OR model</strong> (a process can proceed once any one of its wait-set responds), a cycle is no longer enough for deadlock. The same paper gives a different algorithm for that case, a diffusion computation: the initiator sends queries, every blocked process forwards them and replies only once all of its own queries are answered, and the initiator is deadlocked if all its queries come back answered.</p>
 <hr>
 <h2 id="mitchell-merritt-algorithm-1984---single-resource">Mitchell-Merritt Algorithm (1984) - Single Resource</h2>
-<p>For the special case where each process holds at most one resource and waits for at most one resource (single-resource model), the WFG is a collection of simple chains and at most one cycle. Detection is simpler.</p>
-<p><strong>Algorithm:</strong></p>
+<p>For the special case where each process waits for at most one other process at a time (the single-resource model), the WFG has out-degree at most one, so each connected piece of it contains at most one cycle.</p>
+<p><strong>Algorithm.</strong> Each process has two labels, a public one (visible to others) and a private one, initially equal.</p>
 <ul>
-<li>Each edge in the WFG is labeled with a <strong>tag</strong>.</li>
-<li>To detect: process $P_i$ (at the tail of a wait-for chain) propagates a <strong>query</strong> forward along the chain.</li>
-<li>Each process receiving a query forwards it, appending its own label.</li>
-<li>If the query returns to the initiator, there is a cycle.</li>
+<li><strong>Block:</strong> when $P_i$ starts waiting for $P_j$, it sets both its labels to a fresh value larger than its own and $P_j$&rsquo;s public labels.</li>
+<li><strong>Transmit:</strong> a blocked process that sees that the process it waits for has a larger public label copies that label as its own public label. Large labels therefore travel <em>backwards</em> along the wait-for edges.</li>
+<li><strong>Detect:</strong> if a blocked process sees its own private label come back as the public label of the process it waits for, the label has gone all the way around a cycle: deadlock.</li>
 </ul>
-<p><strong>Message complexity.</strong> $O(d)$ messages where $d$ is the length of the deadlock chain. Much cheaper than general WFG algorithms for the single-resource case.</p>
-<p><strong>Limitation.</strong> Only correct under the single-resource model. Does not generalize to AND-model with multiple resources.</p>
+<p>Only the process with the largest label in the cycle detects it, so exactly one process in the cycle finds the deadlock and can resolve it.</p>
+<p><strong>Limitation.</strong> Only correct under the single-resource model. Does not generalize to the AND model with multiple resources.</p>
 <hr>
 <h2 id="termination-detection">Termination Detection</h2>
 <p><strong>Problem.</strong> A distributed computation is <strong>terminated</strong> when all processes are idle and no messages are in transit. How does an observer know when this has happened?</p>
 <p><strong>Why it&rsquo;s hard.</strong> A process that appears idle may be about to receive a message that makes it active again. The observer cannot tell idle-with-pending-message from genuinely-terminated.</p>
-<h3 id="dijkstra-scholten-algorithm-token-based">Dijkstra-Scholten Algorithm (Token-Based)</h3>
+<h3 id="dijkstra-scholten-algorithm-diffusing-computations">Dijkstra-Scholten Algorithm (Diffusing Computations)</h3>
 <p><strong>Model.</strong> One initiator process; all activity derives from it. Tree structure tracks which processes were activated by which.</p>
 <p><strong>Protocol:</strong></p>
 <ul>
@@ -259,10 +247,10 @@
 <li>When a process becomes idle and all processes it activated are also idle (it has no children left), it sends a <strong>signal</strong> to its parent in the computation tree.</li>
 <li>When the initiator receives signals from all its children and is itself idle: the computation is terminated.</li>
 </ul>
-<p><strong>Message complexity.</strong> At most 2 signal messages per message sent in the computation (one credit sent with each message, one returned on termination). No global state collection needed.</p>
+<p><strong>Message complexity.</strong> Every computation message is eventually answered by exactly one signal (an acknowledgement): immediately if the receiver is already part of the tree, or when it leaves the tree otherwise. So the overhead is one signal per computation message. No global state collection needed.</p>
 <h3 id="permission-based-termination-detection">Permission-Based Termination Detection</h3>
-<p><strong>Safra&rsquo;s algorithm (1987).</strong> Processes are arranged in a logical ring. A token circulates. When a process passes the token: if it has been active since it last passed the token, it &ldquo;colors&rdquo; the token black (tainted). Otherwise it passes it white. The initiator detects termination only when a white token completes a full ring traversal while the initiator is itself idle and the token arrived white.</p>
-<p><strong>Invariant.</strong> A white token completing a full ring means no process became active after the token passed through it - which means all processes are idle and will remain idle (no pending messages can re-activate them).</p>
+<p><strong>Safra&rsquo;s algorithm (1987).</strong> Processes are arranged in a logical ring, and a token circulates. Each process also counts messages it has sent minus messages it has received, and the token accumulates the sum. A process that has received a message since the token last passed turns black, and blackens the token when it passes it on. The initiator detects termination only when the token returns white, the initiator itself is white and idle, and the accumulated count plus its own is zero.</p>
+<p><strong>Invariant.</strong> A white token completing a full ring means no process was reactivated behind the token&rsquo;s back, and a zero message count means no message is still in transit to re-activate anyone. Both checks are needed: idleness alone cannot see a message that is still on the wire.</p>
 <hr>
 <h2 id="summary">Summary</h2>
 <table>
@@ -276,40 +264,34 @@
 </thead>
 <tbody>
 <tr>
-<td>Centralized (Chandy-Misra)</td>
+<td>Centralized</td>
 <td>General</td>
 <td>Global WFG at controller</td>
 <td>Simple; bottleneck; phantom-prone</td>
 </tr>
 <tr>
-<td>CMH (diffusion)</td>
-<td>AND-model</td>
-<td>Probe propagation through WFG</td>
-<td>Decentralized; phantom possible</td>
-</tr>
-<tr>
-<td>Singhal-Kshemkalyani</td>
-<td>AND-model</td>
-<td>Differential WFG updates</td>
-<td>Reduces message overhead to changed edges only</td>
+<td>Chandy-Misra-Haas</td>
+<td>AND / OR model</td>
+<td>Edge-chasing probes (AND), diffusion (OR)</td>
+<td>Decentralized; constant-size messages; no false deadlocks</td>
 </tr>
 <tr>
 <td>Mitchell-Merritt</td>
 <td>Single resource</td>
-<td>Tag-labeled query chains</td>
-<td>$O(d)$ messages; limited to single resource</td>
+<td>Labels propagate backwards</td>
+<td>Exactly one process in the cycle detects it</td>
 </tr>
 <tr>
 <td>Dijkstra-Scholten</td>
 <td>Termination</td>
 <td>Computation tree signals</td>
-<td>Initiator-based; $O(1)$ overhead per message</td>
+<td>Initiator-based; one signal per message</td>
 </tr>
 <tr>
 <td>Safra (ring token)</td>
 <td>Termination</td>
-<td>Colored token on ring</td>
-<td>Permission-based; no central coordinator</td>
+<td>Colored token plus message counts</td>
+<td>No central coordinator; detects in-transit messages</td>
 </tr>
 </tbody>
 </table>
